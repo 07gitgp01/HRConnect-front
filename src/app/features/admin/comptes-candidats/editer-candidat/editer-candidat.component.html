@@ -1,0 +1,164 @@
+<!-- src/app/features/admin/components/editer-candidat/editer-candidat.component.html -->
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h3 class="card-title">
+            <i class="fas fa-edit me-2"></i>
+            Éditer le profil de {{ nomCandidat }}
+          </h3>
+          <button class="btn btn-outline-secondary" (click)="annuler()">
+            <i class="fas fa-arrow-left me-2"></i>Retour
+          </button>
+        </div>
+        <div class="card-body">
+          <!-- Messages -->
+          <div *ngIf="messageSucces" class="alert alert-success">
+            <i class="fas fa-check-circle me-2"></i>
+            {{ messageSucces }}
+          </div>
+
+          <div *ngIf="messageErreur" class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {{ messageErreur }}
+          </div>
+
+          <!-- Chargement -->
+          <div *ngIf="isChargement" class="text-center py-4">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+            <p class="mt-2">Chargement du profil...</p>
+          </div>
+
+          <!-- Formulaire -->
+          <form [formGroup]="profilForm" *ngIf="!isChargement">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Adresse de résidence</label>
+                  <input type="text" class="form-control" formControlName="adresseResidence"
+                         placeholder="Adresse complète">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Région géographique</label>
+                  <!-- ✅ CORRECTION: "regionGeographique" au lieu de "regionGeographic" -->
+                  <input type="text" class="form-control" formControlName="regionGeographique"
+                         placeholder="Région de résidence">
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Niveau d'études</label>
+                  <input type="text" class="form-control" formControlName="niveauEtudes"
+                         placeholder="Ex: Bac+2, Licence, Master...">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Domaine d'études</label>
+                  <input type="text" class="form-control" formControlName="domaineEtudes"
+                         placeholder="Ex: Informatique, Commerce, Santé...">
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Type de pièce</label>
+                  <select class="form-control" formControlName="typePiece">
+                    <option value="CNIB">CNIB</option>
+                    <option value="PASSEPORT">Passeport</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Numéro de pièce</label>
+                  <input type="text" class="form-control" formControlName="numeroPiece"
+                         placeholder="Numéro de la pièce">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">URL Pièce d'identité</label>
+                  <input type="text" class="form-control" formControlName="urlPieceIdentite" 
+                         placeholder="https://...">
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Disponibilité</label>
+                  <select class="form-control" formControlName="disponibilite">
+                    <option value="Temps plein">Temps plein</option>
+                    <option value="Temps partiel">Temps partiel</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">URL CV</label>
+                  <input type="text" class="form-control" formControlName="urlCV" 
+                         placeholder="https://...">
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Compétences</label>
+              <input type="text" class="form-control" placeholder="Séparer par des virgules" 
+                     (keyup.enter)="ajouterCompetence($event)" #competenceInput>
+              <small class="text-muted">Appuyez sur Entrée pour ajouter une compétence</small>
+              
+              <!-- Affichage des compétences ajoutées -->
+              <div class="mt-2" *ngIf="profilForm.get('competences')?.value?.length > 0">
+                <span *ngFor="let competence of profilForm.get('competences')?.value" 
+                      class="badge bg-primary me-1 mb-1">
+                  {{ competence }}
+                  <button type="button" class="btn-close btn-close-white ms-1" 
+                          (click)="supprimerCompetence(competence)" 
+                          style="font-size: 0.7rem;"></button>
+                </span>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Motivation</label>
+              <textarea class="form-control" rows="4" formControlName="motivation" 
+                        placeholder="Décrivez vos motivations pour rejoindre le programme..."></textarea>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+              <button type="button" class="btn btn-secondary" (click)="annuler()">
+                <i class="fas fa-times me-2"></i>Annuler
+              </button>
+              <div>
+                <button type="button" class="btn btn-primary me-2" 
+                        (click)="mettreAJourProfil()" [disabled]="isLoading">
+                  <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+                  <i class="fas fa-save me-2" *ngIf="!isLoading"></i>
+                  Mettre à jour
+                </button>
+                <button type="button" class="btn btn-success" 
+                        (click)="completerProfil()" [disabled]="isLoading">
+                  <i class="fas fa-check-circle me-2"></i>
+                  Compléter le profil
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

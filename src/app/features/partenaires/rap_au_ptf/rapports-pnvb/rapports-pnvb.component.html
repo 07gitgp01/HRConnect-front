@@ -1,0 +1,329 @@
+<!-- src/app/features/partenaires/components/rapports-pnvb/rapports-pnvb.component.html -->
+<div class="rapports-pnvb-container">
+  <!-- Header -->
+  <div class="header-section">
+    <div class="header-content">
+      <div>
+        <h1>
+          <mat-icon class="header-icon">description</mat-icon>
+          Rapports PNVB
+        </h1>
+        <p class="subtitle">Consultez les rapports officiels du Programme National de Volontariat</p>
+      </div>
+      
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="openInfoDialog()">
+          <mat-icon>info</mat-icon>
+          Informations
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-section" *ngIf="statsConsultation">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon">library_books</mat-icon>
+          <div>
+            <div class="stat-number">{{ totalRapports }}</div>
+            <div class="stat-label">Rapports disponibles</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon">visibility</mat-icon>
+          <div>
+            <div class="stat-number">{{ statsConsultation.rapportsConsultes || 0 }}</div>
+            <div class="stat-label">Consultés</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon">update</mat-icon>
+          <div>
+            <div class="stat-date" *ngIf="statsConsultation.derniereConsultation">
+              {{ statsConsultation.derniereConsultation | date:'dd/MM/yyyy' }}
+            </div>
+            <div class="stat-date" *ngIf="!statsConsultation.derniereConsultation">
+              Jamais
+            </div>
+            <div class="stat-label">Dernière consultation</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Filtres -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-grid">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Rechercher un rapport</mat-label>
+          <input matInput [(ngModel)]="searchQuery" 
+                 (keyup.enter)="onSearch()" 
+                 placeholder="Titre, description, mots-clés...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Type de rapport</mat-label>
+          <mat-select [(ngModel)]="selectedType" (selectionChange)="onSearch()">
+            <mat-option value="">Tous les types</mat-option>
+            <mat-option *ngFor="let type of types" [value]="type">
+              {{ getTypeLabel(type) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Catégorie</mat-label>
+          <mat-select [(ngModel)]="selectedCategorie" (selectionChange)="onSearch()">
+            <mat-option value="">Toutes les catégories</mat-option>
+            <mat-option *ngFor="let categorie of categories" [value]="categorie">
+              {{ categorie }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button mat-button (click)="onSearch()" color="primary">
+            <mat-icon>filter_list</mat-icon>
+            Filtrer
+          </button>
+          
+          <button mat-button (click)="clearFilters()" *ngIf="searchQuery || selectedType || selectedCategorie">
+            <mat-icon>clear</mat-icon>
+            Effacer
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Liste des rapports -->
+  <mat-card class="rapports-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>list</mat-icon>
+        Rapports disponibles
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ totalRapports }} rapport{{ totalRapports > 1 ? 's' : '' }} trouvé{{ totalRapports > 1 ? 's' : '' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Chargement -->
+      <div *ngIf="isLoading" class="loading-section">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Chargement des rapports...</p>
+      </div>
+
+      <!-- Téléchargement -->
+      <div *ngIf="isDownloading" class="download-overlay">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Téléchargement en cours...</p>
+      </div>
+
+      <!-- Tableau -->
+      <div class="table-responsive" *ngIf="!isLoading && rapports.length > 0">
+        <table mat-table [dataSource]="rapports" matSort class="mat-elevation-z1">
+          
+          <!-- Titre -->
+          <ng-container matColumnDef="titre">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> 
+              <mat-icon class="header-icon">title</mat-icon>
+              Titre 
+            </th>
+            <td mat-cell *matCellDef="let rapport">
+              <div class="rapport-title">
+                <mat-icon class="file-icon" [style.color]="getFileIconColor(rapport.type)">
+                  {{ getFileIcon(rapport.type) }}
+                </mat-icon>
+                <div class="title-content">
+                  <strong class="rapport-titre">{{ rapport.titre }}</strong>
+                  <div *ngIf="rapport.description" class="rapport-description">
+                    {{ rapport.description }}
+                  </div>
+                  <div class="rapport-meta" *ngIf="rapport.metadata">
+                    <span *ngIf="rapport.metadata.themes?.length" class="meta-tag">
+                      <mat-icon class="meta-icon">tag</mat-icon>
+                      {{ rapport.metadata.themes.join(', ') }}
+                    </span>
+                    <span *ngIf="rapport.metadata.zoneGeographique?.length" class="meta-tag">
+                      <mat-icon class="meta-icon">location_on</mat-icon>
+                      {{ rapport.metadata.zoneGeographique.join(', ') }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Type -->
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">category</mat-icon>
+              Type 
+            </th>
+            <td mat-cell *matCellDef="let rapport">
+              <div class="type-cell">
+                <span class="type-badge" [class]="rapport.type">
+                  {{ getTypeLabel(rapport.type) }}
+                </span>
+                <div class="type-period" *ngIf="rapport.metadata?.periode">
+                  {{ rapport.metadata.periode }}
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Date -->
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">event</mat-icon>
+              Date 
+            </th>
+            <td mat-cell *matCellDef="let rapport">
+              <div class="date-cell">
+                <div class="date-value">{{ rapport.date | date:'dd/MM/yyyy' }}</div>
+                <div class="date-period">{{ getPeriodeLabel(rapport) }}</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Catégories -->
+          <ng-container matColumnDef="categories">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">label</mat-icon>
+              Catégories 
+            </th>
+            <td mat-cell *matCellDef="let rapport">
+              <mat-chip-set>
+                <mat-chip *ngFor="let cat of (rapport.categories || [])" 
+                         [style.background]="getCategoryColor(cat)">
+                  {{ cat }}
+                </mat-chip>
+                <span *ngIf="!rapport.categories || rapport.categories.length === 0" class="no-categories">
+                  -
+                </span>
+              </mat-chip-set>
+            </td>
+          </ng-container>
+
+          <!-- Taille -->
+          <ng-container matColumnDef="taille">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">storage</mat-icon>
+              Taille 
+            </th>
+            <td mat-cell *matCellDef="let rapport">
+              <div class="size-cell">
+                <mat-icon class="size-icon">insert_drive_file</mat-icon>
+                <span>{{ rapport.taille | fileSize }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">settings</mat-icon>
+              Actions 
+            </th>
+            <td mat-cell *matCellDef="let rapport">
+              <div class="action-buttons">
+                <button 
+                  mat-icon-button 
+                  color="primary"
+                  matTooltip="Prévisualiser"
+                  (click)="previewRapport(rapport)"
+                  *ngIf="rapport.url">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                
+                <button 
+                  mat-icon-button 
+                  color="accent"
+                  matTooltip="Télécharger"
+                  (click)="telechargerRapport(rapport)">
+                  <mat-icon>download</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <!-- Message si aucun rapport -->
+      <div *ngIf="!isLoading && rapports.length === 0" class="no-data-section">
+        <mat-icon class="no-data-icon">folder_open</mat-icon>
+        <h3>Aucun rapport disponible</h3>
+        <p>Aucun rapport n'est actuellement disponible pour votre compte.</p>
+        <p class="hint">Les rapports sont publiés régulièrement par l'administration PNVB.</p>
+      </div>
+
+      <!-- Pagination -->
+      <mat-paginator *ngIf="!isLoading && rapports.length > 0"
+        [length]="totalRapports"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+        class="rapports-paginator">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Guide -->
+  <mat-card class="guide-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>help</mat-icon>
+        Comment consulter les rapports ?
+      </mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="guide-steps">
+        <div class="guide-step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Rechercher</h4>
+            <p>Utilisez les filtres pour trouver rapidement les rapports qui vous intéressent.</p>
+          </div>
+        </div>
+        
+        <div class="guide-step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Prévisualiser</h4>
+            <p>Cliquez sur l'icône "œil" pour ouvrir le rapport dans un nouvel onglet.</p>
+          </div>
+        </div>
+        
+        <div class="guide-step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Télécharger</h4>
+            <p>Téléchargez les rapports pour les consulter hors ligne.</p>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

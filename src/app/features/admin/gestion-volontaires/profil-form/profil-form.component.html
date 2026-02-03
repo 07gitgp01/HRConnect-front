@@ -1,0 +1,198 @@
+<!-- src/app/features/admin/gestion-volontaires/profil-form/profil-form.component.html -->
+<mat-card class="profil-form-card mat-elevation-z6">
+  <div class="card-header">
+    <h3 class="card-title">{{ isEdit ? 'Modifier le profil' : 'Nouveau volontaire' }}</h3>
+    <div class="card-actions">
+      @if (isLoading) {
+        <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+      }
+    </div>
+  </div>
+
+  <form [formGroup]="profilForm" (ngSubmit)="submit()" class="profil-form">
+    <!-- === IDENTITÉ OBLIGATOIRE === -->
+    <h4 class="section-title">Identité</h4>
+    
+    <div class="two-cols">
+      <mat-form-field appearance="outline">
+        <mat-label>Nom</mat-label>
+        <input matInput formControlName="nom" />
+        @if (profilForm.get('nom')?.hasError('required')) {
+          <mat-error>Nom requis</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Prénom</mat-label>
+        <input matInput formControlName="prenom" />
+        @if (profilForm.get('prenom')?.hasError('required')) {
+          <mat-error>Prénom requis</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="two-cols">
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" />
+        @if (profilForm.get('email')?.hasError('required')) {
+          <mat-error>Email requis</mat-error>
+        }
+        @if (profilForm.get('email')?.hasError('email')) {
+          <mat-error>Format invalide</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Téléphone</mat-label>
+        <input matInput formControlName="telephone" maxlength="8" />
+        <mat-hint align="end">8 chiffres</mat-hint>
+        @if (profilForm.get('telephone')?.hasError('required')) {
+          <mat-error>Téléphone requis</mat-error>
+        }
+        @if (profilForm.get('telephone')?.hasError('pattern')) {
+          <mat-error>8 chiffres requis</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="two-cols">
+      <mat-form-field appearance="outline">
+        <mat-label>NIP</mat-label>
+        <input matInput formControlName="nip" maxlength="17" />
+        <mat-hint align="end">17 chiffres</mat-hint>
+        @if (profilForm.get('nip')?.hasError('required')) {
+          <mat-error>NIP requis</mat-error>
+        }
+        @if (profilForm.get('nip')?.hasError('pattern')) {
+          <mat-error>17 chiffres requis</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Date de naissance</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="dateNaissance" />
+        <mat-hint>JJ/MM/AAAA</mat-hint>
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        @if (profilForm.get('dateNaissance')?.hasError('required')) {
+          <mat-error>Date de naissance requise</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="two-cols">
+      <mat-form-field appearance="outline">
+        <mat-label>Nationalité</mat-label>
+        <input matInput formControlName="nationalite" />
+        @if (profilForm.get('nationalite')?.hasError('required')) {
+          <mat-error>Nationalité requise</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Sexe</mat-label>
+        <mat-select formControlName="sexe">
+          <mat-option value="M">Masculin</mat-option>
+          <mat-option value="F">Féminin</mat-option>
+        </mat-select>
+        @if (profilForm.get('sexe')?.hasError('required')) {
+          <mat-error>Sexe requis</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <!-- === PROFIL À COMPLÉTER === -->
+    <h4 class="section-title">Profil</h4>
+
+    <div class="two-cols">
+      <mat-form-field appearance="outline">
+        <mat-label>Région géographique</mat-label>
+        <mat-select formControlName="regionGeographique">
+          <mat-option value="">Sélectionner une région</mat-option>
+          @for (r of regions; track r) {
+            <mat-option [value]="r">{{ r }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Adresse de résidence</mat-label>
+        <input matInput formControlName="adresseResidence" />
+      </mat-form-field>
+    </div>
+
+    <div class="two-cols">
+      <mat-form-field appearance="outline">
+        <mat-label>Niveau d'études</mat-label>
+        <mat-select formControlName="niveauEtudes">
+          <mat-option value="">Sélectionner un niveau</mat-option>
+          @for (n of niveauxEtudes; track n) {
+            <mat-option [value]="n">{{ n }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Domaine d'études</mat-label>
+        <mat-select formControlName="domaineEtudes">
+          <mat-option value="">Sélectionner un domaine</mat-option>
+          @for (d of domainesEtudes; track d) {
+            <mat-option [value]="d">{{ d }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="two-cols">
+      <mat-form-field appearance="outline">
+        <mat-label>Disponibilité</mat-label>
+        <mat-select formControlName="disponibilite">
+          <mat-option value="Temps plein">Temps plein</mat-option>
+          <mat-option value="Temps partiel">Temps partiel</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="status-field">
+        <mat-label>Statut PNVB</mat-label>
+        <mat-select formControlName="statut">
+          <mat-option value="Candidat">Candidat</mat-option>
+          <mat-option value="En attente">En attente</mat-option>
+          <mat-option value="Actif">Actif</mat-option>
+          <mat-option value="Inactif">Inactif</mat-option>
+          <mat-option value="Refusé">Refusé</mat-option>
+        </mat-select>
+        @if (profilForm.get('statut')?.hasError('required')) {
+          <mat-error>Statut requis</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Compétences (séparées par des virgules)</mat-label>
+      <textarea matInput formControlName="competences" rows="2" placeholder="Informatique, Communication, Leadership..."></textarea>
+      <mat-hint>Ex: Informatique, Communication, Leadership</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Motivation</mat-label>
+      <textarea matInput formControlName="motivation" rows="3" placeholder="Expliquez votre motivation pour rejoindre le PNVB..."></textarea>
+    </mat-form-field>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button mat-flat-button color="primary" type="submit" [disabled]="isSaving" class="submit-btn">
+        @if (isSaving) {
+          <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
+        }
+        @if (!isSaving) {
+          <span>{{ isEdit ? 'Mettre à jour' : 'Enregistrer' }}</span>
+        }
+      </button>
+
+      <button mat-stroked-button color="warn" type="button" (click)="cancel()" [disabled]="isSaving">
+        Annuler
+      </button>
+    </div>
+  </form>
+</mat-card>

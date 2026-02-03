@@ -1,0 +1,254 @@
+<!-- src/app/features/admin/gest-projets/projets-list/projets-list.component.html -->
+<div class="page-container">
+
+  <!-- Barre d'actions -->
+  <div class="top-bar">
+
+    <!-- Recherche -->
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Rechercher un projet</mat-label>
+      <input matInput [(ngModel)]="searchTerm" (input)="applyFilters()" />
+      <button mat-icon-button matSuffix *ngIf="searchTerm" (click)="clearSearch()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <!-- Filtres -->
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Filtrer par statut</mat-label>
+      <mat-select [(ngModel)]="statusFilter" (selectionChange)="applyFilters()">
+        <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+          {{ option.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Bouton filtrer mobile -->
+    <button mat-icon-button [matMenuTriggerFor]="filterMenu" matTooltip="Plus de filtres" class="mobile-filter">
+      <mat-icon>filter_alt</mat-icon>
+    </button>
+
+    <mat-menu #filterMenu="matMenu">
+      <button mat-menu-item (click)="filterStatus('Tous')">
+        <mat-icon>list</mat-icon>
+        <span>Tous les projets</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="filterStatus('en_attente')">
+        <mat-icon color="warn">schedule</mat-icon>
+        <span>Projets en attente</span>
+      </button>
+      <button mat-menu-item (click)="filterStatus('actif')">
+        <mat-icon color="primary">play_circle</mat-icon>
+        <span>Projets actifs</span>
+      </button>
+      <button mat-menu-item (click)="filterStatus('cloture')">
+        <mat-icon color="accent">check_circle</mat-icon>
+        <span>Projets clôturés</span>
+      </button>
+    </mat-menu>
+
+    <!-- Ajouter projet -->
+    <button mat-mini-fab color="primary" matTooltip="Ajouter un projet"
+            (click)="openProjetDialog()" class="add-btn">
+      <mat-icon>add</mat-icon>
+    </button>
+
+    <!-- Bouton rafraîchir -->
+    <button mat-icon-button matTooltip="Rafraîchir la liste" (click)="loadData()" class="refresh-btn">
+      <mat-icon>refresh</mat-icon>
+    </button>
+
+  </div>
+
+  <!-- Tableau -->
+  <div class="table-container" *ngIf="!isLoading">
+    <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z3">
+
+      <!-- Titre -->
+      <ng-container matColumnDef="titre">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Titre </th>
+        <td mat-cell *matCellDef="let p">
+          <div class="project-title">
+            <strong>{{ p.titre }}</strong>
+            <span *ngIf="isOverdue(p)" class="overdue-badge" matTooltip="Échéance dépassée">
+              <mat-icon>warning</mat-icon> En retard
+            </span>
+          </div>
+          <div *ngIf="p.dateFin" class="project-subtitle">
+            <small class="text-muted">
+              <mat-icon>event</mat-icon>
+              Échéance : {{ formatDate(p.dateFin) }}
+              <span *ngIf="getDaysRemaining(p) !== null" [class.text-danger]="getDaysRemaining(p)! <= 3">
+                ({{ getDaysRemaining(p) }} jour{{ getDaysRemaining(p)! > 1 ? 's' : '' }})
+              </span>
+            </small>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Partenaire -->
+      <ng-container matColumnDef="partenaire">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Partenaire </th>
+        <td mat-cell *matCellDef="let p">
+          <div>{{ getPartenaireNom(p.partenaireId) }}</div>
+          <small class="text-muted">{{ p.nombreVolontairesActuels || 0 }}/{{ p.nombreVolontairesRequis }} volontaires</small>
+        </td>
+      </ng-container>
+
+      <!-- Région -->
+      <ng-container matColumnDef="regionAffectation">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Région </th>
+        <td mat-cell *matCellDef="let p">
+          {{ p.regionAffectation || '—' }}
+          <div *ngIf="p.ville_commune" class="text-muted">
+            <small>{{ p.ville_commune }}</small>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Début -->
+      <ng-container matColumnDef="dateDebut">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Dates </th>
+        <td mat-cell *matCellDef="let p">
+          <div>
+            <mat-icon class="date-icon">event</mat-icon>
+            {{ formatDate(p.dateDebut) }}
+          </div>
+          <div *ngIf="p.dateFin" class="text-muted">
+            <small>au {{ formatDate(p.dateFin) }}</small>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Statut -->
+      <ng-container matColumnDef="statutProjet">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Statut </th>
+        <td mat-cell *matCellDef="let p">
+          <mat-chip [color]="getStatusColor(p.statutProjet)" selected class="status-chip">
+            {{ getStatusDisplay(p.statutProjet) }}
+          </mat-chip>
+          <div *ngIf="getAvailableStatuses(p.statutProjet).length > 0" class="transitions-info">
+            <small class="text-muted">
+              {{ getAvailableStatuses(p.statutProjet).length }} transition{{ getAvailableStatuses(p.statutProjet).length > 1 ? 's' : '' }} possible
+            </small>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef class="actions-header"> Actions </th>
+        <td mat-cell *matCellDef="let p" class="actions-cell">
+          <div class="action-buttons">
+            <!-- Voir les détails -->
+            <button mat-icon-button color="primary" 
+                    (click)="viewProjectDetails(p)"
+                    matTooltip="Voir les détails" class="action-btn view-btn">
+              <mat-icon>visibility</mat-icon>
+            </button>
+
+            <!-- Modifier -->
+            <button mat-icon-button color="accent" 
+                    (click)="openProjetDialog(p)"
+                    matTooltip="Modifier le projet" class="action-btn edit-btn">
+              <mat-icon>edit</mat-icon>
+            </button>
+
+            <!-- Plus d'actions -->
+            <button mat-icon-button [matMenuTriggerFor]="actionMenu" 
+                    matTooltip="Plus d'actions" class="action-btn more-btn">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+
+            <mat-menu #actionMenu="matMenu" class="action-menu">
+              <!-- Valider projet -->
+              <button mat-menu-item (click)="validerProjet(p)" 
+                      *ngIf="canValidate(p)"
+                      class="menu-validate validate-action">
+                <mat-icon color="primary">check_circle</mat-icon>
+                <span>Valider le projet</span>
+              </button>
+
+              <!-- Clôturer -->
+              <button mat-menu-item (click)="cloturerProjet(p)" 
+                      *ngIf="canClose(p)"
+                      class="menu-cloture cloture-action">
+                <mat-icon color="accent">lock</mat-icon>
+                <span>Clôturer le projet</span>
+              </button>
+
+              <mat-divider *ngIf="canValidate(p) || canClose(p)"></mat-divider>
+
+              <!-- Changer statut -->
+              <button mat-menu-item [matMenuTriggerFor]="statutMenu" class="menu-change-status">
+                <mat-icon>swap_vert</mat-icon>
+                <span>Changer le statut</span>
+                <mat-icon>arrow_right</mat-icon>
+              </button>
+
+              <mat-divider></mat-divider>
+
+              <!-- Supprimer -->
+              <button mat-menu-item (click)="supprimer(p)" class="menu-delete delete-action">
+                <mat-icon color="warn">delete</mat-icon>
+                <span>Supprimer le projet</span>
+              </button>
+            </mat-menu>
+
+            <!-- Sous-menu pour les statuts -->
+            <mat-menu #statutMenu="matMenu" class="statut-menu">
+              <!-- ✅ CORRECTION : Utiliser des méthodes du composant au lieu de ProjectWorkflow directement -->
+              <button mat-menu-item (click)="changerStatut(p, 'en_attente')"
+                      [disabled]="p.statutProjet === 'en_attente' || !canChangeToStatus(p, 'en_attente')"
+                      class="status-option attente-option">
+                <mat-icon [color]="p.statutProjet === 'en_attente' ? 'primary' : ''">schedule</mat-icon>
+                <span>En attente</span>
+                <span *ngIf="p.statutProjet === 'en_attente'" class="current-status">(actuel)</span>
+              </button>
+              
+              <button mat-menu-item (click)="changerStatut(p, 'actif')"
+                      [disabled]="p.statutProjet === 'actif' || !canChangeToStatus(p, 'actif')"
+                      class="status-option actif-option">
+                <mat-icon [color]="p.statutProjet === 'actif' ? 'primary' : ''">play_circle</mat-icon>
+                <span>Actif</span>
+                <span *ngIf="p.statutProjet === 'actif'" class="current-status">(actuel)</span>
+              </button>
+              
+              <button mat-menu-item (click)="changerStatut(p, 'cloture')"
+                      [disabled]="p.statutProjet === 'cloture' || !canChangeToStatus(p, 'cloture')"
+                      class="status-option cloture-option">
+                <mat-icon [color]="p.statutProjet === 'cloture' ? 'primary' : ''">check_circle</mat-icon>
+                <span>Clôturé</span>
+                <span *ngIf="p.statutProjet === 'cloture'" class="current-status">(actuel)</span>
+              </button>
+            </mat-menu>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    <!-- Aucune donnée -->
+    <div *ngIf="dataSource.filteredData.length === 0 && !isLoading" class="no-data">
+      <mat-icon>search_off</mat-icon>
+      <h3>Aucun projet trouvé</h3>
+      <p>Aucun projet ne correspond à vos critères de recherche.</p>
+      <button mat-raised-button color="primary" (click)="clearSearch()">
+        <mat-icon>clear_all</mat-icon>
+        Effacer les filtres
+      </button>
+    </div>
+
+    <mat-paginator [pageSizeOptions]="[5, 10, 20, 50]" showFirstLastButtons></mat-paginator>
+  </div>
+
+  <!-- Chargement -->
+  <div *ngIf="isLoading" class="loading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Chargement des projets...</p>
+  </div>
+
+</div>

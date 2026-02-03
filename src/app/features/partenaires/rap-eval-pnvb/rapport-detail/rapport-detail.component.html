@@ -1,0 +1,277 @@
+<div class="container-fluid py-4">
+  <!-- En-tête avec navigation -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex align-items-center mb-3">
+        <button class="btn btn-outline-secondary me-3" (click)="goBack()">
+          <i class="bi bi-arrow-left"></i> Retour
+        </button>
+        <h1 class="h3 mb-0">
+          <i class="bi bi-file-text me-2"></i>Détail du Rapport
+        </h1>
+      </div>
+      
+      <!-- Statut du rapport -->
+      <div class="d-flex justify-content-between align-items-center" *ngIf="rapport">
+        <div>
+          <span class="badge" [class]="getStatutClass(rapport.statut)">
+            <i class="bi me-1" [class]="'bi-' + getStatutIcon(rapport.statut)"></i>
+            {{rapport.statut}}
+          </span>
+          <span class="ms-3 text-muted">
+            <i class="bi bi-calendar me-1"></i>
+            Soumis le {{rapport.dateSoumission | date:'dd/MM/yyyy à HH:mm'}}
+          </span>
+        </div>
+        
+        <div class="btn-group" *ngIf="rapport.statut === 'Brouillon'">
+          <button class="btn btn-primary" (click)="editRapport()">
+            <i class="bi bi-pencil me-2"></i>Modifier
+          </button>
+          <button class="btn btn-success" (click)="soumettreRapport()">
+            <i class="bi bi-send me-2"></i>Soumettre
+          </button>
+          <button class="btn btn-outline-danger" (click)="deleteRapport()">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="error && !isLoading" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    {{error}}
+  </div>
+
+  <!-- Contenu du rapport -->
+  <div *ngIf="!isLoading && !error && rapport">
+    <div class="row">
+      <!-- Informations générales -->
+      <div class="col-lg-8">
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Informations générales</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <dl>
+                  <dt>Volontaire</dt>
+                  <dd class="fs-5">
+                    <i class="bi bi-person-circle me-2"></i>
+                    <ng-container *ngIf="volontaire">
+                      <strong>{{volontaire.prenom}} {{volontaire.nom}}</strong>
+                    </ng-container>
+                    <ng-container *ngIf="!volontaire">
+                      Non disponible
+                    </ng-container>
+                  </dd>
+                  
+                  <dt>Mission</dt>
+                  <dd>
+                    <ng-container *ngIf="volontaire && volontaire.domaineEtudes">
+                      {{volontaire.domaineEtudes}}
+                    </ng-container>
+                    <ng-container *ngIf="!volontaire || !volontaire.domaineEtudes">
+                      Non spécifié
+                    </ng-container>
+                  </dd>
+                </dl>
+              </div>
+              
+              <div class="col-md-6">
+                <dl>
+                  <dt>Période d'évaluation</dt>
+                  <dd class="fs-5">
+                    <span class="badge bg-info">{{rapport.periode}}</span>
+                  </dd>
+                  
+                  <dt>Structure d'accueil</dt>
+                  <dd>
+                    <ng-container *ngIf="partenaire">
+                      {{partenaire.nomStructure}}
+                    </ng-container>
+                    <ng-container *ngIf="!partenaire">
+                      Non disponible
+                    </ng-container>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Évaluation globale -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Évaluation globale</h5>
+          </div>
+          <div class="card-body">
+            <div class="text-center py-4">
+              <div class="display-1 fw-bold" [class]="getEvaluationColor(rapport.evaluationGlobale)">
+                {{rapport.evaluationGlobale}}/10
+              </div>
+              <div class="h3 text-muted mb-4">{{evaluationLabel}}</div>
+              
+              <!-- Étoiles -->
+              <div class="mb-3">
+                <span *ngFor="let star of getStarIcons(rapport.evaluationGlobale / 2, 5)" 
+                      class="star-rating mx-1">
+                  <i class="bi" [class]="star"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Critères détaillés -->
+        <div class="card mb-4" *ngIf="rapport.criteres">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Critères d'évaluation détaillés</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6" *ngFor="let critere of getCriteresList()">
+                <div class="d-flex justify-content-between align-items-center mb-3 p-3 border rounded">
+                  <div>
+                    <h6 class="mb-1">{{critere.label}}</h6>
+                    <small class="text-muted">{{critere.description}}</small>
+                  </div>
+                  <div class="text-end">
+                    <div class="h4 mb-0">{{critere.score}}/5</div>
+                    <div class="star-rating small">
+                      <i class="bi" *ngFor="let star of critere.stars" [class]="star"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Commentaires -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Commentaires détaillés</h5>
+          </div>
+          <div class="card-body">
+            <div class="white-space-pre">{{rapport.commentaires}}</div>
+          </div>
+        </div>
+
+        <!-- Feedback PNVB -->
+        <div class="card" *ngIf="rapport.feedbackPNVB">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-chat-dots me-2"></i>Feedback du PNVB
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex mb-3">
+              <div class="flex-shrink-0">
+                <i class="bi bi-person-circle fs-3 text-info"></i>
+              </div>
+              <div class="ms-3">
+                <h6 class="mb-1">Validé par {{rapport.validePar || 'Administrateur PNVB'}}</h6>
+                <small class="text-muted">
+                  Le {{rapport.dateValidation | date:'dd/MM/yyyy à HH:mm'}}
+                </small>
+              </div>
+            </div>
+            <div class="alert alert-info">
+              {{rapport.feedbackPNVB}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar avec métadonnées -->
+      <div class="col-lg-4">
+        <!-- Document annexe -->
+        <div class="card mb-4" *ngIf="rapport.urlDocumentAnnexe">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-paperclip me-2"></i>Document annexe
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid">
+              <button class="btn btn-outline-primary" (click)="downloadDocument()">
+                <i class="bi bi-download me-2"></i>
+                Télécharger {{rapport.nomDocumentAnnexe || 'le document'}}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Métadonnées -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Métadonnées</h5>
+          </div>
+          <div class="card-body">
+            <dl class="mb-0">
+              <dt>ID du rapport</dt>
+              <dd><code>{{rapport.id}}</code></dd>
+              
+              <dt>Date de création</dt>
+              <dd>{{rapport.created_at | date:'dd/MM/yyyy HH:mm'}}</dd>
+              
+              <dt>Dernière modification</dt>
+              <dd>{{(rapport.updated_at || rapport.dateModification) | date:'dd/MM/yyyy HH:mm'}}</dd>
+              
+              <dt>Volontaire ID</dt>
+              <dd>{{rapport.volontaireId}}</dd>
+              
+              <dt>Partenaire ID</dt>
+              <dd>{{rapport.partenaireId}}</dd>
+            </dl>
+          </div>
+        </div>
+
+        <!-- Statistiques du rapport -->
+        <div class="card">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Résumé des critères</h5>
+          </div>
+          <div class="card-body">
+            <div *ngIf="rapport.criteres">
+              <div class="mb-3" *ngFor="let critere of getCriteresList()">
+                <div class="d-flex justify-content-between mb-1">
+                  <span>{{critere.label}}</span>
+                  <span>{{critere.score}}/5</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                  <div class="progress-bar" [ngClass]="getProgressBarClass(critere.score)" 
+                       [style.width.%]="critere.score * 20">
+                  </div>
+                </div>
+              </div>
+              
+              <hr>
+              
+              <div class="d-flex justify-content-between">
+                <strong>Moyenne des critères</strong>
+                <strong>{{moyenneCriteres.toFixed(1)}}/5</strong>
+              </div>
+            </div>
+            
+            <div *ngIf="!rapport.criteres" class="text-center text-muted">
+              <i class="bi bi-info-circle d-block fs-1 mb-2"></i>
+              Aucun critère détaillé disponible
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

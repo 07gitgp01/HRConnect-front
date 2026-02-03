@@ -1,0 +1,59 @@
+<div class="parametres-container" *ngIf="!isLoading && paramForm">
+  <h2>⚙️ Paramètres Généraux de l’Application</h2>
+
+  <form [formGroup]="paramForm" (ngSubmit)="onSubmit()" class="parametres-form">
+
+    <mat-form-field appearance="fill">
+      <mat-label>Nom de l’application</mat-label>
+      <input matInput formControlName="app_name" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>URL du logo</mat-label>
+      <input matInput formControlName="logo_url" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Email de contact</mat-label>
+      <input matInput type="email" formControlName="email_contact" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Téléphone</mat-label>
+      <input matInput formControlName="telephone" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Adresse</mat-label>
+      <textarea matInput formControlName="adresse"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Langue</mat-label>
+      <mat-select formControlName="langue">
+        <mat-option value="fr">Français</mat-option>
+        <mat-option value="en">Anglais</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Thème</mat-label>
+      <mat-select formControlName="theme">
+        <mat-option value="clair">Clair</mat-option>
+        <mat-option value="sombre">Sombre</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-slide-toggle formControlName="notifications">
+      Activer les notifications
+    </mat-slide-toggle>
+
+    <div class="actions">
+      <button mat-raised-button color="primary" type="submit">💾 Enregistrer</button>
+    </div>
+  </form>
+</div>
+
+<div *ngIf="isLoading" class="loading-message">
+  Chargement des paramètres...
+</div>

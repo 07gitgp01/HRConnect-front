@@ -1,0 +1,170 @@
+<!-- src/app/core/layout/header/header.component.html -->
+<mat-toolbar color="primary" class="mat-elevation-z4">
+  
+  <!-- Bouton pour ouvrir/fermer la sidebar (visible uniquement si connecté) -->
+  @if (username()) {
+    <button mat-icon-button (click)="onToggleMenu()" aria-label="Ouvrir le menu" class="menu-button">
+      <mat-icon>menu</mat-icon>
+    </button>
+  }
+  
+  <!-- Conteneur du Logo et du Titre -->
+  <div class="logo-container" (click)="navigateToDashboard()" style="cursor: pointer;">
+    <img src="assets/images/Logo-PNVB.png" alt="Logo PNVB" class="app-logo">
+    <span class="app-title">PNVB</span> 
+  </div>
+
+  <!-- Texte défilant (Marquee) -->
+  <div class="scrolling-container">
+    <span class="scrolling-text">
+      Programme National de Volontariat au Burkina Faso
+    </span>
+  </div>
+  
+  <!-- Le spacer pousse les éléments suivants à droite -->
+  <span class="spacer"></span> 
+  
+  <!-- Message de bienvenue ET/OU Liens de connexion/inscription -->
+  @if (username()) {
+    <!-- Contenu si l'utilisateur est connecté -->
+    <div class="user-section">
+      <span class="welcome-message">
+        {{ username() }}
+      </span>
+      
+      <!-- Bouton qui ouvre le menu déroulant -->
+      <button mat-icon-button [matMenuTriggerFor]="profileMenu" aria-label="Menu Profil" class="profile-button">
+        <mat-icon>account_circle</mat-icon>
+      </button>
+    </div>
+
+  } @else {
+    <!-- Contenu si l'utilisateur n'est PAS connecté -->
+    <div class="auth-section">
+      <!-- Menu mobile pour les petits écrans -->
+      <button mat-icon-button [matMenuTriggerFor]="mobileMenu" class="mobile-menu-button" aria-label="Menu mobile">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      
+      <!-- Boutons visibles sur desktop -->
+      <div class="desktop-auth-buttons">
+        <button mat-button 
+                routerLink="/" 
+                routerLinkActive="active-link"
+                [routerLinkActiveOptions]="{exact: true}"
+                class="auth-button home-button">
+          Accueil
+        </button>
+        <button mat-button 
+                routerLink="/login" 
+                routerLinkActive="active-link"
+                [routerLinkActiveOptions]="{exact: true}"
+                class="auth-button">
+          Se connecter
+        </button>
+        <button mat-flat-button 
+                color="accent" 
+                routerLink="/signup" 
+                routerLinkActive="active-link"
+                [routerLinkActiveOptions]="{exact: true}"
+                class="auth-button signup-button">
+          S'inscrire
+        </button>
+         <button mat-button 
+                routerLink="/recrutements" 
+                routerLinkActive="active-link"
+                [routerLinkActiveOptions]="{exact: true}"
+                class="auth-button">
+          Recrutements
+        </button>
+        <button mat-button 
+                routerLink="/contact" 
+                routerLinkActive="active-link"
+                [routerLinkActiveOptions]="{exact: true}"
+                class="auth-button">
+          Contact
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Menu Profil -->
+  <mat-menu #profileMenu="matMenu" class="profile-menu">
+    <button mat-menu-item 
+            (click)="navigateToProfil()"
+            [class.active-link]="isActiveForRole('/profil')"
+            class="profile-menu-item">
+      <mat-icon>person</mat-icon>
+      <span>Mon profil</span>
+    </button>
+    
+    <button mat-menu-item 
+            (click)="navigateToDashboard()"
+            [class.active-link]="isActiveForRole('')"
+            class="profile-menu-item">
+      <mat-icon>dashboard</mat-icon>
+      <span>Tableau de bord</span>
+    </button>
+
+    <mat-divider></mat-divider>
+
+    <!-- <button mat-menu-item routerLink="/settings">
+      <mat-icon>settings</mat-icon>
+      <span>Paramètres</span>
+    </button> -->
+
+    <mat-divider></mat-divider>
+
+    <button mat-menu-item 
+            (click)="logout()" 
+            class="logout-item profile-menu-item">
+      <mat-icon>logout</mat-icon>
+      <span>Déconnexion</span>
+    </button>
+  </mat-menu>
+
+  <!-- Menu mobile pour les boutons d'authentification -->
+  <mat-menu #mobileMenu="matMenu" class="mobile-auth-menu">
+    <button mat-menu-item 
+            routerLink="/" 
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{exact: true}"
+            class="mobile-menu-item">
+      <mat-icon>home</mat-icon>
+      <span>Accueil</span>
+    </button>
+    <button mat-menu-item 
+            routerLink="/login" 
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{exact: true}"
+            class="mobile-menu-item">
+      <mat-icon>login</mat-icon>
+      <span>Se connecter</span>
+    </button>
+    <button mat-menu-item 
+            routerLink="/signup" 
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{exact: true}"
+            class="mobile-menu-item">
+      <mat-icon>person_add</mat-icon>
+      <span>S'inscrire</span>
+    </button>
+    <button mat-menu-item 
+            routerLink="/contact" 
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{exact: true}"
+            class="mobile-menu-item">
+      <mat-icon>contact_support</mat-icon>
+      <span>Contact</span>
+    </button>
+    <button mat-menu-item 
+            routerLink="/recrutements" 
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{exact: true}"
+            class="mobile-menu-item">
+      <mat-icon>work</mat-icon>
+      <span>Recrutements</span>
+    </button>
+  </mat-menu>
+
+</mat-toolbar>

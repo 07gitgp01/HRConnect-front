@@ -1,0 +1,258 @@
+<!-- src/app/core/layout/home/home.component.html -->
+<div class="home-container">
+
+  <!-- CAROUSEL HERO AVEC ANGULAR -->
+  <section class="carousel-hero">
+    <div class="carousel-container">
+      
+      <!-- Slides -->
+      <div class="carousel-inner">
+        <div 
+          *ngFor="let slide of carouselSlides; let i = index" 
+          class="carousel-item" 
+          [class.active]="currentSlide === i">
+          <img 
+            [src]="slide.image" 
+            [alt]="slide.title"
+            class="carousel-image"
+            (error)="handleImageError($event)">
+          
+          <div class="carousel-caption">
+            <h1>{{ slide.title }}</h1>
+            <p>{{ slide.description }}</p>
+            <div class="hero-actions">
+              <button 
+                mat-raised-button 
+                color="primary" 
+                [routerLink]="slide.primaryButton.link">
+                {{ slide.primaryButton.text }}
+              </button>
+              <button 
+                mat-stroked-button 
+                color="accent" 
+                [routerLink]="slide.secondaryButton.link">
+                {{ slide.secondaryButton.text }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicateurs -->
+      <div class="carousel-indicators">
+        <button 
+          *ngFor="let slide of carouselSlides; let i = index" 
+          type="button" 
+          [class.active]="currentSlide === i"
+          (click)="goToSlide(i)"
+          [attr.aria-label]="'Aller au slide ' + (i + 1)">
+        </button>
+      </div>
+
+      <!-- Contrôles -->
+      <button class="carousel-control prev" (click)="prevSlide()" aria-label="Slide précédent">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <button class="carousel-control next" (click)="nextSlide()" aria-label="Slide suivant">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+
+      <!-- Statistiques -->
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-number">12,500+</span>
+          <span class="stat-label">Volontaires</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">245+</span>
+          <span class="stat-label">Projets</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">14/17</span>
+          <span class="stat-label">Régions</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: DOMAINES D'INTERVENTION -->
+  <section class="domains-section">
+    <div class="section-container">
+      <div class="section-header">
+        <h2>Nos Domaines d'Intervention</h2>
+        <p>Découvrez les secteurs clés où nous agissons pour le développement du Burkina Faso</p>
+      </div>
+
+      <div class="domains-grid">
+        @for (domain of domains; track domain.id) {
+          <div class="domain-card" [style.border-color]="domain.color">
+            <div class="domain-image">
+              <img 
+                [src]="domain.imageUrl" 
+                [alt]="domain.name"
+                (error)="handleImageError($event)"
+                class="domain-img">
+              <div class="domain-overlay"></div>
+            </div>
+            
+            <div class="domain-content">
+              <div class="domain-icon" [style.background-color]="domain.color + '20'">
+                <span class="icon" [style.color]="domain.color">{{ domain.icon }}</span>
+              </div>
+              
+              <h3 class="domain-name">{{ domain.name }}</h3>
+              <p class="domain-description">{{ domain.description }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: MISSIONS URGENTES -->
+  <section class="missions-section">
+    <div class="section-container">
+      <div class="section-header">
+        <h2>Missions Urgentes - Volontaires Recherchés</h2>
+        <p>Rejoignez nos projets en cours qui ont besoin de votre engagement immédiat</p>
+      </div>
+
+      @if (isLoadingProjects()) {
+        <div class="loading-section">
+          <mat-spinner diameter="50"></mat-spinner>
+          <h3>Recherche des missions urgentes...</h3>
+          <p>Nous identifions les projets qui ont le plus besoin de volontaires</p>
+        </div>
+      }
+
+      @if (loadError() && !isLoadingProjects()) {
+        <div class="error-section">
+          <mat-icon color="warn">error_outline</mat-icon>
+          <h3>Erreur de chargement</h3>
+          <p>Impossible de charger les missions urgentes. Veuillez réessayer.</p>
+          <button mat-raised-button color="primary" (click)="loadFeaturedProjects()">
+            <mat-icon>refresh</mat-icon>
+            Réessayer
+          </button>
+        </div>
+      }
+
+      @if (!isLoadingProjects() && !loadError()) {
+        <div class="missions-grid">
+          @for (project of featuredProjects(); track project.id; let i = $index) {
+            <mat-card class="mission-card urgent-card">
+              <div class="mission-image">
+                <img 
+                  [src]="getMissionImage(project, i)" 
+                  [alt]="project.title"
+                  (error)="handleImageError($event)"
+                  class="mission-img">
+                <div class="mission-overlay">
+                  <span class="mission-region">
+                    <mat-icon>place</mat-icon>
+                    {{ project.region || 'Région à préciser' }}
+                  </span>
+                  <span class="mission-urgent-badge">
+                    <mat-icon>priority_high</mat-icon>
+                    Volontaires Urgents
+                  </span>
+                </div>
+              </div>
+
+              <mat-card-header>
+                <mat-card-title>{{ project.title }}</mat-card-title>
+                <mat-card-subtitle>
+                  {{ (project.description | slice:0:60) || 'Mission de volontariat' }}...
+                </mat-card-subtitle>
+              </mat-card-header>
+
+              <mat-card-content>
+                <div class="volunteers-progress">
+                  <div class="progress-header">
+                    <span class="progress-label">{{ getProgressStatusText(project) }}</span>
+                    <span 
+                      class="progress-percentage" 
+                      [style.color]="getProgressColor(project)">
+                      {{ getPourcentageCompletion(project) }}%
+                    </span>
+                  </div>
+                  
+                  <div class="progress-bar" [class]="getProgressBarClass(project)">
+                    <div 
+                      class="progress-fill" 
+                      [style.width.%]="getPourcentageCompletion(project)"
+                      [style.background]="getProgressGradient(project)"
+                      [style.transition]="getTransitionDuration(project) + ' ease-in-out'">
+                      
+                      <span 
+                        class="progress-indicator" 
+                        *ngIf="getPourcentageCompletion(project) > 15"
+                        [style.color]="getProgressTextColor(project)">
+                        {{ getPourcentageCompletion(project) }}%
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div class="progress-stats">
+                    <span class="stat-assigned">
+                      <mat-icon [style.color]="getProgressColor(project)">groups</mat-icon>
+                      {{ getCurrentVolunteersDisplay(project) }} engagés
+                    </span>
+                    <span class="stat-missing urgent" *ngIf="getVolontairesManquants(project) > 0">
+                      <mat-icon>person_add</mat-icon>
+                      {{ getVolontairesManquants(project) }} places disponibles
+                    </span>
+                    <span class="stat-complete" *ngIf="getVolontairesManquants(project) === 0">
+                      <mat-icon>check_circle</mat-icon>
+                      Mission complète !
+                    </span>
+                  </div>
+                </div>
+
+                <div class="mission-meta">
+                  <span class="mission-status" [class]="'status-' + project.status">
+                    <mat-icon>{{ getStatusIcon(project.status) }}</mat-icon>
+                    {{ getStatusLabel(project.status) }}
+                  </span>
+                  <span class="mission-deadline" *ngIf="project.endDate">
+                    <mat-icon>event</mat-icon>
+                    {{ project.endDate | date:'dd/MM/yyyy' }}
+                  </span>
+                </div>
+              </mat-card-content>
+
+              <mat-card-actions>
+                <button mat-button color="primary" (click)="viewProjectDetails(project.id)">
+                  <mat-icon>visibility</mat-icon>
+                  Détails
+                </button>
+                
+                @if (canApplyToProject(project)) {
+                  @if (!isLoggedIn()) {
+                    <button mat-raised-button color="accent" (click)="applyToProject(project)" class="apply-urgent">
+                      <mat-icon>send</mat-icon>
+                      Postuler Maintenant
+                    </button>
+                  } @else {
+                    <button mat-raised-button color="accent" (click)="viewProjectDetails(project.id)" class="apply-urgent">
+                      <mat-icon>person_add</mat-icon>
+                      Rejoindre la Mission
+                    </button>
+                  }
+                }
+              </mat-card-actions>
+            </mat-card>
+          } @empty {
+            <!-- MESSAGE "AUCUNE MISSION URGENTE" -->
+            <div class="no-projects">
+              <mat-icon>info</mat-icon>
+              <h3>Aucune mission urgente</h3>
+              <p>Il n'y a pas de missions nécessitant des volontaires actuellement.</p>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+</div>

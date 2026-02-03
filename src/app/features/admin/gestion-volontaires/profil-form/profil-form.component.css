@@ -1,0 +1,41 @@
+/* src/app/features/admin/gestion-volontaires/profil-form/profil-form.component.css */
+.profil-form-card{
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.card-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+}
+
+.card-title{ font-size:1.15rem; margin:0; font-weight:600; }
+
+.profil-form { display:flex; flex-direction:column; gap:12px; }
+
+.two-cols {
+  display:flex;
+  gap:12px;
+}
+.two-cols mat-form-field { flex:1; }
+
+.full { width:100%; }
+
+.row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:6px; }
+.status-field { width: 200px; }
+.buttons { display:flex; gap:10px; align-items:center; }
+
+mat-progress-spinner { margin-right:8px; }
+
+mat-form-field { width:100%; }
+
+@media (max-width:720px){
+  .two-cols { flex-direction:column; }
+  .status-field{ width:100%; }
+  .profil-form-card{ padding:12px; }
+}

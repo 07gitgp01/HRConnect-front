@@ -1,0 +1,233 @@
+<div class="projets-disponibles-container">
+  <!-- En-tête -->
+  <div class="header-section">
+    <!-- <h1>Projets Disponibles</h1> -->
+    <p>Découvrez les missions de bénévolat qui correspondent à vos compétences</p>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section">
+    <mat-card class="filters-card">
+      <div class="filters-grid">
+        <!-- Recherche -->
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Rechercher un projet</mat-label>
+          <input matInput 
+                 [(ngModel)]="recherche" 
+                 (input)="appliquerFiltres()"
+                 placeholder="Nom, description, compétences...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Filtre Région -->
+        <mat-form-field appearance="outline">
+          <mat-label>Région</mat-label>
+          <mat-select [(ngModel)]="regionSelectionnee" (selectionChange)="appliquerFiltres()">
+            <mat-option value="">Toutes les régions</mat-option>
+            <mat-option *ngFor="let region of regions" [value]="region">
+              {{ region }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Filtre Domaine -->
+        <mat-form-field appearance="outline">
+          <mat-label>Domaine d'activité</mat-label>
+          <mat-select [(ngModel)]="domaineSelectionne" (selectionChange)="appliquerFiltres()">
+            <mat-option value="">Tous les domaines</mat-option>
+            <mat-option *ngFor="let domaine of domaineActivites" [value]="domaine">
+              {{ domaine }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Filtre Type de mission -->
+        <mat-form-field appearance="outline">
+          <mat-label>Type de mission</mat-label>
+          <mat-select [(ngModel)]="typeMissionSelectionne" (selectionChange)="appliquerFiltres()">
+            <mat-option value="">Tous les types</mat-option>
+            <mat-option *ngFor="let type of typeMissions" [value]="type">
+              {{ type }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Bouton réinitialiser -->
+        <button mat-stroked-button 
+                (click)="reinitialiserFiltres()"
+                class="reset-button">
+          <mat-icon>refresh</mat-icon>
+          Réinitialiser
+        </button>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="content-section">
+    <!-- État de chargement -->
+    <div *ngIf="isLoading" class="loading-section">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Chargement des projets...</p>
+    </div>
+
+    <!-- Erreur -->
+    <div *ngIf="hasError && !isLoading" class="error-section">
+      <mat-icon>error_outline</mat-icon>
+      <h3>Erreur de chargement</h3>
+      <p>Impossible de charger les projets. Veuillez réessayer.</p>
+      <button mat-raised-button color="primary" (click)="chargerProjets()">
+        <mat-icon>refresh</mat-icon>
+        Réessayer
+      </button>
+    </div>
+
+    <!-- Aucun projet -->
+    <div *ngIf="!isLoading && !hasError && projetsFiltres.length === 0" class="no-projects-section">
+      <mat-icon>search_off</mat-icon>
+      <h3>Aucun projet trouvé</h3>
+      <p>Aucun projet ne correspond à vos critères de recherche.</p>
+      <button mat-raised-button color="primary" (click)="reinitialiserFiltres()">
+        <mat-icon>clear_all</mat-icon>
+        Voir tous les projets
+      </button>
+    </div>
+
+    <!-- Grille des projets -->
+    <div *ngIf="!isLoading && projetsFiltres.length > 0" class="projects-grid">
+      <mat-card *ngFor="let projet of projetsFiltres" class="project-card">
+        <!-- En-tête avec urgence -->
+        <div class="card-header" [class.urgent]="getUrgenceCandidature(projet) === 'urgent'">
+          <h3 class="project-title">{{ projet.titre }}</h3>
+          <div class="urgence-badge" *ngIf="getUrgenceCandidature(projet)">
+            {{ getUrgenceText(projet) }}
+          </div>
+          <!-- ✅ CORRECTION : Ajout du badge de statut -->
+          <span class="status-badge" [class]="projet.statutProjet">
+            {{ getStatusLabel(projet.statutProjet) }}
+          </span>
+        </div>
+
+        <mat-card-content>
+          <!-- Description -->
+          <p class="project-description">{{ projet.descriptionCourte }}</p>
+
+          <!-- Informations principales -->
+          <div class="project-info-grid">
+            <div class="info-item">
+              <mat-icon>place</mat-icon>
+              <span>{{ projet.regionAffectation }}</span>
+            </div>
+            
+            <div class="info-item">
+              <mat-icon>category</mat-icon>
+              <span>{{ projet.domaineActivite }}</span>
+            </div>
+            
+            <div class="info-item">
+              <mat-icon>business</mat-icon>
+              <span>{{ projet.type_mission || 'Non spécifié' }}</span>
+            </div>
+            
+            <div class="info-item">
+              <mat-icon>schedule</mat-icon>
+              <span>{{ getDureeProjet(projet) }}</span>
+            </div>
+          </div>
+
+          <!-- Volontaires -->
+          <div class="volunteers-section">
+            <div class="volunteers-info">
+              <mat-icon>people</mat-icon>
+              <span>
+                {{ projet.nombreVolontairesActuels || 0 }}/{{ projet.nombreVolontairesRequis }} volontaires
+                <span class="manquants" *ngIf="getVolontairesManquants(projet) > 0">
+                  ({{ getVolontairesManquants(projet) }} manquants)
+                </span>
+              </span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" 
+                   [style.width.%]="((projet.nombreVolontairesActuels || 0) / projet.nombreVolontairesRequis) * 100">
+              </div>
+            </div>
+          </div>
+
+          <!-- Dates -->
+          <div class="dates-section">
+            <div class="date-item">
+              <strong>Début:</strong> {{ getFormattedDate(projet.dateDebut) }}
+            </div>
+            <div class="date-item">
+              <strong>Fin:</strong> {{ getFormattedDate(projet.dateFin) }}
+            </div>
+            <div class="date-item" *ngIf="projet.dateLimiteCandidature">
+              <strong>Date limite:</strong> {{ getFormattedDate(projet.dateLimiteCandidature) }}
+            </div>
+          </div>
+
+          <!-- Compétences -->
+          <div class="competences-section" *ngIf="projet.competences_requises">
+            <h4>Compétences recherchées:</h4>
+            <div class="competences-chips">
+              <mat-chip-set>
+                <mat-chip *ngFor="let competence of getCompetencesList(projet.competences_requises)" 
+                          [disabled]="true">
+                  {{ competence }}
+                </mat-chip>
+              </mat-chip-set>
+            </div>
+          </div>
+          
+
+          <!-- Avantages -->
+          <div class="avantages-section" *ngIf="projet.avantagesVolontaire">
+            <h4>💫 Avantages:</h4>
+            <p class="avantages-text">{{ projet.avantagesVolontaire }}</p>
+          </div>
+        </mat-card-content>
+
+        <mat-card-actions align="end">
+          <button mat-button 
+                  color="primary" 
+                  (click)="postuler(projet)"
+                  [disabled]="getUrgenceCandidature(projet) === 'expiree' || projet.statutProjet !== 'actif'">
+            <mat-icon>send</mat-icon>
+            {{ projet.statutProjet !== 'actif' ? 'Non disponible' : (getUrgenceCandidature(projet) === 'expiree' ? 'Date dépassée' : 'Postuler') }}
+          </button>
+          
+          <button mat-button 
+                  color="accent"
+                  [routerLink]="['/candidat/projets', projet.id]">
+            <mat-icon>visibility</mat-icon>
+            Détails
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+
+    <!-- Statistiques -->
+    <div *ngIf="!isLoading && projetsFiltres.length > 0" class="stats-section">
+      <mat-card class="stats-card">
+        <div class="stats-content">
+          <div class="stat-item">
+            <div class="stat-number">{{ projetsFiltres.length }}</div>
+            <div class="stat-label">Projets actifs</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ getTotalVolontairesManquants() }}</div>
+            <div class="stat-label">Volontaires recherchés</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ regions.length }}</div>
+            <div class="stat-label">Régions</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ typeMissions.length }}</div>
+            <div class="stat-label">Types de mission</div>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+  </div>
+</div>

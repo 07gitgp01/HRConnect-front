@@ -1,0 +1,352 @@
+<!-- src/app/features/partenaires/detail-projet/detail-projet.component.html -->
+<div class="detail-projet-container">
+  <!-- Header avec navigation -->
+  <div class="page-header">
+    <div class="header-content">
+      <button mat-stroked-button routerLink="/features/partenaires/projets" class="back-btn">
+        <mat-icon>arrow_back_ios</mat-icon>
+        Retour aux projets
+      </button>
+      <div class="header-title">
+        <h1>Détails du Projet</h1>
+        <p class="subtitle">Informations complètes sur votre mission de volontariat</p>
+      </div>
+      <div class="header-actions">
+        <button *ngIf="canEdit(projet)" 
+                mat-raised-button 
+                color="accent"
+                [routerLink]="['/features/partenaires/projets/edit', projet?.id]"
+                class="edit-btn">
+          <mat-icon>edit</mat-icon>
+          Modifier le projet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div *ngIf="erreurChargement" class="error-alert">
+    <mat-icon>error_outline</mat-icon>
+    <div class="alert-content">
+      <h4>Erreur de chargement</h4>
+      <p>{{ erreurChargement }}</p>
+    </div>
+    <button mat-stroked-button (click)="loadProjet()" class="retry-btn">
+      <mat-icon>refresh</mat-icon>
+      Réessayer
+    </button>
+  </div>
+
+  <!-- État de chargement -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="loading-spinner">
+      <mat-spinner diameter="60"></mat-spinner>
+    </div>
+    <div class="loading-text">
+      <h3>Chargement du projet</h3>
+      <p>Veuillez patienter pendant que nous récupérons les informations...</p>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div *ngIf="!isLoading && projet && !erreurChargement" class="projet-content">
+    <div class="content-grid">
+      <!-- Colonne principale -->
+      <div class="main-column">
+        <!-- Carte d'information générale -->
+        <mat-card class="info-card">
+          <mat-card-header class="card-header-primary">
+            <div class="card-title">
+              <mat-icon class="title-icon">description</mat-icon>
+              <div>
+                <h2>{{ projet.title }}</h2>
+                <div class="project-meta">
+                  <span class="status-badge" [ngClass]="getStatutBadgeClass(projet.status)">
+                    {{ getStatutLabel(projet.status) }}
+                  </span>
+                  <span class="project-region">
+                    <mat-icon>location_on</mat-icon>
+                    {{ projet.region }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-icon">
+                  <mat-icon>category</mat-icon>
+                </div>
+                <div class="info-content">
+                  <label>Type de projet</label>
+                  <span class="info-value">{{ projet.type || 'Non spécifié' }}</span>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-icon">
+                  <mat-icon>calendar_today</mat-icon>
+                </div>
+                <div class="info-content">
+                  <label>Date de début</label>
+                  <span class="info-value">{{ formatDate(projet.startDate) }}</span>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-icon">
+                  <mat-icon>event_available</mat-icon>
+                </div>
+                <div class="info-content">
+                  <label>Date de fin</label>
+                  <span class="info-value">{{ formatDate(projet.endDate) }}</span>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-icon">
+                  <mat-icon>schedule</mat-icon>
+                </div>
+                <div class="info-content">
+                  <label>Durée</label>
+                  <span class="info-value">{{ projet.duree || calculateDuree(projet.startDate, projet.endDate) }} semaines</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Description et objectifs -->
+        <mat-card class="description-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="card-icon">info</mat-icon>
+              Description du projet
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="description-content" [class.empty]="!projet.description">
+              {{ projet.description || 'Aucune description n\'a été fournie pour ce projet.' }}
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Objectifs spécifiques -->
+        <mat-card *ngIf="projet.objectifs" class="objectifs-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="card-icon">flag</mat-icon>
+              Objectifs spécifiques
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="objectifs-content">
+              {{ projet.objectifs }}
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Compétences et conditions -->
+        <div class="specs-grid">
+          <!-- Compétences requises -->
+          <mat-card *ngIf="projet.competences_requises" class="specs-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon class="card-icon">build</mat-icon>
+                Compétences requises
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="specs-content">
+                {{ projet.competences_requises }}
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Équipement nécessaire -->
+          <mat-card *ngIf="projet.equipement_necessaire" class="specs-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon class="card-icon">computer</mat-icon>
+                Équipement nécessaire
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="specs-content">
+                {{ projet.equipement_necessaire }}
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Conditions particulières -->
+        <mat-card *ngIf="projet.conditions_particulieres" class="conditions-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="card-icon">warning</mat-icon>
+              Conditions particulières
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="conditions-content">
+              {{ projet.conditions_particulieres }}
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar-column">
+        <!-- Statistiques -->
+        <mat-card class="stats-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="card-icon">analytics</mat-icon>
+              Statistiques
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="stats-grid">
+              <div class="stat-item" [class.highlight]="projet.candidatures_en_attente > 0">
+                <div class="stat-icon pending">
+                  <mat-icon>schedule</mat-icon>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-value">{{ projet.candidatures_en_attente || 0 }}</div>
+                  <div class="stat-label">En attente</div>
+                </div>
+              </div>
+
+              <!-- <div class="stat-item">
+                <div class="stat-icon total">
+                  <mat-icon>description</mat-icon>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-value">{{ projet.total_candidatures || 0 }}</div>
+                  <div class="stat-label">Candidatures total</div>
+                </div>
+              </div> -->
+
+              <div class="stat-item">
+                <div class="stat-icon volunteers">
+                  <mat-icon>people</mat-icon>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-value">{{ projet.volontairesAffectes || 0 }}</div>
+                  <div class="stat-label">Volontaires affectés</div>
+                </div>
+              </div>
+
+              <div class="stat-item">
+                <div class="stat-icon required">
+                  <mat-icon>person_add</mat-icon>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-value">{{ projet.neededVolunteers }}</div>
+                  <div class="stat-label">Volontaires requis</div>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Actions rapides -->
+        <mat-card class="actions-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="card-icon">flash_on</mat-icon>
+              Actions rapides
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="actions-grid">
+              <!-- <button mat-raised-button 
+                      color="primary" 
+                      class="action-btn primary"
+                      [routerLink]="['/features/partenaires/candidatures']" 
+                      [queryParams]="{projet: projet.id}">
+                <mat-icon>list_alt</mat-icon>
+                Voir les candidatures
+                <span *ngIf="projet.candidatures_en_attente > 0" class="badge-count">
+                  {{ projet.candidatures_en_attente }}
+                </span>
+              </button> -->
+
+              <button *ngIf="canEdit(projet)" 
+                      mat-stroked-button 
+                      color="accent"
+                      class="action-btn secondary"
+                      [routerLink]="['/features/partenaires/projets/edit', projet.id]">
+                <mat-icon>edit</mat-icon>
+                Modifier le projet
+              </button>
+
+              <button mat-stroked-button 
+                      class="action-btn outline"
+                      routerLink="/features/partenaires/projets">
+                <mat-icon>arrow_back</mat-icon>
+                Retour aux projets
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Informations de contact -->
+        <mat-card *ngIf="projet.contact_responsable || projet.email_contact" class="contact-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="card-icon">contact_mail</mat-icon>
+              Contact
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="contact-info">
+              <div *ngIf="projet.contact_responsable" class="contact-item">
+                <mat-icon>person</mat-icon>
+                <span>{{ projet.contact_responsable }}</span>
+              </div>
+              <div *ngIf="projet.email_contact" class="contact-item">
+                <mat-icon>email</mat-icon>
+                <a [href]="'mailto:' + projet.email_contact" class="email-link">
+                  {{ projet.email_contact }}
+                </a>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Budget -->
+        <mat-card *ngIf="projet.budget" class="budget-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="card-icon">attach_money</mat-icon>
+              Budget estimé
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="budget-amount">
+              {{ projet.budget | number }} FCFA
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- État vide -->
+  <div *ngIf="!isLoading && !projet && !erreurChargement" class="empty-state">
+    <div class="empty-icon">
+      <mat-icon>error_outline</mat-icon>
+    </div>
+    <div class="empty-content">
+      <h2>Projet non trouvé</h2>
+      <p>Le projet que vous recherchez n'existe pas ou vous n'avez pas les droits d'accès nécessaires.</p>
+      <button mat-raised-button color="primary" routerLink="/features/partenaires/projets">
+        <mat-icon>arrow_back</mat-icon>
+        Retour aux projets
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,146 @@
+/* Styles spécifiques pour la vue détail admin */
+.avatar-lg {
+  width: 80px;
+  height: 80px;
+}
+
+.white-space-pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.6;
+}
+
+/* Timeline */
+.timeline {
+  position: relative;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 24px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #e9ecef;
+}
+
+.timeline-item {
+  position: relative;
+}
+
+.timeline-item .badge {
+  z-index: 1;
+}
+
+/* Progress bar custom colors */
+.bg-orange {
+  background-color: #fd7e14 !important;
+}
+
+.progress {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  border-radius: 10px;
+  transition: width 0.6s ease;
+}
+
+/* Badge enhancements */
+.badge {
+  font-size: 0.85em;
+  padding: 0.4em 0.8em;
+}
+
+/* Card header with status */
+.card-header.bg-success,
+.card-header.bg-danger,
+.card-header.bg-info {
+  border-bottom: none;
+}
+
+/* Cursor pointer for clickable elements */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Alert customizations */
+.alert {
+  border: none;
+  border-left: 4px solid;
+}
+
+.alert-success {
+  border-left-color: #198754;
+}
+
+.alert-danger {
+  border-left-color: #dc3545;
+}
+
+.alert-info {
+  border-left-color: #0dcaf0;
+}
+
+.alert-warning {
+  border-left-color: #ffc107;
+}
+
+/* Button group spacing */
+.btn-group .btn {
+  margin-right: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+/* Code styling */
+code {
+  padding: 0.2rem 0.4rem;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  color: #d63384;
+}
+
+code:hover {
+  background-color: #e9ecef;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .avatar-lg {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .display-1 {
+    font-size: 3rem;
+  }
+  
+  .btn-group {
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+  
+  .btn-group .btn {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .btn,
+  .btn-group,
+  .alert-dismissible .btn-close {
+    display: none !important;
+  }
+  
+  .card {
+    border: 1px solid #dee2e6 !important;
+    box-shadow: none !important;
+  }
+}

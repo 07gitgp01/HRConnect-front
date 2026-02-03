@@ -1,0 +1,22 @@
+<mat-sidenav-container class="layout-container">
+  
+  @if (authService.isLoggedIn()) {
+    <mat-sidenav #sidenav 
+                 [mode]="isMobile ? 'over' : 'side'" 
+                 [opened]="!isMobile"
+                 class="sidebar-container">
+      <app-sidebar (navigationClick)="closeSidebarOnMobile()"></app-sidebar>
+    </mat-sidenav>
+  }
+  
+  <mat-sidenav-content class="content-container">
+    <app-header (toggleMenu)="toggleSidebar()" [isMobile]="isMobile"></app-header>
+    
+    <div class="main-content-wrapper">
+      <main class="main-content">
+        <router-outlet></router-outlet>
+      </main>
+      <app-footer></app-footer>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

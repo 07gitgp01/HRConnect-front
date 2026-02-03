@@ -1,0 +1,98 @@
+<!-- src/app/core/layout/footer/footer.component.html -->
+<footer class="app-footer">
+  <div class="footer-container">
+    <!-- Section PNVB (identité) -->
+    <div class="footer-section">
+      <h4>PNVB Burkina Faso</h4>
+      <img src="assets/images/Logo-PNVB.png" alt="Logo PNVB" class="footer-logo" (error)="onImageError($event)">
+      <p><strong>Programme National de Volontariat du Burkina Faso</strong></p>
+      <p class="footer-mission">
+        Contribuer au développement durable du pays par le volontariat, l'engagement citoyen et la promotion de la solidarité nationale.
+      </p>
+      <!-- Optionnel: Ajouter des réseaux sociaux
+      <div class="social-links">
+        <a href="#" aria-label="Facebook"><i>📘</i></a>
+        <a href="#" aria-label="Twitter"><i>🐦</i></a>
+        <a href="#" aria-label="LinkedIn"><i>💼</i></a>
+        <a href="#" aria-label="YouTube"><i>📹</i></a>
+      </div>
+      -->
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="footer-section">
+      <h4>Navigation</h4>
+      <ul>
+        <li><a routerLink="/">Accueil</a></li>
+        <li><a routerLink="/recrutements">Recrutements</a></li>
+        <li><a routerLink="/actualites">Actualités</a></li>
+        <li><a routerLink="/a-propos">À propos</a></li>
+        <li><a routerLink="/faq">FAQ</a></li>
+      </ul>
+    </div>
+
+    <!-- Section Compte -->
+    <div class="footer-section">
+      <h4>Mon Compte</h4>
+      <ul>
+        <li><a routerLink="/signup">S'inscrire</a></li>
+        <li><a routerLink="/login">Se connecter</a></li>
+        <li><a routerLink="/mon-compte">Tableau de bord</a></li>
+        <li><a routerLink="/mot-de-passe-oublie">Mot de passe oublié</a></li>
+        <li><a routerLink="/aide">Aide & Support</a></li>
+      </ul>
+    </div>
+
+    <!-- Section Partenaires Techniques et Financiers -->
+    <div class="footer-section ptf-section">
+      <h4>Nos Partenaires</h4>
+      <p>Le PNVB remercie ses partenaires techniques et financiers pour leur précieux soutien.</p>
+      
+      <div class="ptf-logos">
+        <div *ngFor="let partner of ptfPartners" class="ptf-logo-item">
+          <a [href]="partner.url" target="_blank" rel="noopener noreferrer" [title]="partner.name">
+            <img 
+              [src]="partner.logo" 
+              [alt]="'Logo ' + partner.name"
+              class="ptf-logo"
+              (error)="onImageError($event)"
+              loading="lazy"
+            >
+          </a>
+        </div>
+      </div>
+      
+      <p class="ptf-description">
+        Grâce au soutien de nos partenaires, le PNVB œuvre pour le développement durable et l'engagement citoyen au Burkina Faso.
+      </p>
+    </div>
+
+    <!-- Section Contact & Info -->
+    <div class="footer-section">
+      <h4>Contact & Informations</h4>
+      <div class="contact-info">
+        <p><strong>Adresse :</strong> Ouagadougou, Burkina Faso</p>
+        <a href="mailto:contact&#64;pnvb.bf">
+          <strong>Email :</strong> contact&#64;pnvb.bf
+        </a>
+        <a href="tel:+22625364037">
+          <strong>Téléphone :</strong> (+226) 25 36 40 37
+        </a>
+        <a routerLink="/contact">
+          <strong>Formulaire de contact</strong>
+        </a>
+        <p><strong>Horaires :</strong> Lun - Ven : 8h00 - 17h00</p>
+        <a routerLink="/mentions-legales">Mentions légales</a>
+        <a routerLink="/politique-confidentialite">Politique de confidentialité</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <p>
+      &copy; {{ currentYear }} <span>Programme National de Volontariat du Burkina Faso (PNVB)</span>. 
+      Tous droits réservés. | 
+      <a routerLink="/credits" style="color: #b2dfdb; text-decoration: none;">Crédits</a>
+    </p>
+  </div>
+</footer>

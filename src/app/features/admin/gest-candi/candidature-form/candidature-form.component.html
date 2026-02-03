@@ -1,0 +1,198 @@
+<!-- src/app/features/admin/components/candidature-form/candidature-form.component.html -->
+<div class="candidature-form-dialog">
+  <div mat-dialog-title class="dialog-title">
+    <h2>{{ isEditing ? 'Modifier la candidature' : 'Nouvelle candidature' }}</h2>
+    <button mat-icon-button (click)="onCancel()" aria-label="Fermer">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div mat-dialog-content class="dialog-content">
+    <form [formGroup]="candidatureForm" (ngSubmit)="onSubmit()">
+      <mat-card>
+        <mat-card-content>
+          <!-- Sélection du volontaire -->
+          <div class="form-section">
+            <h3>Volontaire</h3>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Volontaire *</mat-label>
+              <mat-select formControlName="volontaireId" required>
+                <mat-option value="">Sélectionner un volontaire</mat-option>
+                <mat-option *ngFor="let volontaire of volontaires" [value]="volontaire.id">
+                  {{ volontaire.prenom }} {{ volontaire.nom }} ({{ volontaire.email }})
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="candidatureForm.get('volontaireId')?.hasError('required')">
+                Le volontaire est requis
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Informations personnelles -->
+          <div class="form-section">
+            <h3>Informations personnelles</h3>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Prénom *</mat-label>
+                <input matInput formControlName="prenom" required>
+                <mat-error *ngIf="candidatureForm.get('prenom')?.hasError('required')">
+                  Le prénom est requis
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Nom *</mat-label>
+                <input matInput formControlName="nom" required>
+                <mat-error *ngIf="candidatureForm.get('nom')?.hasError('required')">
+                  Le nom est requis
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Email *</mat-label>
+                <input matInput formControlName="email" type="email" required>
+                <mat-error *ngIf="candidatureForm.get('email')?.hasError('required')">
+                  L'email est requis
+                </mat-error>
+                <mat-error *ngIf="candidatureForm.get('email')?.hasError('email')">
+                  Format d'email invalide
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Téléphone</mat-label>
+                <input matInput formControlName="telephone">
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Type de pièce *</mat-label>
+                <mat-select formControlName="typePiece" required>
+                  <mat-option value="CNIB">CNIB</mat-option>
+                  <mat-option value="PASSEPORT">Passeport</mat-option>
+                </mat-select>
+                <mat-error *ngIf="candidatureForm.get('typePiece')?.hasError('required')">
+                  Le type de pièce est requis
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Numéro de pièce *</mat-label>
+                <input matInput formControlName="numeroPiece" required>
+                <mat-error *ngIf="candidatureForm.get('numeroPiece')?.hasError('required')">
+                  Le numéro de pièce est requis
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Informations de candidature -->
+          <div class="form-section">
+            <h3>Informations de candidature</h3>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Projet *</mat-label>
+              <mat-select formControlName="projectId" required>
+                <mat-option value="">Sélectionner un projet</mat-option>
+                <mat-option *ngFor="let project of projects" [value]="project.id">
+                  {{ project.titre }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="candidatureForm.get('projectId')?.hasError('required')">
+                Le projet est requis
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Poste visé *</mat-label>
+              <input matInput formControlName="poste_vise" required>
+              <mat-error *ngIf="candidatureForm.get('poste_vise')?.hasError('required')">
+                Le poste visé est requis
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Compétences</mat-label>
+              <input matInput formControlName="competences" 
+                     placeholder="Séparées par des virgules (ex: Angular, React, Gestion de projet)">
+              <mat-hint>Listez les compétences séparées par des virgules</mat-hint>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Niveau d'expérience</mat-label>
+                <mat-select formControlName="niveau_experience">
+                  <mat-option value="">Non spécifié</mat-option>
+                  <mat-option value="debutant">Débutant</mat-option>
+                  <mat-option value="intermediaire">Intermédiaire</mat-option>
+                  <mat-option value="expert">Expert</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Disponibilité</mat-label>
+                <mat-select formControlName="disponibilite">
+                  <mat-option value="">Non spécifiée</mat-option>
+                  <mat-option value="Immédiate">Immédiate</mat-option>
+                  <mat-option value="1 semaine">1 semaine</mat-option>
+                  <mat-option value="2 semaines">2 semaines</mat-option>
+                  <mat-option value="1 mois">1 mois</mat-option>
+                  <mat-option value="2 mois">2 mois</mat-option>
+                  <mat-option value="3 mois+">3 mois+</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Statut et dates -->
+          <div class="form-section">
+            <h3>Statut et suivi</h3>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Statut *</mat-label>
+                <mat-select formControlName="statut" required>
+                  <mat-option value="en_attente">En attente</mat-option>
+                  <mat-option value="entretien">En entretien</mat-option>
+                  <mat-option value="acceptee">Acceptée</mat-option>
+                  <mat-option value="refusee">Refusée</mat-option>
+                </mat-select>
+                <mat-error *ngIf="candidatureForm.get('statut')?.hasError('required')">
+                  Le statut est requis
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width" *ngIf="candidatureForm.get('statut')?.value === 'entretien'">
+                <mat-label>Date d'entretien</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="date_entretien">
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Lettre de motivation -->
+          <div class="form-section">
+            <h3>Lettre de motivation</h3>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Lettre de motivation</mat-label>
+              <textarea matInput formControlName="lettre_motivation" rows="6"
+                        placeholder="Expliquez pourquoi vous êtes intéressé par cette mission..."></textarea>
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </form>
+  </div>
+
+  <div mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Annuler</button>
+    <button mat-raised-button color="primary" 
+            (click)="onSubmit()" 
+            [disabled]="!candidatureForm.valid">
+      {{ isEditing ? 'Modifier' : 'Créer' }}
+    </button>
+  </div>
+</div>

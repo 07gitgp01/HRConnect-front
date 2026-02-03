@@ -1,0 +1,281 @@
+.candidature-detail-dialog {
+  max-width: 800px;
+  width: 100%;
+}
+
+.dialog-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px 8px;
+  margin: 0;
+}
+
+.dialog-title h2 {
+  margin: 0;
+  color: #333;
+}
+
+.dialog-content {
+  padding: 0 24px 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Cartes */
+.candidat-info-card,
+.project-info-card,
+.dates-card {
+  margin-bottom: 16px;
+}
+
+/* En-tête des cartes */
+mat-card-header {
+  padding: 16px;
+}
+
+.header-content {
+  flex: 1;
+}
+
+.candidate-name {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0 0 4px 0;
+  color: #333;
+}
+
+.candidate-position {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0 0 8px 0;
+}
+
+.contact-info {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.statut-container {
+  display: flex;
+  align-items: center;
+}
+
+/* Badge de statut */
+.statut-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statut-en-attente {
+  background: #fff3e0;
+  color: #ef6c00;
+  border: 1px solid #ffb74d;
+}
+
+.statut-entretien {
+  background: #e3f2fd;
+  color: #1976d2;
+  border: 1px solid #64b5f6;
+}
+
+.statut-acceptee {
+  background: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #81c784;
+}
+
+.statut-refusee {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #e57373;
+}
+
+.statut-default {
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+/* Sections d'information */
+.info-section {
+  padding: 16px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.section-title mat-icon {
+  color: #666;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Grille d'informations */
+.info-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.info-icon {
+  color: #666;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.info-content {
+  flex: 1;
+}
+
+.info-label {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-weight: 500;
+  color: #333;
+  line-height: 1.4;
+}
+
+/* Liens */
+.email-link, 
+.phone-link,
+.cv-link {
+  color: #1976d2;
+  text-decoration: none;
+}
+
+.email-link:hover, 
+.phone-link:hover,
+.cv-link:hover {
+  text-decoration: underline;
+}
+
+/* Compétences */
+.competences-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.competence-chip {
+  font-size: 0.8rem;
+}
+
+/* Lettre de motivation */
+.motivation-content {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  font-size: 0.9rem;
+  border-left: 4px solid #1976d2;
+}
+
+/* Section CV */
+.cv-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+/* Projet */
+.project-details {
+  padding: 16px;
+}
+
+/* Dates */
+.dates-grid {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Actions */
+mat-dialog-actions {
+  padding: 8px 24px 24px;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .candidature-detail-dialog {
+    max-width: 95vw;
+  }
+  
+  .dialog-title {
+    padding: 12px 16px 4px;
+  }
+  
+  .dialog-content {
+    padding: 0 16px 16px;
+    max-height: 60vh;
+  }
+  
+  .info-section {
+    padding: 12px;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .info-icon {
+    margin-top: 0;
+  }
+  
+  .section-title {
+    font-size: 1rem;
+  }
+  
+  .candidate-name {
+    font-size: 1.3rem;
+  }
+}
+
+/* Scrollbar personnalisée */
+.dialog-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dialog-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

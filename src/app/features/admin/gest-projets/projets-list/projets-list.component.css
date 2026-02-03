@@ -1,0 +1,723 @@
+/* projets-list.component.css */
+.page-container {
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== BARRE D'ACTIONS ===== */
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+}
+
+.search-field {
+  flex: 1;
+  min-width: 300px;
+}
+
+.filter-field {
+  min-width: 200px;
+}
+
+.mobile-filter {
+  display: none;
+}
+
+.add-btn {
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
+  color: white !important;
+}
+
+.add-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(46, 125, 50, 0.4);
+  background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
+}
+
+.refresh-btn {
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(46, 125, 50, 0.3);
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.2);
+}
+
+.refresh-btn:hover {
+  background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(27, 94, 32, 0.3);
+}
+
+.refresh-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(46, 125, 50, 0.2);
+}
+
+.refresh-btn .mat-icon {
+  color: white !important;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}
+
+/* ===== BOUTONS PRINCIPAUX ===== */
+/* Bouton Ajouter */
+button.mat-mini-fab[color="primary"] {
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
+}
+
+button.mat-mini-fab[color="primary"]:hover {
+  background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
+}
+
+button.mat-mini-fab[color="primary"] .mat-icon {
+  color: white !important;
+}
+
+/* ===== TABLEAU ===== */
+.table-container {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+}
+
+/* Header du tableau */
+.mat-header-row {
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
+}
+
+.mat-header-cell {
+  color: white !important;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.actions-header {
+  text-align: right;
+}
+
+/* Lignes du tableau */
+.mat-row {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s ease;
+}
+
+.mat-row:hover {
+  background-color: #f8f9fa !important;
+}
+
+.mat-cell {
+  padding: 1rem;
+  color: #333;
+  font-size: 0.9rem;
+  vertical-align: top;
+}
+
+/* ===== TITRE DU PROJET ===== */
+.project-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.project-title strong {
+  color: #1e293b;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.overdue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #fef3c7;
+  color: #92400e;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.overdue-badge .mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.project-subtitle {
+  margin-top: 0.25rem;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.project-subtitle .mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.text-muted {
+  color: #666;
+}
+
+.text-danger {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* Icônes dates */
+.date-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+  color: #2e7d32;
+}
+
+/* ===== CHIPS DE STATUT ===== */
+.status-chip {
+  font-weight: 600;
+  font-size: 0.75rem;
+  min-height: 24px;
+  border-radius: 16px !important;
+  color: white !important;
+  padding: 4px 12px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ✅ CORRECTION : Couleurs selon VOTRE modèle (en_attente, actif, cloture) */
+.status-chip[color="warn"] {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important; /* ORANGE - en_attente */
+}
+
+.status-chip[color="primary"] {
+  background: linear-gradient(135deg, #27ae60 0%, #2e7d32 100%) !important; /* VERT - actif */
+}
+
+.status-chip[color="accent"] {
+  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%) !important; /* GRIS - cloture */
+}
+
+.transitions-info {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* ===== COLONNE ACTIONS ===== */
+.actions-cell {
+  padding: 0.5rem !important;
+  text-align: right;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* ===== BOUTONS D'ACTION ===== */
+.action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+}
+
+/* Voir - VERT */
+.view-btn {
+  color: #2e7d32 !important;
+  background-color: rgba(46, 125, 50, 0.1);
+  border-color: rgba(46, 125, 50, 0.2);
+}
+
+.view-btn:hover {
+  background-color: #2e7d32 !important;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+  border-color: #2e7d32;
+}
+
+/* Modifier - VERT */
+.edit-btn {
+  color: #2e7d32 !important;
+  background-color: rgba(46, 204, 113, 0.1);
+  border-color: rgba(46, 204, 113, 0.2);
+}
+
+.edit-btn:hover {
+  background-color: #2e7d32 !important;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+  border-color: #2e7d32;
+}
+
+/* Plus d'actions - ORANGE */
+.more-btn {
+  color: #f39c12 !important;
+  background-color: rgba(243, 156, 18, 0.1);
+  border-color: rgba(243, 156, 18, 0.2);
+}
+
+.more-btn:hover {
+  background-color: #f39c12 !important;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(243, 156, 18, 0.3);
+  border-color: #f39c12;
+}
+
+/* Icônes */
+.action-btn .mat-icon {
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+/* ===== MENUS ===== */
+.action-menu .mat-menu-item,
+.statut-menu .mat-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  padding: 8px 16px;
+  min-height: 40px;
+  transition: all 0.2s ease;
+}
+
+.action-menu .mat-menu-item .mat-icon,
+.statut-menu .mat-menu-item .mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-right: 8px;
+}
+
+/* Option Valider */
+.menu-validate {
+  color: #2e7d32;
+}
+
+.menu-validate .mat-icon {
+  color: #2e7d32;
+}
+
+.menu-validate:hover {
+  background-color: rgba(46, 125, 50, 0.1);
+}
+
+/* Option Clôturer */
+.menu-cloture {
+  color: #95a5a6;
+}
+
+.menu-cloture .mat-icon {
+  color: #95a5a6;
+}
+
+.menu-cloture:hover {
+  background-color: rgba(149, 165, 166, 0.1);
+}
+
+/* Option Supprimer */
+.menu-delete {
+  color: #e74c3c;
+}
+
+.menu-delete .mat-icon {
+  color: #e74c3c;
+}
+
+.menu-delete:hover {
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Option Changer statut */
+.menu-change-status .mat-icon:last-child {
+  margin-left: auto;
+}
+
+/* ===== SOUS-MENU STATUTS ===== */
+.status-option {
+  font-size: 0.85rem;
+}
+
+.status-option[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.current-status {
+  font-size: 0.75rem;
+  color: #2e7d32;
+  margin-left: auto;
+}
+
+/* Options spécifiques de statut */
+.attente-option .mat-icon {
+  color: #f39c12;
+}
+
+.actif-option .mat-icon {
+  color: #2e7d32;
+}
+
+.cloture-option .mat-icon {
+  color: #95a5a6;
+}
+
+/* ===== SECTION AUCUNE DONNÉE ===== */
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #666;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.no-data .mat-icon {
+  font-size: 4rem;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+  color: #2e7d32;
+}
+
+.no-data h3 {
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.no-data p {
+  margin-bottom: 1.5rem;
+  max-width: 400px;
+  color: #64748b;
+}
+
+/* Bouton "Effacer les filtres" dans la section aucune donnée */
+.no-data button[mat-raised-button] {
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
+  color: white !important;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 500;
+  font-size: 1rem;
+  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.no-data button[mat-raised-button]:hover {
+  background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(27, 94, 32, 0.4);
+}
+
+.no-data button[mat-raised-button]:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+}
+
+.no-data button[mat-raised-button] .mat-icon {
+  color: white !important;
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+/* ===== CHARGEMENT ===== */
+.loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  gap: 1rem;
+}
+
+.loading p {
+  color: #666;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.loading .mat-spinner circle {
+  stroke: #2e7d32;
+}
+
+/* ===== PAGINATION ===== */
+.mat-paginator {
+  background-color: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+  border-radius: 0 0 12px 12px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 1rem;
+  }
+  
+  .top-bar {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .search-field,
+  .filter-field {
+    min-width: 100%;
+  }
+  
+  .mobile-filter {
+    display: inline-flex;
+  }
+  
+  .filter-field:not(.mobile-filter) {
+    display: none;
+  }
+  
+  .action-buttons {
+    gap: 0.25rem;
+  }
+  
+  .action-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .action-btn .mat-icon {
+    font-size: 1.1rem;
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+  
+  /* Cache certaines colonnes sur mobile */
+  .mat-column-regionAffectation,
+  .mat-column-dateDebut {
+    display: none;
+  }
+  
+  /* Ajustements pour les cellules */
+  .mat-cell {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  /* Ajuste le bouton "Effacer les filtres" dans section aucune donnée */
+  .no-data button[mat-raised-button] {
+    min-width: 150px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: 0.5rem;
+  }
+  
+  .top-bar {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  /* Cache plus de colonnes sur très petits écrans */
+  .mat-column-partenaire {
+    display: none;
+  }
+  
+  /* Ajuste les boutons d'action */
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .action-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .action-btn .mat-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  /* Ajuste les menus */
+  .action-menu .mat-menu-item,
+  .statut-menu .mat-menu-item {
+    padding: 6px 12px;
+    min-height: 36px;
+    font-size: 0.85rem;
+  }
+  
+  /* Ajuste le bouton "Effacer les filtres" dans section aucune donnée */
+  .no-data {
+    padding: 2rem 1rem;
+  }
+  
+  .no-data button[mat-raised-button] {
+    min-width: 120px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ===== CLASSES UTILITAIRES ===== */
+.text-muted {
+  color: #666 !important;
+  font-size: 0.85rem;
+}
+
+.text-danger {
+  color: #dc2626 !important;
+  font-weight: 600;
+}
+
+/* ===== MODE SOMBRE ===== */
+@media (prefers-color-scheme: dark) {
+  .page-container {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+  
+  .top-bar,
+  .table-container,
+  .no-data,
+  .loading {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  .mat-header-row {
+    background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
+  }
+  
+  .mat-row:hover {
+    background-color: #334155 !important;
+  }
+  
+  .mat-cell {
+    color: #cbd5e1;
+  }
+  
+  .project-title strong {
+    color: #f1f5f9;
+  }
+  
+  .project-subtitle,
+  .text-muted {
+    color: #94a3b8;
+  }
+  
+  .no-data h3 {
+    color: #f1f5f9;
+  }
+  
+  .no-data p {
+    color: #94a3b8;
+  }
+  
+  .action-btn {
+    background-color: #334155 !important;
+  }
+  
+  .view-btn,
+  .edit-btn {
+    border-color: #475569;
+  }
+  
+  .refresh-btn {
+    background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
+    border-color: rgba(27, 94, 32, 0.4);
+  }
+  
+  .refresh-btn:hover {
+    background: linear-gradient(135deg, #145214 0%, #0f3a0f 100%) !important;
+  }
+  
+  /* Bouton "Effacer les filtres" dans section aucune donnée - mode sombre */
+  .no-data button[mat-raised-button] {
+    background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
+  }
+  
+  .no-data button[mat-raised-button]:hover {
+    background: linear-gradient(135deg, #145214 0%, #0f3a0f 100%) !important;
+  }
+}
+
+/* ===== RÈGLES DE CONFLIT ===== */
+/* S'assurer que les styles Material ne surchargent pas */
+.mat-table {
+  width: 100%;
+  background: transparent;
+}
+
+.mat-row, .mat-header-row {
+  background: transparent;
+}
+
+.mat-cell, .mat-header-cell {
+  border-bottom-color: #f0f0f0;
+}
+
+/* Amélioration du focus pour l'accessibilité */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #2e7d32;
+  outline-offset: 2px;
+  border-radius: 4px;
+}

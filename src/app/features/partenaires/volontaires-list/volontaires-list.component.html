@@ -1,0 +1,433 @@
+<div class="container-fluid py-4">
+  <!-- Header avec titre -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">
+          <i class="bi bi-people me-2"></i>Mes Volontaires
+        </h1>
+        <div>
+          <button class="btn btn-outline-primary me-2" (click)="exportVolontaires('excel')">
+            <i class="bi bi-file-excel me-2"></i>Excel
+          </button>
+          <button class="btn btn-outline-danger" (click)="exportVolontaires('pdf')">
+            <i class="bi bi-file-pdf me-2"></i>PDF
+          </button>
+        </div>
+      </div>
+      <p class="text-muted mb-0">Gestion des volontaires affectés à vos projets</p>
+    </div>
+  </div>
+
+  <!-- Statistiques rapides -->
+  <div class="row mb-4" *ngIf="stats">
+    <div class="col-md-3 col-6 mb-3">
+      <div class="card border-primary h-100">
+        <div class="card-body py-3">
+          <div class="d-flex">
+            <div class="flex-grow-1">
+              <h6 class="text-uppercase text-muted small">Total</h6>
+              <h3 class="mb-0">{{stats.total}}</h3>
+            </div>
+            <div class="icon-shape bg-primary bg-opacity-10 text-primary rounded-circle">
+              <i class="bi bi-people fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3 col-6 mb-3">
+      <div class="card border-success h-100">
+        <div class="card-body py-3">
+          <div class="d-flex">
+            <div class="flex-grow-1">
+              <h6 class="text-uppercase text-muted small">Actifs</h6>
+              <h3 class="mb-0">{{stats.actifs}}</h3>
+            </div>
+            <div class="icon-shape bg-success bg-opacity-10 text-success rounded-circle">
+              <i class="bi bi-check-circle fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3 col-6 mb-3">
+      <div class="card border-info h-100">
+        <div class="card-body py-3">
+          <div class="d-flex">
+            <div class="flex-grow-1">
+              <h6 class="text-uppercase text-muted small">Avec CV</h6>
+              <h3 class="mb-0">{{stats.volontairesAvecCV || 0}}</h3>
+            </div>
+            <div class="icon-shape bg-info bg-opacity-10 text-info rounded-circle">
+              <i class="bi bi-file-earmark-text fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3 col-6 mb-3">
+      <div class="card border-warning h-100">
+        <div class="card-body py-3">
+          <div class="d-flex">
+            <div class="flex-grow-1">
+              <h6 class="text-uppercase text-muted small">Rétention</h6>
+              <h3 class="mb-0">{{stats.tauxRetention}}%</h3>
+            </div>
+            <div class="icon-shape bg-warning bg-opacity-10 text-warning rounded-circle">
+              <i class="bi bi-graph-up fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphiques -->
+  <div class="row mb-4" *ngIf="chartOptionsLoaded">
+    <div class="col-md-4 mb-3">
+      <div class="card h-100">
+        <div class="card-body">
+          <canvas id="projetChart"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+      <div class="card h-100">
+        <div class="card-body">
+          <canvas id="statutChart"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+      <div class="card h-100">
+        <div class="card-body">
+          <canvas id="evolutionChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="card mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Filtres</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <!-- Colonne 1 -->
+        <div class="col-md-3">
+          <label class="form-label">Statut affectation</label>
+          <select class="form-select" [(ngModel)]="statutFilter" (change)="applyFilters()">
+            <option value="tous">Tous les statuts</option>
+            <option value="active">Actif</option>
+            <option value="terminee">Terminé</option>
+            <option value="annulee">Annulé</option>
+          </select>
+        </div>
+        
+        <div class="col-md-3">
+          <label class="form-label">Projet</label>
+          <select class="form-select" [(ngModel)]="projetFilter" (change)="applyFilters()">
+            <option value="tous">Tous les projets</option>
+            <option *ngFor="let projet of projets" [value]="projet.id">
+              {{projet.nom}}
+            </option>
+          </select>
+        </div>
+        
+        <div class="col-md-3">
+          <label class="form-label">Rôle</label>
+          <select class="form-select" [(ngModel)]="roleFilter" (change)="applyFilters()">
+            <option value="tous">Tous les rôles</option>
+            <option *ngFor="let role of roles" [value]="role">{{role}}</option>
+          </select>
+        </div>
+        
+        <div class="col-md-3">
+          <label class="form-label">Compétence</label>
+          <select class="form-select" [(ngModel)]="competenceFilter" (change)="applyFilters()">
+            <option value="toutes">Toutes les compétences</option>
+            <option *ngFor="let competence of competences" [value]="competence">
+              {{competence}}
+            </option>
+          </select>
+        </div>
+        
+        <!-- Colonne 2 -->
+        <div class="col-md-3">
+          <label class="form-label">Disponibilité</label>
+          <select class="form-select" [(ngModel)]="disponibiliteFilter" (change)="applyFilters()">
+            <option value="toutes">Toutes</option>
+            <option *ngFor="let disp of disponibilites" [value]="disp">{{disp}}</option>
+          </select>
+        </div>
+        
+        <div class="col-md-3">
+          <label class="form-label">Niveau d'études</label>
+          <select class="form-select" [(ngModel)]="niveauEtudesFilter" (change)="applyFilters()">
+            <option value="tous">Tous</option>
+            <option *ngFor="let niveau of niveauxEtudes" [value]="niveau">{{niveau}}</option>
+          </select>
+        </div>
+        
+        <div class="col-md-3">
+          <label class="form-label">Type de pièce</label>
+          <select class="form-select" [(ngModel)]="typePieceFilter" (change)="applyFilters()">
+            <option value="tous">Tous</option>
+            <option *ngFor="let type of typesPiece" [value]="type">{{type}}</option>
+          </select>
+        </div>
+        
+        <div class="col-md-3">
+          <label class="form-label">Recherche</label>
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="Nom, prénom, email..."
+                   [(ngModel)]="searchTerm" (keyup.enter)="applyFilters()">
+            <button class="btn btn-outline-secondary" type="button" (click)="applyFilters()">
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Dates -->
+        <div class="col-md-3">
+          <label class="form-label">Date début affectation</label>
+          <input type="date" class="form-control" [(ngModel)]="dateDebutFilter" (change)="applyFilters()">
+        </div>
+        
+        <div class="col-md-3">
+          <label class="form-label">Date fin affectation</label>
+          <input type="date" class="form-control" [(ngModel)]="dateFinFilter" (change)="applyFilters()">
+        </div>
+        
+        <!-- Actions filtres -->
+        <div class="col-md-6">
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button class="btn btn-outline-secondary" (click)="clearFilters()">
+              <i class="bi bi-x-circle me-2"></i>Réinitialiser
+            </button>
+            <button class="btn btn-primary" (click)="applyFilters()">
+              <i class="bi bi-funnel me-2"></i>Appliquer filtres
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Résumé filtres -->
+  <div class="alert alert-info mb-4" *ngIf="filteredVolontaires.length !== volontaires.length">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <i class="bi bi-info-circle me-2"></i>
+        Filtres actifs : 
+        <span *ngIf="statutFilter !== 'tous'" class="badge bg-primary ms-2">
+          Statut: {{getStatutAffectationLabel(statutFilter)}}
+        </span>
+       <span *ngIf="projetFilter !== 'tous'" class="badge bg-primary ms-2">
+  Projet: {{getProjetNom(projetFilter)}}
+</span>
+        <span *ngIf="searchTerm" class="badge bg-primary ms-2">
+          Recherche: "{{searchTerm}}"
+        </span>
+      </div>
+      <div class="fw-bold">
+        {{filteredVolontaires.length}} / {{volontaires.length}} volontaires
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+    <p class="mt-3">Chargement des volontaires...</p>
+  </div>
+
+  <!-- Contenu principal -->
+  <div *ngIf="!isLoading">
+    <!-- Message si aucun résultat -->
+    <div *ngIf="filteredVolontaires.length === 0" class="card">
+      <div class="card-body text-center py-5">
+        <i class="bi bi-people display-4 text-muted d-block mb-3"></i>
+        <h5>Aucun volontaire trouvé</h5>
+        <p class="text-muted mb-0">
+          {{volontaires.length === 0 ? 
+            'Aucun volontaire affecté à vos projets' : 
+            'Ajustez vos filtres de recherche'}}
+        </p>
+        <!-- <button *ngIf="volontaires.length === 0" class="btn btn-primary mt-3">
+          <i class="bi bi-plus-circle me-2"></i>Affecter un volontaire
+        </button> -->
+      </div>
+    </div>
+
+    <!-- Liste des volontaires -->
+    <div class="row" *ngIf="filteredVolontaires.length > 0">
+      <div *ngFor="let volontaire of paginatedVolontaires" class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 shadow-sm hover-shadow">
+          <!-- En-tête avec statut -->
+          <div class="card-header position-relative bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="badge" [class]="getStatutAffectationClass(volontaire.statutAffectation)">
+                {{getStatutAffectationLabel(volontaire.statutAffectation)}}
+              </span>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary" type="button" 
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a class="dropdown-item" href="#" (click)="viewVolontaire(volontaire.id!); $event.stopPropagation()">
+                      <i class="bi bi-eye me-2"></i>Voir le profil
+                    </a>
+                  </li>
+                  <li *ngIf="volontaire.affectationActive?.statut === 'active'">
+                    <a class="dropdown-item text-warning" href="#" 
+                       (click)="terminerAffectation(volontaire.affectationActive?.id!, $event)">
+                      <i class="bi bi-flag me-2"></i>Terminer affectation
+                    </a>
+                  </li>
+                  <li *ngIf="volontaire.affectationActive?.id">
+                    <a class="dropdown-item" href="#" 
+                       (click)="updateRoleVolontaire(volontaire.affectationActive?.id!, volontaire.roleProjet || ''); $event.stopPropagation()">
+                      <i class="bi bi-pencil me-2"></i>Modifier rôle
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Corps de la carte -->
+          <div class="card-body text-center pt-4">
+            <!-- Avatar -->
+            <div class="avatar-xl bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+              <i class="bi bi-person fs-1 text-primary"></i>
+            </div>
+            
+            <!-- Nom et prénom -->
+            <h5 class="card-title mb-1">{{volontaire.prenom}} {{volontaire.nom}}</h5>
+            
+            <!-- Rôle et projet -->
+            <div class="text-muted mb-3">
+              <div class="mb-1">
+                <i class="bi bi-briefcase me-1"></i>
+                <strong>{{volontaire.roleProjet || 'Rôle non défini'}}</strong>
+              </div>
+              <div>
+                <i class="bi bi-folder me-1"></i>
+                {{volontaire.projetNom || 'Projet non spécifié'}}
+              </div>
+            </div>
+            
+            <!-- Évaluation moyenne -->
+            <div *ngIf="volontaire.moyenneEvaluation !== undefined" class="mb-3">
+              <div class="d-flex align-items-center justify-content-center">
+                <span [class]="getEvaluationColor(volontaire.moyenneEvaluation)" class="fw-bold me-2">
+                  {{volontaire.moyenneEvaluation}}/10
+                </span>
+                <div class="small text-muted">Moyenne d'évaluation</div>
+              </div>
+            </div>
+            
+            <!-- Informations rapides -->
+            <div class="row text-start small">
+              <div class="col-6">
+                <div class="mb-2">
+                  <i class="bi bi-envelope me-1"></i>
+                  <span class="text-truncate d-inline-block" style="max-width: 120px;" 
+                        [title]="volontaire.email">
+                    {{volontaire.email}}
+                  </span>
+                </div>
+                <div class="mb-2">
+                  <i class="bi bi-telephone me-1"></i>
+                  {{volontaire.telephone || 'Non renseigné'}}
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="mb-2">
+                  <i class="bi bi-calendar me-1"></i>
+                  {{volontaire.dateAffectation | date:'dd/MM/yy'}}
+                </div>
+                <div class="mb-2">
+                  <i class="bi bi-clock me-1"></i>
+                  {{volontaire.disponibilite || 'Non spécifié'}}
+                </div>
+              </div>
+            </div>
+            
+            <!-- Compétences -->
+            <div *ngIf="volontaire.competences && volontaire.competences.length > 0" class="mt-3">
+              <div class="d-flex flex-wrap gap-1 justify-content-center">
+                <span *ngFor="let competence of volontaire.competences.slice(0, 3)" 
+                      class="badge bg-light text-dark">
+                  {{competence}}
+                </span>
+                <span *ngIf="volontaire.competences.length > 3" class="badge bg-light text-dark">
+                  +{{volontaire.competences.length - 3}}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Pied de carte -->
+          <div class="card-footer bg-transparent border-top-0">
+            <div class="d-grid">
+              <button class="btn btn-outline-primary" (click)="viewVolontaire(volontaire.id!)">
+                <i class="bi bi-person-circle me-2"></i>Voir le profil complet
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="filteredVolontaires.length > 0 && totalPages > 1" class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="text-muted">
+  Affichage {{getAffichageRange()}} sur {{filteredVolontaires.length}} volontaires
+</div>
+              
+              <nav>
+                <ul class="pagination mb-0">
+                  <li class="page-item" [class.disabled]="currentPage === 1">
+                    <button class="page-link" (click)="goToPage(currentPage - 1)">
+                      <i class="bi bi-chevron-left"></i>
+                    </button>
+                  </li>
+                  
+                  <li *ngFor="let page of [].constructor(totalPages); let i = index" 
+                      class="page-item" [class.active]="currentPage === i + 1">
+                    <button class="page-link" (click)="goToPage(i + 1)">
+                      {{i + 1}}
+                    </button>
+                  </li>
+                  
+                  <li class="page-item" [class.disabled]="currentPage === totalPages">
+                    <button class="page-link" (click)="goToPage(currentPage + 1)">
+                      <i class="bi bi-chevron-right"></i>
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

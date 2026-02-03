@@ -1,0 +1,293 @@
+<!-- src/app/features/candidat/mes-candidatures/mes-candidatures.component.html -->
+<div class="mes-candidatures-container">
+  <!-- En-tête -->
+  <div class="header-section">
+    <mat-card class="header-card">
+      <mat-card-content>
+        <div class="header-content">
+          <div class="header-text">
+            <h1 class="page-title">
+              <mat-icon class="title-icon">list_alt</mat-icon>
+              Mes Candidatures
+            </h1>
+            <p class="page-subtitle">
+              Suivez l'évolution de toutes vos demandes d'engagement
+            </p>
+          </div>
+          <button mat-raised-button color="primary" routerLink="/features/candidats/projets/">
+            <mat-icon>add</mat-icon>
+            Nouvelle Candidature
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-section">
+    <div class="stats-grid">
+      <mat-card class="stat-card total">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">folder_open</mat-icon>
+            <div class="stat-info">
+              <div class="stat-number">{{ stats.total }}</div>
+              <div class="stat-label">Total</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card en-attente">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">schedule</mat-icon>
+            <div class="stat-info">
+              <div class="stat-number">{{ stats.en_attente }}</div>
+              <div class="stat-label">En attente</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card entretien">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">event_available</mat-icon>
+            <div class="stat-info">
+              <div class="stat-number">{{ stats.entretien }}</div>
+              <div class="stat-label">Entretien</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card acceptee">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">check_circle</mat-icon>
+            <div class="stat-info">
+              <div class="stat-number">{{ stats.acceptee }}</div>
+              <div class="stat-label">Acceptées</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card refusee">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">cancel</mat-icon>
+            <div class="stat-info">
+              <div class="stat-number">{{ stats.refusee }}</div>
+              <div class="stat-label">Refusées</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Informations sur les résultats filtrés -->
+  <div class="results-info" *ngIf="!loading && getCandidaturesFiltrees().length > 0">
+    <div class="results-count">
+      <mat-icon>filter_list</mat-icon>
+      <span>{{ getCandidaturesFiltrees().length }} candidature(s) sur {{ mesCandidatures.length }}</span>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section">
+    <mat-card class="filters-card">
+      <mat-card-content>
+        <div class="filters-grid">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Rechercher</mat-label>
+            <input matInput [(ngModel)]="searchTerm" (input)="getCandidaturesFiltrees()" 
+                   placeholder="Poste, projet, nom...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Statut</mat-label>
+            <mat-select [(ngModel)]="filtreStatut" (selectionChange)="getCandidaturesFiltrees()">
+              <mat-option value="">Tous les statuts</mat-option>
+              <mat-option value="en_attente">En attente</mat-option>
+              <mat-option value="entretien">Entretien</mat-option>
+              <mat-option value="acceptee">Acceptée</mat-option>
+              <mat-option value="refusee">Refusée</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Projet</mat-label>
+            <mat-select [(ngModel)]="filtreProjet" (selectionChange)="getCandidaturesFiltrees()">
+              <mat-option value="">Tous les projets</mat-option>
+              <mat-option *ngFor="let projet of projets" [value]="projet.id">
+ {{ projet.titre }}              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-stroked-button color="warn" (click)="clearFilters()" class="clear-filters">
+            <mat-icon>clear</mat-icon>
+            Effacer
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Liste des candidatures -->
+  <div class="candidatures-section">
+    <mat-card class="candidatures-card">
+      <mat-card-content>
+        <div *ngIf="loading" class="loading-container">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Chargement de vos candidatures...</p>
+        </div>
+
+        <div *ngIf="!loading && getCandidaturesFiltrees().length === 0" class="empty-state">
+          <mat-icon class="empty-icon">inbox</mat-icon>
+          <h3>Aucune candidature trouvée</h3>
+          <p *ngIf="filtreStatut || filtreProjet || searchTerm">
+            Aucune candidature ne correspond à vos critères de recherche.
+          </p>
+          <p *ngIf="!filtreStatut && !filtreProjet && !searchTerm">
+            Vous n'avez encore postulé à aucune mission.
+          </p>
+          <button mat-raised-button color="primary" routerLink="/features/candidats/projets/">
+            <mat-icon>explore</mat-icon>
+            Découvrir les missions
+          </button>
+        </div>
+
+        <div *ngFor="let candidature of getCandidaturesFiltrees()" class="candidature-item">
+          <div class="candidature-main">
+            <div class="candidature-info">
+              <div class="candidature-header">
+                <h3 class="poste-title">{{ candidature.poste_vise }}</h3>
+                <span [class]="'statut-badge ' + getStatutBadgeClass(candidature.statut)">
+                  {{ getStatutText(candidature.statut) }}
+                </span>
+              </div>
+
+              <div class="candidature-details">
+                <div class="detail-item">
+                  <mat-icon>business</mat-icon>
+                  <span class="projet-nom">{{ getProjectName(candidature.projectId) }}</span>
+                </div>
+
+                <div class="detail-item">
+                  <mat-icon>event</mat-icon>
+                  <span>Postulé le {{ candidature.cree_le | date:'dd/MM/yyyy' }}</span>
+                </div>
+
+                <div class="detail-item" *ngIf="candidature.mis_a_jour_le">
+                  <mat-icon>update</mat-icon>
+                  <span>Mise à jour le {{ candidature.mis_a_jour_le | date:'dd/MM/yyyy' }}</span>
+                </div>
+
+                <!-- Informations d'entretien -->
+                <div class="detail-item" *ngIf="aEntretienProgramme(candidature)">
+                  <mat-icon>calendar_today</mat-icon>
+                  <span class="entretien-info">
+                    Entretien le {{ getDateEntretienFormatee(candidature.date_entretien) }}
+                  </span>
+                </div>
+
+                <!-- Niveau d'expérience -->
+                <div class="detail-item" *ngIf="candidature.niveau_experience">
+                  <mat-icon>trending_up</mat-icon>
+                  <span>{{ getNiveauExperienceText(candidature.niveau_experience) }}</span>
+                </div>
+
+                <!-- Disponibilité -->
+                <div class="detail-item" *ngIf="candidature.disponibilite">
+                  <mat-icon>access_time</mat-icon>
+                  <span>{{ candidature.disponibilite }}</span>
+                </div>
+              </div>
+
+              <!-- Compétences -->
+              <div class="candidature-competences" *ngIf="getCompetencesArray(candidature.competences).length > 0">
+                <mat-chip-set>
+                  <mat-chip *ngFor="let competence of getCompetencesArray(candidature.competences)" 
+                           class="competence-chip">
+                    {{ competence }}
+                  </mat-chip>
+                </mat-chip-set>
+              </div>
+
+              <!-- CV -->
+              <div class="candidature-cv" *ngIf="candidature.cv_url">
+                <button mat-stroked-button color="accent" (click)="ouvrirCV(candidature.cv_url)" class="cv-button">
+                  <mat-icon>description</mat-icon>
+                  Voir le CV
+                </button>
+              </div>
+            </div>
+
+            <div class="candidature-actions">
+              <button mat-stroked-button color="primary" 
+                      (click)="voirDetailsProjet(candidature.projectId)"
+                      class="action-button">
+                <mat-icon>visibility</mat-icon>
+                Voir le projet
+              </button>
+
+              <button *ngIf="candidature.statut === 'en_attente'" 
+                      mat-stroked-button color="warn"
+                      (click)="retirerCandidature(candidature.id!)"
+                      class="action-button">
+                <mat-icon>delete</mat-icon>
+                Retirer
+              </button>
+
+              <button *ngIf="candidature.statut === 'refusee'" 
+                      mat-stroked-button color="accent"
+                      (click)="reappliquer(candidature)"
+                      class="action-button">
+                <mat-icon>replay</mat-icon>
+                Repostuler
+              </button>
+
+              <!-- Action pour les entretiens -->
+              <button *ngIf="candidature.statut === 'entretien'" 
+                      mat-stroked-button color="primary"
+                      class="action-button"
+                      matTooltip="Préparez-vous pour votre entretien">
+                <mat-icon>video_call</mat-icon>
+                Préparer l'entretien
+              </button>
+
+              <!-- Action pour les candidatures acceptées -->
+              <button *ngIf="candidature.statut === 'acceptee'" 
+                      mat-stroked-button color="primary"
+                      class="action-button"
+                      matTooltip="Félicitations ! Votre candidature a été acceptée">
+                <mat-icon>celebration</mat-icon>
+                Célébrer
+              </button>
+            </div>
+          </div>
+
+          <!-- Lettre de motivation (réduite) -->
+          <div class="lettre-motivation" *ngIf="candidature.lettre_motivation">
+            <mat-divider></mat-divider>
+            <div class="lettre-content">
+              <div class="lettre-header">
+                <strong>Lettre de motivation :</strong>
+                <button mat-icon-button (click)="toggleLettreExpansion(candidature)" class="expand-button">
+                  <mat-icon>{{ isLettreExpanded(candidature) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                </button>
+              </div>
+              <div class="lettre-text" [class.expanded]="isLettreExpanded(candidature)">
+                {{ isLettreExpanded(candidature) ? candidature.lettre_motivation : (candidature.lettre_motivation | slice:0:200) }}{{ isLettreExpanded(candidature) ? '' : '...' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

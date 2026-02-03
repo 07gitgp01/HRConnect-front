@@ -1,0 +1,217 @@
+<!-- src/app/features/admin/gest-projets/projets-form/projets-form.component.html -->
+<mat-card class="form-card">
+  <mat-card-title>
+    {{ isEdit ? 'Modifier un projet' : 'Créer un nouveau projet' }}
+  </mat-card-title>
+
+  <mat-card-content>
+    <form [formGroup]="projectForm" (ngSubmit)="onSubmit()">
+
+      <div class="grid-2">
+
+        <!-- Titre -->
+        <mat-form-field appearance="outline">
+          <mat-label>Titre du projet</mat-label>
+          <input matInput formControlName="titre" placeholder="Ex: Soutien scolaire en zone rurale">
+          <mat-error *ngIf="projectForm.get('titre')?.hasError('required')">
+            Titre obligatoire
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Partenaire -->
+        <mat-form-field appearance="outline">
+          <mat-label>Partenaire</mat-label>
+          <mat-select formControlName="partenaireId">
+            <mat-option *ngIf="isLoadingPartenaires" disabled>Chargement...</mat-option>
+            <mat-option *ngFor="let p of partenaires" [value]="p.id">
+              {{ p.nomStructure }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="projectForm.get('partenaireId')?.hasError('required')">
+            Partenaire obligatoire
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Région -->
+        <mat-form-field appearance="outline">
+          <mat-label>Région</mat-label>
+          <mat-select formControlName="regionAffectation">
+            <mat-option *ngFor="let region of regions" [value]="region">
+              {{ region }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="projectForm.get('regionAffectation')?.hasError('required')">
+            Région obligatoire
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Ville/Commune -->
+        <mat-form-field appearance="outline">
+          <mat-label>Ville/Commune</mat-label>
+          <input matInput formControlName="ville_commune" placeholder="Ex: Ouagadougou">
+        </mat-form-field>
+
+        <!-- Domaine d'activité -->
+        <mat-form-field appearance="outline">
+          <mat-label>Domaine d'activité</mat-label>
+          <mat-select formControlName="domaineActivite">
+            <mat-option value="Éducation">Éducation</mat-option>
+            <mat-option value="Santé">Santé</mat-option>
+            <mat-option value="Environnement">Environnement</mat-option>
+            <mat-option value="Agriculture">Agriculture</mat-option>
+            <mat-option value="Développement rural">Développement rural</mat-option>
+            <mat-option value="Autre">Autre</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Type de mission -->
+        <mat-form-field appearance="outline">
+          <mat-label>Type de mission</mat-label>
+          <mat-select formControlName="type_mission">
+            <mat-option value="Education">Éducation</mat-option>
+            <mat-option value="Santé">Santé</mat-option>
+            <mat-option value="Environnement">Environnement</mat-option>
+            <mat-option value="Développement">Développement</mat-option>
+            <mat-option value="Urgence">Urgence</mat-option>
+            <mat-option value="Autre">Autre</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Statut -->
+        <mat-form-field appearance="outline">
+          <mat-label>Statut</mat-label>
+          <mat-select formControlName="statutProjet">
+            <!-- ✅ CORRECTION : Uniquement les 3 statuts simplifiés -->
+            <mat-option *ngFor="let statut of statuts" [value]="statut.value">
+              {{ statut.label }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="projectForm.get('statutProjet')?.hasError('required')">
+            Statut obligatoire
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Volontaires requis -->
+        <mat-form-field appearance="outline">
+          <mat-label>Volontaires requis</mat-label>
+          <input matInput type="number" formControlName="nombreVolontairesRequis" min="1" max="100">
+          <mat-error *ngIf="projectForm.get('nombreVolontairesRequis')?.hasError('required')">
+            Nombre de volontaires requis
+          </mat-error>
+          <mat-error *ngIf="projectForm.get('nombreVolontairesRequis')?.hasError('min')">
+            Au moins 1 volontaire requis
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Date début -->
+        <mat-form-field appearance="outline">
+          <mat-label>Date de début</mat-label>
+          <input matInput type="date" formControlName="dateDebut">
+          <mat-error *ngIf="projectForm.get('dateDebut')?.hasError('required')">
+            Date de début obligatoire
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Date fin -->
+        <mat-form-field appearance="outline">
+          <mat-label>Date de fin</mat-label>
+          <input matInput type="date" formControlName="dateFin">
+          <mat-error *ngIf="projectForm.get('dateFin')?.hasError('required')">
+            Date de fin obligatoire
+          </mat-error>
+          <mat-error *ngIf="projectForm.get('dateFin')?.hasError('dateFinBeforeStart')">
+            La date de fin doit être après la date de début
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Date limite candidature -->
+        <mat-form-field appearance="outline">
+          <mat-label>Date limite de candidature</mat-label>
+          <input matInput type="date" formControlName="dateLimiteCandidature">
+          <mat-error *ngIf="projectForm.get('dateLimiteCandidature')?.hasError('required')">
+            Date limite obligatoire
+          </mat-error>
+          <mat-error *ngIf="projectForm.get('dateLimiteCandidature')?.hasError('deadlineAfterStart')">
+            La date limite doit être avant la date de début
+          </mat-error>
+        </mat-form-field>
+
+      </div>
+
+      <!-- Description courte -->
+      <mat-form-field appearance="outline" class="mt-2 w-100">
+        <mat-label>Description courte</mat-label>
+        <textarea matInput rows="2" formControlName="descriptionCourte" 
+                  placeholder="Résumé de 2-3 lignes pour l'affichage liste"></textarea>
+        <mat-error *ngIf="projectForm.get('descriptionCourte')?.hasError('required')">
+          Description courte obligatoire
+        </mat-error>
+        <mat-error *ngIf="projectForm.get('descriptionCourte')?.hasError('minlength')">
+          Minimum 20 caractères
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Description longue -->
+      <mat-form-field appearance="outline" class="mt-2 w-100">
+        <mat-label>Description détaillée</mat-label>
+        <textarea matInput rows="4" formControlName="descriptionLongue" 
+                  placeholder="Description complète des objectifs, contexte et activités"></textarea>
+        <mat-error *ngIf="projectForm.get('descriptionLongue')?.hasError('required')">
+          Description détaillée obligatoire
+        </mat-error>
+        <mat-error *ngIf="projectForm.get('descriptionLongue')?.hasError('minlength')">
+          Minimum 50 caractères
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Compétences requises -->
+      <mat-form-field appearance="outline" class="mt-2 w-100">
+        <mat-label>Compétences requises</mat-label>
+        <textarea matInput rows="2" formControlName="competences_requises" 
+                  placeholder="Ex: Animation, Enseignement, Communication..."></textarea>
+      </mat-form-field>
+
+      <!-- Avantages volontaire -->
+      <mat-form-field appearance="outline" class="mt-2 w-100">
+        <mat-label>Avantages pour le volontaire</mat-label>
+        <textarea matInput rows="2" formControlName="avantagesVolontaire" 
+                  placeholder="Ex: Logement fourni, Transport pris en charge, Repas..."></textarea>
+      </mat-form-field>
+
+      <!-- Conditions particulières -->
+      <mat-form-field appearance="outline" class="mt-2 w-100">
+        <mat-label>Conditions particulières</mat-label>
+        <textarea matInput rows="2" formControlName="conditions_particulieres" 
+                  placeholder="Ex: Disponibilité week-end, Formation requise..."></textarea>
+      </mat-form-field>
+
+      <!-- Contact responsable -->
+      <mat-form-field appearance="outline" class="mt-2 w-100">
+        <mat-label>Contact responsable</mat-label>
+        <input matInput formControlName="contact_responsable" placeholder="Ex: Jean Dupont">
+      </mat-form-field>
+
+      <!-- Email contact -->
+      <mat-form-field appearance="outline" class="mt-2 w-100">
+        <mat-label>Email de contact</mat-label>
+        <input matInput type="email" formControlName="email_contact" placeholder="Ex: contact@organisation.org">
+        <mat-error *ngIf="projectForm.get('email_contact')?.hasError('email')">
+          Format d'email invalide
+        </mat-error>
+      </mat-form-field>
+
+      <div class="actions">
+        <button mat-raised-button color="primary" type="submit" 
+                [disabled]="projectForm.invalid || isLoading"
+                class="submit-button">
+          <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+          <span *ngIf="!isLoading">{{ isEdit ? 'Modifier' : 'Enregistrer' }}</span>
+          <span *ngIf="isLoading">{{ isEdit ? 'Modification...' : 'Enregistrement...' }}</span>
+        </button>
+        <button mat-button color="warn" type="button" (click)="closeOrBack()" [disabled]="isLoading">
+          Annuler
+        </button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>

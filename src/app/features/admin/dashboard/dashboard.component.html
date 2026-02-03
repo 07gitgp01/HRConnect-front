@@ -1,0 +1,221 @@
+<!-- src/app/features/admin/admin-dashboard/admin-dashboard.component.html -->
+<div class="dashboard-container">
+  <!-- En-tête du tableau de bord -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>Tableau de Bord de Supervision - PNVB</h1>
+      <p>Vue d'ensemble de l'activité du Programme National de Volontariat</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="verifierEcheances()" class="echeance-btn">
+      <mat-icon>update</mat-icon>
+      Vérifier les Échéances
+    </button>
+  </div>
+
+  <!-- Indicateur de chargement -->
+  <div *ngIf="isLoading" class="loading-section">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Chargement des données du tableau de bord...</p>
+  </div>
+
+  <!-- Section Notifications d'Échéance -->
+  <div *ngIf="!isLoading && echeanceNotifications.length > 0" class="notifications-section">
+    <mat-card class="notification-card">
+      <mat-card-header class="notification-header">
+        <mat-card-title>
+          <mat-icon>notifications_active</mat-icon>
+          Alertes d'Échéance Automatiques
+        </mat-card-title>
+        <button mat-icon-button (click)="verifierEcheances()" matTooltip="Vérifier maintenant">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngFor="let notification of echeanceNotifications" class="notification-item">
+          <mat-icon class="notification-icon" [class.urgent]="notification.includes('⚠️')">
+            {{ notification.includes('⚠️') ? 'warning' : 'info' }}
+          </mat-icon>
+          <span class="notification-text">{{ notification }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Section des KPIs/Widgets -->
+  <div *ngIf="!isLoading" class="kpi-section">
+    <h2>Indicateurs Clés de Performance</h2>
+    
+    <div class="widgets-grid">
+      <!-- Volontaires actifs -->
+      <mat-card class="kpi-widget primary">
+        <mat-card-content>
+          <div class="widget-icon">
+            <mat-icon>people</mat-icon>
+          </div>
+          <div class="widget-data">
+            <div class="value">{{ dashboardData.totalVolontairesActifs }}</div>
+            <div class="label">Volontaires Actifs</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Projets ouverts -->
+      <mat-card class="kpi-widget success">
+        <mat-card-content>
+          <div class="widget-icon">
+            <mat-icon>work</mat-icon>
+          </div>
+          <div class="widget-data">
+            <div class="value">{{ dashboardData.totalProjetsOuverts }}</div>
+            <div class="label">Projets Ouverts</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Candidatures en attente -->
+      <mat-card class="kpi-widget warning">
+        <mat-card-content>
+          <div class="widget-icon">
+            <mat-icon>pending_actions</mat-icon>
+          </div>
+          <div class="widget-data">
+            <div class="value">{{ dashboardData.candidaturesEnAttente }}</div>
+            <div class="label">Candidatures en Attente</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Taux de complétion -->
+      <mat-card class="kpi-widget info">
+        <mat-card-content>
+          <div class="widget-icon">
+            <mat-icon>trending_up</mat-icon>
+          </div>
+          <div class="widget-data">
+            <div class="value">{{ dashboardData.tauxCompletion }}%</div>
+            <div class="label">Taux de Complétion</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- NOUVEAU : Projets en retard -->
+      <mat-card class="kpi-widget danger">
+        <mat-card-content>
+          <div class="widget-icon">
+            <mat-icon>warning</mat-icon>
+          </div>
+          <div class="widget-data">
+            <div class="value">{{ dashboardData.statistiquesEcheances.enRetard || 0 }}</div>
+            <div class="label">Projets en Retard</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- NOUVEAU : Échéances cette semaine -->
+      <mat-card class="kpi-widget accent">
+        <mat-card-content>
+          <div class="widget-icon">
+            <mat-icon>event</mat-icon>
+          </div>
+          <div class="widget-data">
+            <div class="value">{{ dashboardData.statistiquesEcheances.cetteSemaine || 0 }}</div>
+            <div class="label">Échéances Cette Semaine</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Section Graphiques -->
+  <div *ngIf="!isLoading" class="charts-section">
+    <div class="chart-row">
+      <!-- Graphique des candidatures par mois -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Évolution des Candidatures par Mois</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <canvas #candidaturesChart></canvas>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Graphique des candidatures par région -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Répartition des Candidatures par Région</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <canvas #regionsChart></canvas>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Graphique des projets par statut -->
+    <div class="chart-row">
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Répartition des Projets par Statut</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <canvas #projetsChart></canvas>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Section Alertes et Notifications -->
+  <div *ngIf="!isLoading" class="alerts-section">
+    <div class="alerts-row">
+      <!-- Projets arrivant à échéance -->
+      <mat-card class="alert-card">
+        <mat-card-header class="alert-header warning">
+          <mat-card-title>
+            <mat-icon>warning</mat-icon>
+            Projets Arrivant à Échéance
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div *ngIf="dashboardData.projetsEcheance.length === 0" class="no-alerts">
+            Aucun projet n'arrive à échéance prochainement
+          </div>
+          <div *ngFor="let projet of dashboardData.projetsEcheance" class="alert-item">
+            <div class="alert-content">
+              <strong>{{ projet.titre }}</strong>
+              <span class="date">Échéance: {{ projet.dateEcheance | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <!-- CORRECTION : Utiliser (click) au lieu de routerLink -->
+      <button mat-button color="primary" (click)="voirProjet(projet.id)">
+        Voir
+      </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Candidatures urgentes -->
+      <mat-card class="alert-card">
+        <mat-card-header class="alert-header danger">
+          <mat-card-title>
+            <mat-icon>priority_high</mat-icon>
+            Candidatures Urgentes à Traiter
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div *ngIf="dashboardData.candidaturesUrgentes.length === 0" class="no-alerts">
+            Aucune candidature urgente
+          </div>
+          <div *ngFor="let candidature of dashboardData.candidaturesUrgentes" class="alert-item">
+            <div class="alert-content">
+              <strong>{{ candidature.nom }} {{ candidature.prenom }}</strong>
+              <span class="mission">Mission: {{ candidature.mission }}</span>
+              <span class="date">Reçue: {{ candidature.dateReception | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <!-- CORRECTION : Utiliser (click) au lieu de routerLink -->
+      <button mat-button color="primary" (click)="voirCandidature(candidature.id)">
+        Traiter
+      </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

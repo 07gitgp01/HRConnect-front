@@ -1,0 +1,295 @@
+{
+  "users": [
+    {
+      "id": "2d72",
+      "username": "sana",
+      "email": "messi@gmail.com",
+      "password": "sana1234",
+      "role": "candidat",
+      "prenom": "messi",
+      "nom": "sana",
+      "telephone": "65320011",
+      "profilComplete": false,
+      "date_inscription": "2025-11-27T09:06:25.212Z",
+      "volontaireId": null
+    },
+    {
+      "id": "91e8",
+      "username": "leon",
+      "email": "leon2026@gmail.com",
+      "password": "leon2026",
+      "role": "candidat",
+      "prenom": "Messi",
+      "nom": "Leonnel",
+      "telephone": "09992212",
+      "profilComplete": true,
+      "date_inscription": "2026-01-27T13:59:12.192Z",
+      "volontaireId": "5f4e"
+    }
+  ],
+  "projets": [],
+  "volontaires": [
+    {
+      "id": "5f4e",
+      "nom": "Leonnel",
+      "prenom": "Messi",
+      "email": "leon2026@gmail.com",
+      "telephone": "09992212",
+      "dateNaissance": "2002-02-27",
+      "sexe": "M",
+      "nationalite": "Burkinabè",
+      "statut": "En attente",
+      "dateInscription": "2026-01-27T13:59:12.241Z",
+      "userId": "91e8",
+      "competences": [
+        "Numérique"
+      ],
+      "regionGeographique": "Ouest",
+      "motivation": "wserdtfbuhtrftyyttgggtgtgtygjygyukgyurrtygyyutffgggufy",
+      "disponibilite": "Temps partiel",
+      "created_at": "2026-01-27T13:59:12.241Z",
+      "updated_at": "2026-01-27T14:06:07.648Z",
+      "adresseResidence": "bobo",
+      "niveauEtudes": "Licence",
+      "domaineEtudes": "Informatique",
+      "urlCV": "uploads/cv_1769522749893_Rapport_Hebdomadaire_Employes (5).pdf",
+      "urlPieceIdentite": "uploads/identity_1769522688898_Capture d'écran 2026-01-07 083549.png",
+      "typePiece": "CNIB",
+      "numeroPiece": "01000000000000000"
+    }
+  ],
+  "candidatures": [],
+  "partenaires": [
+    {
+      "id": "7357",
+      "nomStructure": "startupEnter",
+      "email": "startup@gmail.com",
+      "telephone": "55221133",
+      "adresse": "bobo",
+      "personneContactNom": "luffy",
+      "personneContactEmail": "luffy@gmail.com",
+      "personneContactTelephone": "66332211",
+      "personneContactFonction": "charge de mission",
+      "typeStructures": [
+        "SecteurPrive",
+        "PTF"
+      ],
+      "domaineActivite": "Éducation",
+      "siteWeb": "",
+      "description": "ils sont dans le domaine de l'informatique.....",
+      "estActive": true,
+      "motDePasseTemporaire": "OOLXOU9uFL$0",
+      "compteActive": true,
+      "role": "partenaire",
+      "dateCreationCompte": "2025-11-28T15:01:03.671Z",
+      "permissions": {
+        "peutCreerProjets": true,
+        "peutGererVolontaires": true,
+        "peutVoirStatistiques": true,
+        "peutVoirRapports": true,
+        "accesZonePTF": true,
+        "permissionsParType": {
+          "SecteurPrive": {
+            "peutCreerProjets": true,
+            "peutGererVolontaires": true,
+            "peutVoirStatistiques": true,
+            "peutVoirRapports": false,
+            "accesZonePTF": false
+          },
+          "PTF": {
+            "peutCreerProjets": false,
+            "peutGererVolontaires": false,
+            "peutVoirStatistiques": true,
+            "peutVoirRapports": true,
+            "accesZonePTF": true
+          }
+        }
+      },
+      "stats": {
+        "totalProjets": 0,
+        "projetsActifs": 0,
+        "projetsTermines": 0,
+        "projetsEnAttente": 0,
+        "volontairesAffectes": 0,
+        "statsParType": {
+          "SecteurPrive": {
+            "projets": 0,
+            "volontaires": 0,
+            "budgetTotal": 0
+          },
+          "PTF": {
+            "projets": 0,
+            "volontaires": 0,
+            "budgetTotal": 0
+          }
+        }
+      },
+      "cree_le": "2025-11-28T15:01:03.694Z",
+      "mis_a_jour_le": "2025-11-28T15:02:11.455Z",
+      "typesPrincipaux": [
+        "SecteurPrive",
+        "PTF"
+      ],
+      "dateActivation": "2025-11-28T15:02:11.455Z"
+    },
+    {
+      "id": "ea52",
+      "nomStructure": "sahelinfo",
+      "email": "sahelinfo@gmail.com",
+      "telephone": "25334400",
+      "adresse": "ouaga",
+      "personneContactNom": "messi",
+      "personneContactEmail": "messi@gmail.com",
+      "personneContactTelephone": "65443322",
+      "personneContactFonction": "DG",
+      "typeStructures": [
+        "InstitutionAcademique"
+      ],
+      "domaineActivite": "Éducation",
+      "siteWeb": "",
+      "description": "nous sommes une structure...................",
+      "estActive": true,
+      "motDePasseTemporaire": "i&BSZMw&Bb4o",
+      "compteActive": true,
+      "role": "partenaire",
+      "dateCreationCompte": "2025-11-28T16:41:37.054Z",
+      "permissions": {
+        "peutCreerProjets": true,
+        "peutGererVolontaires": true,
+        "peutVoirStatistiques": true,
+        "peutVoirRapports": false,
+        "accesZonePTF": false,
+        "permissionsParType": {
+          "InstitutionAcademique": {
+            "peutCreerProjets": true,
+            "peutGererVolontaires": true,
+            "peutVoirStatistiques": true,
+            "peutVoirRapports": false,
+            "accesZonePTF": false
+          }
+        }
+      },
+      "stats": {
+        "totalProjets": 0,
+        "projetsActifs": 0,
+        "projetsTermines": 0,
+        "projetsEnAttente": 0,
+        "volontairesAffectes": 0,
+        "statsParType": {
+          "InstitutionAcademique": {
+            "projets": 0,
+            "volontaires": 0,
+            "budgetTotal": 0
+          }
+        }
+      },
+      "cree_le": "2025-11-28T16:41:37.054Z",
+      "mis_a_jour_le": "2025-11-28T16:43:48.293Z",
+      "typesPrincipaux": [
+        "InstitutionAcademique"
+      ],
+      "dateActivation": "2025-11-28T16:43:48.293Z"
+    },
+    {
+      "id": "acd1",
+      "nomStructure": "ptf1",
+      "email": "ptf1@gmail.com",
+      "telephone": "25660000",
+      "adresse": "ouagadougou",
+      "personneContactNom": "tom",
+      "personneContactEmail": "tom@gmail.com",
+      "personneContactTelephone": "66778800",
+      "personneContactFonction": "charge de mission",
+      "typeStructures": [
+        "PTF"
+      ],
+      "domaineActivite": "Développement Communautaire",
+      "siteWeb": "",
+      "description": "ils sont une entreprise ................................................",
+      "estActive": true,
+      "motDePasseTemporaire": "Vwe0oBJmWSz3",
+      "compteActive": true,
+      "role": "partenaire",
+      "dateCreationCompte": "2025-12-06T10:58:09.774Z",
+      "permissions": {
+        "peutCreerProjets": false,
+        "peutGererVolontaires": false,
+        "peutVoirStatistiques": true,
+        "peutVoirRapports": true,
+        "accesZonePTF": true,
+        "permissionsParType": {
+          "PTF": {
+            "peutCreerProjets": false,
+            "peutGererVolontaires": false,
+            "peutVoirStatistiques": true,
+            "peutVoirRapports": true,
+            "accesZonePTF": true
+          }
+        }
+      },
+      "stats": {
+        "totalProjets": 0,
+        "projetsActifs": 0,
+        "projetsTermines": 0,
+        "projetsEnAttente": 0,
+        "volontairesAffectes": 0,
+        "statsParType": {
+          "PTF": {
+            "projets": 0,
+            "volontaires": 0,
+            "budgetTotal": 0
+          }
+        }
+      },
+      "cree_le": "2025-12-06T10:58:09.774Z",
+      "mis_a_jour_le": "2025-12-06T10:58:41.065Z",
+      "typesPrincipaux": [
+        "PTF"
+      ],
+      "dateActivation": "2025-12-06T10:58:41.065Z"
+    }
+  ],
+  "candidaturesRecues": [],
+  "parametres": [],
+  "affectations": [],
+  "alertes": [],
+  "contactMessages": [
+    {
+      "id": "0",
+      "fullName": "SANA Messi",
+      "email": "Messi@gmail.com",
+      "subject": "question-generale",
+      "message": "j'aimerai savoir comment devenir partenaire",
+      "status": "responded",
+      "priority": "low",
+      "adminNotes": "fournissez nous votre email et le nom de votre entreprise on va creer et vous envoyer les donnees de connexion merci",
+      "assignedTo": null,
+      "createdAt": "2025-11-24T22:41:01.792Z",
+      "updatedAt": "2025-11-25T08:25:01.647Z",
+      "readAt": null,
+      "respondedAt": "2025-11-24T23:04:51.352Z"
+    }
+  ],
+  "admins": [
+    {
+      "id": "63b0",
+      "username": "admin",
+      "email": "admin@pnvb.gov.bf",
+      "password": "admin123",
+      "role": "admin",
+      "prenom": "Administrateur",
+      "nom": "PNVB",
+      "telephone": "70123456",
+      "date_inscription": "2024-01-01T00:00:00.000Z",
+      "permissions": [
+        "all"
+      ],
+      "actif": true,
+      "dateCreation": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "offresMission": [],
+  "rapports": [],
+  "types": [],
+  "rapports-ptf": []
+}

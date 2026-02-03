@@ -1,0 +1,383 @@
+.detail-offre-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+
+  .container-header {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+
+      .header-text {
+        flex: 1;
+
+        .page-title {
+          font-size: 1.8rem;
+          font-weight: 700;
+          color: #333;
+          margin-bottom: 0;
+        }
+      }
+
+      .header-actions {
+        .btn {
+          border-radius: 8px;
+          padding: 8px 20px;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  .loading-state {
+    text-align: center;
+    padding: 60px 20px;
+
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+
+    p {
+      color: #6c757d;
+      margin-top: 20px;
+    }
+  }
+
+  .offre-detail-card {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+    .offre-header {
+      margin-bottom: 25px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e9ecef;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+
+      .offre-title-section {
+        .offre-badge {
+          display: inline-block;
+          padding: 6px 15px;
+          border-radius: 20px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          margin-bottom: 15px;
+        }
+
+        .offre-title {
+          font-size: 1.8rem;
+          font-weight: 700;
+          color: #333;
+          margin-bottom: 15px;
+        }
+
+        .offre-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 20px;
+
+          .meta-item {
+            font-size: 0.9rem;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+
+            i {
+              font-size: 0.9rem;
+              margin-right: 6px;
+            }
+          }
+        }
+      }
+
+      .offre-admin-actions {
+        .btn-group {
+          .btn {
+            border-radius: 6px;
+            padding: 8px 15px;
+            font-size: 0.85rem;
+          }
+        }
+      }
+    }
+
+    .offre-progression {
+      .progress {
+        height: 10px;
+        border-radius: 5px;
+
+        .progress-bar {
+          border-radius: 5px;
+          background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+      }
+    }
+
+    .card {
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+
+      .card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        padding: 15px 20px;
+        border-radius: 8px 8px 0 0;
+
+        h5, h6 {
+          color: #333;
+          font-weight: 600;
+          margin: 0;
+        }
+      }
+
+      .card-body {
+        padding: 20px;
+
+        .white-space-pre-line {
+          white-space: pre-line;
+        }
+
+        .competences-list, .avantages-list {
+          .badge {
+            padding: 8px 15px;
+            font-weight: 500;
+            border-radius: 20px;
+            margin: 3px;
+          }
+        }
+
+        .timeline {
+          .timeline-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f1f1;
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            .timeline-date {
+              font-weight: 600;
+              color: #495057;
+              font-size: 0.9rem;
+            }
+
+            .timeline-content {
+              color: #333;
+              font-weight: 500;
+            }
+          }
+        }
+
+        .metadata-list {
+          .metadata-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f1f1;
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            .metadata-label {
+              color: #6c757d;
+              font-size: 0.9rem;
+            }
+
+            .metadata-value {
+              color: #333;
+              font-weight: 500;
+            }
+          }
+        }
+
+        .candidature-card {
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          padding: 15px;
+          transition: all 0.3s ease;
+
+          &:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+          }
+
+          .candidature-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+
+            h6 {
+              margin: 0;
+              font-weight: 600;
+              color: #333;
+            }
+
+            .badge {
+              font-size: 0.7rem;
+              padding: 4px 10px;
+            }
+          }
+
+          .candidature-body {
+            .small {
+              font-size: 0.8rem;
+            }
+          }
+
+          .candidature-footer {
+            margin-top: 10px;
+            text-align: right;
+
+            .btn {
+              padding: 4px 10px;
+              font-size: 0.8rem;
+            }
+          }
+        }
+      }
+    }
+
+    .table {
+      th {
+        font-weight: 600;
+        color: #495057;
+        border-top: none;
+        font-size: 0.9rem;
+      }
+
+      td {
+        vertical-align: middle;
+      }
+
+      .btn-sm {
+        padding: 4px 10px;
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+  .modal {
+    .modal-content {
+      border-radius: 10px;
+      border: none;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+
+      .modal-header {
+        border-bottom: 1px solid #e9ecef;
+        padding: 20px;
+
+        .modal-title {
+          font-weight: 600;
+          color: #333;
+          display: flex;
+          align-items: center;
+        }
+      }
+
+      .modal-body {
+        padding: 20px;
+        max-height: 70vh;
+        overflow-y: auto;
+
+        .form-label {
+          font-weight: 600;
+          color: #495057;
+        }
+
+        .form-control, .form-select {
+          border-radius: 6px;
+          border: 2px solid #e9ecef;
+          padding: 10px;
+          transition: all 0.2s;
+
+          &:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+          }
+        }
+
+        .invalid-feedback {
+          font-size: 0.85rem;
+        }
+      }
+
+      .modal-footer {
+        border-top: 1px solid #e9ecef;
+        padding: 15px 20px;
+      }
+    }
+  }
+
+  .badge {
+    &.bg-secondary { background-color: #6c757d !important; }
+    &.bg-warning { background-color: #ffc107 !important; color: #212529; }
+    &.bg-info { background-color: #0dcaf0 !important; }
+    &.bg-primary { background-color: #0d6efd !important; }
+    &.bg-danger { background-color: #dc3545 !important; }
+    &.bg-success { background-color: #198754 !important; }
+    &.bg-dark { background-color: #212529 !important; }
+  }
+
+  @media (max-width: 768px) {
+    padding: 15px;
+
+    .container-header {
+      padding: 20px;
+
+      .header-content {
+        flex-direction: column;
+        gap: 15px;
+
+        .header-actions {
+          width: 100%;
+
+          .btn {
+            width: 100%;
+            margin-bottom: 10px;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+          }
+        }
+      }
+    }
+
+    .offre-detail-card {
+      padding: 20px;
+
+      .offre-header {
+        flex-direction: column;
+        gap: 15px;
+
+        .offre-meta {
+          flex-direction: column;
+          gap: 10px;
+        }
+      }
+    }
+
+    .modal {
+      .modal-dialog {
+        margin: 10px;
+      }
+    }
+  }
+}

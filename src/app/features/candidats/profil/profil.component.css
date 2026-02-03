@@ -1,0 +1,532 @@
+/* src/app/features/candidat/components/profil/profil.component.css */
+.profil-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.profil-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.header-info h1 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.completion-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #e9ecef;
+  color: #6c757d;
+  margin-top: 8px;
+}
+
+.completion-badge.complete {
+  background: #d4edda;
+  color: #155724;
+}
+
+.profil-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+
+.form-section {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 25px;
+}
+
+.form-section h3 {
+  margin-bottom: 10px;
+  color: #2c3e50;
+}
+
+.section-description {
+  color: #6c757d;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.info-item label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.competences-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.competence-item {
+  display: flex;
+  align-items: center;
+}
+
+.competence-item label {
+  display: flex;
+  align-items: center;
+  font-weight: normal;
+  cursor: pointer;
+  margin: 0;
+}
+
+.competence-item input {
+  margin-right: 8px;
+}
+
+/* Cartes de statistiques */
+.profil-stats-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stat-card, .actions-card, .candidatures-card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 15px;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+
+.stat-item.total { border-left: 4px solid #007bff; }
+.stat-item.en-attente { border-left: 4px solid #ffc107; }
+.stat-item.entretien { border-left: 4px solid #17a2b8; }
+.stat-item.acceptee { border-left: 4px solid #28a745; }
+
+.stat-number {
+  display: block;
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+
+/* Candidatures */
+.candidatures-list {
+  margin-top: 15px;
+}
+
+.candidature-item {
+  padding: 12px;
+  border-left: 4px solid #e9ecef;
+  margin-bottom: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.candidature-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.statut-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.statut-en_attente { border-left-color: #ffc107; }
+.statut-entretien { border-left-color: #17a2b8; }
+.statut-acceptee { border-left-color: #28a745; }
+.statut-refusee { border-left-color: #dc3545; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .profil-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-grid,
+  .form-row,
+  .competences-grid,
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profil-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+}
+/* Styles pour les champs type de pièce */
+.numero-piece-input {
+  font-family: monospace;
+  font-size: 16px;
+  letter-spacing: 1px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.type-cnib {
+  background: #e8f5e8;
+  border: 2px solid #4caf50;
+  color: #2e7d32;
+}
+
+.type-passeport {
+  background: #fff3e0;
+  border: 2px solid #ff9800;
+  color: #e65100;
+}
+
+.numero-piece-input:focus {
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.type-passeport:focus {
+  box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+}
+
+/* Indicateur visuel */
+.type-indicator {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.type-cnib-indicator {
+  background: #4caf50;
+  color: white;
+}
+
+.type-passeport-indicator {
+  background: #ff9800;
+  color: white;
+}
+
+.profil-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.profil-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.header-info h1 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.completion-badge {
+  display: inline-block;
+  padding: 5px 15px;
+  background-color: #e74c3c;
+  color: white;
+  border-radius: 20px;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.completion-badge.complete {
+  background-color: #27ae60;
+}
+
+.profil-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+
+.form-section {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 25px;
+}
+
+.section-description {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.competences-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.competence-item {
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.selected-competences {
+  margin-top: 10px;
+  padding: 10px;
+  background: #e8f4fd;
+  border-radius: 4px;
+  border-left: 4px solid #007bff;
+}
+
+.file-upload-section {
+  margin-top: 10px;
+}
+
+.file-input-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.file-preview, .existing-document {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.preview-content, .existing-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.form-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Colonne droite */
+.profil-stats-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stat-card, .actions-card, .candidatures-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 15px;
+  border-radius: 6px;
+  background: #f8f9fa;
+}
+
+.stat-number {
+  display: block;
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.actions-card .btn {
+  margin-bottom: 10px;
+}
+
+.candidatures-list {
+  margin-top: 15px;
+}
+
+.candidature-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.candidature-info {
+  flex: 1;
+}
+
+.statut-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: 10px;
+}
+
+.statut-en_attente .statut-badge {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.statut-entretien .statut-badge {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.statut-acceptee .statut-badge {
+  background: #d4edda;
+  color: #155724;
+}
+
+.statut-refusee .statut-badge {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .profil-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .competences-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.loading-competences {
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.competence-item {
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  border: 1px solid #dee2e6;
+}
+
+.competence-item label {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  cursor: pointer;
+}
+
+.competence-item input[type="checkbox"] {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+}
+
+.selected-competences {
+  margin-top: 10px;
+  padding: 10px;
+  background: #e8f4fd;
+  border-radius: 4px;
+  border-left: 4px solid #007bff;
+}

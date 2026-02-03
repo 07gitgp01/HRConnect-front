@@ -1,0 +1,290 @@
+<div class="container-fluid py-4">
+  <!-- Header avec statistiques -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">
+          <i class="bi bi-file-text me-2"></i>Rapports d'Évaluation
+        </h1>
+        <button class="btn btn-primary" (click)="createRapport()">
+          <i class="bi bi-plus-circle me-2"></i>Nouveau Rapport
+        </button>
+      </div>
+      <p class="text-muted mb-0">Soumettez et gérez les évaluations de vos volontaires</p>
+    </div>
+  </div>
+
+  <!-- Statistiques rapides -->
+  <div class="row mb-4" *ngIf="stats">
+    <div class="col-md-3">
+      <div class="card border-primary">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="text-uppercase text-muted">Total</h6>
+              <h2 class="mb-0">{{stats.total}}</h2>
+            </div>
+            <div class="icon-shape bg-primary text-white rounded-circle">
+              <i class="bi bi-files"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <div class="card border-success">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="text-uppercase text-muted">Validés</h6>
+              <h2 class="mb-0">{{stats.valide}}</h2>
+            </div>
+            <div class="icon-shape bg-success text-white rounded-circle">
+              <i class="bi bi-check-circle"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <div class="card border-warning">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="text-uppercase text-muted">Soumis</h6>
+              <h2 class="mb-0">{{stats.soumis}}</h2>
+            </div>
+            <div class="icon-shape bg-warning text-white rounded-circle">
+              <i class="bi bi-send"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <div class="card border-secondary">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="text-uppercase text-muted">Brouillons</h6>
+              <h2 class="mb-0">{{stats.brouillon}}</h2>
+            </div>
+            <div class="icon-shape bg-secondary text-white rounded-circle">
+              <i class="bi bi-pencil"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="card mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Filtres</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Statut</label>
+          <select class="form-select" [(ngModel)]="statutFilter" (change)="applyFilters()">
+            <option value="">Tous les statuts</option>
+            <option *ngFor="let statut of statuts" [value]="statut">{{statut}}</option>
+          </select>
+        </div>
+        
+        <div class="col-md-4">
+          <label class="form-label">Période</label>
+          <select class="form-select" [(ngModel)]="periodeFilter" (change)="applyFilters()">
+            <option value="">Toutes les périodes</option>
+            <option *ngFor="let periode of periodes" [value]="periode">{{periode}}</option>
+          </select>
+        </div>
+        
+        <div class="col-md-4">
+          <label class="form-label">Recherche</label>
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="Nom du volontaire ou commentaire..."
+                   [(ngModel)]="searchTerm" (keyup.enter)="applyFilters()">
+            <button class="btn btn-outline-secondary" type="button" (click)="applyFilters()">
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="col-12">
+          <div class="d-flex justify-content-between">
+            <button class="btn btn-outline-secondary" (click)="clearFilters()">
+              <i class="bi bi-x-circle me-2"></i>Réinitialiser les filtres
+            </button>
+            <button class="btn btn-outline-primary" (click)="exportToExcel()">
+              <i class="bi bi-download me-2"></i>Exporter
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des rapports -->
+  <div class="card">
+    <div class="card-header bg-white">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Rapports ({{filteredRapports.length}})</h5>
+        <div class="text-muted" *ngIf="stats">
+          Moyenne des évaluations : 
+          <span [class]="getEvaluationColor(stats.moyenneEvaluation)">
+            {{stats.moyenneEvaluation}}/10
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th width="200">Volontaire</th>
+              <th width="100">Période</th>
+              <th width="100">Évaluation</th>
+              <th>Commentaires</th>
+              <th width="120">Statut</th>
+              <th width="150">Date</th>
+              <th width="150" class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Loading state -->
+            <tr *ngIf="isLoading">
+              <td colspan="7" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Chargement...</span>
+                </div>
+              </td>
+            </tr>
+            
+            <!-- Empty state -->
+            <tr *ngIf="!isLoading && paginatedRapports.length === 0">
+              <td colspan="7" class="text-center py-5">
+                <div class="text-muted">
+                  <i class="bi bi-file-text display-6 d-block mb-3"></i>
+                  <h5>Aucun rapport trouvé</h5>
+                  <p class="mb-0">Utilisez les filtres ou créez un nouveau rapport</p>
+                </div>
+              </td>
+            </tr>
+            
+            <!-- Rapports -->
+            <tr *ngFor="let rapport of paginatedRapports">
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm bg-light rounded-circle d-flex align-items-center justify-content-center me-3">
+                    <i class="bi bi-person text-primary"></i>
+                  </div>
+                  <div>
+                    <h6 class="mb-0">{{rapport.volontaireNomComplet}}</h6>
+                    <small class="text-muted">{{rapport.missionVolontaire}}</small>
+                  </div>
+                </div>
+              </td>
+              
+              <td>
+                <span class="badge bg-info">{{rapport.periode}}</span>
+              </td>
+              
+              <td>
+                <div class="d-flex align-items-center">
+                  <span [class]="getEvaluationColor(rapport.evaluationGlobale)" class="fw-bold me-2">
+                    {{rapport.evaluationGlobale}}/10
+                  </span>
+                  <i class="bi" [class]="getEvaluationIcon(rapport.evaluationGlobale)"></i>
+                </div>
+              </td>
+              
+              <td>
+                <p class="mb-0 text-truncate" style="max-width: 300px;" 
+                   [title]="rapport.commentaires">
+                  {{rapport.commentaires}}
+                </p>
+              </td>
+              
+              <td>
+                <span class="badge" [class]="getStatutBadgeClass(rapport.statut)">
+                  <i class="bi me-1" [class]="'bi-' + getStatutIcon(rapport.statut)"></i>
+                  {{rapport.statut}}
+                </span>
+              </td>
+              
+              <td>
+                <small class="text-muted">
+                  {{rapport.dateSoumission | date:'dd/MM/yyyy'}}
+                </small>
+              </td>
+              
+              <td class="text-end">
+                <div class="btn-group" role="group">
+                  <button class="btn btn-sm btn-outline-primary" 
+                          [title]="rapport.statut === 'Brouillon' ? 'Modifier' : 'Voir'"
+                          (click)="rapport.statut === 'Brouillon' ? editRapport(rapport.id!) : viewRapport(rapport.id!)">
+                    <i class="bi" [class]="rapport.statut === 'Brouillon' ? 'bi-pencil' : 'bi-eye'"></i>
+                  </button>
+                  
+                  <button *ngIf="rapport.statut === 'Brouillon'" 
+                          class="btn btn-sm btn-outline-success"
+                          title="Soumettre"
+                          (click)="soumettreRapport(rapport.id!)">
+                    <i class="bi bi-send"></i>
+                  </button>
+                  
+                  <button *ngIf="rapport.statut === 'Brouillon'" 
+                          class="btn btn-sm btn-outline-danger"
+                          title="Supprimer"
+                          (click)="deleteRapport(rapport.id!)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="card-footer bg-white" *ngIf="totalPages > 1">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="text-muted">
+          Affichage {{(currentPage - 1) * itemsPerPage + 1}} à 
+{{math.min(currentPage * itemsPerPage, filteredRapports.length)}}          sur {{filteredRapports.length}} rapports
+        </div>
+        
+        <nav>
+          <ul class="pagination mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <button class="page-link" (click)="goToPage(currentPage - 1)">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+            </li>
+            
+            <li *ngFor="let page of [].constructor(totalPages); let i = index" 
+                class="page-item" [class.active]="currentPage === i + 1">
+              <button class="page-link" (click)="goToPage(i + 1)">
+                {{i + 1}}
+              </button>
+            </li>
+            
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <button class="page-link" (click)="goToPage(currentPage + 1)">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>

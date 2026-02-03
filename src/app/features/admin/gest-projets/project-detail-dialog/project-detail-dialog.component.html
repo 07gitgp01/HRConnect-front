@@ -1,0 +1,314 @@
+<!-- src/app/features/admin/gest-projets/project-detail-dialog/project-detail-dialog.component.html -->
+<div class="project-detail-dialog">
+  <div mat-dialog-title class="dialog-title">
+    <h2>Détails du Projet</h2>
+    <button mat-icon-button (click)="onClose()" aria-label="Fermer">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div mat-dialog-content class="dialog-content">
+    <mat-tab-group>
+      <!-- Onglet Informations générales -->
+      <mat-tab label="Informations">
+        <div class="tab-content">
+          <mat-card class="info-card">
+            <mat-card-header>
+              <mat-card-title>{{ getProjectTitle() }}</mat-card-title>
+              <mat-card-subtitle>
+                Partenaire: {{ getPartenaireNom(data.project.partenaireId) }}
+              </mat-card-subtitle>
+              
+              <span [class]="'status-badge ' + getStatusColor()">
+                <mat-icon>{{ getStatusIcon() }}</mat-icon>
+                {{ getStatusLabel() }}
+              </span>
+            </mat-card-header>
+
+            <mat-card-content>
+              <div class="info-grid">
+                <div class="info-item">
+                  <mat-icon>place</mat-icon>
+                  <div>
+                    <div class="info-label">Région</div>
+                    <div class="info-value">{{ getProjectRegion() }}</div>
+                  </div>
+                </div>
+
+                <div class="info-item">
+                  <mat-icon>people</mat-icon>
+                  <div>
+                    <div class="info-label">Volontaires requis</div>
+                    <div class="info-value">{{ getNeededVolunteers() }}</div>
+                  </div>
+                </div>
+
+                <div class="info-item">
+                  <mat-icon>event</mat-icon>
+                  <div>
+                    <div class="info-label">Date de début</div>
+                    <div class="info-value">{{ getStartDate() }}</div>
+                  </div>
+                </div>
+
+                <div class="info-item">
+                  <mat-icon>event_available</mat-icon>
+                  <div>
+                    <div class="info-label">Date de fin</div>
+                    <div class="info-value">{{ getEndDate() }}</div>
+                  </div>
+                </div>
+
+                <div class="info-item">
+                  <mat-icon>category</mat-icon>
+                  <div>
+                    <div class="info-label">Domaine</div>
+                    <div class="info-value">{{ data.project.domaineActivite || 'Non spécifié' }}</div>
+                  </div>
+                </div>
+
+                <div class="info-item">
+                  <mat-icon>business</mat-icon>
+                  <div>
+                    <div class="info-label">Type de mission</div>
+                    <div class="info-value">{{ data.project.type_mission || 'Non spécifié' }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="divider-container">
+                <mat-divider></mat-divider>
+              </div>
+
+              <div class="description-section">
+                <h3>Description détaillée</h3>
+                <p>{{ getProjectDescription() }}</p>
+              </div>
+
+              @if (hasProjectCompetences()) {
+                <div class="competences-section">
+                  <h3>Compétences requises</h3>
+                  <mat-chip-listbox>
+                    @for (competence of getProjectCompetences(); track competence) {
+                      <mat-chip-option [selectable]="false">
+                        {{ competence }}
+                      </mat-chip-option>
+                    }
+                  </mat-chip-listbox>
+                </div>
+              }
+
+              @if (data.project.avantagesVolontaire) {
+                <div class="avantages-section">
+                  <h3>Avantages pour le volontaire</h3>
+                  <p>{{ data.project.avantagesVolontaire }}</p>
+                </div>
+              }
+
+              @if (data.project.conditions_particulieres) {
+                <div class="conditions-section">
+                  <h3>Conditions particulières</h3>
+                  <p>{{ data.project.conditions_particulieres }}</p>
+                </div>
+              }
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Onglet Candidatures -->
+      <mat-tab label="Candidatures">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Candidatures liées à ce projet</mat-card-title>
+              <mat-card-subtitle>
+                {{ candidatures.length }} candidature(s) reçue(s)
+              </mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              @if (isLoadingCandidatures) {
+                <div class="loading-section">
+                  <mat-spinner diameter="40"></mat-spinner>
+                  <p>Chargement des candidatures...</p>
+                </div>
+              }
+
+              @if (!isLoadingCandidatures && candidatures.length === 0) {
+                <div class="no-data">
+                  <mat-icon>people_outline</mat-icon>
+                  <h3>Aucune candidature</h3>
+                  <p>Aucune candidature n'est liée à ce projet pour le moment.</p>
+                </div>
+              }
+
+              @if (!isLoadingCandidatures && candidatures.length > 0) {
+                <mat-list>
+                  @for (candidature of candidatures; track candidature.id) {
+                    <mat-list-item class="candidature-item" lines="3">
+                      <div matListItemIcon>
+                        <mat-icon>person</mat-icon>
+                      </div>
+                      <div matListItemTitle>{{ candidature.prenom }} {{ candidature.nom }}</div>
+                      <div matListItemLine>{{ candidature.email }}</div>
+                      <div matListItemLine class="competences">
+                        <span class="competences-label">Compétences: </span>
+                        <span class="competences-text">
+                          {{ getCompetencesText(candidature.competences) }}
+                        </span>
+                      </div>
+                      <span matListItemMeta [class]="'statut-badge ' + getCandidatureStatutClass(candidature.statut)">
+                        {{ getCandidatureStatutLabel(candidature.statut) }}
+                      </span>
+                    </mat-list-item>
+                  }
+                </mat-list>
+              }
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Onglet Volontaires -->
+      <mat-tab label="Volontaires">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Volontaires affectés</mat-card-title>
+              <mat-card-subtitle>
+                Gestion des volontaires pour ce projet
+              </mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              <div class="volontaires-section">
+                <!-- Statistiques -->
+                <div class="volontaires-stats">
+                  <div class="stat">
+                    <div class="stat-number">{{ getNeededVolunteers() }}</div>
+                    <div class="stat-label">Requis</div>
+                  </div>
+                  <div class="stat">
+                    <div class="stat-number">{{ volontairesAffectes.length }}</div>
+                    <div class="stat-label">Affectés</div>
+                  </div>
+                  <div class="stat">
+                    <div class="stat-number" [class.warning]="getVolontairesManquants() > 0">
+                      {{ getVolontairesManquants() }}
+                    </div>
+                    <div class="stat-label">Manquants</div>
+                  </div>
+                </div>
+
+                <div class="divider-container">
+                  <mat-divider></mat-divider>
+                </div>
+
+                <!-- Affectation manuelle -->
+                @if (volontairesDisponibles.length > 0) {
+                  <div class="affectation-section">
+                    <h3>Affecter un volontaire</h3>
+                    <div class="affectation-controls">
+                      <mat-form-field appearance="outline" class="volontaire-select">
+                        <mat-label>Sélectionner un volontaire</mat-label>
+                        <mat-select [(value)]="volontaireSelectionne">
+                          <mat-option value="">Choisir un volontaire...</mat-option>
+                          @for (volontaire of volontairesDisponibles; track volontaire.id) {
+                            <mat-option 
+                              [value]="volontaire.id" 
+                              [disabled]="estDejaAffecte(volontaire.id)">
+                              {{ volontaire.prenom }} {{ volontaire.nom }} 
+                              @if (volontaire.competences) {
+                                - {{ getCompetencesText(volontaire.competences) }}
+                              }
+                            </mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                      
+                      <button 
+                        mat-raised-button 
+                        color="primary" 
+                        (click)="affecterVolontaire()"
+                        [disabled]="!volontaireSelectionne || getVolontairesManquants() <= 0">
+                        <mat-icon>person_add</mat-icon>
+                        Affecter
+                      </button>
+                    </div>
+                  </div>
+                }
+
+                @if (volontairesDisponibles.length === 0 && !isLoadingVolontaires) {
+                  <div class="no-volontaires">
+                    <mat-icon>warning</mat-icon>
+                    <p>Aucun volontaire disponible pour affectation</p>
+                  </div>
+                }
+
+                <div class="divider-container">
+                  <mat-divider></mat-divider>
+                </div>
+
+                <!-- Liste des volontaires affectés -->
+                <div class="volontaires-list">
+                  <h3>Volontaires affectés au projet</h3>
+                  
+                  @if (isLoadingVolontaires) {
+                    <div class="loading-section">
+                      <mat-spinner diameter="40"></mat-spinner>
+                      <p>Chargement des volontaires...</p>
+                    </div>
+                  }
+
+                  @if (!isLoadingVolontaires && volontairesAffectes.length === 0) {
+                    <div class="no-data">
+                      <mat-icon>person_outline</mat-icon>
+                      <h3>Aucun volontaire affecté</h3>
+                      <p>Aucun volontaire n'est actuellement affecté à ce projet.</p>
+                    </div>
+                  }
+
+                  @if (!isLoadingVolontaires && volontairesAffectes.length > 0) {
+                    <mat-list>
+                      @for (affectation of volontairesAffectes; track affectation.id) {
+                        <mat-list-item class="volontaire-item" lines="3">
+                          <div matListItemIcon>
+                            <mat-icon>person</mat-icon>
+                          </div>
+                          <div matListItemTitle>{{ affectation.volontaire.prenom }} {{ affectation.volontaire.nom }}</div>
+                          <div matListItemLine>{{ affectation.volontaire.email || 'Email non disponible' }}</div>
+                          <div matListItemLine class="competences">
+                            <span class="competences-label">Compétences: </span>
+                            <span class="competences-text">
+                              {{ getCompetencesText(affectation.volontaire.competences) }}
+                            </span>
+                          </div>
+                          <div matListItemLine class="date-affectation">
+                            Affecté le: {{ getFormattedDate(affectation.dateAffectation) || 'Date inconnue' }}
+                          </div>
+                          <button 
+                            mat-icon-button 
+                            color="warn" 
+                            (click)="retirerVolontaire(affectation.id!)"
+                            matListItemMeta
+                            matTooltip="Retirer du projet">
+                            <mat-icon>person_remove</mat-icon>
+                          </button>
+                        </mat-list-item>
+                      }
+                    </mat-list>
+                  }
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+
+  <div mat-dialog-actions align="end">
+    <button mat-button (click)="onClose()">Fermer</button>
+  </div>
+</div>

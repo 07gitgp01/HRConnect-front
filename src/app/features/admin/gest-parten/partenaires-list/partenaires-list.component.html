@@ -1,0 +1,388 @@
+<!-- src/app/features/admin/gest-parten/partenaires-list/partenaires-list.html -->
+<div class="partenaires-container">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <!-- En-tête -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h2 class="h3 mb-1">Gestion des Partenaires</h2>
+            <p class="text-muted mb-0">Structures d'accueil proposant des missions de volontariat</p>
+          </div>
+          <button class="btn btn-success" (click)="addPartenaire()">
+            <i class="fas fa-plus me-2"></i>Nouveau partenaire
+          </button>
+        </div>
+
+        <!-- Cartes de statistiques -->
+        <div class="row mb-4">
+          <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5 class="card-title text-primary mb-1">{{ statsGlobales.totalPartenaires }}</h5>
+                    <p class="card-text text-muted small mb-0">Partenaires total</p>
+                  </div>
+                  <div class="text-primary">
+                    <i class="fas fa-building fa-2x opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5 class="card-title text-success mb-1">{{ statsGlobales.partenairesActifs }}</h5>
+                    <p class="card-text text-muted small mb-0">Comptes actifs</p>
+                  </div>
+                  <div class="text-success">
+                    <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5 class="card-title text-info mb-1">{{ getTotalProjets() }}</h5>
+                    <p class="card-text text-muted small mb-0">Projets soumis</p>
+                  </div>
+                  <div class="text-info">
+                    <i class="fas fa-project-diagram fa-2x opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5 class="card-title text-warning mb-1">{{ getTotalVolontaires() }}</h5>
+                    <p class="card-text text-muted small mb-0">Volontaires affectés</p>
+                  </div>
+                  <div class="text-warning">
+                    <i class="fas fa-users fa-2x opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistiques par rôle -->
+        <div class="row mb-4" *ngIf="statsGlobales.statsRoles">
+          <div class="col-12">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <h6 class="card-title mb-3">Répartition par rôle</h6>
+                <div class="row text-center">
+                  <div class="col-md-4 mb-2">
+                    <div class="border-end-md">
+                      <h4 class="text-primary mb-1">{{ statsGlobales.statsRoles.totalPTF }}</h4>
+                      <small class="text-muted">Partenaires PTF</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4 mb-2">
+                    <div class="border-end-md">
+                      <h4 class="text-success mb-1">{{ statsGlobales.statsRoles.totalStructuresAccueil }}</h4>
+                      <small class="text-muted">Structures d'Accueil</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4 mb-2">
+                    <div>
+                      <h4 class="text-info mb-1">{{ statsGlobales.statsRoles.totalMixtes }}</h4>
+                      <small class="text-muted">Partenaires Mixtes</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barre de recherche et filtres -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body">
+            <div class="row g-3 align-items-end">
+              <div class="col-lg-4 col-md-6">
+                <label class="form-label fw-semibold">Recherche</label>
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    placeholder="Nom, email, type, description..."
+                    [(ngModel)]="searchTerm"
+                    (input)="applyFilter()"
+                  />
+                </div>
+              </div>
+              <div class="col-lg-3 col-md-6">
+                <label class="form-label fw-semibold">Statut du compte</label>
+                <select class="form-select" [(ngModel)]="filterActif" (change)="applyFilter()">
+                  <option value="">Tous les statuts</option>
+                  <option value="actif">Actifs</option>
+                  <option value="inactif">Inactifs</option>
+                </select>
+              </div>
+              <div class="col-lg-3 col-md-6">
+                <label class="form-label fw-semibold">Type de partenaire</label>
+                <select class="form-select" [(ngModel)]="filterType" (change)="applyFilter()">
+                  <option value="">Tous les types</option>
+                  <option value="Public-Administration">Administration Publique</option>
+                  <option value="Public-Collectivite">Collectivité Territoriale</option>
+                  <option value="SocieteCivile">Société Civile</option>
+                  <option value="SecteurPrive">Secteur Privé</option>
+                  <option value="PTF">Partenaire Technique et Financier</option>
+                  <option value="InstitutionAcademique">Institution Académique</option>
+                </select>
+              </div>
+              <div class="col-lg-2 col-md-6">
+                <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+                  <i class="fas fa-undo me-2"></i>Réinitialiser
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Résultats et actions -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <span class="text-muted">
+              <strong>{{ filteredPartenaires.length }}</strong> 
+              partenaire(s) trouvé(s) sur {{ partenaires.length }}
+            </span>
+          </div>
+          <div>
+            <button class="btn btn-outline-primary me-2" [routerLink]="['/features/admin/dashboard']">
+              <i class="fas fa-arrow-left me-2"></i>Retour
+            </button>
+          </div>
+        </div>
+
+        <!-- Tableau des partenaires -->
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-0">
+            <div *ngIf="isLoading" class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+              </div>
+              <p class="mt-3 text-muted">Chargement des partenaires...</p>
+            </div>
+
+            <div *ngIf="!isLoading && filteredPartenaires.length === 0" class="text-center py-5">
+              <i class="fas fa-building fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">Aucun partenaire trouvé</h5>
+              <p class="text-muted">Aucun partenaire ne correspond à vos critères de recherche.</p>
+              <button class="btn btn-primary" (click)="clearFilters()">
+                <i class="fas fa-undo me-2"></i>Réinitialiser les filtres
+              </button>
+            </div>
+
+            <div *ngIf="!isLoading && filteredPartenaires.length > 0" class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th width="25%">Partenaire</th>
+                    <th width="15%">Type & Rôle</th>
+                    <th width="20%">Contact</th>
+                    <th width="20%">Statistiques</th>
+                    <th width="10%">Statut</th>
+                    <th width="10%" class="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let p of filteredPartenaires" class="align-middle">
+                    <td>
+                      <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0 me-3">
+                          <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" 
+                               style="width: 40px; height: 40px;">
+                            <i class="fas fa-building text-muted"></i>
+                          </div>
+                        </div>
+                        <div class="flex-grow-1">
+                          <h6 class="mb-1 fw-semibold">{{ p.nomStructure }}</h6>
+                          <p class="text-muted small mb-0 line-clamp-2">
+                            {{ p.description || 'Aucune description' }}
+                          </p>
+                          <small class="text-muted" *ngIf="p.dateCreationCompte">
+                            Créé le {{ p.dateCreationCompte | date:'dd/MM/yyyy' }}
+                          </small>
+                          <div *ngIf="p.domaineActivite" class="mt-1">
+                            <small class="badge bg-light text-dark">
+                              <i class="fas fa-tag me-1"></i>{{ p.domaineActivite }}
+                            </small>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <!-- Badge du type principal -->
+                      <div class="mb-2">
+                        <span [class]="getTypeColor(p) + ' badge badge-sm'" 
+                              [title]="hasMultipleTypes(p) ? 'Types: ' + getAllTypesDisplay(p) : ''">
+                          {{ getTypeDisplay(p) }}
+                          <i *ngIf="hasMultipleTypes(p)" class="fas fa-layer-group ms-1"></i>
+                        </span>
+                      </div>
+                      
+                      <!-- Rôle principal -->
+                      <div class="small">
+                        <span class="text-muted">Rôle:</span>
+                        <strong class="d-block">{{ getRolePrincipal(p) }}</strong>
+                      </div>
+
+                      <!-- Indicateur multi-types -->
+                      <div *ngIf="hasMultipleTypes(p)" class="mt-1">
+                        <small class="text-info">
+                          <i class="fas fa-tags me-1"></i>
+                          {{ p.typeStructures.length }} type(s)
+                        </small>
+                      </div>
+
+                      <!-- Indicateur PTF -->
+                      <div *ngIf="isPTF(p)" class="mt-1">
+                        <small class="text-warning">
+                          <i class="fas fa-hand-holding-usd me-1"></i>
+                          Accès zone PTF
+                        </small>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="mb-1">
+                        <i class="fas fa-envelope text-muted me-2"></i>
+                        <a [href]="'mailto:' + p.email" class="text-decoration-none small">{{ p.email }}</a>
+                      </div>
+                      <div class="mb-1">
+                        <i class="fas fa-phone text-muted me-2"></i>
+                        <span class="text-muted small">{{ p.telephone || 'Non renseigné' }}</span>
+                      </div>
+                      <div *ngIf="p.siteWeb">
+                        <i class="fas fa-globe text-muted me-2"></i>
+                        <a [href]="p.siteWeb" target="_blank" class="text-decoration-none small">Site web</a>
+                      </div>
+                      <div class="mb-1" *ngIf="p.personneContactNom">
+                        <i class="fas fa-user text-muted me-2"></i>
+                        <span class="text-muted small">{{ p.personneContactNom }}</span>
+                        <span *ngIf="p.personneContactFonction" class="text-muted d-block small">
+                          ({{ p.personneContactFonction }})
+                        </span>
+                      </div>
+                      <!-- Email de la personne contact -->
+                      <div class="mb-1" *ngIf="p.personneContactEmail">
+                        <i class="fas fa-envelope text-muted me-2"></i>
+                        <a [href]="'mailto:' + p.personneContactEmail" class="text-decoration-none small">
+                          {{ p.personneContactEmail }}
+                        </a>
+                        <small class="text-muted d-block">(Contact)</small>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="small">
+                        <!-- Statistiques globales -->
+                        <div class="d-flex justify-content-between mb-1">
+                          <span class="text-muted">Total projets:</span>
+                          <strong>{{ p.stats?.totalProjets || 0 }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                          <span class="text-muted">Actifs:</span>
+                          <span class="text-success">{{ p.stats?.projetsActifs || 0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                          <span class="text-muted">En attente:</span>
+                          <span class="text-warning">{{ p.stats?.projetsEnAttente || 0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                          <span class="text-muted">Volontaires:</span>
+                          <strong class="text-primary">{{ p.stats?.volontairesAffectes || 0 }}</strong>
+                        </div>
+                        
+                        <!-- Statistiques par type si disponibles -->
+                       <div *ngIf="hasStatsParType(p)" class="mt-2 p-2 bg-light rounded">
+  <small class="fw-semibold d-block mb-1">Par type:</small>
+                          <small class="fw-semibold d-block mb-1">Par type:</small>
+                           <div *ngFor="let typeKey of getObjectKeys(p.stats?.statsParType)" 
+       class="d-flex justify-content-between small">
+                           <span class="text-muted">{{ getTypeDisplayShort(typeKey) }}:</span>
+    <strong>{{ getProjetsByType(p, typeKey) }}</strong>
+                          </div>
+                        </div>
+
+                        <div *ngIf="p.stats?.dateDernierProjet" class="text-muted small mt-1">
+                          Dernier: {{ p.stats?.dateDernierProjet }}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span [class]="getStatusBadgeClass(p.estActive || p.compteActive)" class="badge badge-sm">
+                        {{ getStatusText(p.estActive || p.compteActive) }}
+                      </span>
+                      <div *ngIf="p.dateActivation" class="mt-1">
+                        <small class="text-muted d-block">
+                          Activé le {{ p.dateActivation | date:'dd/MM/yy' }}
+                        </small>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="btn-group-vertical btn-group-sm">
+                        <button class="btn btn-outline-primary" (click)="viewDetails(p.id)" 
+                                title="Voir les détails">
+                          <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" (click)="editPartenaire(p.id)"
+                                title="Modifier">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-info" (click)="viewProjets(p.id)"
+                                title="Voir les projets">
+                          <i class="fas fa-project-diagram"></i>
+                        </button>
+                        <button class="btn btn-outline-warning" (click)="toggleAccountStatus(p)"
+                                [title]="(p.estActive || p.compteActive) ? 'Désactiver le compte' : 'Activer le compte'">
+                          <i class="fas" 
+                             [class.fa-toggle-on]="p.estActive || p.compteActive" 
+                             [class.fa-toggle-off]="!(p.estActive || p.compteActive)"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" (click)="deletePartenaire(p.id)"
+                                title="Supprimer">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+
+                      <!-- Indicateur permissions -->
+                      <div *ngIf="p.permissions" class="mt-2 text-center">
+                        <small class="text-muted d-block" title="Peut créer des projets">
+                          <i class="fas fa-plus-circle" 
+                             [class.text-success]="p.permissions.peutCreerProjets"
+                             [class.text-muted]="!p.permissions.peutCreerProjets"></i>
+                        </small>
+                        <small class="text-muted d-block" title="Accès zone PTF">
+                          <i class="fas fa-chart-line"
+                             [class.text-warning]="p.permissions.accesZonePTF"
+                             [class.text-muted]="!p.permissions.accesZonePTF"></i>
+                        </small>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

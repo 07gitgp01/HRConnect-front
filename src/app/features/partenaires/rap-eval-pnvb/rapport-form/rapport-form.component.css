@@ -1,0 +1,136 @@
+/* Étoiles d'évaluation */
+.star-rating {
+  color: #ffc107;
+  font-size: 1.5rem;
+}
+
+.star-rating .bi-star {
+  color: #dee2e6;
+}
+
+/* Barre de progression */
+.progress {
+  height: 8px;
+}
+
+/* Champs requis */
+.form-control.ng-invalid.ng-touched,
+.form-select.ng-invalid.ng-touched {
+  border-color: #dc3545;
+}
+
+.form-control.ng-valid.ng-touched,
+.form-select.ng-valid.ng-touched {
+  border-color: #28a745;
+}
+
+/* Indicateur de caractères */
+.char-count {
+  font-size: 0.875rem;
+}
+
+.char-count.too-short {
+  color: #dc3545;
+}
+
+.char-count.valid {
+  color: #28a745;
+}
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.upload-zone:hover {
+  border-color: #0d6efd;
+  background-color: #f8f9fa;
+}
+
+.upload-zone.dragover {
+  border-color: #0d6efd;
+  background-color: #e7f1ff;
+}
+
+/* Critères d'évaluation */
+.criteres-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.critere-card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.3s;
+}
+
+.critere-card:hover {
+  border-color: #0d6efd;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.critere-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.critere-title {
+  font-weight: 600;
+  color: #495057;
+}
+
+.critere-score {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0d6efd;
+}
+
+.critere-description {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 1rem;
+}
+
+/* Évaluation globale */
+.global-score-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.global-score-number {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #0d6efd;
+  line-height: 1;
+}
+
+.global-score-label {
+  font-size: 1.25rem;
+  color: #6c757d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .criteres-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .global-score-card {
+    padding: 1.5rem;
+  }
+  
+  .global-score-number {
+    font-size: 2.5rem;
+  }
+}

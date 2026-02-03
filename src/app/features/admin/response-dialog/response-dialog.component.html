@@ -1,0 +1,90 @@
+<!-- src/app/features/admin/response-dialog/response-dialog.component.html -->
+<div class="response-dialog">
+  <h2 mat-dialog-title>
+    <mat-icon>reply</mat-icon>
+    Répondre à {{ data.message.fullName }}
+  </h2>
+
+  <mat-dialog-content class="dialog-content">
+    <!-- Informations du contact -->
+    <mat-card class="contact-info">
+      <mat-card-header>
+        <mat-card-title>Informations du contact</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="contact-details">
+          <p><strong>Email :</strong> {{ data.message.email }}</p>
+          <p><strong>Sujet :</strong> {{ getSubjectLabel(data.message.subject) }}</p>
+          <p><strong>Date :</strong> {{ data.message.createdAt | date:'dd/MM/yyyy à HH:mm' }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Message original -->
+    <mat-card class="original-message">
+      <mat-card-header>
+        <mat-card-title>Message original</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="message-text">{{ data.message.message }}</p>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Formulaire de réponse -->
+    <mat-card class="response-form-card">
+      <mat-card-header>
+        <mat-card-title>Votre réponse</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="responseForm" class="response-form">
+          
+          <!-- Option d'envoi d'email -->
+          <mat-checkbox formControlName="sendEmail" color="primary" class="email-option">
+            <div class="checkbox-label">
+              <mat-icon>email</mat-icon>
+              Envoyer la réponse par email à <strong>{{ data.message.email }}</strong>
+            </div>
+          </mat-checkbox>
+
+          <!-- Champ de réponse -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Votre réponse</mat-label>
+            <textarea matInput formControlName="response" rows="8"
+                      placeholder="Rédigez votre réponse ici..."></textarea>
+            <mat-hint align="end">
+              {{ response?.value?.length || 0 }} caractères
+            </mat-hint>
+            <mat-error *ngIf="response?.hasError('required') && response?.touched">
+              La réponse est obligatoire
+            </mat-error>
+            <mat-error *ngIf="response?.hasError('minlength') && response?.touched">
+              La réponse doit contenir au moins 10 caractères
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Aperçu de l'email -->
+          <div *ngIf="responseForm.get('response')?.value && responseForm.get('sendEmail')?.value" 
+               class="email-preview">
+            <h4>📧 Aperçu de l'email qui sera envoyé :</h4>
+            <div class="preview-container" [innerHTML]="getEmailPreview()"></div>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()" [disabled]="isSubmitting">
+      <mat-icon>cancel</mat-icon>
+      Annuler
+    </button>
+    <button mat-raised-button color="primary" 
+            (click)="onSend()" 
+            [disabled]="responseForm.invalid || isSubmitting"
+            class="send-button">
+      <mat-icon *ngIf="!isSubmitting">send</mat-icon>
+      <mat-spinner *ngIf="isSubmitting" diameter="20"></mat-spinner>
+      {{ isSubmitting ? 'Envoi en cours...' : 'Envoyer la réponse' }}
+    </button>
+  </mat-dialog-actions>
+</div>

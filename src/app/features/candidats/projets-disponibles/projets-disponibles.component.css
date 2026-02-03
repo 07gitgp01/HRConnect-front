@@ -1,0 +1,500 @@
+/* src/app/features/candidats/projets-disponibles/projets-disponibles.component.css */
+.projets-disponibles-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* En-tête */
+.header-section {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.header-section h1 {
+  color: #1e293b;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.header-section p {
+  color: #64748b;
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Filtres */
+.filters-section {
+  margin-bottom: 32px;
+}
+
+.filters-card {
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.search-field {
+  min-width: 300px;
+}
+
+.reset-button {
+  height: 56px;
+  white-space: nowrap;
+}
+
+/* Contenu principal */
+.content-section {
+  min-height: 400px;
+}
+
+/* États */
+.loading-section, .error-section, .no-projects-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  color: #64748b;
+}
+
+.loading-section mat-spinner {
+  margin-bottom: 16px;
+}
+
+.error-section mat-icon, .no-projects-section mat-icon {
+  font-size: 4rem;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.error-section h3, .no-projects-section h3 {
+  color: #1e293b;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+/* Grille des projets */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.project-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+/* ✅ CORRECTION : En-tête carte selon votre HTML */
+.card-header {
+  padding: 20px 20px 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+}
+
+.card-header.urgent {
+  background: linear-gradient(135deg, #fef3c7 0%, #fef3c7 100%);
+  margin: -1px -1px 0 -1px;
+  padding: 16px 20px 0;
+  border-radius: 12px 12px 0 0;
+}
+
+.project-title {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+  flex: 1;
+  min-width: 200px;
+}
+
+/* ✅ CORRECTION : Badge d'urgence */
+.urgence-badge {
+  background: #dc2626;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  order: 2;
+}
+
+/* ✅ CORRECTION : Badge de statut */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  order: 1;
+}
+
+/* Classes pour les différents statuts */
+.status-badge.en_attente {
+  background: #fbbf24;
+  color: #92400e;
+}
+
+.status-badge.actif {
+  background: #10b981;
+  color: #065f46;
+}
+
+.status-badge.cloture {
+  background: #6b7280;
+  color: #ffffff;
+}
+
+/* ✅ CORRECTION : Contenu carte selon votre HTML */
+mat-card-content {
+  padding: 16px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-description {
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* ✅ CORRECTION : Grille d'information selon votre HTML */
+.project-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.info-item mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+/* ✅ CORRECTION : Section volontaires */
+.volunteers-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.volunteers-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.manquants {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* ✅ CORRECTION : Dates */
+.dates-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f0f9ff;
+  border-radius: 8px;
+  border-left: 4px solid #0ea5e9;
+  flex-shrink: 0;
+}
+
+.date-item {
+  margin-bottom: 4px;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.date-item:last-child {
+  margin-bottom: 0;
+}
+
+.date-item strong {
+  color: #0ea5e9;
+}
+
+/* ✅ CORRECTION : Compétences */
+.competences-section {
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.competences-section h4 {
+  margin: 0 0 8px 0;
+  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.competences-chips {
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+/* ✅ CORRECTION : Avantages */
+.avantages-section {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border-radius: 8px;
+  border-left: 4px solid #16a34a;
+  flex-shrink: 0;
+}
+
+.avantages-section h4 {
+  margin: 0 0 4px 0;
+  color: #15803d;
+  font-size: 0.9rem;
+}
+
+.avantages-text {
+  margin: 0;
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* ✅ CORRECTION : Actions */
+mat-card-actions {
+  padding: 0 20px 20px !important;
+  gap: 8px;
+  margin-top: auto;
+}
+
+/* ✅ CORRECTION : Statistiques */
+.stats-section {
+  margin-top: 32px;
+}
+
+.stats-card {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border-radius: 12px;
+}
+
+.stats-content {
+  display: flex;
+  justify-content: space-around;
+  padding: 24px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ✅ Améliorations pour l'accessibilité et performance */
+.project-card {
+  will-change: transform, box-shadow;
+}
+
+/* ✅ Badge d'urgence avec meilleur contraste */
+.urgence-badge {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
+.info-item {
+  color: #4b5563;
+}
+
+/* ✅ Fallback pour gradient */
+.stats-card {
+  background: #6366f1;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+/* ✅ Barre de défilement personnalisée */
+.competences-chips::-webkit-scrollbar {
+  width: 4px;
+}
+
+.competences-chips::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 2px;
+}
+
+.competences-chips::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.competences-chips::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ✅ Styles pour les chips de compétences */
+mat-chip-set {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+mat-chip {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  min-height: 24px;
+}
+
+/* ✅ Responsive Design */
+@media (max-width: 1200px) {
+  .filters-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .projects-grid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .projets-disponibles-container {
+    padding: 16px;
+  }
+  
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .project-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .header-section h1 {
+    font-size: 2rem;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .project-title {
+    min-width: 100%;
+    order: 1;
+  }
+  
+  .status-badge {
+    order: 2;
+    align-self: flex-start;
+  }
+  
+  .urgence-badge {
+    order: 3;
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .project-card {
+    margin: 0 -8px;
+    border-radius: 8px;
+  }
+  
+  .project-title {
+    font-size: 1.1rem;
+  }
+  
+  mat-card-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  mat-card-actions button {
+    width: 100%;
+  }
+}

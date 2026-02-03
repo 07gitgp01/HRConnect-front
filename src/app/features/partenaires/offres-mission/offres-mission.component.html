@@ -1,0 +1,529 @@
+<div class="offres-mission-container">
+  <!-- Header avec statistiques -->
+  <div class="container-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1 class="page-title">
+          <i class="fas fa-bullhorn me-2"></i>
+          Offres de Mission
+        </h1>
+        <p class="page-subtitle">
+          Créez et soumettez vos demandes de volontaires. L'administration validera et publiera les offres.
+        </p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary btn-lg" (click)="ouvrirModalNouvelleOffre()">
+          <i class="fas fa-plus me-2"></i>
+          Nouvelle offre
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="stats-overview">
+      <div class="stat-item">
+        <div class="stat-number">{{ statistiques.total }}</div>
+        <div class="stat-label">Offres total</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ statistiques.postesVacants }}</div>
+        <div class="stat-label">Postes vacants</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ statistiques.en_attente }}</div>
+        <div class="stat-label">En attente</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ statistiques.actifs }}</div>
+        <div class="stat-label">Publiées</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres et recherche -->
+  <div class="filters-section">
+    <div class="row g-3">
+      <div class="col-md-8">
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="fas fa-search"></i>
+          </span>
+          <input type="text" class="form-control" 
+                 [(ngModel)]="filtres.recherche"
+                 (ngModelChange)="appliquerFiltres()"
+                 placeholder="Rechercher par titre, description ou région...">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="row g-2">
+          <div class="col-6">
+            <select class="form-select" [(ngModel)]="filtres.statut" (ngModelChange)="appliquerFiltres()">
+              <option value="tous">Tous statuts</option>
+              <option value="en_attente">En attente</option>
+              <option value="actif">Publiées</option>
+              <option value="cloture">Clôturées</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <select class="form-select" [(ngModel)]="filtres.domaine" (ngModelChange)="appliquerFiltres()">
+              <option value="tous">Tous domaines</option>
+              <option *ngFor="let domaine of domaines" [value]="domaine">{{ domaine }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+    <p class="mt-3">Chargement des offres de mission...</p>
+  </div>
+
+  <!-- Liste des offres -->
+  <div *ngIf="!isLoading" class="content-section">
+    <!-- Aucune offre -->
+    <div *ngIf="offresFiltrees.length === 0" class="no-data-card">
+      <div class="no-data-icon">
+        <i class="fas fa-clipboard-list fa-3x"></i>
+      </div>
+      <h4>Aucune offre trouvée</h4>
+      <p *ngIf="filtres.statut !== 'tous' || filtres.domaine !== 'tous' || filtres.recherche">
+        Aucune offre ne correspond à vos critères de recherche.
+      </p>
+      <p *ngIf="filtres.statut === 'tous' && filtres.domaine === 'tous' && !filtres.recherche">
+        Vous n'avez pas encore créé d'offre de mission.
+      </p>
+      <button *ngIf="peutCreerOffres" class="btn btn-primary mt-3" (click)="ouvrirModalNouvelleOffre()">
+        <i class="fas fa-plus me-2"></i>
+        Créer votre première offre
+      </button>
+    </div>
+
+    <!-- Grille des offres -->
+    <div *ngIf="offresFiltrees.length > 0" class="offres-grid">
+      <div *ngFor="let offre of offresFiltrees" class="offre-card">
+        <!-- Header de la carte -->
+        <div class="offre-header">
+          <div class="offre-title-section">
+            <div class="offre-badge" [ngClass]="getStatutBadgeClass(offre.statutProjet)">
+              {{ getStatutText(offre.statutProjet) }}
+            </div>
+            <h3 class="offre-title">{{ offre.titre }}</h3>
+            <div class="offre-meta">
+              <span class="meta-item">
+                <i class="fas fa-map-marker-alt me-1"></i>
+                {{ offre.ville_commune }}, {{ offre.regionAffectation }}
+              </span>
+              <span class="meta-item">
+                <i class="fas fa-calendar-alt me-1"></i>
+                Début : {{ formatDate(offre.dateDebut) }}
+              </span>
+              <span class="meta-item">
+                <i class="fas fa-users me-1"></i>
+                {{ offre.nombreVolontairesActuels || 0 }}/{{ offre.nombreVolontairesRequis }}
+              </span>
+            </div>
+          </div>
+          <div class="offre-actions">
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                      data-bs-toggle="dropdown" type="button">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <ul class="dropdown-menu">
+                <!-- Le partenaire ne peut que modifier et supprimer les offres en attente -->
+                <li *ngIf="peutModifier(offre)">
+                  <a class="dropdown-item" href="javascript:void(0)" (click)="ouvrirModalEdition(offre)">
+                    <i class="fas fa-edit me-2"></i> Modifier
+                  </a>
+                </li>
+                
+                <!-- Séparateur seulement s'il y a suppression -->
+                <li *ngIf="peutSupprimer(offre)">
+                  <hr class="dropdown-divider">
+                </li>
+                
+                <!-- Suppression seulement pour les offres en attente -->
+                <li *ngIf="peutSupprimer(offre)">
+                  <a class="dropdown-item text-danger" href="javascript:void(0)" (click)="ouvrirModalSuppression(offre)">
+                    <i class="fas fa-trash me-2"></i> Supprimer
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Body de la carte -->
+        <div class="offre-body">
+          <p class="offre-description">{{ offre.descriptionCourte }}</p>
+          
+          <div class="offre-details">
+            <div class="detail-row">
+              <div class="detail-item">
+                <span class="detail-label">
+                  <i class="fas fa-tag me-1"></i> Type :
+                </span>
+                <span class="detail-value">{{ offre.type_mission }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">
+                  <i [class]="getDomaineIcon(offre.domaineActivite) + ' me-1'"></i> Domaine :
+                </span>
+                <span class="detail-value">{{ offre.domaineActivite }}</span>
+              </div>
+            </div>
+            
+            <div class="detail-row">
+              <div class="detail-item">
+                <span class="detail-label">
+                  <i class="fas fa-calendar-times me-1"></i> Échéance :
+                </span>
+                <span class="detail-value">{{ formatDate(offre.dateLimiteCandidature) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">
+                  <i class="fas fa-user-check me-1"></i> Postes vacants :
+                </span>
+                <span class="detail-value">
+                  {{ getNombrePostesRestants(offre) }}
+                  <span *ngIf="getNombrePostesRestants(offre) > 0 && offre.statutProjet === 'actif'" class="badge bg-success ms-2">
+                    Recrutement ouvert
+                  </span>
+                  <span *ngIf="getNombrePostesRestants(offre) > 0 && offre.statutProjet === 'en_attente'" class="badge bg-warning text-dark ms-2">
+                    En attente de validation
+                  </span>
+                  <span *ngIf="getNombrePostesRestants(offre) === 0 && offre.statutProjet === 'actif'" class="badge bg-secondary ms-2">
+                    Complet
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Information sur les candidatures -->
+            <div class="detail-row" *ngIf="offre.statutProjet === 'actif'">
+              <div class="detail-item">
+                <span class="detail-label">
+                  <i class="fas fa-user-clock me-1"></i> Candidatures :
+                </span>
+                <span class="detail-value">
+                  {{ offre.nombreVolontairesActuels || 0 }} volontaires affectés
+                  <span *ngIf="offre.statutProjet === 'actif'" class="badge bg-info ms-2">
+                    Accepte les candidatures
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Avantages -->
+          <div class="offre-avantages" *ngIf="offre.avantagesVolontaire">
+            <h6>Avantages proposés :</h6>
+            <div class="avantages-list">
+              <span class="badge bg-success me-1 mb-1">
+                <i class="fas fa-check me-1"></i>{{ offre.avantagesVolontaire }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Instructions selon le statut -->
+          <div *ngIf="offre.statutProjet === 'en_attente'" class="alert alert-info mt-3">
+            <i class="fas fa-info-circle me-2"></i>
+            Cette offre est en attente de validation par l'administration. Vous pouvez la modifier tant qu'elle n'est pas publiée.
+          </div>
+
+          <div *ngIf="offre.statutProjet === 'actif'" class="alert alert-success mt-3">
+            <i class="fas fa-check-circle me-2"></i>
+            Cette offre est publiée et visible par les volontaires. 
+            <strong>{{ getNombrePostesRestants(offre) }} postes disponibles</strong>.
+          </div>
+
+          <div *ngIf="offre.statutProjet === 'cloture'" class="alert alert-secondary mt-3">
+            <i class="fas fa-archive me-2"></i>
+            Cette offre est clôturée. 
+            <span *ngIf="offre.dateCloture">Clôturée le {{ formatDate(offre.dateCloture) }}</span>
+          </div>
+        </div>
+
+        <!-- Footer de la carte -->
+        <div class="offre-footer">
+          <div class="footer-left">
+            <div class="date-info">
+              <small class="text-muted">
+                Créée le {{ formatDate(offre.created_at) }}
+                <span *ngIf="offre.datePublication">
+                  • Publiée le {{ formatDate(offre.datePublication) }}
+                </span>
+                <span *ngIf="offre.dateCloture">
+                  • Clôturée le {{ formatDate(offre.dateCloture) }}
+                </span>
+              </small>
+            </div>
+          </div>
+          <div class="footer-right">
+            <a [routerLink]="['/features/partenaires/offres-mission', offre.id]" 
+               class="btn btn-sm btn-outline-primary me-2">
+              <i class="fas fa-eye me-1"></i> Voir détails
+            </a>
+            <a *ngIf="offre.statutProjet === 'actif'" 
+               [routerLink]="['/features/partenaires/candidatures', offre.id]" 
+               class="btn btn-sm btn-success">
+              <i class="fas fa-user-check me-1"></i> 
+              Voir candidatures
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal : Formulaire offre -->
+  <div *ngIf="showModalOffre" class="modal-backdrop fade show" (click)="fermerModalOffre()"></div>
+  <div *ngIf="showModalOffre" class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            {{ modeEdition ? 'Modifier l\'offre' : 'Nouvelle offre de mission' }}
+          </h5>
+          <button type="button" class="btn-close" (click)="fermerModalOffre()"></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="offreForm" (ngSubmit)="sauvegarderOffre()">
+            <!-- Informations générales -->
+            <div class="form-section">
+              <h6 class="section-title">
+                <i class="fas fa-info-circle me-2"></i> Informations générales
+              </h6>
+              <div class="row g-3">
+                <div class="col-md-12">
+                  <label class="form-label">Titre de l'offre *</label>
+                  <input type="text" class="form-control" formControlName="titre" 
+                         placeholder="Ex: Coordinateur de Projet Éducation">
+                  <div *ngIf="offreForm.get('titre')?.invalid && (offreForm.get('titre')?.touched || isSubmitting)" 
+                       class="invalid-feedback d-block">
+                    <div *ngIf="offreForm.get('titre')?.errors?.['required']">Le titre est requis</div>
+                    <div *ngIf="offreForm.get('titre')?.errors?.['minlength']">Minimum 10 caractères</div>
+                  </div>
+                </div>
+
+                <div class="col-md-12">
+                  <label class="form-label">Description courte *</label>
+                  <textarea class="form-control" formControlName="descriptionCourte" rows="2" 
+                            placeholder="Description visible dans les listes"></textarea>
+                  <div *ngIf="offreForm.get('descriptionCourte')?.invalid && (offreForm.get('descriptionCourte')?.touched || isSubmitting)" 
+                       class="invalid-feedback d-block">
+                    <div *ngIf="offreForm.get('descriptionCourte')?.errors?.['required']">La description courte est requise</div>
+                    <div *ngIf="offreForm.get('descriptionCourte')?.errors?.['minlength']">Minimum 20 caractères</div>
+                  </div>
+                </div>
+
+                <div class="col-md-12">
+                  <label class="form-label">Description détaillée *</label>
+                  <textarea class="form-control" formControlName="descriptionLongue" rows="4" 
+                            placeholder="Description complète du projet, objectifs, contexte..."></textarea>
+                  <div *ngIf="offreForm.get('descriptionLongue')?.invalid && (offreForm.get('descriptionLongue')?.touched || isSubmitting)" 
+                       class="invalid-feedback d-block">
+                    <div *ngIf="offreForm.get('descriptionLongue')?.errors?.['required']">La description détaillée est requise</div>
+                    <div *ngIf="offreForm.get('descriptionLongue')?.errors?.['minlength']">Minimum 100 caractères</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Détails de la mission -->
+            <div class="form-section">
+              <h6 class="section-title">
+                <i class="fas fa-tasks me-2"></i> Détails de la mission
+              </h6>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Type de mission *</label>
+                  <select class="form-select" formControlName="type_mission">
+                    <option *ngFor="let type of typesMission" [value]="type.value">
+                      {{ type.label }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Domaine d'activité *</label>
+                  <select class="form-select" formControlName="domaineActivite">
+                    <option value="">Sélectionner...</option>
+                    <option *ngFor="let domaine of domaines" [value]="domaine">
+                      {{ domaine }}
+                    </option>
+                  </select>
+                  <div *ngIf="offreForm.get('domaineActivite')?.invalid && (offreForm.get('domaineActivite')?.touched || isSubmitting)" 
+                       class="invalid-feedback d-block">
+                    Le domaine d'activité est requis
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Nombre de volontaires *</label>
+                  <input type="number" class="form-control" formControlName="nombreVolontairesRequis" min="1">
+                  <div *ngIf="offreForm.get('nombreVolontairesRequis')?.invalid && (offreForm.get('nombreVolontairesRequis')?.touched || isSubmitting)" 
+                       class="invalid-feedback d-block">
+                    Le nombre de volontaires est requis (minimum 1)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dates -->
+            <div class="form-section">
+              <h6 class="section-title">
+                <i class="fas fa-calendar-alt me-2"></i> Calendrier
+              </h6>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Date de début *</label>
+                  <input type="date" class="form-control" formControlName="dateDebut">
+                  <div *ngIf="offreForm.get('dateDebut')?.invalid && (offreForm.get('dateDebut')?.touched || isSubmitting)" 
+                       class="invalid-feedback d-block">
+                    La date de début est requise
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Date de fin *</label>
+                  <input type="date" class="form-control" formControlName="dateFin">
+                  <div *ngIf="offreForm.get('dateFin')?.invalid && (offreForm.get('dateFin')?.touched || isSubmitting)" 
+                       class="invalid-feedback d-block">
+                    La date de fin est requise
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Date limite candidature *</label>
+                  <input type="date" class="form-control" formControlName="dateLimiteCandidature">
+                  <div *ngIf="offreForm.get('dateLimiteCandidature')?.invalid && (offreForm.get('dateLimiteCandidature')?.touched || isSubmitting)" 
+                       class="invalid-feedback d-block">
+                    La date limite est requise
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Localisation -->
+            <div class="form-section">
+              <h6 class="section-title">
+                <i class="fas fa-map-marker-alt me-2"></i> Localisation
+              </h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Région d'affectation *</label>
+                  <input type="text" class="form-control" formControlName="regionAffectation" 
+                         placeholder="Ex: Région de Dakar">
+                  <div *ngIf="offreForm.get('regionAffectation')?.invalid && (offreForm.get('regionAffectation')?.touched || isSubmitting)" 
+                       class="invalid-feedback d-block">
+                    La région est requise
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Ville/Commune *</label>
+                  <input type="text" class="form-control" formControlName="ville_commune" 
+                         placeholder="Ex: Dakar">
+                  <div *ngIf="offreForm.get('ville_commune')?.invalid && (offreForm.get('ville_commune')?.touched || isSubmitting)" 
+                       class="invalid-feedback d-block">
+                    La ville/commune est requise
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Informations complémentaires -->
+            <div class="form-section">
+              <h6 class="section-title">
+                <i class="fas fa-file-alt me-2"></i> Informations complémentaires
+              </h6>
+              <div class="row g-3">
+                <div class="col-md-12">
+                  <label class="form-label">Compétences requises</label>
+                  <textarea class="form-control" formControlName="competences_requises" rows="2"
+                            placeholder="Listez les compétences nécessaires"></textarea>
+                </div>
+
+                <div class="col-md-12">
+                  <label class="form-label">Conditions particulières</label>
+                  <textarea class="form-control" formControlName="conditions_particulieres" rows="2"
+                            placeholder="Conditions spécifiques pour les volontaires"></textarea>
+                </div>
+
+                <div class="col-md-12">
+                  <label class="form-label">Avantages pour le volontaire</label>
+                  <textarea class="form-control" formControlName="avantagesVolontaire" rows="2"
+                            placeholder="Ex: Logement, Transport, Repas..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" (click)="fermerModalOffre()">
+                Annuler
+              </button>
+              <button type="submit" class="btn btn-primary" [disabled]="isSubmitting">
+                <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+                {{ modeEdition ? 'Mettre à jour' : 'Soumettre l\'offre' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal : Confirmation suppression -->
+  <div *ngIf="showModalSuppression" class="modal-backdrop fade show" (click)="fermerModalSuppression()"></div>
+  <div *ngIf="showModalSuppression" class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Confirmer la suppression
+          </h5>
+          <button type="button" class="btn-close" (click)="fermerModalSuppression()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            Êtes-vous sûr de vouloir supprimer cette offre ?
+          </div>
+          
+          <div *ngIf="offreASupprimer" class="offre-preview">
+            <h6>{{ offreASupprimer.titre }}</h6>
+            <div class="text-muted">
+              <small>
+                Créée le {{ formatDate(offreASupprimer.created_at) }} • 
+                Statut : {{ getStatutText(offreASupprimer.statutProjet) }}
+              </small>
+            </div>
+          </div>
+
+          <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Attention :</strong> Seules les offres "en attente" peuvent être supprimées. 
+            Les offres publiées doivent être clôturées par l'administration.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="fermerModalSuppression()">
+            Annuler
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmerSuppression()">
+            <i class="fas fa-trash me-2"></i>
+            Supprimer définitivement
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

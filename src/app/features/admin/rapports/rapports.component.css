@@ -1,0 +1,65 @@
+/* Conteneur global */
+.rapports-container {
+  padding: 20px;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+}
+
+/* Titre principal */
+.rapports-container h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Cartes pour les graphiques */
+.rapport-card {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rapport-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+
+/* Titre des cartes */
+.rapport-card h5 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 500;
+  color: #555;
+}
+
+/* Canvas */
+canvas {
+  max-width: 100%;
+}
+
+/* Grid responsive */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.col-md-4 {
+  flex: 1 1 calc(33.333% - 20px);
+}
+
+@media (max-width: 992px) {
+  .col-md-4 {
+    flex: 1 1 calc(50% - 20px);
+  }
+}
+
+@media (max-width: 576px) {
+  .col-md-4 {
+    flex: 1 1 100%;
+  }
+}

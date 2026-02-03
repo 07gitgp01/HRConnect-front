@@ -1,0 +1,152 @@
+/* src/app/features/admin/gest-projets/gest-projets.component.css */
+
+/* S'assure que la barre d'outils utilise tout l'espace horizontal disponible */
+mat-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* CHANGEMENT ICI : couleur primaire verte */
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
+}
+
+/* Pousse les boutons de navigation vers la droite de la barre d'outils */
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+/* Style de base pour les liens de navigation (qui utilisent mat-button) */
+a[mat-button] {
+  margin: 0 8px;
+  color: white;
+  font-weight: 500;
+  /* Ajoute un peu de transition pour l'effet de survol */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 4px;
+  padding: 8px 16px;
+  
+  &:hover {
+    /* CHANGEMENT ICI : survol vert clair */
+    background-color: rgba(76, 175, 80, 0.2);
+    transform: translateY(-1px);
+  }
+}
+
+/* Style spécifique pour le lien de navigation actuellement actif */
+.active-link {
+  /* CHANGEMENT ICI : fond vert plus prononcé pour l'état actif */
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+  
+  &:hover {
+    background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%);
+  }
+}
+
+/* Conteneur pour le contenu principal rendu par <router-outlet> */
+.content-wrapper {
+  padding: 24px;
+  max-width: 1400px; /* Limite la largeur pour une meilleure lisibilité sur grands écrans */
+  margin: 0 auto; /* Centre le contenu principal */
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: calc(100vh - 64px);
+}
+
+/* Réactivité de base pour les petits écrans */
+@media (max-width: 600px) {
+  mat-toolbar {
+    flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si l'écran est trop petit */
+    height: auto;
+    min-height: 56px; /* Hauteur minimale standard Material Design */
+    padding: 8px 0;
+  }
+
+  a[mat-button] {
+    margin: 4px 0; /* Plus d'espace vertical sur mobile */
+    font-size: 0.9rem;
+    padding: 6px 12px;
+  }
+  
+  .content-wrapper {
+    padding: 16px;
+  }
+}
+
+/* Mode sombre */
+@media (prefers-color-scheme: dark) {
+  mat-toolbar {
+    /* CHANGEMENT ICI : vert foncé pour mode sombre */
+    background: linear-gradient(135deg, #1b5e20 0%, #145214 100%);
+    box-shadow: 0 4px 12px rgba(27, 94, 32, 0.3);
+  }
+  
+  a[mat-button] {
+    &:hover {
+      background-color: rgba(76, 175, 80, 0.3);
+    }
+  }
+  
+  .active-link {
+    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+    
+    &:hover {
+      background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+    }
+  }
+  
+  .content-wrapper {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+}
+
+/* Améliorations visuelles supplémentaires */
+mat-toolbar .app-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.25px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+mat-toolbar .app-title mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+/* Ajout d'un indicateur visuel pour les liens actifs */
+.active-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background-color: #ffd740;
+  border-radius: 2px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 60%;
+    opacity: 1;
+  }
+}
+
+/* Amélioration de la visibilité au focus pour l'accessibilité */
+a[mat-button]:focus-visible {
+  outline: 2px solid #4caf50;
+  outline-offset: 2px;
+  border-radius: 4px;
+}

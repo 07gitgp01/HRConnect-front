@@ -1,0 +1,344 @@
+.candidature-form-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Alerte profil incomplet */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-content strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 1rem;
+}
+
+.alert-content p {
+  margin: 0 0 12px 0;
+  font-size: 0.9rem;
+}
+
+/* Carte principale */
+.form-card {
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+
+.form-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 24px;
+  border-radius: 12px 12px 0 0;
+}
+
+.form-header mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.form-header mat-card-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+}
+
+/* Informations du projet */
+.projet-info {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border-left: 4px solid #667eea;
+}
+
+.projet-info h3 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 1.3rem;
+}
+
+.projet-description {
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.projet-details {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.projet-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Sections du formulaire */
+.form-section {
+  margin-bottom: 32px;
+  padding: 0 8px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 500;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+/* Grilles */
+.two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Champs de formulaire */
+mat-form-field {
+  width: 100%;
+}
+
+/* Note d'information utilisateur */
+.user-info-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #e3f2fd;
+  border-radius: 6px;
+  color: #1976d2;
+  font-size: 0.9rem;
+  margin-top: 16px;
+}
+
+/* Conseils */
+.form-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.form-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.form-hint mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* Upload de fichiers */
+.file-upload-section {
+  margin-top: 16px;
+}
+
+.file-input-container {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.file-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.file-input-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: #f5f5f5;
+  border: 2px dashed #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #666;
+}
+
+.file-input-label:hover {
+  background: #e8e8e8;
+  border-color: #667eea;
+}
+
+.file-preview-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-top: 12px;
+}
+
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  color: #333;
+}
+
+.remove-file-btn {
+  margin-left: auto;
+}
+
+.file-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+/* Champs spécifiques pour la pièce d'identité */
+.numero-piece-input.type-cnib {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.numero-piece-input.type-passeport {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Actions du formulaire */
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 8px 8px;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 24px;
+}
+
+.submit-button {
+  min-width: 200px;
+}
+
+/* État de chargement */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.loading-container p {
+  margin-top: 16px;
+}
+
+/* Animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .candidature-form-container {
+    padding: 10px;
+  }
+  
+  .two-cols {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .form-header {
+    padding: 16px;
+  }
+  
+  .form-header mat-card-title {
+    font-size: 1.3rem;
+  }
+  
+  .projet-details {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .submit-button {
+    width: 100%;
+  }
+  
+  .alert {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* Améliorations d'accessibilité */
+mat-form-field.mat-form-field-appearance-outline .mat-form-field-outline-thick {
+  color: #667eea;
+}
+
+mat-form-field.mat-focused .mat-form-field-label {
+  color: #667eea;
+}
+
+/* États de validation */
+.ng-valid[required], .ng-valid.required {
+  border-left: 5px solid #42A948;
+}
+
+.ng-invalid:not(form) {
+  border-left: 5px solid #a94442;
+}

@@ -1,0 +1,543 @@
+/* ===== HEADER PRINCIPAL - VERSION VERTE PNVB ===== */
+mat-toolbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  user-select: none;
+  overflow: hidden;
+  background: linear-gradient(135deg, #2E7D32 0%, #388E3C 50%, #43A047 100%) !important;
+  border-bottom: 3px solid #1B5E20;
+  
+  button[mat-icon-button] {
+    z-index: 1001;
+    position: relative;
+  }
+}
+
+@media (max-width: 768px) {
+  mat-toolbar {
+    height: 56px;
+    padding: 0 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  mat-toolbar {
+    padding: 0 8px;
+    height: 56px;
+    min-height: 56px;
+    overflow: visible;
+  }
+}
+
+/* Logo */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  margin-right: 16px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  z-index: 1002;
+  padding: 4px 8px;
+  border-radius: 6px;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+  }
+
+  .app-logo {
+    height: 44px;
+    width: auto;
+    border-radius: 4px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  }
+
+  .app-title {
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: white;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+}
+
+@media (max-width: 768px) {
+  .logo-container {
+    margin-right: 12px;
+    gap: 8px;
+    
+    .app-logo {
+      height: 36px;
+    }
+    
+    .app-title {
+      font-size: 1.4rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-container {
+    margin-right: 8px;
+    
+    .app-logo {
+      height: 32px;
+    }
+    
+    .app-title {
+      font-size: 1.2rem;
+      display: block !important;
+    }
+  }
+}
+
+/* Texte défilant */
+.scrolling-container {
+  flex: 1;
+  overflow: hidden;
+  margin: 0 20px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  padding: 0 15px;
+  backdrop-filter: blur(5px);
+
+  .scrolling-text {
+    display: inline-block;
+    white-space: nowrap;
+    animation: marquee 30s linear infinite;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    padding: 4px 0;
+  }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+@media (max-width: 1024px) {
+  .scrolling-container {
+    margin: 0 16px;
+    
+    .scrolling-text {
+      font-size: 0.9rem;
+      animation-duration: 25s;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .scrolling-container {
+    display: none; 
+  }
+}
+
+/* Spacer */
+.spacer {
+  flex: 1;
+  min-width: 8px;
+}
+
+/* Section utilisateur connecté */
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.welcome-message {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .welcome-message {
+    display: none;
+  }
+  
+  .user-section {
+    gap: 6px;
+    padding: 4px 8px;
+  }
+}
+
+/* Section authentification */
+.auth-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ===== STYLES POUR LES LIENS - VERSION VERTE ===== */
+/* LIENS NORMAUX (PAR DÉFAUT) - BLANC SUR FOND VERT */
+.desktop-auth-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  
+  /* Style de base pour TOUS les boutons auth-button */
+  .auth-button {
+    font-weight: 600;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    padding: 6px 16px;
+    border-radius: 16px;
+    overflow: hidden;
+    
+    /* Effet au survol */
+    &:hover:not(.active-link) {
+      color: #FFFFFF !important;
+      background-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Animation de pulsation au survol */
+    &:hover:not(.active-link)::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+      animation: ripple 0.6s ease-out;
+    }
+  }
+  
+  /* LIENS ACTIFS (APRÈS CLIC) - ORANGE/AMBRE POUR CONTRASTE */
+  .active-link {
+    color: #FF9800 !important; /* Orange/ambre Material */
+    font-weight: 700 !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    
+    /* Indicateur visuel pour les liens actifs */
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 3px;
+      background-color: #FF9800;
+      border-radius: 2px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Effet au survol quand actif */
+    &:hover {
+      color: #FF9800 !important;
+      background-color: #FFFFFF !important;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    }
+  }
+  
+  /* Style spécifique pour le bouton Accueil */
+  .home-button.active-link {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFECB3 100%) !important;
+  }
+  
+  /* Style spécifique pour le bouton Se connecter */
+  .auth-button:nth-child(2).active-link {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFECB3 100%) !important;
+  }
+  
+  /* Style spécifique pour le bouton d'inscription */
+  .signup-button {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%) !important;
+    color: white !important;
+    font-weight: 700;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    
+    &:hover {
+      background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%) !important;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    /* Quand actif - changement complet */
+    &.active-link {
+      background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%) !important;
+      color: white !important;
+      border-color: #FFFFFF;
+      
+      &::after {
+        display: none;
+      }
+      
+      &:hover {
+        background: linear-gradient(135deg, #66BB6A 0%, #388E3C 100%) !important;
+      }
+    }
+  }
+  
+  /* Style spécifique pour le bouton Recrutements */
+  .auth-button:nth-last-child(2).active-link {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFECB3 100%) !important;
+  }
+  
+  /* Style spécifique pour le bouton Contact */
+  .auth-button:last-child.active-link {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFECB3 100%) !important;
+  }
+}
+
+/* Animation ripple */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Bouton menu mobile */
+.mobile-menu-button {
+  display: none !important;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Menu mobile pour authentification */
+.mobile-auth-menu {
+  min-width: 220px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 8px;
+  overflow: hidden;
+  
+  .mobile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    transition: all 0.2s ease;
+    
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: #2E7D32;
+    }
+    
+    span {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #2E7D32;
+    }
+    
+    /* Éléments actifs dans le menu mobile */
+    &.active-link {
+      background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%) !important;
+      border-left: 4px solid #FF9800;
+      
+      mat-icon {
+        color: #FF9800 !important;
+      }
+      
+      span {
+        color: #FF9800 !important;
+        font-weight: 600;
+      }
+    }
+    
+    &:hover:not(.active-link) {
+      background-color: #F1F8E9;
+    }
+  }
+}
+
+/* Menu profil */
+.profile-menu {
+  min-width: 240px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 8px;
+  overflow: hidden;
+  
+  .profile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    transition: all 0.2s ease;
+    
+    mat-icon {
+      color: #2E7D32;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+    
+    span {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #2E7D32;
+    }
+    
+    /* Éléments actifs dans le menu profil */
+    &.active-link {
+      background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%) !important;
+      border-left: 4px solid #FF9800;
+      
+      mat-icon {
+        color: #FF9800 !important;
+      }
+      
+      span {
+        color: #FF9800 !important;
+        font-weight: 600;
+      }
+    }
+    
+    &:hover:not(.active-link) {
+      background: #F1F8E9;
+    }
+  }
+}
+
+.logout-item {
+  color: #D32F2F !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 4px;
+  
+  mat-icon {
+    color: #D32F2F !important;
+  }
+  
+  &:hover {
+    background: rgba(211, 47, 47, 0.1) !important;
+  }
+}
+
+/* Menu bouton */
+.menu-button,
+.profile-button {
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1) rotate(5deg);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  mat-icon {
+    color: white;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  mat-toolbar {
+    padding: 0 12px;
+  }
+  
+  .desktop-auth-buttons {
+    display: none !important;
+  }
+  
+  .mobile-menu-button {
+    display: block !important;
+  }
+  
+  .auth-section {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  mat-toolbar {
+    padding: 0 8px;
+  }
+  
+  .logo-container {
+    .app-title {
+      font-size: 1.1rem;
+    }
+  }
+  
+  .mobile-menu-button {
+    margin-left: 4px;
+  }
+}
+
+/* Touche de focus */
+button:focus-visible {
+  outline: 2px solid #FF9800;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.3);
+}
+
+/* Animation pour le changement d'état */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.auth-button.active-link,
+.mobile-menu-item.active-link,
+.profile-menu-item.active-link {
+  animation: pulse 0.3s ease;
+}
+
+/* Effet de transition pour les boutons */
+.auth-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}

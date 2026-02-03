@@ -1,0 +1,298 @@
+<!-- dashboard.component.html (version simplifiée) -->
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <div class="header-content">
+      <div class="header-text">
+        <!-- <h1 class="dashboard-title">
+          Tableau de Bord {{ estPTF() ? 'PTF' : 'Partenaire' }}
+        </h1> -->
+        <p class="dashboard-subtitle">
+          {{ estPTF() ? 'Vue d\'ensemble de vos financements' : 'Vue d\'ensemble de votre activité' }}
+        </p>
+      </div>
+      <div class="user-welcome">
+        <div class="welcome-text">Bienvenue,</div>
+        <div class="user-name">{{ currentUser?.nom || currentUser?.email }}</div>
+        <div class="user-type" [class.ptf-badge]="estPTF()">
+          {{ estPTF() ? 'Partenaire Technique et Financier' : getTypeStructure() }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div *ngIf="erreurChargement" class="alert alert-danger">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    {{ erreurChargement }}
+  </div>
+
+  <!-- État de chargement -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin fa-2x"></i>
+    </div>
+    <p class="loading-text">Chargement de votre tableau de bord...</p>
+  </div>
+
+  <!-- Contenu principal -->
+  <div *ngIf="!isLoading && !erreurChargement">
+    
+    <!-- Section statuts de projets -->
+    <div class="project-status-section" *ngIf="!estPTF()">
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">Statuts de vos projets</h3>
+          <div class="status-badges">
+            <span class="badge bg-warning text-dark">
+              <i class="fas fa-clock me-1"></i> {{ getProjetsEnAttente() }} en attente
+            </span>
+            <span class="badge bg-success">
+              <i class="fas fa-play-circle me-1"></i> {{ getProjetsActifs() }} actifs
+            </span>
+            <span class="badge bg-secondary">
+              <i class="fas fa-flag-checkered me-1"></i> {{ getProjetsTermines() }} clôturés
+            </span>
+          </div>
+        </div>
+        
+        <!-- Barre de progression limite de projets -->
+        <div class="mt-3" *ngIf="!estPTF()">
+          <div class="d-flex justify-content-between mb-1">
+            <small class="text-muted">Utilisation de la limite de projets</small>
+            <small class="text-muted">
+              {{ getProjetsActuelsCount() }}/{{ getLimiteProjets() }}
+              ({{ getPourcentageLimite() | number:'1.0-0' }}%)
+            </small>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div class="progress-bar" 
+                 [ngClass]="{
+                   'bg-success': getPourcentageLimite() < 80,
+                   'bg-warning': getPourcentageLimite() >= 80 && getPourcentageLimite() < 100,
+                   'bg-danger': getPourcentageLimite() >= 100
+                 }"
+                 [style.width.%]="getPourcentageLimite()">
+            </div>
+          </div>
+          
+          <!-- Messages d'avertissement -->
+          <div *ngIf="estProcheLimite() && !aAtteintLimite()" class="alert alert-warning alert-sm mt-2 mb-0 py-1">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            <small>Vous approchez de la limite de {{ getLimiteProjets() }} projets actifs/en attente.</small>
+          </div>
+          
+          <div *ngIf="aAtteintLimite()" class="alert alert-danger alert-sm mt-2 mb-0 py-1">
+            <i class="fas fa-ban me-1"></i>
+            <small>Limite atteinte ! Vous ne pouvez pas créer de nouveaux projets.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cartes de statistiques -->
+    <div class="stats-grid">
+      <!-- Carte 1: Projets totaux -->
+      <div class="stat-card">
+        <div class="stat-icon primary">
+          <i class="fas fa-project-diagram"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ getTotalProjets() }}</div>
+          <div class="stat-label">
+            {{ estPTF() ? 'Projets financés' : 'Projets total' }}
+          </div>
+          <div class="stat-details">
+            <span class="detail-item success">{{ getProjetsActifs() }} actifs</span>
+            <span class="detail-item warning" *ngIf="!estPTF()">
+              {{ getProjetsEnAttente() }} en attente
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carte 2: Volontaires -->
+      <div class="stat-card">
+        <div class="stat-icon success">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ getVolontairesActuels() }}</div>
+          <div class="stat-label">
+            {{ estPTF() ? 'Volontaires supportés' : 'Volontaires actifs' }}
+          </div>
+          <div class="stat-details">
+            <span class="detail-item">
+              {{ estPTF() ? 'Bénéficiaires de vos financements' : 'Sous votre supervision' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carte 3: Candidatures (uniquement pour non-PTF) -->
+      <div class="stat-card" *ngIf="!estPTF()">
+        <div class="stat-icon info">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ getTotalCandidatures() }}</div>
+          <div class="stat-label">Candidatures total</div>
+          <div class="stat-details" *ngIf="getNouvellesCandidatures() > 0">
+            <span class="detail-item warning highlight">
+              <i class="fas fa-bell me-1"></i>
+              {{ getNouvellesCandidatures() }} nouvelles
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carte 4: Projets terminés -->
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          <i class="fas fa-flag-checkered"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ getProjetsTermines() }}</div>
+          <div class="stat-label">Projets terminés</div>
+          <div class="stat-details">
+            <span class="detail-item">
+              {{ estPTF() ? 'Missions accomplies' : 'Mission accomplie' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section graphique et alertes -->
+    <div class="content-grid">
+      <!-- Graphique d'évolution -->
+      <div class="chart-section">
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title">
+              {{ estPTF() ? 'Évolution des volontaires' : 'Évolution des candidatures' }}
+            </h3>
+            <span class="section-subtitle">7 derniers jours</span>
+          </div>
+          <div class="section-body">
+            <div *ngIf="hasEvolutionData(); else noChart" class="chart-container">
+              <!-- Graphique simplifié -->
+              <div class="chart-placeholder">
+                <div class="chart-bars">
+                  <div *ngFor="let day of getLast7Days()" 
+                       class="chart-bar" 
+                       [style.height]="(day.count / getMaxCandidatures()) * 100 + '%'">
+                    <span class="bar-value">{{ day.count }}</span>
+                  </div>
+                </div>
+                <div class="chart-labels">
+                  <span *ngFor="let day of getLast7Days()" class="chart-label">
+                    {{ day.date | date:'EEE' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <ng-template #noChart>
+              <div class="no-data">
+                <i class="fas fa-chart-bar no-data-icon"></i>
+                <p class="no-data-text">Aucune donnée disponible pour l'instant</p>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alertes récentes -->
+      <div class="alerts-section">
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title">Alertes récentes</h3>
+            <span *ngIf="getUnreadAlertsCount() > 0" class="alert-badge">
+              {{ getUnreadAlertsCount() }}
+            </span>
+          </div>
+          <div class="section-body">
+            <div *ngIf="hasAlerts(); else noAlerts" class="alerts-list">
+              <div *ngFor="let alerte of getRecentAlerts()" 
+                   class="alert-item" 
+                   [class.unread]="!alerte.lu">
+                <div class="alert-icon" [ngClass]="getColorAlerte(alerte.type)">
+                  <i [class]="getIconAlerte(alerte.type)"></i>
+                </div>
+                <div class="alert-content">
+                  <h4 class="alert-title">{{ alerte.titre }}</h4>
+                  <p class="alert-message">{{ alerte.message }}</p>
+                  <span class="alert-time">{{ alerte.date | date:'dd/MM/yy à HH:mm' }}</span>
+                </div>
+                <div class="alert-actions">
+                  <button *ngIf="!alerte.lu" 
+                          class="btn-mark-read"
+                          (click)="marquerCommeLue(alerte)">
+                    <i class="fas fa-check"></i>
+                  </button>
+                  <button class="btn-action ms-2" (click)="onAlerteAction(alerte)">
+                    <i class="fas fa-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <ng-template #noAlerts>
+              <div class="no-data">
+                <i class="fas fa-bell-slash no-data-icon"></i>
+                <p class="no-data-text">Aucune alerte pour le moment</p>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="quick-actions-section" *ngIf="!estPTF()">
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">Actions rapides</h3>
+        </div>
+        <div class="section-body">
+          <div class="actions-grid">
+            <a routerLink="/features/partenaires/mes-volontaires" 
+               class="action-card success"
+               *ngIf="isPartenaireDataLoaded() && peutGererVolontaires()">
+              <div class="action-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="action-content">
+                <h4 class="action-title">Mes Volontaires</h4>
+                <p class="action-description">Gérer les volontaires sous votre supervision</p>
+              </div>
+            </a>
+
+            <a routerLink="/features/partenaires/rapports" 
+               class="action-card info"
+               *ngIf="isPartenaireDataLoaded() && peutGererVolontaires()">
+              <div class="action-icon">
+                <i class="fas fa-file-alt"></i>
+              </div>
+              <div class="action-content">
+                <h4 class="action-title">Gestion Rapports</h4>
+                <p class="action-description">Suivre et valider les rapports d'activité</p>
+              </div>
+            </a>
+
+            <a routerLink="/features/partenaires/offres-mission" 
+               class="action-card primary"
+               [class.disabled]="!peutCreerProjets()"
+               *ngIf="isPartenaireDataLoaded()">
+              <div class="action-icon">
+                <i class="fas fa-briefcase"></i>
+              </div>
+              <div class="action-content">
+                <h4 class="action-title">Offres de Mission</h4>
+                <p class="action-description">Créer et gérer vos offres de volontariat</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

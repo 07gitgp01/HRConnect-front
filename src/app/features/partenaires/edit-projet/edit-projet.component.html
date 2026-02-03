@@ -1,0 +1,286 @@
+<!-- src/app/features/partenaires/edit-projet/edit-projet.component.html -->
+<div class="edit-projet-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <button mat-stroked-button [routerLink]="['/features/partenaires/projets/', projet?.id]" class="back-btn">
+        <mat-icon>arrow_back_ios</mat-icon>
+        Retour au détail
+      </button>
+      <div class="header-title">
+        <h1>Modifier le Projet</h1>
+        <p class="subtitle">Modifiez les informations de votre mission de volontariat</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div *ngIf="erreurChargement" class="error-alert">
+    <mat-icon>error_outline</mat-icon>
+    <div class="alert-content">
+      <h4>Erreur de chargement</h4>
+      <p>{{ erreurChargement }}</p>
+    </div>
+    <button mat-stroked-button (click)="loadProjet()" class="retry-btn">
+      <mat-icon>refresh</mat-icon>
+      Réessayer
+    </button>
+  </div>
+
+  <!-- État de chargement -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="loading-spinner">
+      <mat-spinner diameter="60"></mat-spinner>
+    </div>
+    <div class="loading-text">
+      <h3>Chargement du projet</h3>
+      <p>Veuillez patienter pendant que nous récupérons les informations...</p>
+    </div>
+  </div>
+
+  <!-- Formulaire d'édition -->
+  <div *ngIf="!isLoading && projet && !erreurChargement" class="edit-content">
+    <form [formGroup]="editForm" (ngSubmit)="onSubmit()">
+      <div class="form-grid">
+        <!-- Colonne principale -->
+        <div class="main-column">
+          <!-- Informations de base -->
+          <mat-card class="form-section">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon class="card-icon">info</mat-icon>
+                Informations de base
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="form-row">
+                <mat-form-field class="full-width" [class.mat-form-field-invalid]="isFieldInvalid('title')">
+                  <mat-label>Titre du projet *</mat-label>
+                  <input matInput formControlName="title" placeholder="Ex: Campagne de reboisement">
+                  <mat-error *ngIf="isFieldInvalid('title')">
+                    {{ getFieldError('title') }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field class="full-width" [class.mat-form-field-invalid]="isFieldInvalid('description')">
+                  <mat-label>Description *</mat-label>
+                  <textarea matInput formControlName="description" rows="4" 
+                            placeholder="Décrivez en détail votre projet..."></textarea>
+                  <mat-error *ngIf="isFieldInvalid('description')">
+                    {{ getFieldError('description') }}
+                  </mat-error>
+                  <mat-hint align="end">
+                    {{ editForm.get('description')?.value?.length || 0 }}/20 caractères minimum
+                  </mat-hint>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field class="half-width" [class.mat-form-field-invalid]="isFieldInvalid('region')">
+                  <mat-label>Région *</mat-label>
+                  <input matInput formControlName="region" placeholder="Ex: Dakar">
+                  <mat-error *ngIf="isFieldInvalid('region')">
+                    {{ getFieldError('region') }}
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field class="half-width" [class.mat-form-field-invalid]="isFieldInvalid('type')">
+                  <mat-label>Type de projet *</mat-label>
+                  <mat-select formControlName="type">
+                    <mat-option value="environnement">Environnement</mat-option>
+                    <mat-option value="education">Éducation</mat-option>
+                    <mat-option value="sante">Santé</mat-option>
+                    <mat-option value="social">Social</mat-option>
+                    <mat-option value="culturel">Culturel</mat-option>
+                    <mat-option value="autre">Autre</mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="isFieldInvalid('type')">
+                    {{ getFieldError('type') }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Période et volontaires -->
+          <mat-card class="form-section">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon class="card-icon">date_range</mat-icon>
+                Période et ressources
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="form-row">
+                <mat-form-field class="half-width" [class.mat-form-field-invalid]="isFieldInvalid('startDate')">
+                  <mat-label>Date de début *</mat-label>
+                  <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+                  <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #startPicker></mat-datepicker>
+                  <mat-error *ngIf="isFieldInvalid('startDate')">
+                    {{ getFieldError('startDate') }}
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field class="half-width" [class.mat-form-field-invalid]="isFieldInvalid('endDate')">
+                  <mat-label>Date de fin *</mat-label>
+                  <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+                  <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #endPicker></mat-datepicker>
+                  <mat-error *ngIf="isFieldInvalid('endDate')">
+                    {{ getFieldError('endDate') }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field class="half-width" [class.mat-form-field-invalid]="isFieldInvalid('neededVolunteers')">
+                  <mat-label>Nombre de volontaires requis *</mat-label>
+                  <input matInput type="number" formControlName="neededVolunteers" min="1">
+                  <mat-error *ngIf="isFieldInvalid('neededVolunteers')">
+                    {{ getFieldError('neededVolunteers') }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- Indicateur de validation du formulaire -->
+              <div *ngIf="editForm.invalid && editForm.touched" class="form-validation-info">
+                <mat-icon color="warn" class="validation-icon">warning</mat-icon>
+                <span class="validation-text">Veuillez corriger les erreurs ci-dessus avant de soumettre le formulaire</span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Colonne secondaire -->
+        <div class="sidebar-column">
+          <!-- Actions -->
+          <mat-card class="actions-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon class="card-icon">save</mat-icon>
+                Actions
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="actions-grid">
+                <button mat-raised-button 
+                        color="primary" 
+                        type="submit"
+                        [disabled]="isSaving || !editForm.valid"
+                        class="save-btn"
+                        matTooltip="Enregistrer toutes les modifications"
+                        [matTooltipDisabled]="editForm.valid">
+                  <mat-icon *ngIf="!isSaving">save</mat-icon>
+                  <mat-spinner *ngIf="isSaving" diameter="20"></mat-spinner>
+                  {{ isSaving ? 'Enregistrement...' : 'Enregistrer' }}
+                </button>
+
+                <button mat-stroked-button 
+                        type="button"
+                        (click)="onCancel()"
+                        [disabled]="isSaving"
+                        class="cancel-btn"
+                        matTooltip="Annuler et retourner au détail du projet">
+                  <mat-icon>cancel</mat-icon>
+                  Annuler
+                </button>
+              </div>
+
+              <!-- Indicateur d'état du formulaire -->
+              <div class="form-status">
+                <div class="status-item" [class.valid]="editForm.valid" [class.invalid]="editForm.invalid">
+                  <mat-icon class="status-icon">
+                    {{ editForm.valid ? 'check_circle' : 'error' }}
+                  </mat-icon>
+                  <span class="status-text">
+                    {{ editForm.valid ? 'Formulaire valide' : 'Formulaire incomplet' }}
+                  </span>
+                </div>
+                <div class="status-item">
+                  <mat-icon class="status-icon">edit</mat-icon>
+                  <span class="status-text">
+                    {{ editForm.touched ? 'Modifications non enregistrées' : 'Aucune modification' }}
+                  </span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Informations supplémentaires -->
+          <mat-card class="form-section">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon class="card-icon">add_circle</mat-icon>
+                Informations supplémentaires
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <mat-form-field class="full-width">
+                <mat-label>Objectifs spécifiques</mat-label>
+                <textarea matInput formControlName="objectifs" rows="3"
+                          placeholder="Objectifs mesurables à atteindre..."></textarea>
+                <mat-hint>Facultatif</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field class="full-width">
+                <mat-label>Compétences requises</mat-label>
+                <textarea matInput formControlName="competences_requises" rows="2"
+                          placeholder="Compétences nécessaires pour les volontaires..."></textarea>
+                <mat-hint>Facultatif</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field class="full-width">
+                <mat-label>Équipement nécessaire</mat-label>
+                <textarea matInput formControlName="equipement_necessaire" rows="2"
+                          placeholder="Équipement que les volontaires doivent apporter..."></textarea>
+                <mat-hint>Facultatif</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field class="full-width">
+                <mat-label>Conditions particulières</mat-label>
+                <textarea matInput formControlName="conditions_particulieres" rows="2"
+                          placeholder="Conditions spécifiques (âge, santé, etc.)..."></textarea>
+                <mat-hint>Facultatif</mat-hint>
+              </mat-form-field>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Contact -->
+          <mat-card class="form-section">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon class="card-icon">contact_mail</mat-icon>
+                Contact
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <mat-form-field class="full-width">
+                <mat-label>Responsable</mat-label>
+                <input matInput formControlName="contact_responsable" placeholder="Nom du responsable">
+                <mat-hint>Facultatif</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field class="full-width" [class.mat-form-field-invalid]="isFieldInvalid('email_contact')">
+                <mat-label>Email de contact</mat-label>
+                <input matInput formControlName="email_contact" type="email" placeholder="email@exemple.com">
+                <mat-error *ngIf="isFieldInvalid('email_contact')">
+                    {{ getFieldError('email_contact') }}
+                </mat-error>
+                <mat-hint>Facultatif</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field class="full-width">
+                <mat-label>Budget estimé (FCFA)</mat-label>
+                <input matInput formControlName="budget" type="number" placeholder="Montant en FCFA">
+                <mat-hint>Facultatif</mat-hint>
+              </mat-form-field>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

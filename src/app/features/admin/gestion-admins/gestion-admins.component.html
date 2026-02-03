@@ -1,0 +1,399 @@
+<!-- src/app/features/admin/gestion-admins/gestion-admins.component.html -->
+<div class="gestion-admins-container">
+  <!-- En-tête -->
+  <div class="header-section">
+    <div class="header-card">
+      <div class="header-content">
+        <div class="header-text">
+          <h1 class="page-title">
+            <mat-icon class="title-icon">admin_panel_settings</mat-icon>
+            Gestion des Administrateurs
+          </h1>
+          <p class="page-subtitle">
+            Gérez les comptes administrateurs de votre plateforme. Créez, modifiez ou supprimez des comptes avec différents niveaux de privilèges.
+          </p>
+        </div>
+        <button 
+          mat-flat-button 
+          color="primary" 
+          class="add-admin-btn"
+          (click)="toggleForm()"
+          [disabled]="isLoading">
+          <mat-icon>person_add</mat-icon>
+          {{ showForm ? 'Masquer le formulaire' : 'Nouvel administrateur' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire de création -->
+  <div class="form-section" *ngIf="showForm">
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>person_add</mat-icon>
+          Créer un nouvel administrateur
+        </mat-card-title>
+        <mat-card-subtitle>
+          Remplissez les informations pour créer un nouveau compte administrateur
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <form [formGroup]="adminForm" (ngSubmit)="onSubmit()" class="admin-form">
+          <div class="form-row">
+            <!-- Prénom -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Prénom</mat-label>
+              <input 
+                matInput 
+                formControlName="prenom" 
+                placeholder="Ex: Jean"
+                maxlength="50">
+              <mat-icon matSuffix>person</mat-icon>
+              <mat-hint align="end">{{prenom?.value?.length || 0}}/50</mat-hint>
+              <mat-error *ngIf="prenom?.hasError('required')">
+                Le prénom est obligatoire
+              </mat-error>
+              <mat-error *ngIf="prenom?.hasError('minlength')">
+                Le prénom doit contenir au moins 2 caractères
+              </mat-error>
+              <mat-error *ngIf="prenom?.hasError('maxlength')">
+                Le prénom ne peut pas dépasser 50 caractères
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Nom -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Nom</mat-label>
+              <input 
+                matInput 
+                formControlName="nom" 
+                placeholder="Ex: Dupont"
+                maxlength="50">
+              <mat-icon matSuffix>badge</mat-icon>
+              <mat-hint align="end">{{nom?.value?.length || 0}}/50</mat-hint>
+              <mat-error *ngIf="nom?.hasError('required')">
+                Le nom est obligatoire
+              </mat-error>
+              <mat-error *ngIf="nom?.hasError('minlength')">
+                Le nom doit contenir au moins 2 caractères
+              </mat-error>
+              <mat-error *ngIf="nom?.hasError('maxlength')">
+                Le nom ne peut pas dépasser 50 caractères
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <!-- Email -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Email</mat-label>
+              <input 
+                matInput 
+                formControlName="email" 
+                type="email" 
+                placeholder="Ex: jean.dupont@pnvb.fr">
+              <mat-icon matSuffix>email</mat-icon>
+              <mat-error *ngIf="email?.hasError('required')">
+                L'email est obligatoire
+              </mat-error>
+              <mat-error *ngIf="email?.hasError('email')">
+                Format d'email invalide
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Rôle -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Rôle</mat-label>
+              <mat-select formControlName="role">
+                <mat-option value="ADMIN">
+                  <div class="role-option">
+                    <mat-icon>admin_panel_settings</mat-icon>
+                    <span>Administrateur</span>
+                  </div>
+                </mat-option>
+                <mat-option 
+                  value="SUPER_ADMIN" 
+                  [disabled]="superAdminExists">
+                  <div class="role-option">
+                    <mat-icon>security</mat-icon>
+                    <span>Super Administrateur</span>
+                    <span class="role-hint" *ngIf="superAdminExists">(Déjà existant)</span>
+                  </div>
+                </mat-option>
+              </mat-select>
+              <mat-icon matSuffix>security</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Mot de passe -->
+          <mat-form-field appearance="outline" class="form-field full-width">
+            <mat-label>Mot de passe initial</mat-label>
+            <input 
+              matInput 
+              formControlName="password" 
+              type="password" 
+              placeholder="Minimum 8 caractères">
+            <mat-icon matSuffix>lock</mat-icon>
+            <mat-hint>Le mot de passe doit contenir au moins 8 caractères</mat-hint>
+            <mat-error *ngIf="password?.hasError('required')">
+              Le mot de passe est obligatoire
+            </mat-error>
+            <mat-error *ngIf="password?.hasError('minlength')">
+              Le mot de passe doit contenir au moins 8 caractères
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Message d'information -->
+          <div *ngIf="superAdminExists" class="info-message">
+            <mat-icon>info</mat-icon>
+            <span>Un Super Administrateur existe déjà. Vous ne pouvez créer que des Administrateurs standards.</span>
+          </div>
+
+          <!-- Actions du formulaire -->
+          <div class="form-actions">
+            <button 
+              type="button" 
+              mat-stroked-button 
+              (click)="toggleForm()"
+              class="cancel-btn"
+              [disabled]="isSubmitting">
+              <mat-icon>close</mat-icon>
+              Annuler
+            </button>
+            <button 
+              type="submit" 
+              mat-flat-button 
+              color="primary"
+              [disabled]="isSubmitting || adminForm.invalid"
+              class="submit-btn">
+              <mat-icon *ngIf="!isSubmitting">check</mat-icon>
+              <mat-spinner *ngIf="isSubmitting" diameter="20"></mat-spinner>
+              {{ isSubmitting ? 'Création...' : 'Créer l\'admin' }}
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section">
+    <mat-card class="filters-card">
+      <mat-card-content>
+        <div class="filters-grid">
+          <!-- Recherche -->
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Rechercher un administrateur</mat-label>
+            <input 
+              matInput 
+              [(ngModel)]="searchValue" 
+              (input)="applyFilter()"
+              placeholder="Nom, prénom ou email...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+
+          <!-- Filtre par rôle -->
+          <mat-form-field appearance="outline" class="role-filter-field">
+            <mat-label>Filtrer par rôle</mat-label>
+            <mat-select [(ngModel)]="roleFilter" (selectionChange)="onRoleFilterChange()">
+              <mat-option value="TOUS">Tous les rôles</mat-option>
+              <mat-option value="ADMIN">Administrateurs</mat-option>
+              <mat-option value="SUPER_ADMIN">Super Administrateurs</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Compteur de résultats -->
+          <div class="results-count">
+            <mat-icon>people</mat-icon>
+            <span>{{dataSource.filteredData.length}} administrateur(s)</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Tableau des administrateurs -->
+  <div class="table-section">
+    <mat-card class="table-card">
+      <mat-card-content>
+        <div class="table-container">
+          <!-- État de chargement -->
+          <div *ngIf="isLoading" class="loading-state">
+            <mat-spinner diameter="50"></mat-spinner>
+            <p>Chargement des administrateurs...</p>
+          </div>
+
+          <!-- Tableau -->
+          <table 
+            mat-table 
+            [dataSource]="dataSource" 
+            class="admins-table"
+            *ngIf="!isLoading">
+
+            <!-- Colonne Nom complet -->
+            <ng-container matColumnDef="nom">
+              <th mat-header-cell *matHeaderCellDef>Administrateur</th>
+              <td mat-cell *matCellDef="let admin" class="admin-info">
+                <div class="admin-name">{{admin.prenom}} {{admin.nom}}</div>
+                <div class="admin-email">{{admin.email}}</div>
+              </td>
+            </ng-container>
+
+            <!-- Colonne Email -->
+            <ng-container matColumnDef="email">
+              <th mat-header-cell *matHeaderCellDef>Email</th>
+              <td mat-cell *matCellDef="let admin">
+                <div class="email-display">
+                  <mat-icon class="email-icon">email</mat-icon>
+                  {{admin.email}}
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Colonne Rôle -->
+            <ng-container matColumnDef="role">
+              <th mat-header-cell *matHeaderCellDef>Rôle</th>
+              <td mat-cell *matCellDef="let admin">
+                <span 
+                  class="role-badge" 
+                  [class.admin]="admin.role === 'ADMIN'"
+                  [class.super_admin]="admin.role === 'SUPER_ADMIN'">
+                  {{ getRoleDisplay(admin.role) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Colonne Date de création -->
+            <ng-container matColumnDef="dateCreation">
+              <th mat-header-cell *matHeaderCellDef>Date de création</th>
+              <td mat-cell *matCellDef="let admin">
+                <div class="date-display">
+                  <div class="date">{{admin.dateCreation | date:'dd/MM/yyyy'}}</div>
+                  <div class="time">{{admin.dateCreation | date:'HH:mm'}}</div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Colonne Statut -->
+            <ng-container matColumnDef="statut">
+              <th mat-header-cell *matHeaderCellDef>Statut</th>
+              <td mat-cell *matCellDef="let admin">
+                <span 
+                  class="status-badge" 
+                  [class.active]="admin.actif"
+                  [class.inactive]="!admin.actif">
+                  {{ getStatusDisplay(admin.actif) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Colonne Actions -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="actions-header">Actions</th>
+              <td mat-cell *matCellDef="let admin">
+                <div class="actions-container">
+                  <!-- Bouton Éditer -->
+                  <button 
+                    mat-icon-button 
+                    class="action-btn edit-btn"
+                    (click)="editAdmin(admin)"
+                    [disabled]="!canModifyAdmin(admin)"
+                    matTooltip="Éditer le profil"
+                    matTooltipPosition="above">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+
+                  <!-- Bouton Activer/Désactiver -->
+                  <button 
+                    *ngIf="admin.actif"
+                    mat-icon-button 
+                    class="action-btn deactivate-btn"
+                    (click)="toggleAdminStatus(admin)"
+                    [disabled]="!canToggleAdminStatus(admin)"
+                    matTooltip="Désactiver le compte"
+                    matTooltipPosition="above">
+                    <mat-icon>toggle_on</mat-icon>
+                  </button>
+
+                  <button 
+                    *ngIf="!admin.actif"
+                    mat-icon-button 
+                    class="action-btn activate-btn"
+                    (click)="toggleAdminStatus(admin)"
+                    [disabled]="!canToggleAdminStatus(admin)"
+                    matTooltip="Activer le compte"
+                    matTooltipPosition="above">
+                    <mat-icon>toggle_off</mat-icon>
+                  </button>
+
+                  <!-- Bouton Supprimer -->
+                  <button 
+                    mat-icon-button 
+                    class="action-btn delete-btn"
+                    (click)="deleteAdmin(admin)"
+                    [disabled]="!canDeleteAdmin(admin)"
+                    matTooltip="Supprimer définitivement"
+                    matTooltipPosition="above">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- En-têtes -->
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr 
+              mat-row 
+              *matRowDef="let row; columns: displayedColumns;" 
+              class="admin-row"></tr>
+          </table>
+
+          <!-- État vide -->
+          <div 
+            *ngIf="!isLoading && dataSource.filteredData.length === 0" 
+            class="empty-state">
+            <mat-icon class="empty-icon">admin_panel_settings</mat-icon>
+            <h3>Aucun administrateur trouvé</h3>
+            <p *ngIf="searchValue || roleFilter !== 'TOUS'">
+              Aucun administrateur ne correspond à vos critères de recherche.
+            </p>
+            <p *ngIf="!searchValue && roleFilter === 'TOUS'">
+              Aucun administrateur n'a été créé pour le moment.
+            </p>
+            <button 
+              mat-flat-button 
+              color="primary" 
+              class="create-first-btn"
+              (click)="toggleForm()">
+              <mat-icon>person_add</mat-icon>
+              Créer le premier administrateur
+            </button>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <mat-paginator 
+          *ngIf="!isLoading && dataSource.filteredData.length > 0"
+          [pageSize]="10"
+          [pageSizeOptions]="[5, 10, 20, 50]"
+          showFirstLastButtons
+          aria-label="Sélectionner la page des administrateurs">
+        </mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Bouton debug (optionnel - à retirer en production) -->
+  <div class="debug-section" *ngIf="!isLoading">
+    <button 
+      mat-mini-fab 
+      color="accent" 
+      class="debug-btn"
+      (click)="debugInfo()"
+      matTooltip="Debug information">
+      <mat-icon>bug_report</mat-icon>
+    </button>
+  </div>
+</div>

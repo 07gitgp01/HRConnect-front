@@ -1,0 +1,339 @@
+<!-- src/app/features/admin/components/rapports-ptf/admin-rapports-ptf.component.html -->
+<div class="admin-rapports-container">
+  <!-- Header -->
+  <div class="header-section">
+<!--     <h1>Gestion des Rapports PTF</h1>
+ -->    <p>Administration des rapports mis à disposition des Partenaires Techniques et Financiers</p>
+  </div>
+
+  <!-- Section d'upload -->
+  <mat-card class="upload-section">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>cloud_upload</mat-icon>
+        Nouveau Rapport
+      </mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <form [formGroup]="uploadForm" (ngSubmit)="onSubmit()">
+        <div class="form-grid">
+          <!-- Fichier -->
+          <div class="form-group file-upload">
+            <label class="file-label">
+              <input 
+                type="file" 
+                accept=".pdf,.doc,.docx"
+                (change)="onFileSelected($event)"
+                [disabled]="isUploading"
+                required
+              >
+              <mat-icon>attach_file</mat-icon>
+              <span>{{ selectedFile ? selectedFile.name : 'Choisir un fichier (PDF/Word, max 10MB)' }}</span>
+            </label>
+            <div class="file-info" *ngIf="selectedFile">
+              <small>{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB • {{ selectedFile.type }}</small>
+            </div>
+            <mat-hint>Fichiers PDF ou Word acceptés, taille maximum 10MB</mat-hint>
+          </div>
+
+          <!-- Titre -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Titre du rapport *</mat-label>
+            <input matInput formControlName="titre" placeholder="Ex: Rapport Annuel 2024 PNVB">
+            <mat-error *ngIf="uploadForm.get('titre')?.hasError('required')">
+              Le titre est obligatoire
+            </mat-error>
+            <mat-error *ngIf="uploadForm.get('titre')?.hasError('maxlength')">
+              Le titre ne peut pas dépasser 200 caractères
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Type -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Type de rapport *</mat-label>
+            <mat-select formControlName="type">
+              <mat-option value="">-- Sélectionner un type --</mat-option>
+              <mat-option *ngFor="let type of types" [value]="type">
+                {{ getTypeLabel(type) }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="uploadForm.get('type')?.hasError('required')">
+              Le type de rapport est obligatoire
+            </mat-error>
+          </mat-form-field>
+
+          <!-- PTF spécifique -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>PTF destinataire (optionnel)</mat-label>
+            <mat-select formControlName="partenairePTFId">
+              <mat-option value="">Tous les PTF</mat-option>
+              <mat-option *ngFor="let ptf of partenairesPTF" [value]="ptf.id">
+                {{ getPtfDisplayName(ptf) }}
+              </mat-option>
+            </mat-select>
+            <mat-hint *ngIf="partenairesPTF.length > 0">
+              {{ partenairesPTF.length }} PTF{{ partenairesPTF.length > 1 ? 's' : '' }} disponible{{ partenairesPTF.length > 1 ? 's' : '' }}
+            </mat-hint>
+          </mat-form-field>
+
+          <!-- Catégories -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Catégories (optionnel)</mat-label>
+            <mat-select formControlName="categories" multiple>
+              <mat-option *ngFor="let categorie of categories" [value]="categorie">
+                {{ categorie }}
+              </mat-option>
+            </mat-select>
+            <mat-hint>Sélectionnez une ou plusieurs catégories</mat-hint>
+          </mat-form-field>
+
+          <!-- Période -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Période (optionnel)</mat-label>
+            <input matInput formControlName="periode" placeholder="Ex: Q1-2024, Année 2023, Janvier-Mars 2024">
+            <mat-hint>Format libre: trimestre, année, période spécifique</mat-hint>
+          </mat-form-field>
+
+          <!-- Description -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description (optionnel)</mat-label>
+            <textarea matInput formControlName="description" rows="3" 
+                     placeholder="Description du rapport, objectifs, contenu..."></textarea>
+            <mat-hint>Maximum 1000 caractères</mat-hint>
+            <mat-error *ngIf="uploadForm.get('description')?.hasError('maxlength')">
+              La description ne peut pas dépasser 1000 caractères
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Zone géographique -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Zone géographique (optionnel)</mat-label>
+            <input matInput formControlName="zoneGeographique" placeholder="Ex: Dakar, Thiès, Saint-Louis">
+            <mat-hint>Séparez les zones par des virgules</mat-hint>
+          </mat-form-field>
+
+          <!-- Thèmes -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Thèmes (optionnel)</mat-label>
+            <input matInput formControlName="themes" placeholder="Ex: Éducation, Santé, Environnement, Gouvernance">
+            <mat-hint>Séparez les thèmes par des virgules</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <!-- Indicateur de chargement -->
+        <div *ngIf="isUploading" class="upload-progress">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          <div class="progress-text">Téléchargement en cours...</div>
+        </div>
+
+        <!-- Boutons -->
+        <div class="form-actions">
+          <button 
+            type="button" 
+            mat-button 
+            (click)="uploadForm.reset(); selectedFile = null;"
+            [disabled]="isUploading">
+            <mat-icon>clear</mat-icon>
+            Effacer
+          </button>
+          
+          <button 
+            type="button" 
+            mat-button 
+            (click)="debugForm()"
+            title="Debug">
+            <mat-icon>bug_report</mat-icon>
+            Debug
+          </button>
+          
+          <button 
+            type="submit" 
+            mat-raised-button 
+            color="primary"
+            [disabled]="uploadForm.invalid || !selectedFile || isUploading">
+            <mat-icon>cloud_upload</mat-icon>
+            {{ isUploading ? 'Téléchargement...' : 'Téléverser le rapport' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Liste des rapports -->
+  <mat-card class="rapports-list">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>description</mat-icon>
+        Rapports disponibles ({{ totalRapports }})
+      </mat-card-title>
+      <mat-card-subtitle>Rapports mis à disposition pour les PTF</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Filtres -->
+      <div class="filters-section">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Rechercher</mat-label>
+          <input matInput [(ngModel)]="searchQuery" 
+                 (keyup.enter)="onSearch()" 
+                 placeholder="Titre, description, catégorie...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Type</mat-label>
+          <mat-select [(ngModel)]="selectedType" (selectionChange)="onSearch()">
+            <mat-option value="">Tous les types</mat-option>
+            <mat-option *ngFor="let type of types" [value]="type">
+              {{ getTypeLabel(type) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-button (click)="clearFilters()" class="clear-filters" 
+                *ngIf="searchQuery || selectedType || selectedCategorie">
+          <mat-icon>clear_all</mat-icon>
+          Effacer filtres
+        </button>
+      </div>
+
+      <!-- Tableau -->
+      <div class="table-responsive" *ngIf="rapports.length > 0">
+        <table mat-table [dataSource]="rapports" matSort class="mat-elevation-z1">
+          
+          <!-- Titre -->
+          <ng-container matColumnDef="titre">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> 
+              <mat-icon class="header-icon">title</mat-icon>
+              Titre 
+            </th>
+            <td mat-cell *matCellDef="let rapport">
+              <div class="rapport-title">
+                <mat-icon class="file-icon" [style.color]="getFileIconColor(rapport.type)">
+                  {{ getFileIcon(rapport.type) }}
+                </mat-icon>
+                <div>
+                  <strong>{{ rapport.titre }}</strong>
+                  <small *ngIf="rapport.description" class="description">{{ rapport.description }}</small>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Type -->
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">category</mat-icon>
+              Type 
+            </th>
+            <td mat-cell *matCellDef="let rapport">
+              <span class="type-badge" [class]="rapport.type">
+                {{ getTypeLabel(rapport.type) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Date -->
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">date_range</mat-icon>
+              Date 
+            </th>
+            <td mat-cell *matCellDef="let rapport">
+              {{ rapport.date | date:'dd/MM/yyyy' }}
+              <small class="date-hint" *ngIf="rapport.metadata?.periode">
+                <br>{{ rapport.metadata.periode }}
+              </small>
+            </td>
+          </ng-container>
+
+          <!-- Catégories -->
+          <ng-container matColumnDef="categories">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">label</mat-icon>
+              Catégories 
+            </th>
+            <td mat-cell *matCellDef="let rapport">
+              <mat-chip-set>
+                <mat-chip *ngFor="let cat of (rapport.categories || [])" 
+                         [style.background]="getCategoryColor(cat)">
+                  {{ cat }}
+                </mat-chip>
+                <span *ngIf="!rapport.categories || rapport.categories.length === 0" class="no-categories">
+                  -
+                </span>
+              </mat-chip-set>
+            </td>
+          </ng-container>
+
+          <!-- Partenaire -->
+          <ng-container matColumnDef="partenaire">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">account_balance</mat-icon>
+              Destinataire 
+            </th>
+            <td mat-cell *matCellDef="let rapport">
+              <div class="destinataire-cell">
+                <mat-icon class="dest-icon">person</mat-icon>
+                <span>{{ getPartnerName(rapport.partenairePTFId) }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">settings</mat-icon>
+              Actions 
+            </th>
+            <td mat-cell *matCellDef="let rapport">
+              <div class="action-buttons">
+                <button 
+                  mat-icon-button 
+                  color="primary"
+                  matTooltip="Télécharger le rapport"
+                  (click)="downloadRapport(rapport.url, rapport.titre)"
+                  *ngIf="rapport.url">
+                  <mat-icon>download</mat-icon>
+                </button>
+                
+                <button 
+                  mat-icon-button 
+                  color="warn"
+                  matTooltip="Supprimer le rapport"
+                  (click)="deleteRapport(rapport.id)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <!-- Message si aucun rapport -->
+      <div *ngIf="rapports.length === 0" class="no-data-section">
+        <mat-icon class="no-data-icon">folder_open</mat-icon>
+        <h3>Aucun rapport disponible</h3>
+        <p>Commencez par téléverser votre premier rapport ci-dessus.</p>
+       <!--  <button mat-raised-button color="primary" (click)="scrollToUpload()">
+          <mat-icon>add</mat-icon>
+          Ajouter un rapport
+        </button> -->
+      </div>
+
+      <!-- Pagination -->
+      <mat-paginator *ngIf="rapports.length > 0"
+        [length]="totalRapports"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+        class="rapports-paginator">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>

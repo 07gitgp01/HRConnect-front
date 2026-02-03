@@ -1,0 +1,284 @@
+<!-- src/app/features/partenaires/gestion-rapports/gestion-rapports.component.html -->
+<div class="gestion-rapports-container">
+  <!-- Header avec statistiques -->
+  <div class="container-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1 class="page-title">
+          <i class="fas fa-file-alt me-2"></i>
+          Gestion des Rapports
+        </h1>
+        <p class="page-subtitle">
+          Soumettez et gérez vos rapports d'évaluation trimestriels et de fin de mission
+        </p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary btn-lg" (click)="ouvrirModalNouveau()">
+          <i class="fas fa-plus me-2"></i>
+          Nouveau Rapport
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="stats-overview">
+      <div class="stat-item">
+        <div class="stat-number">{{ statistiques.total }}</div>
+        <div class="stat-label">Total rapports</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ statistiques.soumis }}</div>
+        <div class="stat-label">Soumis</div>
+      </div>
+      <div class="stat-item warning">
+        <div class="stat-number">{{ statistiques.enRetard }}</div>
+        <div class="stat-label">En retard</div>
+      </div>
+      <div class="stat-item success">
+        <div class="stat-number">{{ statistiques.valides }}</div>
+        <div class="stat-label">Validés</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ statistiques.tauxSoumission }}%</div>
+        <div class="stat-label">Taux soumission</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alertes rapports en retard -->
+  <div *ngIf="statistiques.rapportsEnRetard.length > 0" class="alert alert-danger">
+    <div class="d-flex align-items-center">
+      <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+      <div>
+        <h5 class="mb-1">Attention ! Vous avez {{ statistiques.rapportsEnRetard.length }} rapport(s) en retard</h5>
+        <p class="mb-0">Veuillez soumettre ces rapports dès que possible pour éviter les pénalités.</p>
+      </div>
+    </div>
+    
+    <div class="mt-3">
+      <div *ngFor="let rapport of statistiques.rapportsEnRetard" class="d-flex align-items-center mb-2">
+        <i class="fas fa-clock text-danger me-2"></i>
+        <span class="me-3">{{ rapport.titre }}</span>
+        <span class="badge bg-danger">En retard depuis {{ getEcheanceInfo(rapport).texte }}</span>
+        <button class="btn btn-sm btn-outline-danger ms-auto" (click)="editerRapport(rapport)">
+          <i class="fas fa-pen me-1"></i> Compléter
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres et recherche -->
+  <div class="filters-section">
+    <div class="row g-3">
+      <div class="col-md-8">
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="fas fa-search"></i>
+          </span>
+          <input type="text" class="form-control" 
+                 [(ngModel)]="filtres.recherche"
+                 (ngModelChange)="appliquerFiltres()"
+                 placeholder="Rechercher par titre, description...">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="row g-2">
+          <div class="col-4">
+            <select class="form-select" [(ngModel)]="filtres.statut" (ngModelChange)="appliquerFiltres()">
+              <option value="tous">Tous statuts</option>
+              <option value="brouillon">Brouillons</option>
+              <option value="soumis">Soumis</option>
+              <option value="valide">Validés</option>
+              <option value="en_retard">En retard</option>
+            </select>
+          </div>
+          <div class="col-4">
+            <select class="form-select" [(ngModel)]="filtres.type" (ngModelChange)="appliquerFiltres()">
+              <option value="tous">Tous types</option>
+              <option *ngFor="let type of typesRapport" [value]="type.id">{{ type.label }}</option>
+            </select>
+          </div>
+          <div class="col-4">
+            <button class="btn btn-outline-secondary w-100" (click)="resetFiltres()">
+              <i class="fas fa-redo"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des rapports -->
+  <div class="content-section">
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+      <p class="mt-3">Chargement des rapports...</p>
+    </div>
+
+    <!-- Aucun rapport -->
+    <div *ngIf="!isLoading && rapports.length === 0" class="no-data-card">
+      <div class="no-data-icon">
+        <i class="fas fa-file-alt fa-3x"></i>
+      </div>
+      <h4>Aucun rapport trouvé</h4>
+      <p>Vous n'avez pas encore créé de rapport.</p>
+      <button class="btn btn-primary mt-3" (click)="ouvrirModalNouveau()">
+        <i class="fas fa-plus me-2"></i>
+        Créer votre premier rapport
+      </button>
+    </div>
+
+    <!-- Tableau des rapports -->
+    <div *ngIf="!isLoading && rapports.length > 0" class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Titre</th>
+            <th>Type</th>
+            <th>Statut</th>
+            <th>Date création</th>
+            <th>Échéance</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rapport of getRapportsPagination()">
+            <td>
+              <div class="rapport-title">
+                <strong>{{ rapport.titre }}</strong>
+                <div *ngIf="rapport.description" class="text-muted small">
+                  {{ rapport.description.length > 100 ? rapport.description.slice(0, 100) + '...' : rapport.description }}
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge bg-light text-dark">
+                {{ getTypeRapportLabel(rapport.typeRapportId) }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getStatutBadgeClass(rapport.statut)">
+                {{ getStatutTexte(rapport.statut) }}
+              </span>
+            </td>
+            <td>{{ formaterDate(rapport.dateCreation) }}</td>
+            <td>
+              <span class="badge" [ngClass]="'bg-' + getEcheanceInfo(rapport).classe">
+                {{ getEcheanceInfo(rapport).texte }}
+              </span>
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" (click)="voirDetail(rapport)" title="Voir">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-outline-warning" (click)="editerRapport(rapport)" title="Éditer">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button *ngIf="rapport.statut === 'brouillon'" 
+                        class="btn btn-outline-success" 
+                        (click)="soumettreRapport(rapport)"
+                        title="Soumettre">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+                <button class="btn btn-outline-info" (click)="telechargerRapport(rapport)" title="Télécharger">
+                  <i class="fas fa-download"></i>
+                </button>
+                <button class="btn btn-outline-secondary" (click)="dupliquerRapport(rapport)" title="Dupliquer">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="!isLoading && rapports.length > 0" class="pagination-section">
+      <nav>
+        <ul class="pagination justify-content-center">
+          <li class="page-item" [class.disabled]="pageCourante === 1">
+            <a class="page-link" (click)="changerPage(pageCourante - 1)">
+              <i class="fas fa-chevron-left"></i>
+            </a>
+          </li>
+          
+          <li *ngFor="let page of pages" class="page-item" [class.active]="page === pageCourante">
+            <a class="page-link" (click)="changerPage(page)">{{ page }}</a>
+          </li>
+          
+          <li class="page-item" [class.disabled]="pageCourante === totalPages">
+            <a class="page-link" (click)="changerPage(pageCourante + 1)">
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <div class="text-center text-muted">
+        <small>
+          Affichage {{ (pageCourante - 1) * rapportsParPage + 1 }} à 
+          {{ min(pageCourante * rapportsParPage, getRapportsFiltres().length) }} 
+          sur {{ getRapportsFiltres().length }} rapports
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal : Nouveau rapport -->
+<div *ngIf="showModalNouveau" class="modal-backdrop fade show" (click)="showModalNouveau = false"></div>
+<div *ngIf="showModalNouveau" class="modal fade show d-block" tabindex="-1">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nouveau Rapport</h5>
+        <button type="button" class="btn-close" (click)="showModalNouveau = false"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="creerRapport()">
+          <div class="mb-3">
+            <label class="form-label">Type de rapport *</label>
+            <select class="form-select" [(ngModel)]="nouveauRapport.typeRapportId" name="typeRapportId" required>
+              <option value="">Sélectionnez un type</option>
+              <option *ngFor="let type of typesRapport" [value]="type.id">
+                {{ type.label }}
+              </option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Titre du rapport *</label>
+            <input type="text" class="form-control" 
+                   [(ngModel)]="nouveauRapport.titre" 
+                   name="titre"
+                   placeholder="Ex: Rapport trimestriel Q1 2024"
+                   required>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" 
+                      [(ngModel)]="nouveauRapport.description" 
+                      name="description"
+                      rows="3"
+                      placeholder="Brève description du rapport..."></textarea>
+          </div>
+          
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" (click)="showModalNouveau = false">
+              Annuler
+            </button>
+            <button type="submit" class="btn btn-primary">
+              Créer le rapport
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,68 @@
+/* Styles pour la liste des volontaires */
+.avatar-xl {
+  width: 80px;
+  height: 80px;
+}
+
+.icon-shape {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card.hover-shadow {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card.hover-shadow:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+}
+
+/* Badge colors */
+.badge-success { background-color: #d1e7dd; color: #0f5132; }
+.badge-primary { background-color: #cfe2ff; color: #052c65; }
+.badge-secondary { background-color: #e2e3e5; color: #2b2f32; }
+.badge-danger { background-color: #f8d7da; color: #842029; }
+.badge-info { background-color: #cff4fc; color: #055160; }
+.badge-warning { background-color: #fff3cd; color: #664d03; }
+
+/* Dropdown dans les cartes */
+.dropdown-menu {
+  min-width: 160px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .avatar-xl {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .icon-shape {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+}
+
+/* Animation pour le chargement */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Styles pour les graphiques */
+canvas {
+  max-height: 250px;
+}
+
+/* Alertes */
+.alert-info {
+  border-left: 4px solid #0dcaf0;
+}

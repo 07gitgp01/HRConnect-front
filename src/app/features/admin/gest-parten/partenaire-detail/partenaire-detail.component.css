@@ -1,0 +1,28 @@
+/* src/app/features/admin/gest-parten/partenaire-detail/partenaire-detail.component.css */
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.badge-lg {
+  padding: 0.5em 1em;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.875rem;
+}
+
+.btn-group-sm > .btn {
+  padding: 0.25rem 0.5rem;
+}
+
+/* Couleurs des statuts de projet */
+.badge.bg-success { background-color: #198754 !important; }
+.badge.bg-warning { background-color: #ffc107 !important; color: #000; }
+.badge.bg-info { background-color: #0dcaf0 !important; }
+.badge.bg-secondary { background-color: #6c757d !important; }

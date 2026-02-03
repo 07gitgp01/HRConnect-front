@@ -1,0 +1,467 @@
+<!-- src/app/features/partenaires/detail-offre/detail-offre.component.html -->
+<div class="detail-offre-container">
+  <!-- Header avec navigation -->
+  <div class="container-header">
+    <div class="header-content">
+      <div class="header-text">
+        <button class="btn btn-outline-secondary btn-sm mb-3" (click)="retourListe()">
+          <i class="fas fa-arrow-left me-2"></i> Retour aux offres
+        </button>
+        <h1 class="page-title">
+          <i class="fas fa-file-alt me-2"></i>
+          Détail de votre offre
+        </h1>
+      </div>
+      <div class="header-actions">
+        <button *ngIf="peutModifier()" class="btn btn-outline-primary me-2" (click)="modifierOffre()">
+          <i class="fas fa-edit me-1"></i> Modifier
+        </button>
+        <button *ngIf="peutAnnuler()" class="btn btn-outline-danger" (click)="annulerOffre()">
+          <i class="fas fa-ban me-1"></i> Demander l'annulation
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+    <p class="mt-3">Chargement des détails de l'offre...</p>
+  </div>
+
+  <!-- Erreur -->
+  <div *ngIf="!isLoading && erreurChargement" class="alert alert-danger">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    {{ erreurChargement }}
+  </div>
+
+  <!-- Contenu de l'offre -->
+  <div *ngIf="!isLoading && offre" class="content-section">
+    <!-- Carte principale -->
+    <div class="offre-detail-card">
+      <!-- Header -->
+      <div class="offre-header">
+        <div class="offre-title-section">
+          <div class="offre-badge" [ngClass]="getStatutBadgeClass(offre.statutProjet)">
+            {{ getStatutText(offre.statutProjet) }}
+          </div>
+          <h2 class="offre-title">{{ offre.titre }}</h2>
+          <div class="offre-meta">
+            <span class="meta-item">
+              <i class="fas fa-map-marker-alt me-1"></i>
+              {{ offre.ville_commune }}, {{ offre.regionAffectation }}
+            </span>
+            <span class="meta-item">
+              <i class="fas fa-calendar-alt me-1"></i>
+              Du {{ formatDate(offre.dateDebut) }} au {{ formatDate(offre.dateFin) }}
+            </span>
+            <span class="meta-item">
+              <i class="fas fa-users me-1"></i>
+              {{ offre.nombreVolontairesActuels || 0 }}/{{ offre.nombreVolontairesRequis }} volontaires
+            </span>
+            <span class="meta-item">
+              <i class="fas fa-hourglass me-1"></i>
+              {{ getNombrePostesRestants() }} postes disponibles
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progression -->
+      <div class="offre-progression mb-4">
+        <div class="d-flex justify-content-between mb-2">
+          <small>Progression du projet</small>
+          <small>{{ getProgressionOffre() | number:'1.0-0' }}%</small>
+        </div>
+        <div class="progress">
+          <div class="progress-bar" 
+               [style.width]="getProgressionOffre() + '%'"
+               role="progressbar">
+          </div>
+        </div>
+        <div class="progression-steps mt-2">
+          <span class="step" [class.active]="offre.statutProjet !== 'cloture'">En attente</span>
+          <span class="step" [class.active]="offre.statutProjet === 'actif' || offre.statutProjet === 'cloture'">Publiée</span>
+          <span class="step" [class.active]="offre.statutProjet === 'cloture'">Terminée</span>
+        </div>
+      </div>
+
+      <!-- Informations principales -->
+      <div class="row">
+        <!-- Colonne gauche : Description -->
+        <div class="col-lg-8">
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">
+                <i class="fas fa-info-circle me-2"></i> Description du projet
+              </h5>
+            </div>
+            <div class="card-body">
+              <h6 class="text-muted mb-3">Description courte</h6>
+              <p class="mb-4">{{ offre.descriptionCourte }}</p>
+              
+              <h6 class="text-muted mb-3">Description détaillée</h6>
+              <p class="white-space-pre-line">{{ offre.descriptionLongue }}</p>
+              
+              <div class="row mt-4">
+                <div class="col-md-6">
+                  <h6 class="text-muted">Type de mission</h6>
+                  <p><i class="fas fa-tag me-2"></i>{{ offre.type_mission }}</p>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="text-muted">Domaine d'activité</h6>
+                  <p>
+                    <i [class]="getDomaineIcon(offre.domaineActivite) + ' me-2'"></i>
+                    {{ offre.domaineActivite }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compétences et conditions -->
+          <div class="row">
+            <div class="col-md-6" *ngIf="offre.competences_requises">
+              <div class="card mb-4">
+                <div class="card-header">
+                  <h6 class="mb-0">
+                    <i class="fas fa-tools me-2"></i> Compétences requises
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <div class="competences-list">
+                    <span *ngFor="let competence of getCompetencesList(offre.competences_requises)" 
+                          class="badge bg-light text-dark me-1 mb-1">
+                      {{ competence }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6" *ngIf="offre.conditions_particulieres">
+              <div class="card mb-4">
+                <div class="card-header">
+                  <h6 class="mb-0">
+                    <i class="fas fa-clipboard-list me-2"></i> Conditions particulières
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <p class="white-space-pre-line">{{ offre.conditions_particulieres }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Colonne droite : Informations pratiques -->
+        <div class="col-lg-4">
+          <!-- Dates importantes -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h6 class="mb-0">
+                <i class="fas fa-calendar-check me-2"></i> Calendrier
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="timeline">
+                <div class="timeline-item">
+                  <div class="timeline-date">Date de début</div>
+                  <div class="timeline-content">{{ formatDate(offre.dateDebut) }}</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-date">Date de fin</div>
+                  <div class="timeline-content">{{ formatDate(offre.dateFin) }}</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-date">Date limite candidature</div>
+                  <div class="timeline-content">{{ formatDate(offre.dateLimiteCandidature) }}</div>
+                </div>
+                <div class="timeline-item" *ngIf="offre.datePublication">
+                  <div class="timeline-date">Date de publication</div>
+                  <div class="timeline-content">{{ formatDate(offre.datePublication) }}</div>
+                </div>
+                <div class="timeline-item" *ngIf="offre.dateCloture">
+                  <div class="timeline-date">Date de clôture</div>
+                  <div class="timeline-content">{{ formatDate(offre.dateCloture) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Avantages -->
+          <div *ngIf="offre.avantagesVolontaire" class="card mb-4">
+            <div class="card-header">
+              <h6 class="mb-0">
+                <i class="fas fa-gift me-2"></i> Avantages
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="avantages-list">
+                <span *ngFor="let avantage of getAvantagesList(offre.avantagesVolontaire)" 
+                      class="badge bg-success me-1 mb-1">
+                  <i class="fas fa-check me-1"></i>{{ avantage }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Métadonnées -->
+          <div class="card">
+            <div class="card-header">
+              <h6 class="mb-0">
+                <i class="fas fa-database me-2"></i> Informations techniques
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="metadata-list">
+                <div class="metadata-item">
+                  <span class="metadata-label">Créée le</span>
+                  <span class="metadata-value">{{ formatDateTime(offre.created_at) }}</span>
+                </div>
+                <div class="metadata-item" *ngIf="offre.updated_at">
+                  <span class="metadata-label">Modifiée le</span>
+                  <span class="metadata-value">{{ formatDateTime(offre.updated_at) }}</span>
+                </div>
+                <div class="metadata-item">
+                  <span class="metadata-label">Référence</span>
+                  <span class="metadata-value badge bg-secondary">#{{ offre.id }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions selon le statut -->
+      <div *ngIf="offre.statutProjet === 'en_attente'" class="alert alert-warning mb-4">
+        <i class="fas fa-clock me-2"></i>
+        <strong>Votre offre est en attente de validation</strong>
+        <p class="mb-0 mt-2">
+          Votre offre a été soumise à l'administration pour validation. 
+          Vous serez notifié par email une fois qu'elle sera publiée.
+          Vous pouvez encore la modifier tant qu'elle n'est pas publiée.
+        </p>
+      </div>
+
+      <div *ngIf="offre.statutProjet === 'actif'" class="alert alert-success mb-4">
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>Votre offre est publiée</strong>
+        <p class="mb-0 mt-2">
+          Votre offre est maintenant visible par les volontaires. 
+          <strong>{{ getNombrePostesRestants() }} postes disponibles</strong>.
+          Les volontaires peuvent postuler via le site public.
+        </p>
+      </div>
+
+      <div *ngIf="offre.statutProjet === 'cloture'" class="alert alert-secondary mb-4">
+        <i class="fas fa-archive me-2"></i>
+        <strong>Votre offre est clôturée</strong>
+        <p class="mb-0 mt-2">
+          Cette offre n'est plus active. 
+          <span *ngIf="offre.dateCloture">Clôturée le {{ formatDate(offre.dateCloture) }}</span>
+        </p>
+      </div>
+
+      <!-- Volontaires affectés -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-users me-2"></i> Volontaires affectés
+            <span class="badge bg-primary ms-2">{{ volontairesAffectes.length }}</span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <div *ngIf="volontairesAffectes.length === 0" class="text-center py-4">
+            <i class="fas fa-users-slash fa-2x text-muted mb-3"></i>
+            <p class="text-muted mb-0" *ngIf="offre.statutProjet === 'en_attente'">
+              Les volontaires seront affectés une fois votre offre publiée.
+            </p>
+            <p class="text-muted mb-0" *ngIf="offre.statutProjet === 'actif'">
+              Aucun volontaire n'a encore été affecté à votre projet.
+              Les volontaires sont affectés par l'administration après traitement des candidatures.
+            </p>
+            <p class="text-muted mb-0" *ngIf="offre.statutProjet === 'cloture'">
+              Aucun volontaire n'a été affecté à ce projet.
+            </p>
+          </div>
+          
+          <div *ngIf="volontairesAffectes.length > 0" class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Email</th>
+                  <th>Date d'affectation</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let affectation of volontairesAffectes">
+                  <td>
+                    <strong>{{ affectation.volontaire.prenom }} {{ affectation.volontaire.nom }}</strong>
+                  </td>
+                  <td>{{ affectation.volontaire.email }}</td>
+                  <td>{{ formatDate(affectation.dateAffectation) }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'bg-success': affectation.statut === 'active',
+                      'bg-warning': affectation.statut === 'pending',
+                      'bg-danger': affectation.statut === 'inactive'
+                    }">
+                      {{ affectation.statut === 'active' ? 'Actif' : 
+                         affectation.statut === 'pending' ? 'En attente' : 'Inactif' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Candidatures (lecture seule pour partenaire) -->
+      <div *ngIf="offre.statutProjet === 'actif'" class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-file-alt me-2"></i> Candidatures
+            <span class="badge bg-info ms-2">{{ candidatures.length }}</span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <div *ngIf="candidatures.length === 0" class="text-center py-4">
+            <i class="fas fa-inbox fa-2x text-muted mb-3"></i>
+            <p class="text-muted mb-0">Aucune candidature reçue pour le moment.</p>
+            <p class="text-muted small">
+              Les volontaires peuvent postuler via le site public du PNVB.
+            </p>
+          </div>
+          
+          <div *ngIf="candidatures.length > 0" class="row">
+            <div *ngFor="let candidature of candidatures.slice(0, 3)" class="col-md-4 mb-3">
+              <div class="candidature-card">
+                <div class="candidature-header">
+                  <h6>{{ candidature.volontaire.prenom }} {{ candidature.volontaire.nom }}</h6>
+                  <span class="badge" [ngClass]="{
+                    'bg-warning': candidature.statut === 'en_attente',
+                    'bg-success': candidature.statut === 'acceptee',
+                    'bg-danger': candidature.statut === 'refusee'
+                  }">
+                    {{ candidature.statut === 'en_attente' ? 'En attente' : 
+                       candidature.statut === 'acceptee' ? 'Acceptée' : 'Refusée' }}
+                  </span>
+                </div>
+                <div class="candidature-body">
+                  <p class="text-muted small mb-2">
+                    <i class="fas fa-calendar me-1"></i>
+                    Candidatée le {{ formatDate(candidature.dateCandidature) }}
+                  </p>
+                  <p class="mb-2" *ngIf="candidature.message">
+                    <strong>Message :</strong> {{ candidature.message | slice:0:100 }}...
+                  </p>
+                  <p *ngIf="candidature.statut === 'en_attente'" class="text-muted small">
+                    <i class="fas fa-clock me-1"></i> En attente de traitement par l'administration
+                  </p>
+                  <p *ngIf="candidature.statut === 'acceptee'" class="text-success small">
+                    <i class="fas fa-check-circle me-1"></i> Candidature acceptée
+                  </p>
+                  <p *ngIf="candidature.statut === 'refusee'" class="text-danger small">
+                    <i class="fas fa-times-circle me-1"></i> Candidature refusée
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div *ngIf="candidatures.length > 3" class="col-12 text-center mt-3">
+              <button class="btn btn-outline-secondary btn-sm" (click)="ouvrirModalCandidatures()">
+                Voir les {{ candidatures.length - 3 }} autres candidatures...
+              </button>
+            </div>
+          </div>
+
+          <!-- Note sur le traitement -->
+          <div *ngIf="candidatures.length > 0" class="alert alert-info mt-3">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Information :</strong> Les candidatures sont traitées par l'administration.
+            Vous serez notifié lorsque des volontaires seront affectés à votre projet.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal : Liste des candidatures -->
+  <div *ngIf="showModalCandidatures" class="modal-backdrop fade show" (click)="fermerModalCandidatures()"></div>
+  <div *ngIf="showModalCandidatures" class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-file-alt me-2"></i> Liste des candidatures
+            <span class="badge bg-info ms-2">{{ candidatures.length }}</span>
+          </h5>
+          <button type="button" class="btn-close" (click)="fermerModalCandidatures()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Volontaire</th>
+                  <th>Email</th>
+                  <th>Date candidature</th>
+                  <th>Message</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let candidature of candidatures">
+                  <td>
+                    <strong>{{ candidature.volontaire.prenom }} {{ candidature.volontaire.nom }}</strong>
+                  </td>
+                  <td>{{ candidature.volontaire.email }}</td>
+                  <td>{{ formatDateTime(candidature.dateCandidature) }}</td>
+                  <td>
+                    <div *ngIf="candidature.message">
+                      <button class="btn btn-link btn-sm" 
+                              data-bs-toggle="popover" 
+                              [title]="candidature.volontaire.prenom + ' ' + candidature.volontaire.nom"
+                              [attr.data-bs-content]="candidature.message">
+                        Voir le message
+                      </button>
+                    </div>
+                    <span *ngIf="!candidature.message" class="text-muted">Aucun message</span>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'bg-warning': candidature.statut === 'en_attente',
+                      'bg-success': candidature.statut === 'acceptee',
+                      'bg-danger': candidature.statut === 'refusee'
+                    }">
+                      {{ candidature.statut === 'en_attente' ? 'En attente' : 
+                         candidature.statut === 'acceptee' ? 'Acceptée' : 'Refusée' }}
+                    </span>
+                    <div *ngIf="candidature.statut === 'en_attente'" class="text-muted small mt-1">
+                      <i class="fas fa-clock"></i> En attente
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="alert alert-info w-100">
+            <i class="fas fa-info-circle me-2"></i>
+            Les candidatures sont traitées par l'administration. Vous serez notifié lorsque des volontaires seront affectés à votre projet.
+          </div>
+          <button type="button" class="btn btn-outline-secondary" (click)="fermerModalCandidatures()">
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

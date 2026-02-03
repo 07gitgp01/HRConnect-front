@@ -1,0 +1,258 @@
+<div class="candidat-dashboard" *ngIf="user">
+  <!-- En-tête personnalisée -->
+  <div class="header-section">
+    <mat-card class="welcome-card">
+      <mat-card-content>
+        <div class="welcome-content">
+          <div class="welcome-text">
+            <!-- <h1 class="welcome-title">
+              <mat-icon class="welcome-icon">person</mat-icon>
+              Bienvenue, {{ user.prenom || user.username }} !
+            </h1> -->
+            <p class="welcome-subtitle">
+              Bienvenue dans votre espace personnel Programme National de Volontariat du Burkina Faso
+            </p>
+          </div>
+          <div class="status-badge">
+            <span class="statut-principal" [class]="getStatutBadgeClass(statutPrincipal.toLowerCase())">
+              {{ statutPrincipal }}
+            </span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Widgets de Statistiques -->
+  <div class="stats-section">
+    <div class="stats-grid">
+      <mat-card class="stat-card total">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">folder_open</mat-icon>
+            <div class="stat-info">
+              <div class="stat-number">{{ stats.totalCandidatures }}</div>
+              <div class="stat-label">Total Candidatures</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card en-attente">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">schedule</mat-icon>
+            <div class="stat-info">
+              <div class="stat-number">{{ stats.enAttente }}</div>
+              <div class="stat-label">En attente</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card entretien">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">event_available</mat-icon>
+            <div class="stat-info">
+              <div class="stat-number">{{ stats.entretien }}</div>
+              <div class="stat-label">Entretien</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card acceptee">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">check_circle</mat-icon>
+            <div class="stat-info">
+              <div class="stat-number">{{ stats.acceptee }}</div>
+              <div class="stat-label">Acceptées</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Alertes/Notifications -->
+  <div class="notifications-section" *ngIf="notifications.length > 0">
+    <mat-card class="notifications-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon class="header-icon">notifications</mat-icon>
+          Vos alertes importantes
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="notifications-list">
+          <div *ngFor="let notif of notifications" 
+               class="notification-item"
+               [class]="'notification-' + notif.type">
+            <mat-icon class="notification-icon">
+              {{ notif.type === 'info' ? 'info' : 
+                 notif.type === 'success' ? 'check_circle' : 
+                 'warning' }}
+            </mat-icon>
+            <div class="notification-content">
+              <div class="notification-message">{{ notif.message }}</div>
+              <div class="notification-date">{{ notif.date | date:'dd/MM/yyyy' }}</div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="content-section">
+    <!-- Mes Candidatures Récentes -->
+    <div class="candidatures-column">
+      <mat-card class="content-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="header-icon">list_alt</mat-icon>
+            Mes candidatures récentes
+          </mat-card-title>
+          <span class="badge-count">{{ mesCandidatures.length }}</span>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div *ngIf="loading" class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Chargement de vos candidatures...</p>
+          </div>
+
+          <div *ngIf="!loading && mesCandidatures.length === 0" class="empty-state">
+            <mat-icon class="empty-icon">inbox</mat-icon>
+            <h3>Aucune candidature pour le moment</h3>
+            <p>Découvrez les missions disponibles et postulez !</p>
+            <button mat-raised-button color="primary" (click)="voirTousProjets()">
+              <mat-icon>search</mat-icon>
+              Découvrir les missions
+            </button>
+          </div>
+
+          <div *ngFor="let candidature of mesCandidatures" class="candidature-item">
+            <div class="candidature-header">
+              <h4 class="poste-title">{{ candidature.poste_vise }}</h4>
+              <span [class]="'statut-badge ' + getStatutBadgeClass(candidature.statut)">
+                {{ getStatutText(candidature.statut) }}
+              </span>
+            </div>
+
+            <div class="candidature-details">
+              <div class="candidature-date">
+                <mat-icon>event</mat-icon>
+                Postulé le {{ candidature.cree_le | date:'dd/MM/yyyy' }}
+              </div>
+              
+              <div class="candidature-competences" *ngIf="getCompetencesArray(candidature.competences).length > 0">
+                <mat-chip-set>
+                  <mat-chip *ngFor="let competence of getCompetencesArray(candidature.competences)" 
+                           class="competence-chip">
+                    {{ competence }}
+                  </mat-chip>
+                </mat-chip-set>
+              </div>
+            </div>
+
+            <div class="candidature-actions">
+              <button mat-stroked-button color="primary" 
+                      [routerLink]="['/features/candidats/details/', candidature.projectId]">
+                <mat-icon>visibility</mat-icon>
+                Voir le projet
+              </button>
+              
+              <button *ngIf="candidature.statut === 'en_attente'" 
+                      mat-stroked-button color="warn"
+                      (click)="retirerCandidature(candidature.id!)">
+                <mat-icon>delete</mat-icon>
+                Retirer
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="mesCandidatures.length > 0" class="view-all-section">
+            <button mat-button color="primary" (click)="voirToutesCandidatures()">
+              <mat-icon>list</mat-icon>
+              Voir toutes mes candidatures
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Missions Disponibles -->
+    <div class="projets-column">
+      <mat-card class="content-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="header-icon">business_center</mat-icon>
+            Missions disponibles
+          </mat-card-title>
+          <span class="badge-count">{{ projetsDisponibles.length }}</span>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div *ngIf="projetsDisponibles.length === 0" class="empty-state">
+            <mat-icon class="empty-icon">business_center</mat-icon>
+            <h3>Aucune mission disponible</h3>
+            <p>Revenez plus tard pour découvrir de nouvelles opportunités.</p>
+          </div>
+
+          <div *ngFor="let projet of projetsDisponibles" class="projet-item">
+            <div class="projet-header">
+              <!-- CORRIGÉ : projet.title → projet.titre -->
+              <h4 class="projet-title">{{ projet.titre }}</h4>
+              <!-- CORRIGÉ : projet.status → projet.statutProjet -->
+              <span class="projet-statut" *ngIf="projet.statutProjet">
+                {{ getProjectStatusLabel(projet.statutProjet) }}
+              </span>
+            </div>
+
+            <!-- CORRIGÉ : projet.description → projet.descriptionCourte -->
+            <p class="projet-description">
+              {{ (projet.descriptionCourte || 'Aucune description disponible') | slice:0:120 }}...
+            </p>
+
+            <div class="projet-details">
+              <!-- CORRIGÉ : projet.region → projet.regionAffectation -->
+              <div class="projet-region" *ngIf="projet.regionAffectation">
+                <mat-icon>location_on</mat-icon>
+                {{ projet.regionAffectation }}
+              </div>
+              
+              <!-- CORRIGÉ : projet.neededVolunteers → projet.nombreVolontairesRequis -->
+              <div class="projet-volontaires" *ngIf="projet.nombreVolontairesRequis">
+                <mat-icon>people</mat-icon>
+                {{ projet.nombreVolontairesRequis }} places
+              </div>
+            </div>
+
+            <div class="projet-actions">
+              <button mat-raised-button color="primary"
+                      (click)="postulerAuProjet(projet)">
+                <mat-icon>send</mat-icon>
+                Postuler
+              </button>
+              
+              <button mat-button 
+                      [routerLink]="['/features/candidats/details', projet.id]">
+                <mat-icon>info</mat-icon>
+                Détails
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="projetsDisponibles.length > 0" class="view-all-section">
+            <button mat-button color="primary" (click)="voirTousProjets()">
+              <mat-icon>explore</mat-icon>
+              Explorer toutes les missions
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>
