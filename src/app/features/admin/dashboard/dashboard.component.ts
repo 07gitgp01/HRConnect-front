@@ -6,13 +6,15 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../services/service_auth/auth.service';
 import { Router, RouterModule } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CandidatureService } from '../../services/service_candi/candidature.service';
 import { ProjectService } from '../../services/service_projects/projects.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Project, ProjectStatus } from '../../models/projects.model';
 
 Chart.register(...registerables);
 
@@ -21,26 +23,57 @@ interface DashboardData {
   totalProjetsOuverts: number;
   candidaturesEnAttente: number;
   tauxCompletion: number;
-  projetsEcheance: any[];
-  candidaturesUrgentes: any[];
-  evolutionCandidatures: any[];
-  candidaturesParRegion: any[];
-  projetsParStatut: any[];
-  statistiquesEcheances: any;
+  projetsEcheance: ProjetEcheance[];
+  candidaturesUrgentes: CandidatureUrgente[];
+  evolutionCandidatures: EvolutionMensuelle[];
+  projetsParStatut: RepartitionStatut[];
+  statistiquesEcheances: StatistiquesEcheances;
+}
+
+interface ProjetEcheance {
+  id: number;
+  titre: string;
+  dateEcheance: string;
+}
+
+interface CandidatureUrgente {
+  id: number;
+  nom: string;
+  prenom: string;
+  mission: string;
+  dateReception: string;
+}
+
+interface EvolutionMensuelle {
+  mois: string;
+  count: number;
+}
+
+interface RepartitionStatut {
+  statut: string;
+  count: number;
+}
+
+interface StatistiquesEcheances {
+  enRetard: number;
+  cetteSemaine: number;
+  ceMois: number;
 }
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css'],
+  styleUrls: ['./dashboard.component.scss'],
   imports: [
     CommonModule, 
     MatCardModule, 
     MatIconModule, 
     MatButtonModule, 
+    MatTooltipModule,
     RouterModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatSnackBarModule
   ],
   providers: [DatePipe]
 })
@@ -54,21 +87,22 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     projetsEcheance: [],
     candidaturesUrgentes: [],
     evolutionCandidatures: [],
-    candidaturesParRegion: [],
     projetsParStatut: [],
-    statistiquesEcheances: {}
+    statistiquesEcheances: {
+      enRetard: 0,
+      cetteSemaine: 0,
+      ceMois: 0
+    }
   };
 
   echeanceNotifications: string[] = [];
   isUserAdmin = false;
 
   @ViewChild('candidaturesChart') candidaturesChart!: ElementRef;
-  @ViewChild('regionsChart') regionsChart!: ElementRef;
   @ViewChild('projetsChart') projetsChart!: ElementRef;
 
   private chart1: Chart | undefined;
   private chart2: Chart | undefined;
-  private chart3: Chart | undefined;
 
   constructor(
     private http: HttpClient,
@@ -94,7 +128,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.isUserAdmin) {
       this.setupEcheanceNotifications();
     } else {
-      // S'assurer que les notifications sont vidées si non-admin
       this.echeanceNotifications = [];
     }
   }
@@ -125,12 +158,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private setupEcheanceNotifications(): void {
     if (!this.isUserAdmin) {
       console.log('🔕 Notifications désactivées - Utilisateur non admin');
-      this.echeanceNotifications = []; // Vider les notifications
+      this.echeanceNotifications = [];
       return;
     }
 
     this.projectService.getEcheanceNotifications().subscribe(notifications => {
-      // Vérifier à nouveau qu'on est toujours admin
       if (!this.authService.isAdmin()) {
         this.echeanceNotifications = [];
         return;
@@ -166,11 +198,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       })
     );
 
-    const candidatures$ = this.candidatureService.getCandidaturesAvecProjets();
-    
-    const affectations$ = this.http.get<any[]>('http://localhost:3000/affectations').pipe(
+    const candidatures$ = this.candidatureService.getCandidaturesAvecProjets().pipe(
       catchError(error => {
-        console.error('Erreur chargement affectations:', error);
+        console.error('Erreur chargement candidatures:', error);
         return of([]);
       })
     );
@@ -178,8 +208,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     forkJoin({
       volontaires: volontaires$,
       projets: projets$,
-      candidatures: candidatures$,
-      affectations: affectations$
+      candidatures: candidatures$
     }).subscribe({
       next: (results) => {
         console.log('✅ DONNÉES CHARGÉES AVEC SUCCÈS');
@@ -194,7 +223,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         
         setTimeout(() => {
           this.createCharts();
-        });
+        }, 100);
       },
       error: (error) => {
         console.error('❌ Erreur chargement dashboard:', error);
@@ -206,32 +235,46 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * 📊 Charger les statistiques d'échéance (UNIQUEMENT POUR ADMIN)
    */
-  private async loadStatistiquesEcheances(): Promise<void> {
+  private loadStatistiquesEcheances(): void {
     if (!this.isUserAdmin) {
-      this.dashboardData.statistiquesEcheances = { enRetard: 0, cetteSemaine: 0, ceMois: 0 };
+      this.dashboardData.statistiquesEcheances = { 
+        enRetard: 0, 
+        cetteSemaine: 0, 
+        ceMois: 0 
+      };
       return;
     }
 
-    try {
-      const stats = await this.projectService.getStatistiquesEcheances();
-      this.dashboardData.statistiquesEcheances = stats;
-    } catch (error) {
-      console.error('Erreur chargement statistiques échéances:', error);
-      this.dashboardData.statistiquesEcheances = { enRetard: 0, cetteSemaine: 0, ceMois: 0 };
-    }
+    this.projectService.getStatistiquesEcheances().subscribe({
+      next: (stats) => {
+        this.dashboardData.statistiquesEcheances = {
+          enRetard: stats.projetsEnRetard || 0,
+          cetteSemaine: stats.projetsAEcheance || 0,
+          ceMois: 0 // À implémenter si nécessaire
+        };
+        console.log('📊 Statistiques échéances chargées:', this.dashboardData.statistiquesEcheances);
+      },
+      error: (error) => {
+        console.error('Erreur chargement statistiques échéances:', error);
+        this.dashboardData.statistiquesEcheances = { 
+          enRetard: 0, 
+          cetteSemaine: 0, 
+          ceMois: 0 
+        };
+      }
+    });
   }
 
   /**
    * 📈 Traitement des données pour le tableau de bord
    */
   private processDashboardData(data: any): void {
-    const { volontaires, projets, candidatures, affectations } = data;
+    const { volontaires, projets, candidatures } = data;
 
     console.log('📊 Traitement des données:', {
       volontaires: volontaires.length,
       projets: projets.length,
-      candidatures: candidatures.length,
-      affectations: affectations.length
+      candidatures: candidatures.length
     });
 
     // KPIs principaux
@@ -239,8 +282,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       this.normaliserStatut(v.statut).includes('actif')
     ).length;
 
-    this.dashboardData.totalProjetsOuverts = projets.filter((p: any) => 
-      this.estProjetOuvert(p)
+    // ✅ CORRECTION : Utiliser statutProjet au lieu de status
+    this.dashboardData.totalProjetsOuverts = projets.filter((p: Project) => 
+      p.statutProjet === 'actif'
     ).length;
 
     this.dashboardData.candidaturesEnAttente = candidatures.filter((c: any) => 
@@ -248,9 +292,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     ).length;
 
     // Taux de complétion basé sur les projets
-    const projetsTermines = projets.filter((p: any) => 
-      this.normaliserStatut(p.status).includes('clôturé') || 
-      this.normaliserStatut(p.status).includes('termine')
+    const projetsTermines = projets.filter((p: Project) => 
+      p.statutProjet === 'cloture'
     ).length;
     
     this.dashboardData.tauxCompletion = projets.length > 0 ? 
@@ -269,18 +312,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * 🔧 Vérifier si un projet est ouvert
-   */
-  private estProjetOuvert(projet: any): boolean {
-    const statut = this.normaliserStatut(projet.status);
-    return statut.includes('en cours') || 
-           statut.includes('planifié') || 
-           statut.includes('soumis') ||
-           statut.includes('ouvert');
-  }
-
-  /**
-   * 🔧 Normalisation des statuts
+   * 🔧 Normalisation des statuts (pour volontaires uniquement)
    */
   private normaliserStatut(statut: any): string {
     if (!statut) return '';
@@ -288,35 +320,47 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * ⏰ Projets arrivant à échéance
+   * ⏰ Projets arrivant à échéance (15 prochains jours)
    */
-  private getProjetsEcheance(projets: any[]): any[] {
+  private getProjetsEcheance(projets: Project[]): ProjetEcheance[] {
     const aujourdhui = new Date();
-    const dans15Jours = new Date();
+    aujourdhui.setHours(0, 0, 0, 0);
+    
+    const dans15Jours = new Date(aujourdhui);
     dans15Jours.setDate(aujourdhui.getDate() + 15);
     
     return projets
-      .filter((p: any) => {
-        if (!p.endDate) return false;
+      .filter((p: Project) => {
+        // Exclure les projets clôturés
+        if (p.statutProjet === 'cloture') return false;
+        
+        if (!p.dateFin) return false;
+        
         try {
-          const dateEcheance = new Date(p.endDate);
+          const dateEcheance = new Date(p.dateFin);
+          dateEcheance.setHours(0, 0, 0, 0);
           return dateEcheance > aujourdhui && dateEcheance <= dans15Jours;
         } catch {
           return false;
         }
       })
-      .map((p: any) => ({
-        id: p.id,
-        titre: p.title || p.nom || 'Projet sans titre',
-        dateEcheance: p.endDate
+      .map((p: Project) => ({
+        id: p.id!,
+        titre: p.titre,
+        dateEcheance: p.dateFin
       }))
+      .sort((a, b) => {
+        const dateA = new Date(a.dateEcheance).getTime();
+        const dateB = new Date(b.dateEcheance).getTime();
+        return dateA - dateB;
+      })
       .slice(0, 5);
   }
 
   /**
-   * 🚨 Candidatures urgentes
+   * 🚨 Candidatures urgentes (plus de 7 jours en attente)
    */
-  private getCandidaturesUrgentes(candidatures: any[]): any[] {
+  private getCandidaturesUrgentes(candidatures: any[]): CandidatureUrgente[] {
     const aujourdhui = new Date();
     const ilYa7Jours = new Date();
     ilYa7Jours.setDate(aujourdhui.getDate() - 7);
@@ -335,28 +379,37 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         id: c.id,
         nom: c.nom,
         prenom: c.prenom,
-        mission: c.poste_vise,
+        mission: c.poste_vise || 'Mission non spécifiée',
         dateReception: c.cree_le
       }))
+      .sort((a, b) => {
+        const dateA = new Date(a.dateReception).getTime();
+        const dateB = new Date(b.dateReception).getTime();
+        return dateA - dateB;
+      })
       .slice(0, 5);
   }
 
   /**
    * 📊 Préparation des données pour les graphiques
    */
-  private prepareChartData(candidatures: any[], projets: any[]): void {
+  private prepareChartData(candidatures: any[], projets: Project[]): void {
     this.dashboardData.evolutionCandidatures = this.calculerEvolutionMensuelle(candidatures);
-    this.dashboardData.candidaturesParRegion = this.calculerRepartitionRegion(candidatures);
     this.dashboardData.projetsParStatut = this.calculerRepartitionProjets(projets);
+    
+    console.log('📊 Données graphiques préparées:', {
+      evolutionCandidatures: this.dashboardData.evolutionCandidatures,
+      projetsParStatut: this.dashboardData.projetsParStatut
+    });
   }
 
   /**
-   * 📈 Évolution mensuelle des candidatures
+   * 📈 Évolution mensuelle des candidatures (6 derniers mois)
    */
-  private calculerEvolutionMensuelle(candidatures: any[]): any[] {
+  private calculerEvolutionMensuelle(candidatures: any[]): EvolutionMensuelle[] {
     const mois = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
     const aujourdhui = new Date();
-    const result = [];
+    const result: EvolutionMensuelle[] = [];
 
     for (let i = 5; i >= 0; i--) {
       const date = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth() - i, 1);
@@ -381,50 +434,57 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * 🗺️ Répartition des candidatures par région
+   * 📊 Répartition des projets par statut (CORRIGÉ ✅)
    */
-  private calculerRepartitionRegion(candidatures: any[]): any[] {
-    const regions: { [key: string]: number } = {};
-
-    candidatures.forEach((c: any) => {
-      const region = c.region || 'Non assignée';
-      regions[region] = (regions[region] || 0) + 1;
-    });
-
-    return Object.entries(regions)
-      .map(([region, count]) => ({ region, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8); // Limiter à 8 régions maximum
-  }
-
-  /**
-   * 📊 Répartition des projets par statut
-   */
-  private calculerRepartitionProjets(projets: any[]): any[] {
+  private calculerRepartitionProjets(projets: Project[]): RepartitionStatut[] {
     const statuts: { [key: string]: number } = {};
+    
+    // Mapping des statuts vers des labels lisibles
+    const statusLabels: { [key in ProjectStatus]: string } = {
+      'en_attente': 'En Attente',
+      'actif': 'Actif',
+      'cloture': 'Clôturé'
+    };
 
-    projets.forEach((p: any) => {
-      const statut = p.status || 'Non spécifié';
-      statuts[statut] = (statuts[statut] || 0) + 1;
+    projets.forEach((p: Project) => {
+      const statutLabel = statusLabels[p.statutProjet] || 'Non spécifié';
+      statuts[statutLabel] = (statuts[statutLabel] || 0) + 1;
+      
+      console.log(`📌 Projet "${p.titre}": statutProjet="${p.statutProjet}" -> label="${statutLabel}"`);
     });
 
-    return Object.entries(statuts)
-      .map(([statut, count]) => ({ statut, count }));
+    const result = Object.entries(statuts)
+      .map(([statut, count]) => ({ statut, count }))
+      .sort((a, b) => b.count - a.count);
+    
+    console.log('📊 Répartition projets par statut:', result);
+    return result;
   }
 
   /**
-   * 📊 Création des graphiques
+   * 📊 Création des graphiques (CORRIGÉ ✅)
    */
   private createCharts(): void {
+    console.log('🎨 Création des graphiques...');
     this.createCandidaturesChart();
-    this.createRegionsChart();
     this.createProjetsChart();
   }
 
+  /**
+   * 📈 Graphique d'évolution des candidatures
+   */
   private createCandidaturesChart(): void {
-    if (!this.candidaturesChart?.nativeElement) return;
+    if (!this.candidaturesChart?.nativeElement) {
+      console.warn('⚠️ Canvas candidaturesChart introuvable');
+      return;
+    }
 
     const ctx = this.candidaturesChart.nativeElement.getContext('2d');
+    
+    // Détruire le graphique existant s'il existe
+    if (this.chart1) {
+      this.chart1.destroy();
+    }
     
     this.chart1 = new Chart(ctx, {
       type: 'line',
@@ -433,82 +493,170 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         datasets: [{
           label: 'Candidatures reçues',
           data: this.dashboardData.evolutionCandidatures.map(item => item.count),
-          borderColor: '#2196F3',
-          backgroundColor: 'rgba(33, 150, 243, 0.1)',
+          borderColor: '#2e7d32',
+          backgroundColor: 'rgba(46, 125, 50, 0.1)',
           borderWidth: 3,
           tension: 0.4,
-          fill: true
+          fill: true,
+          pointBackgroundColor: '#2e7d32',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          title: {
+          legend: {
             display: true,
-            text: 'Évolution mensuelle des candidatures'
+            position: 'top',
+            labels: {
+              font: {
+                size: 12,
+                weight: 'bold'
+              }
+            }
+          },
+          title: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 12,
+            titleFont: {
+              size: 14
+            },
+            bodyFont: {
+              size: 13
+            },
+            callbacks: {
+              label: (context) => {
+                const value = context.parsed.y;
+                return `Candidatures: ${value}`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              precision: 0
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
           }
         }
       }
     });
+
+    console.log('✅ Graphique candidatures créé avec succès');
   }
 
-  private createRegionsChart(): void {
-    if (!this.regionsChart?.nativeElement) return;
-
-    const ctx = this.regionsChart.nativeElement.getContext('2d');
-    const colors = ['#4CAF50', '#2196F3', '#FF9800', '#F44336', '#9C27B0', '#607D8B', '#795548', '#E91E63'];
-    
-    this.chart2 = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: this.dashboardData.candidaturesParRegion.map(item => item.region),
-        datasets: [{
-          label: 'Candidatures par région',
-          data: this.dashboardData.candidaturesParRegion.map(item => item.count),
-          backgroundColor: colors
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          title: {
-            display: true,
-            text: 'Répartition des candidatures par région'
-          }
-        }
-      }
-    });
-  }
-
+  /**
+   * 📊 Graphique de répartition des projets par statut
+   */
   private createProjetsChart(): void {
-    if (!this.projetsChart?.nativeElement) return;
+    console.log('🎨 Création graphique projets...');
+    console.log('Canvas element:', this.projetsChart?.nativeElement);
+    console.log('Données projets:', this.dashboardData.projetsParStatut);
+    
+    if (!this.projetsChart?.nativeElement) {
+      console.error('❌ Canvas projetsChart introuvable');
+      return;
+    }
+    
+    if (!this.dashboardData.projetsParStatut.length) {
+      console.warn('⚠️ Aucune donnée pour le graphique projets');
+      return;
+    }
 
     const ctx = this.projetsChart.nativeElement.getContext('2d');
-    const colors = ['#4CAF50', '#2196F3', '#FF9800', '#F44336', '#9C27B0'];
     
-    this.chart3 = new Chart(ctx, {
+    // Détruire le graphique existant s'il existe
+    if (this.chart2) {
+      this.chart2.destroy();
+    }
+    
+    // Couleurs adaptées aux statuts
+    const colorMap: { [key: string]: string } = {
+      'En Attente': '#FF9800',       // Orange
+      'Actif': '#4CAF50',            // Vert
+      'Clôturé': '#9E9E9E',          // Gris
+      'Non spécifié': '#757575'      // Gris foncé
+    };
+    
+    const colors = this.dashboardData.projetsParStatut.map(item => 
+      colorMap[item.statut] || '#9C27B0'
+    );
+    
+    this.chart2 = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: this.dashboardData.projetsParStatut.map(item => item.statut),
         datasets: [{
-          label: 'Projets par statut',
+          label: 'Missions',
           data: this.dashboardData.projetsParStatut.map(item => item.count),
-          backgroundColor: colors
+          backgroundColor: colors,
+          borderWidth: 3,
+          borderColor: '#ffffff',
+          hoverBorderWidth: 4,
+          hoverOffset: 10
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12,
+                weight: 'bold'
+              },
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          },
           title: {
-            display: true,
-            text: 'Répartition des projets par statut'
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 12,
+            titleFont: {
+              size: 14,
+              weight: 'bold'
+            },
+            bodyFont: {
+              size: 13
+            },
+            callbacks: {
+              label: (context) => {
+                const label = context.label || '';
+                const value = context.parsed || 0;
+                const total = (context.dataset.data as number[]).reduce((a, b) => a + b, 0);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                return `${label}: ${value} mission${value > 1 ? 's' : ''} (${percentage}%)`;
+              }
+            }
           }
         }
       }
     });
+    
+    console.log('✅ Graphique projets créé avec succès');
   }
 
   /**
@@ -543,8 +691,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
    * 🗑️ Nettoyage
    */
   ngOnDestroy(): void {
-    if (this.chart1) this.chart1.destroy();
-    if (this.chart2) this.chart2.destroy();
-    if (this.chart3) this.chart3.destroy();
+    if (this.chart1) {
+      this.chart1.destroy();
+    }
+    if (this.chart2) {
+      this.chart2.destroy();
+    }
   }
 }

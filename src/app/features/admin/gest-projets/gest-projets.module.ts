@@ -11,7 +11,7 @@ import { ProjectDetailDialogComponent } from './project-detail-dialog/project-de
 @NgModule({
   declarations: [
   
-    ProjectDetailDialogComponent
+    /* ProjectDetailDialogComponent */
   ],
   imports: [
     CommonModule,          // ✅ nécessaire pour *ngIf et *ngFor

@@ -60,7 +60,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   currentSlide = 0;
   carouselSlides: CarouselSlide[] = [];
   private autoSlideInterval: any;
-  private loadTimeout: any; // Timeout pour éviter le blocage
+  private loadTimeout: any;
 
   // Computed signals pour l'authentification
   isLoggedIn = computed(() => this.authService.isLoggedIn());
@@ -75,10 +75,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     console.log('🏠 HomeComponent initialisé');
     
-    // Initialiser avec un tableau vide
     this.featuredProjects.set([]);
     
-    // Charger les projets avec un délai pour éviter les conflits
     setTimeout(() => {
       this.loadFeaturedProjects();
     }, 100);
@@ -225,18 +223,19 @@ export class HomeComponent implements OnInit, OnDestroy {
     ];
   }
 
-  // ==================== GESTION DES PROJETS - SIMPLIFIÉE ====================
+  // ==================== CHARGEMENT DES PROJETS - VERSION CORRIGÉE ====================
   loadFeaturedProjects(): void {
+    console.log('🔄 Début chargement des projets actifs...');
     this.isLoadingProjects.set(true);
     this.loadError.set(false);
 
-    // Timeout de sécurité pour éviter le blocage infini
+    // Timeout de sécurité
     this.loadTimeout = setTimeout(() => {
-      console.log('⏱️ Timeout: Arrêt forcé du chargement');
+      console.log('⏱️ Timeout: Arrêt forcé du chargement après 8 secondes');
       this.featuredProjects.set([]);
       this.isLoadingProjects.set(false);
       this.loadError.set(false);
-    }, 8000); // 8 secondes max
+    }, 8000);
 
     this.projectService.getAllProjectsWithStats().subscribe({
       next: (projectsWithStats: any[]) => {
@@ -245,29 +244,72 @@ export class HomeComponent implements OnInit, OnDestroy {
           clearTimeout(this.loadTimeout);
         }
 
-        console.log('📊 PROJETS REÇUS:', projectsWithStats?.length || 0);
+        console.log('📊 PROJETS REÇUS DU JSON:', projectsWithStats?.length || 0);
+        console.log('📋 Premier projet exemple:', projectsWithStats?.[0]);
         
         let filteredProjects: any[] = [];
         
         if (projectsWithStats && projectsWithStats.length > 0) {
-          // Logique simplifiée de filtrage
+          // ✅ FILTRAGE CORRIGÉ POUR DONNÉES JSON
           filteredProjects = projectsWithStats
             .filter(project => {
-              // Vérifier si le projet est actif
-              const isActive = this.estProjetEnCours(project.status);
-              if (!isActive) return false;
+              // 1️⃣ Extraire le statut (peut être dans status OU statutProjet)
+              const status = project.status || project.statutProjet || '';
+              const statusNormalized = status.toString().toLowerCase().trim();
               
-              // Vérifier les volontaires
-              const needed = project.neededVolunteers || 0;
+              // ✅ Vérifier que le statut est 'actif' UNIQUEMENT
+              const isActive = statusNormalized === 'actif';
+              
+              if (!isActive) {
+                console.log(`❌ Projet "${project.title || project.titre}" ignoré - Statut: "${status}" (attendu: "actif")`);
+                return false;
+              }
+              
+              // 2️⃣ Vérifier les volontaires (gestion multi-noms de champs)
+              const needed = project.neededVolunteers || 
+                           project.nombreVolontairesRequis || 
+                           0;
+              
               const current = this.getCurrentVolunteersCount(project);
-              const hasMissingVolunteers = needed > current;
+              const missingVolunteers = needed - current;
+              const hasMissingVolunteers = missingVolunteers > 0 && needed > 0;
               
-              return hasMissingVolunteers && needed > 0;
+              if (!hasMissingVolunteers) {
+                console.log(`❌ Projet "${project.title || project.titre}" ignoré - Complet ou aucun besoin (${current}/${needed})`);
+                return false;
+              }
+              
+              console.log(`✅ Projet "${project.title || project.titre}" RETENU - Actif avec ${missingVolunteers} places disponibles (${current}/${needed})`);
+              return true;
             })
             .slice(0, 6); // Limiter à 6 projets max
         }
         
-        console.log('🎯 PROJETS URGENTS TROUVÉS:', filteredProjects.length);
+        console.log('🎯 PROJETS ACTIFS AFFICHÉS:', filteredProjects.length);
+        
+        if (filteredProjects.length > 0) {
+          console.log('📋 Détails des projets retenus:', filteredProjects.map(p => ({
+            id: p.id,
+            titre: p.title || p.titre,
+            statut: p.status || p.statutProjet,
+            volontaires: `${this.getCurrentVolunteersCount(p)}/${p.neededVolunteers || p.nombreVolontairesRequis}`,
+            manquants: this.calculerVolontairesManquants(p)
+          })));
+        } else {
+          console.warn('⚠️ AUCUN PROJET ACTIF TROUVÉ !');
+          console.log('💡 Vérifications à faire:');
+          console.log('   1. Vérifier que db.json contient des projets avec statutProjet="actif"');
+          console.log('   2. Vérifier que nombreVolontairesRequis > nombreVolontairesActuels');
+          console.log('   3. Exemple de projet valide:');
+          console.log('      {');
+          console.log('        "id": 1,');
+          console.log('        "titre": "Mon projet",');
+          console.log('        "statutProjet": "actif",  ← DOIT ÊTRE "actif"');
+          console.log('        "nombreVolontairesRequis": 10,');
+          console.log('        "nombreVolontairesActuels": 3  ← Doit être < requis');
+          console.log('      }');
+        }
+        
         this.featuredProjects.set(filteredProjects);
         this.totalProjectsCount.set(projectsWithStats?.length || 0);
         this.isLoadingProjects.set(false);
@@ -278,57 +320,44 @@ export class HomeComponent implements OnInit, OnDestroy {
           clearTimeout(this.loadTimeout);
         }
         
-        console.error('❌ ERREUR chargement projets:', error);
-        this.featuredProjects.set([]); // Assure que c'est vide
+        console.error('❌ ERREUR chargement projets depuis JSON:', error);
+        this.featuredProjects.set([]);
         this.loadError.set(true);
         this.isLoadingProjects.set(false);
       },
       complete: () => {
-        // S'assurer que le chargement est arrêté
         this.isLoadingProjects.set(false);
       }
     });
   }
 
-  private estProjetEligible(project: any): boolean {
-    const statutValide = this.estProjetEnCours(project.status);
-    const neededVolunteers = project.neededVolunteers || 0;
-    const currentVolunteers = this.getCurrentVolunteersCount(project);
-    const missingVolunteers = neededVolunteers - currentVolunteers;
-    
-    return statutValide && missingVolunteers > 0 && neededVolunteers > 0;
-  }
-
-  private estProjetEnCours(statut: string): boolean {
-    if (!statut) return false;
-    
-    const statutsEnCours = [
-      'en cours', 'active', 'planifié', 'soumis', 'pending', 
-      'en_cours', 'actif', 'ouvert', 'open', 'progress', 'in_progress',
-      'en cours de recrutement', 'recrutement'
-    ];
-    
-    const statutNormalise = statut.toString().toLowerCase().trim();
-    return statutsEnCours.includes(statutNormalise);
-  }
-
+  // ✅ MÉTHODE CORRIGÉE : Obtenir le nombre de volontaires actuels
   private getCurrentVolunteersCount(project: any): number {
-    if (project.volunteersStats) {
-      return project.volunteersStats.accepted || 0;
+    // Gérer tous les noms de champs possibles dans le JSON
+    if (project.volunteersStats?.accepted) {
+      return project.volunteersStats.accepted;
     }
     
     if (Array.isArray(project.volunteers)) {
       return project.volunteers.length;
     }
+    
     if (Array.isArray(project.volontaires)) {
       return project.volontaires.length;
     }
+    
     if (typeof project.currentVolunteers === 'number') {
       return project.currentVolunteers;
     }
+    
+    if (typeof project.nombreVolontairesActuels === 'number') {
+      return project.nombreVolontairesActuels;
+    }
+    
     if (typeof project.volontairesAffectes === 'number') {
       return project.volontairesAffectes;
     }
+    
     if (typeof project.assignedVolunteers === 'number') {
       return project.assignedVolunteers;
     }
@@ -336,9 +365,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     return 0;
   }
 
+  // ✅ MÉTHODE CORRIGÉE : Calculer les volontaires manquants
   private calculerVolontairesManquants(project: any): number {
     const volontairesAffectes = this.getCurrentVolunteersCount(project);
-    const volontairesNecessaires = project.neededVolunteers || 0;
+    const volontairesNecessaires = project.neededVolunteers || 
+                                   project.nombreVolontairesRequis || 
+                                   0;
     return Math.max(0, volontairesNecessaires - volontairesAffectes);
   }
 
@@ -372,38 +404,22 @@ export class HomeComponent implements OnInit, OnDestroy {
     event.target.src = this.getDefaultImage();
   }
 
+  // ✅ MÉTHODE CORRIGÉE : Icônes de statut (seulement 3 statuts)
   getStatusIcon(status: string): string {
     const statusIcons: { [key: string]: string } = {
-      'active': 'play_circle',
-      'completed': 'check_circle',
-      'pending': 'schedule',
-      'soumis': 'pending_actions',
-      'planifié': 'event',
-      'en cours': 'play_circle',
-      'clôturé': 'check_circle',
-      'en retard': 'warning',
-      'en_cours': 'play_circle',
-      'actif': 'play_circle',
-      'ouvert': 'play_circle',
-      'open': 'play_circle'
+      'en_attente': 'schedule',      // ⏳ En attente
+      'actif': 'play_circle',        // ▶️ Actif
+      'cloture': 'check_circle'      // ✅ Clôturé
     };
     return statusIcons[status] || 'help';
   }
 
+  // ✅ MÉTHODE CORRIGÉE : Labels de statut (seulement 3 statuts)
   getStatusLabel(status: string): string {
     const statusLabels: { [key: string]: string } = {
-      'active': 'En cours',
-      'completed': 'Terminé',
-      'pending': 'En attente',
-      'soumis': 'Soumis',
-      'planifié': 'Planifié',
-      'en cours': 'En cours',
-      'clôturé': 'Clôturé',
-      'en retard': 'En retard',
-      'en_cours': 'En cours',
+      'en_attente': 'En attente',
       'actif': 'Actif',
-      'ouvert': 'Ouvert',
-      'open': 'Ouvert'
+      'cloture': 'Clôturé'
     };
     return statusLabels[status] || status;
   }
@@ -413,12 +429,14 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   getPourcentageCompletion(project: any): number {
-    if (project.volunteersStats) {
-      return project.volunteersStats.completionRate || 0;
+    if (project.volunteersStats?.completionRate) {
+      return project.volunteersStats.completionRate;
     }
     
     const volontairesAffectes = this.getCurrentVolunteersCount(project);
-    const volontairesNecessaires = project.neededVolunteers || 1;
+    const volontairesNecessaires = project.neededVolunteers || 
+                                   project.nombreVolontairesRequis || 
+                                   1;
     return Math.min(100, Math.round((volontairesAffectes / volontairesNecessaires) * 100));
   }
 
@@ -427,15 +445,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   getRequiredVolunteersDisplay(project: any): number {
-    return project.neededVolunteers || 0;
+    return project.neededVolunteers || project.nombreVolontairesRequis || 0;
   }
 
+  // ✅ MÉTHODE CORRIGÉE : Vérifier si on peut postuler (seulement 'actif')
   canApplyToProject(project: any): boolean {
-    const allowedStatuses = [
-      'active', 'soumis', 'planifié', 'pending', 
-      'en cours', 'en_cours', 'actif', 'ouvert', 'open'
-    ];
-    return allowedStatuses.includes(project.status);
+    const status = (project.status || project.statutProjet || '').toString().toLowerCase().trim();
+    return status === 'actif';
   }
 
   // ==================== MÉTHODES POUR LA BARRE DE PROGRESSION ====================
@@ -460,7 +476,6 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   getProgressStatusText(project: any): string {
     const percentage = this.getPourcentageCompletion(project);
-    const missing = this.getVolontairesManquants(project);
     
     if (percentage === 0) return 'Aucun volontaire engagé';
     if (percentage < 25) return 'Début de recrutement';

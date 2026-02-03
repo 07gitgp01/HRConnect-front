@@ -459,4 +459,593 @@ button:focus-visible {
 .projet-item:focus-within {
   border-color: #3f51b5;
   box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.1);
+}/* src/app/features/candidat/candidat-dashboard/candidat-dashboard.component.css */
+.candidat-dashboard {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  margin-top: 64px; /* ✅ Hauteur exacte de votre header fixe */
+  min-height: calc(100vh - 64px); /* ✅ Prend en compte la hauteur du header */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== EN-TÊTE ===== */
+.header-section {
+  margin-bottom: 24px;
+}
+
+.welcome-card {
+  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
+  color: white;
+  border-radius: 12px;
+}
+
+.welcome-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+}
+
+.welcome-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+.welcome-icon {
+  font-size: 2rem;
+  width: 2rem;
+  height: 2rem;
+}
+
+.welcome-subtitle {
+  margin: 8px 0 0 0;
+  opacity: 0.9;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.statut-principal {
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+/* ===== STATISTIQUES ===== */
+.stats-section {
+  margin-bottom: 24px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 10px;
+  border: 1px solid #e9ecef;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 15px rgba(0, 129, 36, 0.15);
+}
+
+.stat-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  opacity: 0.9;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  color: #212529;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6c757d;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+/* Couleurs des statistiques - VERT et JAUNE PNVB */
+.stat-card.total .stat-icon { 
+  color: #008124; /* Vert PNVB principal */
+}
+.stat-card.en-attente .stat-icon { 
+  color: #FF9800; /* Jaune/Ambre PNVB */
+}
+.stat-card.entretien .stat-icon { 
+  color: #0288D1; /* Bleu info */
+}
+.stat-card.acceptee .stat-icon { 
+  color: #2E7D32; /* Vert succès */
+}
+
+/* ===== NOTIFICATIONS ===== */
+.notifications-section {
+  margin-bottom: 24px;
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 10px;
+  border-left: 4px solid;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  border: 1px solid #e9ecef;
+}
+
+.notification-info {
+  border-left-color: #008124; /* Vert PNVB */
+  background-color: #e6f4e6; /* Vert très clair */
+}
+
+.notification-success {
+  border-left-color: #2E7D32; /* Vert succès */
+  background-color: #e8f5e8;
+}
+
+.notification-warning {
+  border-left-color: #FF9800; /* Jaune PNVB */
+  background-color: #fff3e0;
+}
+
+.notification-icon {
+  margin-top: 2px;
+  color: #008124;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-message {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #212529;
+  font-size: 0.95rem;
+}
+
+.notification-date {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* ===== CONTENU PRINCIPAL ===== */
+.content-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .content-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.content-card {
+  height: fit-content;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.content-card .mat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e9ecef;
+  margin-bottom: 16px;
+  padding: 20px 20px 16px;
+}
+
+.header-icon {
+  margin-right: 8px;
+  color: #008124; /* Vert PNVB */
+}
+
+.badge-count {
+  background: #008124; /* Vert PNVB */
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+/* ===== ÉTAT VIDE ===== */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+  color: #008124; /* Vert PNVB */
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  color: #212529;
+  font-weight: 600;
+  font-size: 1.3rem;
+}
+
+.empty-state p {
+  margin: 0 0 20px 0;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+/* ===== ITEMS ===== */
+.candidature-item,
+.projet-item {
+  padding: 20px;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.candidature-item:hover,
+.projet-item:hover {
+  border-color: #008124; /* Vert PNVB */
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.1);
+}
+
+.candidature-header,
+.projet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.poste-title,
+.projet-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #006b1e; /* Vert PNVB foncé */
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+/* ===== BADGES DE STATUT ===== */
+.statut-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+.statut-en-attente {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  color: #FF9800; /* Jaune PNVB */
+  border: 2px solid #FF9800;
+}
+
+.statut-entretien {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #0288D1;
+  border: 2px solid #0288D1;
+}
+
+.statut-acceptee {
+  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+  color: #2E7D32;
+  border: 2px solid #2E7D32;
+}
+
+.statut-refusee {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  color: #D32F2F;
+  border: 2px solid #D32F2F;
+}
+
+/* ===== DÉTAILS ===== */
+.candidature-details,
+.projet-details {
+  margin-bottom: 16px;
+}
+
+.candidature-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.projet-description {
+  color: #495057;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.projet-details {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.projet-region,
+.projet-volontaires {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.projet-region i,
+.projet-volontaires i {
+  color: #008124; /* Vert PNVB */
+}
+
+/* ===== COMPÉTENCES ===== */
+.competence-chip {
+  font-size: 0.75rem;
+  margin: 2px;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+/* ===== ACTIONS ===== */
+.candidature-actions,
+.projet-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Boutons harmonisés */
+.btn-primary {
+  background: linear-gradient(135deg, #008124 0%, #006b1e 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #009629 0%, #008124 100%);
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.2);
+}
+
+.btn-outline-primary {
+  border: 2px solid #008124;
+  color: #008124;
+  font-weight: 600;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+.btn-outline-primary:hover {
+  background: #008124;
+  color: white;
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+}
+
+.btn-warning:hover {
+  background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);
+}
+
+/* ===== VOIR TOUT ===== */
+.view-all-section {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+  margin-top: 20px;
+}
+
+/* ===== LOADING ===== */
+.loading-container {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.loading-container p {
+  margin-top: 16px;
+  color: #6c757d;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* ===== CHIPS DE COMPÉTENCES ===== */
+.mat-chip-set {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.competence-chip {
+  background: #e6f4e6 !important; /* Vert très clair PNVB */
+  color: #008124 !important; /* Vert PNVB */
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgba(0, 129, 36, 0.2);
+  border-radius: 16px;
+}
+
+/* ===== STATUT PROJET ===== */
+.projet-statut {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #e9ecef;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .candidat-dashboard {
+    padding: 16px;
+    margin-top: 56px; /* ✅ Header réduit à 56px sur mobile */
+    min-height: calc(100vh - 56px);
+  }
+  
+  .welcome-content {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+    padding: 16px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .candidature-header,
+  .projet-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .candidature-actions,
+  .projet-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+  
+  .stat-content {
+    padding: 16px;
+  }
+  
+  .stat-number {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .candidat-dashboard {
+    margin-top: 56px;
+    min-height: calc(100vh - 56px);
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .candidature-actions,
+  .projet-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .candidature-actions button,
+  .projet-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .notification-item {
+    padding: 12px;
+  }
+}
+
+/* ===== ACCESSIBILITÉ ===== */
+button:focus-visible {
+  outline: 2px solid #008124;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 129, 36, 0.1);
+}
+
+.candidature-item:focus-within,
+.projet-item:focus-within {
+  border-color: #008124;
+  box-shadow: 0 0 0 2px rgba(0, 129, 36, 0.1);
+}
+
+/* ===== TYPOGRAPHIE COHÉRENTE ===== */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  font-weight: 600;
+  color: #006b1e; /* Vert PNVB foncé pour les titres */
+}
+
+p, span, div {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+strong, b {
+  font-weight: 700;
+}
+
+/* ===== ICÔNES ===== */
+.bi {
+  vertical-align: middle;
+}
+
+.bi-calendar, .bi-geo-alt, .bi-people, .bi-clock, .bi-briefcase, .bi-folder, .bi-envelope {
+  color: #008124; /* Vert PNVB pour les icônes */
 }

@@ -4,8 +4,8 @@
     <div class="col-12">
       <div class="d-flex justify-content-between align-items-center">
         <h1 class="h3 mb-0">
-          <i class="bi bi-people me-2"></i>Mes Volontaires
-        </h1>
+<!--           <i class="bi bi-people me-2"></i>Mes Volontaires
+ -->        </h1>
         <div>
           <button class="btn btn-outline-primary me-2" (click)="exportVolontaires('excel')">
             <i class="bi bi-file-excel me-2"></i>Excel
@@ -15,8 +15,8 @@
           </button>
         </div>
       </div>
-      <p class="text-muted mb-0">Gestion des volontaires affectés à vos projets</p>
-    </div>
+<!--       <p class="text-muted mb-0">Gestion des volontaires affectés à vos projets</p>
+ -->    </div>
   </div>
 
   <!-- Statistiques rapides -->
@@ -96,13 +96,13 @@
       </div>
     </div>
     
-    <div class="col-md-4 mb-3">
+    <!-- <div class="col-md-4 mb-3">
       <div class="card h-100">
         <div class="card-body">
           <canvas id="statutChart"></canvas>
         </div>
       </div>
-    </div>
+    </div> -->
     
     <div class="col-md-4 mb-3">
       <div class="card h-100">
@@ -231,7 +231,7 @@
           Statut: {{getStatutAffectationLabel(statutFilter)}}
         </span>
        <span *ngIf="projetFilter !== 'tous'" class="badge bg-primary ms-2">
-  Projet: {{getProjetNom(projetFilter)}}
+  Mission: {{getProjetNom(projetFilter)}}
 </span>
         <span *ngIf="searchTerm" class="badge bg-primary ms-2">
           Recherche: "{{searchTerm}}"

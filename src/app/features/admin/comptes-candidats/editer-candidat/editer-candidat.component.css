@@ -12,6 +12,80 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.125);
 }
 
+/* MODIFICATION: Jaune pour le bouton "Mettre à jour" */
+.btn-primary {
+  background-color: #FFD700 !important; /* JAUNE PNVB */
+  border-color: #FFD700 !important;
+  color: #1e293b !important; /* Texte foncé pour contraste */
+}
+
+.btn-primary:hover {
+  background-color: #FFC107 !important; /* Jaune légèrement plus foncé au survol */
+  border-color: #FFC107 !important;
+}
+
+/* MODIFICATION: Les compétences en VERT (fond vert clair, texte vert foncé) */
+.badge.bg-primary {
+  background-color: rgba(0, 129, 36, 0.15) !important; /* Fond vert très clair (PNVB #008124) */
+  color: #006b1e !important; /* Vert foncé (PNVB #006b1e) */
+  border-color: rgba(0, 129, 36, 0.3) !important; /* Bordure vert clair */
+}
+
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn {
+  border-radius: 0.375rem;
+}
+
+.badge {
+  font-size: 0.75em;
+  padding: 0.5em 0.75em;
+}:host {
+  display: block;
+}
+
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* MODIFICATION: Jaune pour le bouton "Mettre à jour" */
+.btn-primary {
+  background-color: #FFD700 !important; /* JAUNE PNVB */
+  border-color: #FFD700 !important;
+  color: #1e293b !important; /* Texte foncé pour contraste */
+}
+
+.btn-primary:hover {
+  background-color: #FFC107 !important; /* Jaune légèrement plus foncé au survol */
+  border-color: #FFC107 !important;
+}
+
+/* MODIFICATION: Les compétences en VERT */
+.badge.bg-primary {
+  background-color: rgba(0, 129, 36, 0.15) !important; /* Fond vert très clair */
+  color: #006b1e !important; /* Vert foncé */
+  border-color: rgba(0, 129, 36, 0.3) !important; /* Bordure vert clair */
+}
+
+/* MODIFICATION: Croix de suppression des compétences en NOIR */
+.badge.bg-primary .btn-close {
+  filter: invert(1) !important; /* Rend la croix noire */
+  opacity: 0.8;
+}
+
+.badge.bg-primary .btn-close:hover {
+  opacity: 1;
+}
+
 .form-control:focus {
   border-color: #007bff;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);

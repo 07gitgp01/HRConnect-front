@@ -1,22 +1,37 @@
 /* projets-list.component.css */
+:root {
+  /* Couleurs PNVB */
+  --pnvb-primary: #008124;
+  --pnvb-dark: #006b1e;
+  --pnvb-light: #009629;
+  --pnvb-darker: #005518;
+  --pnvb-lighter: #00ad2e;
+  
+  /* Couleurs complémentaires */
+  --pnvb-orange: #FF9800;
+  --pnvb-red: #dc2626;
+  --pnvb-blue: #2196F3;
+  --pnvb-yellow: #FFD700;
+}
+
 .page-container {
-  padding: 2rem;
+  padding: 24px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
 }
 
 /* ===== BARRE D'ACTIONS ===== */
 .top-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding: 20px 24px;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
   flex-wrap: wrap;
 }
 
@@ -35,13 +50,14 @@
 
 .add-btn {
   box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
   background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
   color: white !important;
+  font-weight: 500;
 }
 
 .add-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.05);
   box-shadow: 0 6px 16px rgba(46, 125, 50, 0.4);
   background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
 }
@@ -54,18 +70,14 @@
   border-radius: 8px;
   padding: 8px 16px;
   font-weight: 500;
-  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.2);
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.2);
 }
 
 .refresh-btn:hover {
   background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(27, 94, 32, 0.3);
-}
-
-.refresh-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(46, 125, 50, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(27, 94, 32, 0.3);
 }
 
 .refresh-btn .mat-icon {
@@ -73,78 +85,82 @@
   font-size: 20px;
   width: 20px;
   height: 20px;
-  margin-right: 8px;
+  margin-right: 6px;
 }
 
-/* ===== BOUTONS PRINCIPAUX ===== */
-/* Bouton Ajouter */
-button.mat-mini-fab[color="primary"] {
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
-}
-
-button.mat-mini-fab[color="primary"]:hover {
-  background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
-}
-
-button.mat-mini-fab[color="primary"] .mat-icon {
-  color: white !important;
-}
-
-/* ===== TABLEAU ===== */
+/* ===== TABLEAU (STYLE VOLONTAIRES) ===== */
 .table-container {
   background: white;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 28px;
+  border: 1px solid #e2e8f0;
 }
 
-/* Header du tableau */
-.mat-header-row {
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
+/* En-têtes du tableau - Style volontaires */
+::ng-deep .table-container .mat-header-row {
+  background: linear-gradient(135deg, #e6f4e6 0%, #d4edd4 100%) !important;
+  height: 56px !important;
 }
 
-.mat-header-cell {
-  color: white !important;
-  font-weight: 600;
-  font-size: 0.9rem;
-  padding: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+::ng-deep .table-container .mat-header-cell {
+  color: #005518 !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 16px 12px !important;
+  border-bottom: 3px solid #008124 !important;
+  font-family: inherit;
+}
+
+::ng-deep .table-container .mat-sort-header-arrow {
+  color: #005518 !important;
 }
 
 .actions-header {
   text-align: right;
 }
 
-/* Lignes du tableau */
-.mat-row {
-  border-bottom: 1px solid #f0f0f0;
-  transition: background-color 0.2s ease;
+/* Lignes du tableau - Style volontaires */
+::ng-deep .table-container .mat-row {
+  background: white !important;
+  transition: all 0.2s ease !important;
+  height: 72px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
 }
 
-.mat-row:hover {
-  background-color: #f8f9fa !important;
+::ng-deep .table-container .mat-row:hover {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  transform: translateX(4px);
+  box-shadow: -4px 0 0 #008124 !important;
 }
 
-.mat-cell {
-  padding: 1rem;
-  color: #333;
-  font-size: 0.9rem;
-  vertical-align: top;
+::ng-deep .table-container .mat-cell {
+  padding: 16px 12px !important;
+  color: #1e293b !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  vertical-align: middle !important;
+  font-family: inherit;
+  line-height: 1.5;
 }
 
 /* ===== TITRE DU PROJET ===== */
 .project-title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
   flex-wrap: wrap;
+  margin-bottom: 4px;
 }
 
 .project-title strong {
-  color: #1e293b;
-  font-size: 0.95rem;
-  line-height: 1.3;
+  color: #005518 !important;
+  font-size: 14px !important;
+  line-height: 1.4;
+  font-weight: 600;
 }
 
 .overdue-badge {
@@ -155,77 +171,99 @@ button.mat-mini-fab[color="primary"] .mat-icon {
   color: #92400e;
   padding: 2px 8px;
   border-radius: 12px;
-  font-size: 0.75rem;
+  font-size: 11px;
   font-weight: 600;
+  font-family: inherit;
 }
 
 .overdue-badge .mat-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-}
-
-.project-subtitle {
-  margin-top: 0.25rem;
-  color: #666;
-  font-size: 0.8rem;
-}
-
-.project-subtitle .mat-icon {
   font-size: 14px;
   width: 14px;
   height: 14px;
+}
+
+.project-subtitle {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.project-subtitle .mat-icon {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
   vertical-align: middle;
   margin-right: 4px;
 }
 
 .text-muted {
-  color: #666;
+  color: #64748b;
+  font-size: 12px;
+  font-family: inherit;
 }
 
 .text-danger {
   color: #dc2626;
   font-weight: 600;
+  font-size: 12px;
 }
 
 /* Icônes dates */
 .date-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
   vertical-align: middle;
-  margin-right: 4px;
-  color: #2e7d32;
+  margin-right: 6px;
+  color: #008124;
 }
 
-/* ===== CHIPS DE STATUT ===== */
-.status-chip {
-  font-weight: 600;
-  font-size: 0.75rem;
-  min-height: 24px;
-  border-radius: 16px !important;
-  color: white !important;
-  padding: 4px 12px !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+/* ===== BADGES DE STATUT (Style volontaires) ===== */
+::ng-deep .table-container .status-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 6px 16px !important;
+  border-radius: 20px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  white-space: nowrap !important;
+  border: 1px solid !important;
+  min-height: 24px !important;
+  font-family: inherit;
+  line-height: 1;
 }
 
-/* ✅ CORRECTION : Couleurs selon VOTRE modèle (en_attente, actif, cloture) */
-.status-chip[color="warn"] {
-  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important; /* ORANGE - en_attente */
+/* En attente - ORANGE */
+::ng-deep .table-container .status-chip[color="warn"] {
+  background: rgba(255, 152, 0, 0.1) !important;
+  color: #FF9800 !important;
+  border-color: rgba(255, 152, 0, 0.2) !important;
 }
 
-.status-chip[color="primary"] {
-  background: linear-gradient(135deg, #27ae60 0%, #2e7d32 100%) !important; /* VERT - actif */
+/* Actif - VERT */
+::ng-deep .table-container .status-chip[color="primary"] {
+  background: rgba(0, 129, 36, 0.15) !important;
+  color: #008124 !important;
+  border-color: rgba(0, 129, 36, 0.3) !important;
 }
 
-.status-chip[color="accent"] {
-  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%) !important; /* GRIS - cloture */
+/* Clôturé - GRIS */
+::ng-deep .table-container .status-chip[color="accent"] {
+  background: rgba(149, 165, 166, 0.1) !important;
+  color: #95a5a6 !important;
+  border-color: rgba(149, 165, 166, 0.2) !important;
 }
 
 .transitions-info {
   margin-top: 4px;
-  font-size: 0.75rem;
+  font-size: 11px;
   color: #64748b;
+  font-family: inherit;
 }
 
 /* ===== COLONNE ACTIONS ===== */
@@ -236,73 +274,63 @@ button.mat-mini-fab[color="primary"] .mat-icon {
 
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
+  align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
 }
 
-/* ===== BOUTONS D'ACTION ===== */
+/* ===== BOUTONS D'ACTION (Style volontaires) ===== */
 .action-btn {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid transparent;
+  border: none !important;
+  background: transparent !important;
 }
 
 /* Voir - VERT */
 .view-btn {
-  color: #2e7d32 !important;
-  background-color: rgba(46, 125, 50, 0.1);
-  border-color: rgba(46, 125, 50, 0.2);
+  color: #008124 !important;
+  background-color: rgba(0, 129, 36, 0.1) !important;
 }
 
 .view-btn:hover {
-  background-color: #2e7d32 !important;
-  color: white !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
-  border-color: #2e7d32;
+  background-color: rgba(0, 129, 36, 0.2) !important;
+  transform: scale(1.15);
 }
 
 /* Modifier - VERT */
 .edit-btn {
-  color: #2e7d32 !important;
-  background-color: rgba(46, 204, 113, 0.1);
-  border-color: rgba(46, 204, 113, 0.2);
+  color: #008124 !important;
+  background-color: rgba(0, 129, 36, 0.1) !important;
 }
 
 .edit-btn:hover {
-  background-color: #2e7d32 !important;
-  color: white !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
-  border-color: #2e7d32;
+  background-color: rgba(0, 129, 36, 0.2) !important;
+  transform: scale(1.15);
 }
 
 /* Plus d'actions - ORANGE */
 .more-btn {
-  color: #f39c12 !important;
-  background-color: rgba(243, 156, 18, 0.1);
-  border-color: rgba(243, 156, 18, 0.2);
+  color: #FF9800 !important;
+  background-color: rgba(255, 152, 0, 0.1) !important;
 }
 
 .more-btn:hover {
-  background-color: #f39c12 !important;
-  color: white !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(243, 156, 18, 0.3);
-  border-color: #f39c12;
+  background-color: rgba(255, 152, 0, 0.2) !important;
+  transform: scale(1.15);
 }
 
 /* Icônes */
 .action-btn .mat-icon {
-  font-size: 1.2rem;
-  width: 1.2rem;
-  height: 1.2rem;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
 
 /* ===== MENUS ===== */
@@ -310,32 +338,33 @@ button.mat-mini-fab[color="primary"] .mat-icon {
 .statut-menu .mat-menu-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
+  gap: 8px;
+  font-size: 14px;
   padding: 8px 16px;
   min-height: 40px;
   transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .action-menu .mat-menu-item .mat-icon,
 .statut-menu .mat-menu-item .mat-icon {
-  font-size: 1.1rem;
-  width: 1.1rem;
-  height: 1.1rem;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
   margin-right: 8px;
 }
 
 /* Option Valider */
 .menu-validate {
-  color: #2e7d32;
+  color: #008124;
 }
 
 .menu-validate .mat-icon {
-  color: #2e7d32;
+  color: #008124;
 }
 
 .menu-validate:hover {
-  background-color: rgba(46, 125, 50, 0.1);
+  background-color: rgba(0, 129, 36, 0.1);
 }
 
 /* Option Clôturer */
@@ -371,7 +400,8 @@ button.mat-mini-fab[color="primary"] .mat-icon {
 
 /* ===== SOUS-MENU STATUTS ===== */
 .status-option {
-  font-size: 0.85rem;
+  font-size: 14px;
+  font-family: inherit;
 }
 
 .status-option[disabled] {
@@ -380,18 +410,19 @@ button.mat-mini-fab[color="primary"] .mat-icon {
 }
 
 .current-status {
-  font-size: 0.75rem;
-  color: #2e7d32;
+  font-size: 11px;
+  color: #008124;
   margin-left: auto;
+  font-family: inherit;
 }
 
 /* Options spécifiques de statut */
 .attente-option .mat-icon {
-  color: #f39c12;
+  color: #FF9800;
 }
 
 .actif-option .mat-icon {
-  color: #2e7d32;
+  color: #008124;
 }
 
 .cloture-option .mat-icon {
@@ -410,27 +441,33 @@ button.mat-mini-fab[color="primary"] .mat-icon {
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  font-family: inherit;
 }
 
 .no-data .mat-icon {
-  font-size: 4rem;
-  width: 4rem;
-  height: 4rem;
-  margin-bottom: 1rem;
+  font-size: 60px;
+  width: 60px;
+  height: 60px;
+  margin-bottom: 16px;
   opacity: 0.5;
   color: #2e7d32;
 }
 
 .no-data h3 {
   color: #1e293b;
-  margin-bottom: 0.5rem;
+  margin-bottom: 8px;
   font-weight: 600;
+  font-size: 20px;
+  font-family: inherit;
 }
 
 .no-data p {
-  margin-bottom: 1.5rem;
+  margin-bottom: 24px;
   max-width: 400px;
   color: #64748b;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
 }
 
 /* Bouton "Effacer les filtres" dans la section aucune donnée */
@@ -441,7 +478,7 @@ button.mat-mini-fab[color="primary"] .mat-icon {
   border-radius: 8px;
   padding: 12px 24px;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 14px;
   box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
   transition: all 0.3s ease;
   display: flex;
@@ -449,6 +486,7 @@ button.mat-mini-fab[color="primary"] .mat-icon {
   justify-content: center;
   gap: 8px;
   min-width: 200px;
+  font-family: inherit;
 }
 
 .no-data button[mat-raised-button]:hover {
@@ -457,16 +495,11 @@ button.mat-mini-fab[color="primary"] .mat-icon {
   box-shadow: 0 6px 12px rgba(27, 94, 32, 0.4);
 }
 
-.no-data button[mat-raised-button]:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
-}
-
 .no-data button[mat-raised-button] .mat-icon {
   color: white !important;
-  font-size: 1.2rem;
-  width: 1.2rem;
-  height: 1.2rem;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
 
 /* ===== CHARGEMENT ===== */
@@ -479,13 +512,15 @@ button.mat-mini-fab[color="primary"] .mat-icon {
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  gap: 1rem;
+  gap: 16px;
+  font-family: inherit;
 }
 
 .loading p {
-  color: #666;
-  font-size: 1rem;
+  color: #64748b;
+  font-size: 14px;
   margin: 0;
+  font-weight: 500;
 }
 
 .loading .mat-spinner circle {
@@ -493,22 +528,56 @@ button.mat-mini-fab[color="primary"] .mat-icon {
 }
 
 /* ===== PAGINATION ===== */
-.mat-paginator {
+::ng-deep .table-container .mat-paginator {
   background-color: #f8f9fa;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid #f1f5f9;
   border-radius: 0 0 12px 12px;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+::ng-deep .table-container .mat-paginator .mat-paginator-range-label,
+::ng-deep .table-container .mat-paginator .mat-paginator-page-size-label {
+  font-size: 13px !important;
+  color: #64748b !important;
+  font-weight: 500;
+}
+
+/* ===== CHAMPS DE FORMULAIRE ===== */
+::ng-deep .mat-form-field {
+  font-family: inherit !important;
+}
+
+::ng-deep .mat-form-field-label {
+  font-family: inherit !important;
+  font-size: 14px !important;
+}
+
+::ng-deep .mat-input-element {
+  font-family: inherit !important;
+  font-size: 14px !important;
+}
+
+::ng-deep .mat-select-value {
+  font-family: inherit !important;
+  font-size: 14px !important;
+}
+
+::ng-deep .mat-option {
+  font-family: inherit !important;
+  font-size: 14px !important;
 }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .page-container {
-    padding: 1rem;
+    padding: 16px;
   }
   
   .top-bar {
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    padding: 1rem;
+    gap: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
   }
   
   .search-field,
@@ -525,18 +594,18 @@ button.mat-mini-fab[color="primary"] .mat-icon {
   }
   
   .action-buttons {
-    gap: 0.25rem;
+    gap: 6px;
   }
   
   .action-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
   }
   
   .action-btn .mat-icon {
-    font-size: 1.1rem;
-    width: 1.1rem;
-    height: 1.1rem;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
   }
   
   /* Cache certaines colonnes sur mobile */
@@ -545,27 +614,34 @@ button.mat-mini-fab[color="primary"] .mat-icon {
     display: none;
   }
   
-  /* Ajustements pour les cellules */
-  .mat-cell {
-    padding: 0.75rem 0.5rem;
+  /* Ajuste le bouton "Effacer les filtres" dans section aucune donnée */
+  .no-data {
+    padding: 3rem 1.5rem;
   }
   
-  /* Ajuste le bouton "Effacer les filtres" dans section aucune donnée */
   .no-data button[mat-raised-button] {
-    min-width: 150px;
+    min-width: 160px;
     padding: 10px 16px;
-    font-size: 0.9rem;
+    font-size: 13px;
+  }
+  
+  .no-data h3 {
+    font-size: 18px;
+  }
+  
+  .no-data p {
+    font-size: 13px;
   }
 }
 
 @media (max-width: 480px) {
   .page-container {
-    padding: 0.5rem;
+    padding: 12px;
   }
   
   .top-bar {
-    padding: 0.75rem;
-    gap: 0.5rem;
+    padding: 12px;
+    gap: 8px;
   }
   
   /* Cache plus de colonnes sur très petits écrans */
@@ -575,19 +651,19 @@ button.mat-mini-fab[color="primary"] .mat-icon {
   
   /* Ajuste les boutons d'action */
   .action-buttons {
-    flex-direction: column;
-    gap: 0.25rem;
+    flex-direction: row;
+    gap: 4px;
   }
   
   .action-btn {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
   }
   
   .action-btn .mat-icon {
-    font-size: 1rem;
-    width: 1rem;
-    height: 1rem;
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
   }
   
   /* Ajuste les menus */
@@ -595,7 +671,7 @@ button.mat-mini-fab[color="primary"] .mat-icon {
   .statut-menu .mat-menu-item {
     padding: 6px 12px;
     min-height: 36px;
-    font-size: 0.85rem;
+    font-size: 13px;
   }
   
   /* Ajuste le bouton "Effacer les filtres" dans section aucune donnée */
@@ -604,27 +680,16 @@ button.mat-mini-fab[color="primary"] .mat-icon {
   }
   
   .no-data button[mat-raised-button] {
-    min-width: 120px;
+    min-width: 140px;
     padding: 8px 12px;
-    font-size: 0.85rem;
+    font-size: 12px;
   }
-}
-
-/* ===== ANIMATIONS ===== */
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-/* ===== CLASSES UTILITAIRES ===== */
-.text-muted {
-  color: #666 !important;
-  font-size: 0.85rem;
-}
-
-.text-danger {
-  color: #dc2626 !important;
-  font-weight: 600;
+  
+  .no-data .mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+  }
 }
 
 /* ===== MODE SOMBRE ===== */
@@ -642,20 +707,35 @@ button.mat-mini-fab[color="primary"] .mat-icon {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
   
-  .mat-header-row {
-    background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
+  /* Tableau mode sombre */
+  .table-container {
+    border-color: #334155;
   }
   
-  .mat-row:hover {
-    background-color: #334155 !important;
+  ::ng-deep .table-container .mat-header-row {
+    background: linear-gradient(135deg, #1e3a1e 0%, #2d4d2d 100%) !important;
   }
   
-  .mat-cell {
-    color: #cbd5e1;
+  ::ng-deep .table-container .mat-header-cell {
+    color: #e6f4e6 !important;
+    border-bottom-color: #008124 !important;
+  }
+  
+  ::ng-deep .table-container .mat-row {
+    background: #1e293b !important;
+    border-bottom-color: #334155 !important;
+  }
+  
+  ::ng-deep .table-container .mat-row:hover {
+    background: linear-gradient(135deg, #334155 0%, #475569 100%) !important;
+  }
+  
+  ::ng-deep .table-container .mat-cell {
+    color: #cbd5e1 !important;
   }
   
   .project-title strong {
-    color: #f1f5f9;
+    color: #e6f4e6 !important;
   }
   
   .project-subtitle,
@@ -677,47 +757,32 @@ button.mat-mini-fab[color="primary"] .mat-icon {
   
   .view-btn,
   .edit-btn {
-    border-color: #475569;
+    background-color: rgba(0, 129, 36, 0.2) !important;
   }
   
-  .refresh-btn {
-    background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
-    border-color: rgba(27, 94, 32, 0.4);
-  }
-  
-  .refresh-btn:hover {
-    background: linear-gradient(135deg, #145214 0%, #0f3a0f 100%) !important;
-  }
-  
-  /* Bouton "Effacer les filtres" dans section aucune donnée - mode sombre */
-  .no-data button[mat-raised-button] {
-    background: linear-gradient(135deg, #1b5e20 0%, #145214 100%) !important;
-  }
-  
-  .no-data button[mat-raised-button]:hover {
-    background: linear-gradient(135deg, #145214 0%, #0f3a0f 100%) !important;
+  .more-btn {
+    background-color: rgba(255, 152, 0, 0.2) !important;
   }
 }
 
-/* ===== RÈGLES DE CONFLIT ===== */
-/* S'assurer que les styles Material ne surchargent pas */
-.mat-table {
-  width: 100%;
-  background: transparent;
+/* ===== FONTS SPÉCIFIQUES ===== */
+::ng-deep * {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
 }
 
-.mat-row, .mat-header-row {
-  background: transparent;
+::ng-deep body {
+  font-family: inherit !important;
 }
 
-.mat-cell, .mat-header-cell {
-  border-bottom-color: #f0f0f0;
-}
-
-/* Amélioration du focus pour l'accessibilité */
-button:focus-visible,
-a:focus-visible {
-  outline: 2px solid #2e7d32;
-  outline-offset: 2px;
-  border-radius: 4px;
+/* Correction pour Material components */
+::ng-deep .mat-mdc-form-field,
+::ng-deep .mat-mdc-select,
+::ng-deep .mat-mdc-option,
+::ng-deep .mat-mdc-button,
+::ng-deep .mat-mdc-raised-button,
+::ng-deep .mat-mdc-outlined-button,
+::ng-deep .mat-mdc-menu-item,
+::ng-deep .mat-mdc-card-title,
+::ng-deep .mat-mdc-card-subtitle {
+  font-family: inherit !important;
 }

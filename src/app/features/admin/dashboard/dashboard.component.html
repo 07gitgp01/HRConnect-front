@@ -1,17 +1,6 @@
 <!-- src/app/features/admin/admin-dashboard/admin-dashboard.component.html -->
 <div class="dashboard-container">
-  <!-- En-tête du tableau de bord -->
-  <div class="dashboard-header">
-    <div class="header-content">
-      <h1>Tableau de Bord de Supervision - PNVB</h1>
-      <p>Vue d'ensemble de l'activité du Programme National de Volontariat</p>
-    </div>
-    <button mat-raised-button color="primary" (click)="verifierEcheances()" class="echeance-btn">
-      <mat-icon>update</mat-icon>
-      Vérifier les Échéances
-    </button>
-  </div>
-
+  
   <!-- Indicateur de chargement -->
   <div *ngIf="isLoading" class="loading-section">
     <mat-spinner diameter="50"></mat-spinner>
@@ -42,12 +31,10 @@
   </div>
 
   <!-- Section des KPIs/Widgets -->
-  <div *ngIf="!isLoading" class="kpi-section">
-    <h2>Indicateurs Clés de Performance</h2>
-    
+  <div *ngIf="!isLoading && dashboardData" class="kpi-section">
     <div class="widgets-grid">
       <!-- Volontaires actifs -->
-      <mat-card class="kpi-widget primary">
+      <mat-card class="kpi-widget primary" matTooltip="Nombre de volontaires actuellement actifs">
         <mat-card-content>
           <div class="widget-icon">
             <mat-icon>people</mat-icon>
@@ -60,20 +47,20 @@
       </mat-card>
 
       <!-- Projets ouverts -->
-      <mat-card class="kpi-widget success">
+      <mat-card class="kpi-widget success" matTooltip="Missions actuellement ouvertes aux candidatures">
         <mat-card-content>
           <div class="widget-icon">
             <mat-icon>work</mat-icon>
           </div>
           <div class="widget-data">
             <div class="value">{{ dashboardData.totalProjetsOuverts }}</div>
-            <div class="label">Projets Ouverts</div>
+            <div class="label">Missions Actives</div>
           </div>
         </mat-card-content>
       </mat-card>
 
       <!-- Candidatures en attente -->
-      <mat-card class="kpi-widget warning">
+      <mat-card class="kpi-widget warning" matTooltip="Candidatures en attente de traitement">
         <mat-card-content>
           <div class="widget-icon">
             <mat-icon>pending_actions</mat-icon>
@@ -86,7 +73,7 @@
       </mat-card>
 
       <!-- Taux de complétion -->
-      <mat-card class="kpi-widget info">
+      <mat-card class="kpi-widget info" matTooltip="Pourcentage de missions clôturées">
         <mat-card-content>
           <div class="widget-icon">
             <mat-icon>trending_up</mat-icon>
@@ -98,28 +85,28 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- NOUVEAU : Projets en retard -->
-      <mat-card class="kpi-widget danger">
+      <!-- Projets en retard -->
+      <mat-card class="kpi-widget danger" matTooltip="Missions ayant dépassé leur date de fin">
         <mat-card-content>
           <div class="widget-icon">
             <mat-icon>warning</mat-icon>
           </div>
           <div class="widget-data">
             <div class="value">{{ dashboardData.statistiquesEcheances.enRetard || 0 }}</div>
-            <div class="label">Projets en Retard</div>
+            <div class="label">Missions en Retard</div>
           </div>
         </mat-card-content>
       </mat-card>
 
-      <!-- NOUVEAU : Échéances cette semaine -->
-      <mat-card class="kpi-widget accent">
+      <!-- Échéances cette semaine -->
+      <mat-card class="kpi-widget accent" matTooltip="Missions arrivant à échéance dans les 3 prochains jours">
         <mat-card-content>
           <div class="widget-icon">
             <mat-icon>event</mat-icon>
           </div>
           <div class="widget-data">
             <div class="value">{{ dashboardData.statistiquesEcheances.cetteSemaine || 0 }}</div>
-            <div class="label">Échéances Cette Semaine</div>
+            <div class="label">Échéances Imminentes</div>
           </div>
         </mat-card-content>
       </mat-card>
@@ -127,34 +114,27 @@
   </div>
 
   <!-- Section Graphiques -->
-  <div *ngIf="!isLoading" class="charts-section">
+  <div *ngIf="!isLoading && dashboardData" class="charts-section">
+    <!-- Graphique des candidatures par mois et projets par statut côte à côte -->
     <div class="chart-row">
-      <!-- Graphique des candidatures par mois -->
       <mat-card class="chart-card">
         <mat-card-header>
-          <mat-card-title>Évolution des Candidatures par Mois</mat-card-title>
+          <mat-card-title>
+            <mat-icon>show_chart</mat-icon>
+            Évolution des Candidatures par Mois
+          </mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <canvas #candidaturesChart></canvas>
         </mat-card-content>
       </mat-card>
 
-      <!-- Graphique des candidatures par région -->
       <mat-card class="chart-card">
         <mat-card-header>
-          <mat-card-title>Répartition des Candidatures par Région</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <canvas #regionsChart></canvas>
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    <!-- Graphique des projets par statut -->
-    <div class="chart-row">
-      <mat-card class="chart-card">
-        <mat-card-header>
-          <mat-card-title>Répartition des Projets par Statut</mat-card-title>
+          <mat-card-title>
+            <mat-icon>pie_chart</mat-icon>
+            Répartition des Missions par Statut
+          </mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <canvas #projetsChart></canvas>
@@ -164,29 +144,33 @@
   </div>
 
   <!-- Section Alertes et Notifications -->
-  <div *ngIf="!isLoading" class="alerts-section">
+  <div *ngIf="!isLoading && dashboardData" class="alerts-section">
     <div class="alerts-row">
       <!-- Projets arrivant à échéance -->
       <mat-card class="alert-card">
         <mat-card-header class="alert-header warning">
           <mat-card-title>
             <mat-icon>warning</mat-icon>
-            Projets Arrivant à Échéance
+            Missions Arrivant à Échéance (15 jours)
           </mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <div *ngIf="dashboardData.projetsEcheance.length === 0" class="no-alerts">
-            Aucun projet n'arrive à échéance prochainement
+            <mat-icon>check_circle</mat-icon>
+            <p>Aucune mission n'arrive à échéance prochainement</p>
           </div>
           <div *ngFor="let projet of dashboardData.projetsEcheance" class="alert-item">
             <div class="alert-content">
               <strong>{{ projet.titre }}</strong>
-              <span class="date">Échéance: {{ projet.dateEcheance | date:'dd/MM/yyyy' }}</span>
+              <span class="date">
+                <mat-icon class="date-icon">event</mat-icon>
+                Échéance: {{ projet.dateEcheance | date:'dd/MM/yyyy' }}
+              </span>
             </div>
-            <!-- CORRECTION : Utiliser (click) au lieu de routerLink -->
-      <button mat-button color="primary" (click)="voirProjet(projet.id)">
-        Voir
-      </button>
+            <button mat-raised-button color="primary" (click)="voirProjet(projet.id)">
+              <mat-icon>visibility</mat-icon>
+              Voir
+            </button>
           </div>
         </mat-card-content>
       </mat-card>
@@ -196,23 +180,30 @@
         <mat-card-header class="alert-header danger">
           <mat-card-title>
             <mat-icon>priority_high</mat-icon>
-            Candidatures Urgentes à Traiter
+            Candidatures Urgentes (+ de 7 jours)
           </mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <div *ngIf="dashboardData.candidaturesUrgentes.length === 0" class="no-alerts">
-            Aucune candidature urgente
+            <mat-icon>check_circle</mat-icon>
+            <p>Aucune candidature urgente à traiter</p>
           </div>
           <div *ngFor="let candidature of dashboardData.candidaturesUrgentes" class="alert-item">
             <div class="alert-content">
               <strong>{{ candidature.nom }} {{ candidature.prenom }}</strong>
-              <span class="mission">Mission: {{ candidature.mission }}</span>
-              <span class="date">Reçue: {{ candidature.dateReception | date:'dd/MM/yyyy' }}</span>
+              <span class="mission">
+                <mat-icon class="mission-icon">work</mat-icon>
+                Mission: {{ candidature.mission }}
+              </span>
+              <span class="date">
+                <mat-icon class="date-icon">access_time</mat-icon>
+                Reçue: {{ candidature.dateReception | date:'dd/MM/yyyy' }}
+              </span>
             </div>
-            <!-- CORRECTION : Utiliser (click) au lieu de routerLink -->
-      <button mat-button color="primary" (click)="voirCandidature(candidature.id)">
-        Traiter
-      </button>
+            <button mat-raised-button color="accent" (click)="voirCandidature(candidature.id)">
+              <mat-icon>assignment</mat-icon>
+              Traiter
+            </button>
           </div>
         </mat-card-content>
       </mat-card>

@@ -2,20 +2,33 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { PartenaireService } from '../../services/service_parten/partenaire.service';
+import { ProjectService } from '../../services/service_projects/projects.service';
 import { PartenaireDashboardStats, Alerte, Partenaire } from '../../models/partenaire.model';
 import { AuthService } from '../../services/service_auth/auth.service';
 import { PermissionService } from '../../services/permission.service';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-partenaire-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule, 
+    RouterModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTooltipModule
+  ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
 export class PartenaireDashboardComponent implements OnInit, OnDestroy {
+  // ===== DONNÉES PRINCIPALES =====
   stats: PartenaireDashboardStats = this.getStatsParDefaut();
   isLoading = true;
   currentUser: any;
@@ -23,27 +36,27 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
   erreurChargement = '';
   isPTF = false;
   
-  // ✅ STATS SPÉCIFIQUES POUR LE PARTENAIRE
+  // ===== STATS PROJET SPÉCIFIQUES =====
   projetsStats: any = {
     en_attente: 0,
     actifs: 0,
     clotures: 0,
     total: 0,
     volontairesAffectes: 0,
-    limiteProjets: 10 // Limite configurable
+    limiteProjets: 10
   };
   
   private subscriptions: Subscription[] = [];
 
   constructor(
     private partenaireService: PartenaireService,
+    private projectService: ProjectService,
     private authService: AuthService,
     private permissionService: PermissionService
-    // ✅ RETIRÉ ProjectService car non disponible
   ) {}
 
   ngOnInit(): void {
-    console.log('🔄 Dashboard partenaire initialisation');
+    console.log('🚀 Dashboard partenaire initialisation');
     
     const userSub = this.authService.currentUser$.subscribe({
       next: (user) => {
@@ -67,7 +80,7 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
         console.log('🔢 ID partenaire:', partenaireId, 'Type:', typeof partenaireId);
         
         this.currentUser = user;
-        this.loadPartenaireData(partenaireId);
+        this.chargerToutesLesDonnees(partenaireId);
       },
       error: (error: any) => {
         console.error('❌ Erreur observable user:', error);
@@ -83,112 +96,175 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
-  loadPartenaireData(partenaireId: string | number): void {
-    console.log('🔄 Chargement données partenaire ID:', partenaireId);
-    
-    const partenaireSub = this.partenaireService.getById(partenaireId).subscribe({
-      next: (partenaire: Partenaire) => {
-        console.log('✅ Données partenaire chargées:', partenaire);
-        this.partenaireData = partenaire;
-        this.isPTF = this.permissionService.estPTF(partenaire);
-        
-        // ✅ CHARGER LES STATS DU PARTENAIRE
-        this.loadPartenaireStats(partenaireId);
-        
-        // ✅ CHARGER LE DASHBOARD ADAPTÉ
-        this.loadDashboardAdapte(partenaireId);
-      },
-      error: (error: any) => {
-        console.error('❌ Erreur chargement données partenaire:', error);
-        this.isLoading = false;
-        this.erreurChargement = 'Erreur lors du chargement des données du partenaire';
-      }
+  /**
+   * ✅ MÉTHODE UNIFIÉE: Charge toutes les données en parallèle
+   */
+  private chargerToutesLesDonnees(partenaireId: string | number): void {
+    console.log('📥 Chargement données partenaire:', {
+      partenaireId,
+      type: typeof partenaireId
     });
     
-    this.subscriptions.push(partenaireSub);
-  }
+    this.isLoading = true;
+    this.erreurChargement = '';
 
-  // ✅ MÉTHODE POUR CHARGER LES STATS GÉNÉRALES DU PARTENAIRE
-  loadPartenaireStats(partenaireId: string | number): void {
-    const generalStatsSub = this.partenaireService.getDashboardStats(partenaireId).subscribe({
-      next: (stats: PartenaireDashboardStats) => {
-        console.log('📈 Stats générales partenaire:', stats);
-        // Fusionner avec les stats existantes
-        this.stats = { ...this.stats, ...stats };
-        
-        // ✅ METTRE À JOUR LES STATS DE PROJETS À PARTIR DES STATS GÉNÉRALES
-        this.updateProjetsStatsFromGeneral();
-        
-        // ✅ AJOUTER DES ALERTES SI PROJETS EN ATTENTE
-        this.ajouterAlertesProjets();
-        
-        // ✅ VÉRIFIER LA LIMITE DE PROJETS POUR CE PARTENAIRE
-        this.verifierLimiteProjetsPartenaire(partenaireId);
-      },
-      error: (error: any) => {
-        console.error('❌ Erreur chargement stats générales:', error);
-      }
-    });
-    
-    this.subscriptions.push(generalStatsSub);
-  }
-
-  // ✅ METTRE À JOUR LES STATS DE PROJETS À PARTIR DES STATS GÉNÉRALES
-  updateProjetsStatsFromGeneral(): void {
-    this.projetsStats = {
-      en_attente: this.stats.projetsEnAttente || 0,
-      actifs: this.stats.projetsActifs || 0,
-      clotures: this.stats.projetsTermines || 0,
-      total: this.stats.totalProjets || 0,
-      volontairesAffectes: this.stats.volontairesActuels || 0,
-      limiteProjets: 10
-    };
-  }
-
-  // ✅ VÉRIFIER LA LIMITE DE PROJETS POUR LE PARTENAIRE
-  verifierLimiteProjetsPartenaire(partenaireId: string | number): void {
-    const projetsActuels = this.getProjetsActuelsCount();
-    const limite = this.projetsStats.limiteProjets;
-    const peutCreer = projetsActuels < limite;
-    
-    console.log('🔍 Limite projets partenaire:', { 
-      peutCreer, 
-      projetsActuels,
-      limite
-    });
-    
-    // ✅ AJOUTER UNE ALERTE SI LIMITE ATTEINTE
-    if (!peutCreer) {
-      const alerte: Alerte = {
-        id: Date.now(),
-        titre: 'Limite de projets atteinte',
-        message: `Vous avez atteint la limite de ${limite} projets actifs/en attente. Vous ne pouvez pas créer de nouveaux projets pour le moment.`,
-        type: 'action_requise',
-        date: new Date().toISOString(),
-        lu: false
-      };
+    const chargementSub = forkJoin({
+      // 1. Données du partenaire
+      partenaire: this.partenaireService.getById(partenaireId).pipe(
+        catchError(error => {
+          console.error('❌ Erreur chargement partenaire:', error);
+          return of(null);
+        })
+      ),
       
-      this.stats.alertes = [alerte, ...this.stats.alertes].slice(0, 10);
+      // 2. Stats générales du partenaire (depuis PartenaireService)
+      statsGenerales: this.partenaireService.getDashboardStats(partenaireId).pipe(
+        catchError(error => {
+          console.error('❌ Erreur stats générales:', error);
+          return of(null);
+        })
+      ),
+      
+      // 3. Stats des projets (depuis ProjectService)
+      statsProjets: this.projectService.getStatsByPartenaire(partenaireId).pipe(
+        catchError(error => {
+          console.error('❌ Erreur stats projets:', error);
+          return of({
+            total: 0,
+            en_attente: 0,
+            actifs: 0,
+            clotures: 0,
+            volontairesAffectes: 0
+          });
+        })
+      ),
+      
+      // 4. Dashboard adapté (si disponible)
+      dashboardAdapte: this.partenaireService.getDashboardAdapte(partenaireId).pipe(
+        catchError(error => {
+          console.error('❌ Erreur dashboard adapté:', error);
+          return of(null);
+        })
+      )
+    }).subscribe({
+      next: (resultat) => {
+        console.log('✅ Toutes les données chargées:', {
+          partenaire: resultat.partenaire ? '✅ OK' : '❌ NULL',
+          statsGenerales: resultat.statsGenerales ? '✅ OK' : '⚠️ NULL',
+          statsProjets: '✅ OK',
+          dashboardAdapte: resultat.dashboardAdapte ? '✅ OK' : '⚠️ NULL'
+        });
+        
+        console.log('📊 Données brutes:', {
+          statsProjets: resultat.statsProjets,
+          statsGenerales: resultat.statsGenerales
+        });
+        
+        // 1. Appliquer les données du partenaire
+        if (resultat.partenaire) {
+          this.partenaireData = resultat.partenaire;
+          this.isPTF = this.permissionService.estPTF(resultat.partenaire);
+          // CORRIGER LA LIGNE 168 (et les autres lignes similaires)
+console.log('✅ Partenaire data appliquée:', {
+  nom: this.partenaireData.nomStructure,  // ❌ nom → ✅ nomStructure
+  typeStructures: this.partenaireData.typeStructures,
+  isPTF: this.isPTF
+});
+        }
+        
+        // 2. Mettre à jour projetsStats avec les données du ProjectService
+        this.projetsStats = {
+          en_attente: resultat.statsProjets.en_attente ?? 0,
+          actifs: resultat.statsProjets.actifs ?? 0,
+          clotures: resultat.statsProjets.clotures ?? 0,
+          total: resultat.statsProjets.total ?? 0,
+          volontairesAffectes: resultat.statsProjets.volontairesAffectes ?? 0,
+          limiteProjets: 10
+        };
+        
+        console.log('📊 projetsStats mis à jour:', this.projetsStats);
+        
+        // 3. Construire les stats finales
+        if (resultat.dashboardAdapte) {
+          // Si on a un dashboard adapté, l'utiliser comme base
+          if (resultat.dashboardAdapte.dashboardStructure) {
+            this.stats = { ...resultat.dashboardAdapte.dashboardStructure };
+          } else if (resultat.dashboardAdapte.dashboardPTF) {
+            this.stats = this.adapterStatsPTF(resultat.dashboardAdapte.dashboardPTF);
+          }
+        } else if (resultat.statsGenerales) {
+          // Sinon utiliser les stats générales
+          this.stats = { ...resultat.statsGenerales };
+        }
+        
+        // 4. Fusionner avec les stats projets (priorité aux stats projets)
+        this.fusionnerStatsAvecProjets();
+        
+        // 5. Générer alertes et évolution
+        this.ajouterAlertesProjets();
+        this.verifierLimiteProjetsPartenaire();
+        this.genererEvolutionSiNecessaire();
+        
+        console.log('📊 Stats finales:', this.stats);
+        
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('❌ Erreur critique chargement données:', error);
+        this.erreurChargement = 'Erreur lors du chargement des données';
+        this.isLoading = false;
+      }
+    });
+    
+    this.subscriptions.push(chargementSub);
+  }
+
+  /**
+   * Fusionne les stats avec les données des projets
+   */
+  private fusionnerStatsAvecProjets(): void {
+    // Utiliser ?? pour préserver les valeurs 0
+    this.stats = {
+      ...this.stats,
+      totalProjets: this.projetsStats.total ?? this.stats.totalProjets ?? 0,
+      projetsActifs: this.projetsStats.actifs ?? this.stats.projetsActifs ?? 0,
+      projetsEnAttente: this.projetsStats.en_attente ?? this.stats.projetsEnAttente ?? 0,
+      projetsTermines: this.projetsStats.clotures ?? this.stats.projetsTermines ?? 0,
+      volontairesActuels: this.projetsStats.volontairesAffectes ?? this.stats.volontairesActuels ?? 0
+    };
+    
+    console.log('🔄 Stats après fusion:', this.stats);
+  }
+
+  /**
+   * Génère l'évolution si elle n'existe pas déjà
+   */
+  private genererEvolutionSiNecessaire(): void {
+    if (!this.stats.evolutionCandidatures || this.stats.evolutionCandidatures.length === 0) {
+      this.stats.evolutionCandidatures = this.genererEvolutionFromProjets();
+      console.log('📈 Évolution générée:', this.stats.evolutionCandidatures);
     }
   }
 
-  // ✅ AJOUTER DES ALERTES LIÉES AUX PROJETS
-  ajouterAlertesProjets(): void {
+  /**
+   * Ajoute les alertes basées sur les stats des projets
+   */
+  private ajouterAlertesProjets(): void {
     const nouvellesAlertes: Alerte[] = [];
     
-    // Projets en attente de validation
+    // Alerte: Projets en attente
     if (this.projetsStats.en_attente > 0) {
       nouvellesAlertes.push({
         id: Date.now() + 1,
-        titre: 'Projets en attente',
+        titre: 'Projets en attente de validation',
         message: `Vous avez ${this.projetsStats.en_attente} projet(s) en attente de validation par l'administration.`,
-        type: 'action_requise', // ✅ CORRECTION : 'action_requise' au lieu de 'info'
+        type: 'action_requise',
         date: new Date().toISOString(),
         lu: false
       });
     }
     
-    // Volontaires affectés
+    // Alerte: Volontaires actifs
     if (this.projetsStats.volontairesAffectes > 0) {
       nouvellesAlertes.push({
         id: Date.now() + 2,
@@ -200,87 +276,63 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
       });
     }
     
-    // Ajouter aux alertes existantes
+    // Fusionner avec les alertes existantes
     if (nouvellesAlertes.length > 0) {
-      this.stats.alertes = [...nouvellesAlertes, ...this.stats.alertes].slice(0, 10);
+      const alertesExistantes = this.stats.alertes || [];
+      this.stats.alertes = [...nouvellesAlertes, ...alertesExistantes].slice(0, 10);
+      console.log('🔔 Alertes générées:', this.stats.alertes.length);
     }
   }
 
-  loadDashboardAdapte(partenaireId: string | number): void {
-    this.isLoading = true;
-    this.erreurChargement = '';
-
-    const dashboardSub = this.partenaireService.getDashboardAdapte(partenaireId).subscribe({
-      next: (data: any) => {
-        console.log('✅ Dashboard adapté chargé:', data);
-        
-        if (data.dashboardStructure) {
-          this.stats = data.dashboardStructure;
-        } else if (data.dashboardPTF) {
-          this.stats = this.adapterStatsPTF(data.dashboardPTF);
-        } else {
-          // ✅ UTILISER LES STATS DE PROJETS COMME FALLBACK
-          this.stats = this.getStatsAvecProjets();
-          this.isLoading = false;
-          return;
-        }
-        
-        // ✅ FUSIONNER AVEC LES STATS DE PROJETS
-        this.fusionnerStatsAvecProjets();
-        
-        this.isLoading = false;
-      },
-      error: (error: any) => {
-        console.error('❌ Erreur chargement dashboard adapté:', error);
-        // ✅ UTILISER LES STATS DE PROJETS EN CAS D'ERREUR
-        this.stats = this.getStatsAvecProjets();
-        this.isLoading = false;
-      }
+  /**
+   * Vérifie la limite de projets et ajoute une alerte si nécessaire
+   */
+  private verifierLimiteProjetsPartenaire(): void {
+    const projetsActuels = this.getProjetsActuelsCount();
+    const limite = this.projetsStats.limiteProjets;
+    const peutCreer = projetsActuels < limite;
+    
+    console.log('🔍 Limite projets partenaire:', { 
+      peutCreer, 
+      projetsActuels,
+      limite
     });
     
-    this.subscriptions.push(dashboardSub);
+    if (!peutCreer) {
+      const alerte: Alerte = {
+        id: Date.now(),
+        titre: 'Limite de projets atteinte',
+        message: `Vous avez atteint la limite de ${limite} projets actifs/en attente. Vous ne pouvez pas créer de nouveaux projets pour le moment.`,
+        type: 'action_requise',
+        date: new Date().toISOString(),
+        lu: false
+      };
+      
+      const alertesExistantes = this.stats.alertes || [];
+      this.stats.alertes = [alerte, ...alertesExistantes].slice(0, 10);
+    }
   }
 
-  // ✅ CRÉER LES STATS À PARTIR DES PROJETS
-  getStatsAvecProjets(): PartenaireDashboardStats {
-    return {
-      totalProjets: this.projetsStats.total,
-      projetsActifs: this.projetsStats.actifs,
-      projetsEnAttente: this.projetsStats.en_attente,
-      projetsTermines: this.projetsStats.clotures,
-      totalCandidatures: this.projetsStats.volontairesAffectes, // Approximation
-      nouvellesCandidatures: 0,
-      volontairesActuels: this.projetsStats.volontairesAffectes,
-      evolutionCandidatures: this.genererEvolutionFromProjets(),
-      alertes: this.stats.alertes || []
-    };
-  }
-
-  fusionnerStatsAvecProjets(): void {
-    this.stats = {
-      ...this.stats,
-      totalProjets: this.projetsStats.total || this.stats.totalProjets,
-      projetsActifs: this.projetsStats.actifs || this.stats.projetsActifs,
-      projetsEnAttente: this.projetsStats.en_attente || this.stats.projetsEnAttente,
-      projetsTermines: this.projetsStats.clotures || this.stats.projetsTermines,
-      volontairesActuels: this.projetsStats.volontairesAffectes || this.stats.volontairesActuels
-    };
-  }
-
+  /**
+   * Adapte les stats PTF si nécessaire
+   */
   private adapterStatsPTF(dataPTF: any): PartenaireDashboardStats {
     return {
-      totalProjets: this.projetsStats.total,
-      projetsActifs: this.projetsStats.actifs,
-      projetsEnAttente: 0, // PTF n'a pas de projets en attente
-      projetsTermines: this.projetsStats.clotures,
-      totalCandidatures: this.projetsStats.volontairesAffectes,
+      totalProjets: this.projetsStats.total ?? 0,
+      projetsActifs: this.projetsStats.actifs ?? 0,
+      projetsEnAttente: 0,
+      projetsTermines: this.projetsStats.clotures ?? 0,
+      totalCandidatures: this.projetsStats.volontairesAffectes ?? 0,
       nouvellesCandidatures: 0,
-      volontairesActuels: this.projetsStats.volontairesAffectes,
+      volontairesActuels: this.projetsStats.volontairesAffectes ?? 0,
       evolutionCandidatures: this.genererEvolutionPTF(dataPTF),
       alertes: dataPTF.alertes || []
     };
   }
 
+  /**
+   * Génère l'évolution pour PTF
+   */
   private genererEvolutionPTF(dataPTF: any): { date: string; count: number }[] {
     const today = new Date();
     const baseCount = this.projetsStats.volontairesAffectes || 0;
@@ -295,6 +347,9 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Génère l'évolution basée sur les projets
+   */
   private genererEvolutionFromProjets(): { date: string; count: number }[] {
     const today = new Date();
     const baseCount = this.projetsStats.volontairesAffectes || 0;
@@ -309,6 +364,9 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Retourne les stats par défaut
+   */
   private getStatsParDefaut(): PartenaireDashboardStats {
     return {
       totalProjets: 0,
@@ -323,7 +381,8 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
     };
   }
 
-  // ✅ MÉTHODES D'ACCÈS AUX STATS
+  // ===== MÉTHODES D'ACCÈS AUX STATS =====
+  
   getTotalProjets(): number { 
     return this.stats.totalProjets; 
   }
@@ -352,7 +411,8 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
     return this.stats.volontairesActuels; 
   }
 
-  // ✅ MÉTHODES POUR LA LIMITE DE PROJETS
+  // ===== MÉTHODES POUR LA LIMITE DE PROJETS =====
+  
   getProjetsActuelsCount(): number {
     return this.projetsStats.actifs + this.projetsStats.en_attente;
   }
@@ -364,13 +424,13 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
   getPourcentageLimite(): number {
     const total = this.getProjetsActuelsCount();
     const limite = this.getLimiteProjets();
-    return Math.min(100, (total / limite) * 100);
+    return limite > 0 ? Math.min(100, (total / limite) * 100) : 0;
   }
   
   estProcheLimite(): boolean {
     const total = this.getProjetsActuelsCount();
     const limite = this.getLimiteProjets();
-    return total >= limite * 0.8; // 80% de la limite
+    return total >= limite * 0.8;
   }
   
   aAtteintLimite(): boolean {
@@ -379,9 +439,10 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
     return total >= limite;
   }
 
-  // ✅ MÉTHODES EXISTANTES
+  // ===== MÉTHODES POUR LE GRAPHIQUE =====
+  
   hasEvolutionData(): boolean { 
-    return this.stats.evolutionCandidatures.length > 0; 
+    return this.stats.evolutionCandidatures && this.stats.evolutionCandidatures.length > 0; 
   }
 
   getLast7Days(): { date: string; count: number }[] { 
@@ -389,13 +450,15 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
   }
 
   getMaxCandidatures(): number { 
-    if (!this.stats.evolutionCandidatures.length) return 10;
+    if (!this.stats.evolutionCandidatures || !this.stats.evolutionCandidatures.length) return 10;
     const max = Math.max(...this.stats.evolutionCandidatures.map(d => d.count));
     return max > 0 ? max : 10;
   }
 
+  // ===== MÉTHODES POUR LES ALERTES =====
+  
   hasAlerts(): boolean { 
-    return this.stats.alertes.length > 0; 
+    return this.stats.alertes && this.stats.alertes.length > 0; 
   }
 
   getRecentAlerts(): Alerte[] { 
@@ -407,28 +470,32 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
   }
 
   marquerCommeLue(alerte: Alerte): void {
-    const marquerSub = this.partenaireService.marquerAlerteCommeLue(alerte.id).subscribe({
-      next: () => {
-        alerte.lu = true;
-      },
-      error: (error: any) => {
-        console.error('Erreur mise à jour alerte', error);
-        alerte.lu = true;
-      }
-    });
+    alerte.lu = true;
     
-    this.subscriptions.push(marquerSub);
+    // Optionnel: persister sur le serveur
+    if (this.partenaireService.marquerAlerteCommeLue) {
+      const marquerSub = this.partenaireService.marquerAlerteCommeLue(alerte.id).subscribe({
+        next: () => {
+          console.log('✅ Alerte marquée comme lue');
+        },
+        error: (error: any) => {
+          console.warn('⚠️ Erreur marquage alerte:', error);
+        }
+      });
+      
+      this.subscriptions.push(marquerSub);
+    }
   }
 
   getIconAlerte(type: string): string {
     const icons: { [key: string]: string } = {
-      'nouvelle_candidature': 'fa-user-plus',
-      'projet_echeance': 'fa-calendar-exclamation',
-      'action_requise': 'fa-exclamation-triangle',
-      'rapport_a_soumettre': 'fa-file-alt',
-      'validation_requise': 'fa-check-circle'
+      'nouvelle_candidature': 'person_add',
+      'projet_echeance': 'event',
+      'action_requise': 'warning',
+      'rapport_a_soumettre': 'description',
+      'validation_requise': 'check_circle'
     };
-    return icons[type] || 'fa-bell';
+    return icons[type] || 'notifications';
   }
 
   getColorAlerte(type: string): string {
@@ -442,12 +509,13 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
     return colors[type] || 'text-primary';
   }
 
+  // ===== MÉTHODES DE PERMISSIONS =====
+  
   peutCreerProjets(): boolean {
     if (!this.partenaireData) {
       return false;
     }
     
-    // ✅ VÉRIFIER LA LIMITE ET LES PERMISSIONS
     const peutCreerParDefaut = this.partenaireData.permissions?.peutCreerProjets ?? false;
     const aAtteintLimite = this.aAtteintLimite();
     
@@ -520,39 +588,24 @@ export class PartenaireDashboardComponent implements OnInit, OnDestroy {
 
   getActionIcon(action: string): string {
     const icons: { [key: string]: string } = {
-      'mes-volontaires': 'fa-users',
-      'gestion-rapports': 'fa-file-alt',
-      'offres-mission': 'fa-briefcase',
-      'projets': 'fa-list',
-      'soumettre': 'fa-plus'
+      'mes-volontaires': 'people',
+      'gestion-rapports': 'description',
+      'offres-mission': 'work',
+      'projets': 'folder_open',
+      'soumettre': 'add'
     };
-    return icons[action] || 'fa-link';
+    return icons[action] || 'link';
   }
   
-  // ✅ GESTION DES ACTIONS SUR LES ALERTES
   onAlerteAction(alerte: Alerte): void {
-    console.log('Action sur alerte:', alerte);
-    // Implémentez la logique de redirection selon le type d'alerte
-    switch(alerte.type) {
-      case 'nouvelle_candidature':
-        // Rediriger vers les candidatures
-        window.location.href = '/features/partenaires/candidatures';
-        break;
-      case 'projet_echeance':
-        // Rediriger vers les projets
-        window.location.href = '/features/partenaires/projets';
-        break;
-      case 'action_requise':
-        // Rediriger vers les actions requises
-        window.location.href = '/features/partenaires/actions';
-        break;
-      case 'rapport_a_soumettre':
-        // Rediriger vers les rapports
-        window.location.href = '/features/partenaires/rapports';
-        break;
-      default:
-        // Par défaut vers le tableau de bord
-        window.location.href = '/features/partenaires/dashboard';
-    }
+    console.log('🔗 Action sur alerte:', alerte.type);
+    const routes: { [key: string]: string } = {
+      'nouvelle_candidature': '/features/partenaires/candidatures',
+      'projet_echeance': '/features/partenaires/projets',
+      'action_requise': '/features/partenaires/actions',
+      'rapport_a_soumettre': '/features/partenaires/rapports'
+    };
+    
+    window.location.href = routes[alerte.type] || '/features/partenaires/dashboard';
   }
 }

@@ -1,12 +1,12 @@
-<!-- dashboard.component.html (version simplifiée) -->
+<!-- dashboard.component.html - HARMONISÉ avec Material Icons -->
 <div class="dashboard-container">
   <div class="dashboard-header">
-    <div class="header-content">
-      <div class="header-text">
+    <!-- <div class="header-content">
+      <div class="header-text"> -->
         <!-- <h1 class="dashboard-title">
           Tableau de Bord {{ estPTF() ? 'PTF' : 'Partenaire' }}
         </h1> -->
-        <p class="dashboard-subtitle">
+       <!--  <p class="dashboard-subtitle">
           {{ estPTF() ? 'Vue d\'ensemble de vos financements' : 'Vue d\'ensemble de votre activité' }}
         </p>
       </div>
@@ -18,18 +18,18 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <!-- Message d'erreur -->
   <div *ngIf="erreurChargement" class="alert alert-danger">
-    <i class="fas fa-exclamation-triangle me-2"></i>
+    <mat-icon class="alert-icon">error_outline</mat-icon>
     {{ erreurChargement }}
   </div>
 
   <!-- État de chargement -->
   <div *ngIf="isLoading" class="loading-state">
     <div class="loading-spinner">
-      <i class="fas fa-spinner fa-spin fa-2x"></i>
+      <mat-icon class="spinner-icon">hourglass_empty</mat-icon>
     </div>
     <p class="loading-text">Chargement de votre tableau de bord...</p>
   </div>
@@ -41,16 +41,16 @@
     <div class="project-status-section" *ngIf="!estPTF()">
       <div class="section-card">
         <div class="section-header">
-          <h3 class="section-title">Statuts de vos projets</h3>
+          <h3 class="section-title">Statuts de vos missions</h3>
           <div class="status-badges">
             <span class="badge bg-warning text-dark">
-              <i class="fas fa-clock me-1"></i> {{ getProjetsEnAttente() }} en attente
+              <mat-icon>schedule</mat-icon> {{ getProjetsEnAttente() }} en attente
             </span>
             <span class="badge bg-success">
-              <i class="fas fa-play-circle me-1"></i> {{ getProjetsActifs() }} actifs
+              <mat-icon>play_circle</mat-icon> {{ getProjetsActifs() }} actifs
             </span>
             <span class="badge bg-secondary">
-              <i class="fas fa-flag-checkered me-1"></i> {{ getProjetsTermines() }} clôturés
+              <mat-icon>flag</mat-icon> {{ getProjetsTermines() }} clôturés
             </span>
           </div>
         </div>
@@ -58,7 +58,7 @@
         <!-- Barre de progression limite de projets -->
         <div class="mt-3" *ngIf="!estPTF()">
           <div class="d-flex justify-content-between mb-1">
-            <small class="text-muted">Utilisation de la limite de projets</small>
+            <small class="text-muted">Utilisation de la limite des missions</small>
             <small class="text-muted">
               {{ getProjetsActuelsCount() }}/{{ getLimiteProjets() }}
               ({{ getPourcentageLimite() | number:'1.0-0' }}%)
@@ -77,13 +77,13 @@
           
           <!-- Messages d'avertissement -->
           <div *ngIf="estProcheLimite() && !aAtteintLimite()" class="alert alert-warning alert-sm mt-2 mb-0 py-1">
-            <i class="fas fa-exclamation-triangle me-1"></i>
-            <small>Vous approchez de la limite de {{ getLimiteProjets() }} projets actifs/en attente.</small>
+            <mat-icon>warning</mat-icon>
+            <small>Vous approchez de la limite de {{ getLimiteProjets() }} missions actifs/en attente.</small>
           </div>
           
           <div *ngIf="aAtteintLimite()" class="alert alert-danger alert-sm mt-2 mb-0 py-1">
-            <i class="fas fa-ban me-1"></i>
-            <small>Limite atteinte ! Vous ne pouvez pas créer de nouveaux projets.</small>
+            <mat-icon>block</mat-icon>
+            <small>Limite atteinte ! Vous ne pouvez pas créer de nouveaux missions.</small>
           </div>
         </div>
       </div>
@@ -94,12 +94,12 @@
       <!-- Carte 1: Projets totaux -->
       <div class="stat-card">
         <div class="stat-icon primary">
-          <i class="fas fa-project-diagram"></i>
+          <mat-icon>folder_open</mat-icon>
         </div>
         <div class="stat-content">
           <div class="stat-number">{{ getTotalProjets() }}</div>
           <div class="stat-label">
-            {{ estPTF() ? 'Projets financés' : 'Projets total' }}
+            {{ estPTF() ? 'Missions financés' : 'Missions total' }}
           </div>
           <div class="stat-details">
             <span class="detail-item success">{{ getProjetsActifs() }} actifs</span>
@@ -113,7 +113,7 @@
       <!-- Carte 2: Volontaires -->
       <div class="stat-card">
         <div class="stat-icon success">
-          <i class="fas fa-users"></i>
+          <mat-icon>people</mat-icon>
         </div>
         <div class="stat-content">
           <div class="stat-number">{{ getVolontairesActuels() }}</div>
@@ -131,14 +131,14 @@
       <!-- Carte 3: Candidatures (uniquement pour non-PTF) -->
       <div class="stat-card" *ngIf="!estPTF()">
         <div class="stat-icon info">
-          <i class="fas fa-file-alt"></i>
+          <mat-icon>assignment_ind</mat-icon>
         </div>
         <div class="stat-content">
           <div class="stat-number">{{ getTotalCandidatures() }}</div>
           <div class="stat-label">Candidatures total</div>
           <div class="stat-details" *ngIf="getNouvellesCandidatures() > 0">
             <span class="detail-item warning highlight">
-              <i class="fas fa-bell me-1"></i>
+              <mat-icon>notifications_active</mat-icon>
               {{ getNouvellesCandidatures() }} nouvelles
             </span>
           </div>
@@ -148,11 +148,11 @@
       <!-- Carte 4: Projets terminés -->
       <div class="stat-card">
         <div class="stat-icon warning">
-          <i class="fas fa-flag-checkered"></i>
+          <mat-icon>check_circle_outline</mat-icon>
         </div>
         <div class="stat-content">
           <div class="stat-number">{{ getProjetsTermines() }}</div>
-          <div class="stat-label">Projets terminés</div>
+          <div class="stat-label">Missions terminées</div>
           <div class="stat-details">
             <span class="detail-item">
               {{ estPTF() ? 'Missions accomplies' : 'Mission accomplie' }}
@@ -193,7 +193,7 @@
             </div>
             <ng-template #noChart>
               <div class="no-data">
-                <i class="fas fa-chart-bar no-data-icon"></i>
+                <mat-icon class="no-data-icon">insert_chart_outlined</mat-icon>
                 <p class="no-data-text">Aucune donnée disponible pour l'instant</p>
               </div>
             </ng-template>
@@ -216,7 +216,7 @@
                    class="alert-item" 
                    [class.unread]="!alerte.lu">
                 <div class="alert-icon" [ngClass]="getColorAlerte(alerte.type)">
-                  <i [class]="getIconAlerte(alerte.type)"></i>
+                  <mat-icon>{{ getIconAlerte(alerte.type) }}</mat-icon>
                 </div>
                 <div class="alert-content">
                   <h4 class="alert-title">{{ alerte.titre }}</h4>
@@ -227,17 +227,17 @@
                   <button *ngIf="!alerte.lu" 
                           class="btn-mark-read"
                           (click)="marquerCommeLue(alerte)">
-                    <i class="fas fa-check"></i>
+                    <mat-icon>done</mat-icon>
                   </button>
                   <button class="btn-action ms-2" (click)="onAlerteAction(alerte)">
-                    <i class="fas fa-arrow-right"></i>
+                    <mat-icon>arrow_forward</mat-icon>
                   </button>
                 </div>
               </div>
             </div>
             <ng-template #noAlerts>
               <div class="no-data">
-                <i class="fas fa-bell-slash no-data-icon"></i>
+                <mat-icon class="no-data-icon">notifications_none</mat-icon>
                 <p class="no-data-text">Aucune alerte pour le moment</p>
               </div>
             </ng-template>
@@ -258,7 +258,7 @@
                class="action-card success"
                *ngIf="isPartenaireDataLoaded() && peutGererVolontaires()">
               <div class="action-icon">
-                <i class="fas fa-users"></i>
+                <mat-icon>people</mat-icon>
               </div>
               <div class="action-content">
                 <h4 class="action-title">Mes Volontaires</h4>
@@ -270,7 +270,7 @@
                class="action-card info"
                *ngIf="isPartenaireDataLoaded() && peutGererVolontaires()">
               <div class="action-icon">
-                <i class="fas fa-file-alt"></i>
+                <mat-icon>description</mat-icon>
               </div>
               <div class="action-content">
                 <h4 class="action-title">Gestion Rapports</h4>
@@ -283,7 +283,7 @@
                [class.disabled]="!peutCreerProjets()"
                *ngIf="isPartenaireDataLoaded()">
               <div class="action-icon">
-                <i class="fas fa-briefcase"></i>
+                <mat-icon>work</mat-icon>
               </div>
               <div class="action-content">
                 <h4 class="action-title">Offres de Mission</h4>

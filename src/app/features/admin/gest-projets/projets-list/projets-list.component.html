@@ -6,7 +6,7 @@
 
     <!-- Recherche -->
     <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Rechercher un projet</mat-label>
+      <mat-label>Rechercher une mission</mat-label>
       <input matInput [(ngModel)]="searchTerm" (input)="applyFilters()" />
       <button mat-icon-button matSuffix *ngIf="searchTerm" (click)="clearSearch()">
         <mat-icon>close</mat-icon>
@@ -31,25 +31,25 @@
     <mat-menu #filterMenu="matMenu">
       <button mat-menu-item (click)="filterStatus('Tous')">
         <mat-icon>list</mat-icon>
-        <span>Tous les projets</span>
+        <span>Toutes les missions</span>
       </button>
       <mat-divider></mat-divider>
       <button mat-menu-item (click)="filterStatus('en_attente')">
         <mat-icon color="warn">schedule</mat-icon>
-        <span>Projets en attente</span>
+        <span>Missions en attente</span>
       </button>
       <button mat-menu-item (click)="filterStatus('actif')">
         <mat-icon color="primary">play_circle</mat-icon>
-        <span>Projets actifs</span>
+        <span>Missions actifs</span>
       </button>
       <button mat-menu-item (click)="filterStatus('cloture')">
         <mat-icon color="accent">check_circle</mat-icon>
-        <span>Projets clôturés</span>
+        <span>Missions clôturés</span>
       </button>
     </mat-menu>
 
     <!-- Ajouter projet -->
-    <button mat-mini-fab color="primary" matTooltip="Ajouter un projet"
+    <button mat-mini-fab color="primary" matTooltip="Ajouter une mission"
             (click)="openProjetDialog()" class="add-btn">
       <mat-icon>add</mat-icon>
     </button>
@@ -151,7 +151,7 @@
             <!-- Modifier -->
             <button mat-icon-button color="accent" 
                     (click)="openProjetDialog(p)"
-                    matTooltip="Modifier le projet" class="action-btn edit-btn">
+                    matTooltip="Modifier la mission" class="action-btn edit-btn">
               <mat-icon>edit</mat-icon>
             </button>
 
@@ -167,7 +167,7 @@
                       *ngIf="canValidate(p)"
                       class="menu-validate validate-action">
                 <mat-icon color="primary">check_circle</mat-icon>
-                <span>Valider le projet</span>
+                <span>Valider la mission</span>
               </button>
 
               <!-- Clôturer -->
@@ -175,7 +175,7 @@
                       *ngIf="canClose(p)"
                       class="menu-cloture cloture-action">
                 <mat-icon color="accent">lock</mat-icon>
-                <span>Clôturer le projet</span>
+                <span>Clôturer la mission</span>
               </button>
 
               <mat-divider *ngIf="canValidate(p) || canClose(p)"></mat-divider>
@@ -192,7 +192,7 @@
               <!-- Supprimer -->
               <button mat-menu-item (click)="supprimer(p)" class="menu-delete delete-action">
                 <mat-icon color="warn">delete</mat-icon>
-                <span>Supprimer le projet</span>
+                <span>Supprimer la mission</span>
               </button>
             </mat-menu>
 
@@ -234,8 +234,8 @@
     <!-- Aucune donnée -->
     <div *ngIf="dataSource.filteredData.length === 0 && !isLoading" class="no-data">
       <mat-icon>search_off</mat-icon>
-      <h3>Aucun projet trouvé</h3>
-      <p>Aucun projet ne correspond à vos critères de recherche.</p>
+      <h3>Aucune mission trouvée</h3>
+      <p>Aucune mission ne correspond à vos critères de recherche.</p>
       <button mat-raised-button color="primary" (click)="clearSearch()">
         <mat-icon>clear_all</mat-icon>
         Effacer les filtres
@@ -248,7 +248,7 @@
   <!-- Chargement -->
   <div *ngIf="isLoading" class="loading">
     <mat-spinner diameter="50"></mat-spinner>
-    <p>Chargement des projets...</p>
+    <p>Chargement des missions...</p>
   </div>
 
 </div>

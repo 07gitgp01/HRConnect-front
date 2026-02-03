@@ -5,12 +5,12 @@
 }
 
 .container-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
   color: white;
   border-radius: 12px;
   padding: 25px;
   margin-bottom: 25px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 129, 36, 0.1);
 }
 
 .header-content {
@@ -40,9 +40,22 @@
   border-radius: 8px;
   padding: 12px 25px;
   font-weight: 600;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 129, 36, 0.1);
 }
 
+/* Bouton "Nouvelle Offre" - VERT PNVB */
+.header-actions .btn-primary {
+  background: linear-gradient(135deg, #008124 0%, #006b1e 100%);
+  border: none;
+}
+
+.header-actions .btn-primary:hover {
+  background: linear-gradient(135deg, #009629 0%, #008124 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 129, 36, 0.2);
+}
+
+/* ===== CORRECTION CRITIQUE POUR LES CHIFFRES DES STATISTIQUES ===== */
 .stats-overview {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -51,31 +64,52 @@
 }
 
 .stat-item {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15); /* Plus opaque pour mieux contraster */
   backdrop-filter: blur(10px);
   border-radius: 10px;
   padding: 20px;
   text-align: center;
   transition: transform 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3); /* Bordure pour délimitation */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Ombre pour détachement */
 }
 
 .stat-item:hover {
   transform: translateY(-5px);
   background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
 }
 
+/* CORRECTION : Chiffres en BLANC PUR avec contraste maximum */
 .stat-number {
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: 900 !important; /* Très gras pour mieux voir */
   margin-bottom: 5px;
+  
+  /* BLANC PUR avec ombre pour contraste */
+  color: #FFFFFF !important; /* FORCE LE BLANC */
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.5), /* Ombre noire épaisse */
+    0 0 8px rgba(0, 0, 0, 0.3);   /* Lueur noire autour */
+  
+  /* Alternative avec effet de relief */
+  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.3);
 }
 
+/* Labels aussi en blanc mais moins gras */
 .stat-label {
   font-size: 0.9rem;
   opacity: 0.9;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 600;
+  
+  /* Blanc légèrement transparent pour les labels */
+  color: rgba(255, 255, 255, 0.95) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
+/* ===== FIN DE LA CORRECTION DES CHIFFRES ===== */
 
 .filters-section {
   background: white;
@@ -97,6 +131,8 @@
 .spinner-border {
   width: 3rem;
   height: 3rem;
+  color: #008124 !important;
+  border-right-color: transparent !important;
 }
 
 .content-section {
@@ -147,8 +183,8 @@
 
 .offre-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  border-color: #007bff;
+  box-shadow: 0 8px 25px rgba(0, 129, 36, 0.1);
+  border-color: #008124;
 }
 
 .offre-header {
@@ -199,7 +235,7 @@
 
 .meta-item i {
   margin-right: 5px;
-  color: #6c757d;
+  color: #008124;
 }
 
 .offre-actions .dropdown-toggle {
@@ -209,7 +245,7 @@
 }
 
 .offre-actions .dropdown-toggle:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 129, 36, 0.05);
 }
 
 .offre-body {
@@ -246,7 +282,7 @@
 }
 
 .detail-label i {
-  color: #007bff;
+  color: #008124;
 }
 
 .detail-value {
@@ -298,7 +334,7 @@
 }
 
 .progress-bar {
-  background: linear-gradient(90deg, #007bff, #00bfff);
+  background: linear-gradient(90deg, #008124, #009629);
   border-radius: 5px;
   font-size: 0.7rem;
   font-weight: 600;
@@ -335,13 +371,13 @@
 }
 
 .step.active {
-  color: #007bff;
+  color: #008124;
   font-weight: 600;
 }
 
 .step.active:before {
-  background: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  background: #008124;
+  box-shadow: 0 0 0 3px rgba(0, 129, 36, 0.2);
 }
 
 .offre-footer {
@@ -360,6 +396,18 @@
 .footer-right .btn {
   font-size: 0.85rem;
   padding: 6px 15px;
+}
+
+/* Boutons dans les cartes - VERT PNVB */
+.footer-right .btn-outline-primary {
+  border-color: #008124;
+  color: #008124;
+}
+
+.footer-right .btn-outline-primary:hover {
+  background-color: #008124;
+  border-color: #008124;
+  color: white;
 }
 
 .modal-backdrop {
@@ -413,7 +461,7 @@
 }
 
 .section-title i {
-  color: #007bff;
+  color: #008124;
 }
 
 .form-label {
@@ -434,8 +482,8 @@
 
 .form-control:focus,
 .form-select:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+  border-color: #008124;
+  box-shadow: 0 0 0 0.25rem rgba(0, 129, 36, 0.25);
 }
 
 textarea.form-control {
@@ -454,8 +502,9 @@ textarea.form-control {
   gap: 10px;
 }
 
+/* Boutons modaux - VERT PNVB */
 .btn-primary {
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  background: linear-gradient(135deg, #008124 0%, #006b1e 100%);
   border: none;
   border-radius: 8px;
   padding: 10px 25px;
@@ -464,8 +513,9 @@ textarea.form-control {
 }
 
 .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #009629 0%, #008124 100%);
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+  box-shadow: 0 5px 15px rgba(0, 129, 36, 0.3);
 }
 
 .btn-primary:disabled {
@@ -476,11 +526,14 @@ textarea.form-control {
   border-radius: 8px;
   padding: 10px 25px;
   font-weight: 600;
+  border-color: #6c757d;
+  color: #6c757d;
 }
 
 .btn-outline-secondary:hover {
   background-color: #6c757d;
   border-color: #6c757d;
+  color: white;
 }
 
 .btn-danger {
@@ -518,16 +571,16 @@ textarea.form-control {
 }
 
 .alert-warning {
-  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-  color: #212529;
-}
-
-.alert-info {
-  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
   color: white;
 }
 
-/* Badge classes pour les statuts */
+.alert-info {
+  background: linear-gradient(135deg, #008124 0%, #006b1e 100%);
+  color: white;
+}
+
+/* Badge classes pour les statuts - VERT ET JAUNE PNVB */
 .badge {
   padding: 6px 12px;
   border-radius: 6px;
@@ -537,26 +590,43 @@ textarea.form-control {
 
 .badge.bg-secondary {
   background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+  color: white !important;
 }
 
 .badge.bg-warning {
-  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%) !important;
+  color: white !important;
 }
 
 .badge.bg-info {
-  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+  background: linear-gradient(135deg, #008124 0%, #006b1e 100%) !important;
+  color: white !important;
 }
 
 .badge.bg-primary {
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+  background: linear-gradient(135deg, #008124 0%, #006b1e 100%) !important;
+  color: white !important;
+}
+
+.badge.bg-success {
+  background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%) !important;
+  color: white !important;
 }
 
 .badge.bg-danger {
   background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%) !important;
+  color: white !important;
 }
 
 .badge.bg-dark {
   background: linear-gradient(135deg, #343a40 0%, #212529 100%) !important;
+  color: white !important;
+}
+
+/* Badge orange/ambre pour certains statuts */
+.badge.bg-amber {
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%) !important;
+  color: white !important;
 }
 
 /* Responsive design */
@@ -595,11 +665,22 @@ textarea.form-control {
   .modal-content {
     border-radius: 8px;
   }
+  
+  /* Adaptation des chiffres sur mobile */
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 900 !important;
+  }
 }
 
 @media (max-width: 576px) {
   .stats-overview {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .stat-item {
+    padding: 15px;
   }
   
   .offre-footer {
@@ -619,4 +700,53 @@ textarea.form-control {
   .modal-body {
     padding: 20px 15px;
   }
+}
+
+/* Bouton Retour - VERT PNVB */
+.btn-outline-secondary.back-btn {
+  border-color: #008124;
+  color: #008124;
+}
+
+.btn-outline-secondary.back-btn:hover {
+  background-color: #008124;
+  color: white;
+}
+
+/* Icônes vertes */
+.bi {
+  vertical-align: middle;
+}
+
+.bi-check-circle {
+  color: #008124;
+}
+
+.bi-clock {
+  color: #FF9800;
+}
+
+.bi-people {
+  color: #008124;
+}
+
+.bi-calendar {
+  color: #008124;
+}
+
+.bi-geo-alt {
+  color: #008124;
+}
+
+/* SUPPRIMEZ CES LIGNES QUI RENDENT LES CHIFFRES COLORÉS */
+/* .stat-item:nth-child(1) .stat-number { color: #008124; } */
+/* .stat-item:nth-child(2) .stat-number { color: #FF9800; } */
+/* .stat-item:nth-child(3) .stat-number { color: #2E7D32; } */
+/* .stat-item:nth-child(4) .stat-number { color: #0288D1; } */
+
+/* Ajoutez plutôt des classes pour les icônes si besoin */
+.stat-item .stat-icon {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.9);
 }

@@ -1,5 +1,5 @@
-/* src/app/features/partenaires/dashboard/dashboard.component.scss */
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+/* src/app/features/partenaires/dashboard/dashboard.component.css */
+/* HARMONISÉ avec couleurs VERT et JAUNE PNVB */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :host {
@@ -38,7 +38,8 @@
         font-weight: 700;
         color: #1e293b;
         margin: 0 0 0.5rem 0;
-        background: linear-gradient(135deg, #004d40 0%, #00695c 100%);
+        /* VERT PNVB */
+        background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -81,7 +82,8 @@
         color: #64748b;
         
         &.ptf-badge {
-          background: linear-gradient(135deg, #9c27b0, #673ab7);
+          /* VERT PNVB */
+          background: linear-gradient(135deg, #006b1e, #008124);
           color: white;
           padding: 4px 12px;
           border-radius: 20px;
@@ -107,15 +109,17 @@
   }
   
   &.alert-warning {
+    /* JAUNE PNVB */
     background: linear-gradient(135deg, #fffbeb, #fef3c7);
-    border-left: 4px solid #f59e0b;
-    color: #92400e;
+    border-left: 4px solid #ffc107; /* Jaune PNVB */
+    color: #856404;
   }
   
   &.alert-info {
-    background: linear-gradient(135deg, #eff6ff, #dbeafe);
-    border-left: 4px solid #3b82f6;
-    color: #1e40af;
+    /* VERT PNVB clair */
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    border-left: 4px solid #008124; /* Vert PNVB */
+    color: #155724;
   }
 }
 
@@ -133,7 +137,8 @@
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
   
   .loading-spinner {
-    color: #004d40;
+    /* VERT PNVB */
+    color: #008124;
     margin-bottom: 1.5rem;
   }
   
@@ -185,18 +190,23 @@
           gap: 0.25rem;
           
           &.bg-warning {
-            background: #fef3c7;
-            color: #92400e;
+            /* JAUNE PNVB */
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
           }
           
           &.bg-success {
-            background: #dcfce7;
-            color: #166534;
+            /* VERT PNVB */
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
           }
           
           &.bg-secondary {
             background: #f1f5f9;
             color: #475569;
+            border: 1px solid #e2e8f0;
           }
         }
       }
@@ -217,11 +227,13 @@
     transition: width 0.3s ease;
     
     &.bg-success {
-      background: linear-gradient(90deg, #10b981, #34d399);
+      /* VERT PNVB */
+      background: linear-gradient(90deg, #009629, #008124);
     }
     
     &.bg-warning {
-      background: linear-gradient(90deg, #f59e0b, #fbbf24);
+      /* JAUNE PNVB */
+      background: linear-gradient(90deg, #ffc107, #ffb300);
     }
     
     &.bg-danger {
@@ -260,7 +272,8 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #004d40, #00695c);
+    /* VERT PNVB */
+    background: linear-gradient(90deg, #006b1e, #008124, #009629);
   }
   
   &:hover {
@@ -282,19 +295,23 @@
     flex-shrink: 0;
     
     &.primary {
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      /* VERT PNVB foncé */
+      background: linear-gradient(135deg, #006b1e, #008124);
     }
     
     &.success {
-      background: linear-gradient(135deg, #10b981, #059669);
+      /* VERT PNVB */
+      background: linear-gradient(135deg, #009629, #008124);
     }
     
     &.info {
-      background: linear-gradient(135deg, #06b6d4, #0891b2);
+      /* VERT PNVB clair */
+      background: linear-gradient(135deg, #4caf50, #2e7d32);
     }
     
     &.warning {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
+      /* JAUNE PNVB */
+      background: linear-gradient(135deg, #ffc107, #ffb300);
     }
   }
   
@@ -331,15 +348,17 @@
         font-weight: 500;
         
         &.success {
-          background: #dcfce7;
-          color: #166534;
-          border: 1px solid #bbf7d0;
+          /* VERT PNVB clair */
+          background: #d4edda;
+          color: #155724;
+          border: 1px solid #c3e6cb;
         }
         
         &.warning {
-          background: #fef3c7;
-          color: #92400e;
-          border: 1px solid #fde68a;
+          /* JAUNE PNVB clair */
+          background: #fff3cd;
+          color: #856404;
+          border: 1px solid #ffeaa7;
         }
         
         &.secondary {
@@ -349,8 +368,9 @@
         }
         
         &.highlight {
-          background: linear-gradient(135deg, #fef3c7, #fde68a);
-          border: 1px solid #f59e0b;
+          /* JAUNE PNVB */
+          background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+          border: 1px solid #ffc107;
           animation: pulse 2s infinite;
         }
       }
@@ -441,7 +461,8 @@
     border-top: 1px solid #f1f5f9;
     
     .view-all-link {
-      color: #004d40;
+      /* VERT PNVB */
+      color: #008124;
       text-decoration: none;
       font-weight: 500;
       display: inline-flex;
@@ -451,13 +472,14 @@
       font-size: 0.875rem;
       
       &:hover {
-        color: #00695c;
+        color: #009629;
         gap: 0.75rem;
       }
     }
     
     .btn-link {
-      color: #004d40;
+      /* VERT PNVB */
+      color: #008124;
       text-decoration: none;
       font-weight: 500;
       display: inline-flex;
@@ -488,7 +510,8 @@
         
         .chart-bar {
           flex: 1;
-          background: linear-gradient(to top, #004d40, #00695c);
+          /* VERT PNVB */
+          background: linear-gradient(to top, #006b1e, #008124, #009629);
           border-radius: 4px 4px 0 0;
           position: relative;
           min-height: 4px;
@@ -496,7 +519,7 @@
           cursor: pointer;
           
           &:hover {
-            background: linear-gradient(to top, #00332b, #004d40);
+            background: linear-gradient(to top, #005518, #006b1e, #008124);
             transform: scaleY(1.05);
             
             .bar-value {
@@ -554,7 +577,8 @@
         width: 12px;
         height: 12px;
         border-radius: 2px;
-        background: #4e73df;
+        /* VERT PNVB */
+        background: #008124;
       }
       
       .legend-text {
@@ -579,7 +603,8 @@
     
     &.unread {
       background: #f8fafc;
-      border-left: 4px solid #004d40;
+      /* VERT PNVB */
+      border-left: 4px solid #008124;
       border-color: #e2e8f0;
       
       .alert-title {
@@ -607,20 +632,23 @@
       flex-shrink: 0;
       
       &.text-success { 
-        background: #dcfce7; 
-        color: #166534; 
+        /* VERT PNVB clair */
+        background: #d4edda; 
+        color: #155724; 
       }
       &.text-warning { 
-        background: #fef3c7; 
-        color: #92400e; 
+        /* JAUNE PNVB clair */
+        background: #fff3cd; 
+        color: #856404; 
       }
       &.text-danger { 
         background: #fee2e2; 
         color: #dc2626; 
       }
       &.text-info { 
-        background: #dbeafe; 
-        color: #1d4ed8; 
+        /* VERT PNVB moyen */
+        background: #c8e6c9; 
+        color: #155724; 
       }
       &.text-secondary { 
         background: #f1f5f9; 
@@ -669,20 +697,23 @@
           border-radius: 6px;
           
           &.bg-success {
-            background: #dcfce7;
-            color: #166534;
+            /* VERT PNVB clair */
+            background: #d4edda;
+            color: #155724;
           }
           &.bg-warning {
-            background: #fef3c7;
-            color: #92400e;
+            /* JAUNE PNVB clair */
+            background: #fff3cd;
+            color: #856404;
           }
           &.bg-danger {
             background: #fee2e2;
             color: #dc2626;
           }
           &.bg-info {
-            background: #dbeafe;
-            color: #1d4ed8;
+            /* VERT PNVB clair */
+            background: #c8e6c9;
+            color: #155724;
           }
         }
       }
@@ -705,7 +736,8 @@
         
         &:hover {
           background: #e2e8f0;
-          color: #004d40;
+          /* VERT PNVB */
+          color: #008124;
           opacity: 1;
         }
       }
@@ -753,50 +785,58 @@
     }
     
     &.success {
-      border-color: #22c55e;
+      /* VERT PNVB */
+      border-color: #28a745;
       
       &:hover:not(.disabled) {
-        background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
       }
       
       .action-icon {
-        background: linear-gradient(135deg, #22c55e, #16a34a);
+        /* VERT PNVB */
+        background: linear-gradient(135deg, #28a745, #218838);
       }
     }
     
     &.primary {
-      border-color: #3b82f6;
+      /* VERT PNVB foncé */
+      border-color: #006b1e;
       
       &:hover:not(.disabled) {
-        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
       }
       
       .action-icon {
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        /* VERT PNVB foncé */
+        background: linear-gradient(135deg, #006b1e, #008124);
       }
     }
     
     &.info {
-      border-color: #06b6d4;
+      /* VERT PNVB clair */
+      border-color: #4caf50;
       
       &:hover:not(.disabled) {
-        background: linear-gradient(135deg, #cffafe, #a5f3fc);
+        background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
       }
       
       .action-icon {
-        background: linear-gradient(135deg, #06b6d4, #0891b2);
+        /* VERT PNVB clair */
+        background: linear-gradient(135deg, #4caf50, #2e7d32);
       }
     }
     
     &.warning {
-      border-color: #f59e0b;
+      /* JAUNE PNVB */
+      border-color: #ffc107;
       
       &:hover:not(.disabled) {
-        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
       }
       
       .action-icon {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
+        /* JAUNE PNVB */
+        background: linear-gradient(135deg, #ffc107, #ffb300);
       }
     }
     
@@ -869,7 +909,8 @@
         }
         
         &.bg-success {
-          background: #22c55e;
+          /* VERT PNVB */
+          background: #28a745;
           color: white;
         }
       }
@@ -915,15 +956,18 @@
         margin-bottom: 1rem;
         
         &.impact {
-          background: linear-gradient(135deg, #667eea, #764ba2);
+          /* VERT PNVB */
+          background: linear-gradient(135deg, #006b1e, #008124);
         }
         
         &.rapport {
-          background: linear-gradient(135deg, #43e97b, #38f9d7);
+          /* VERT PNVB clair */
+          background: linear-gradient(135deg, #4caf50, #2e7d32);
         }
         
         &.partenariat {
-          background: linear-gradient(135deg, #fa709a, #fee140);
+          /* JAUNE PNVB */
+          background: linear-gradient(135deg, #ffc107, #ffb300);
         }
       }
       
@@ -953,7 +997,8 @@
             display: block;
             font-size: 1.5rem;
             font-weight: 700;
-            color: #4e73df;
+            /* VERT PNVB */
+            color: #008124;
           }
           
           .stat-label {
@@ -969,13 +1014,14 @@
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        color: #004d40;
+        /* VERT PNVB */
+        color: #008124;
         text-decoration: none;
         font-weight: 500;
         font-size: 0.875rem;
         
         &:hover {
-          color: #00695c;
+          color: #009629;
           text-decoration: underline;
         }
       }
@@ -1019,13 +1065,14 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      color: #004d40;
+      /* VERT PNVB */
+      color: #008124;
       text-decoration: none;
       font-size: 0.875rem;
       padding: 0.5rem 0;
       
       &:hover {
-        color: #00695c;
+        color: #009629;
         text-decoration: underline;
       }
     }
@@ -1216,7 +1263,8 @@
 .alert-item:focus,
 .btn-mark-read:focus,
 .btn-action:focus {
-  outline: 2px solid #004d40;
+  /* VERT PNVB */
+  outline: 2px solid #008124;
   outline-offset: 2px;
 }
 
@@ -1229,12 +1277,13 @@
   transition: all 0.3s ease;
   
   &.btn-outline-warning {
-    border-color: #f59e0b;
-    color: #92400e;
+    /* JAUNE PNVB */
+    border-color: #ffc107;
+    color: #856404;
     
     &:hover {
-      background: #fef3c7;
-      border-color: #f59e0b;
+      background: #fff3cd;
+      border-color: #ffc107;
     }
   }
   

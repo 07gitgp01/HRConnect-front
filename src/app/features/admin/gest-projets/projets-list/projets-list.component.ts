@@ -67,8 +67,10 @@ export class ProjetsListComponent implements OnInit, AfterViewInit {
   statusFilter = 'Tous';
   partenaires: Partenaire[] = [];
   isLoading = true;
+  
+  // Ajout d'une propriété pour suivre les données originales
+  private originalProjects: Project[] = [];
 
-  // ✅ AVEC LES 3 STATUTS SIMPLIFIÉS
   statusOptions = [
     { value: 'Tous', label: 'Tous les statuts' },
     { value: 'en_attente', label: 'En attente' },
@@ -96,7 +98,8 @@ export class ProjetsListComponent implements OnInit, AfterViewInit {
 
     this.projectService.getProjects().subscribe({
       next: (projects: Project[]) => {
-        this.dataSource.data = projects || [];
+        this.originalProjects = projects || [];
+        this.dataSource.data = [...this.originalProjects];
         
         this.partenaireService.getAll().subscribe({
           next: (partners: Partenaire[]) => {
@@ -167,7 +170,6 @@ export class ProjetsListComponent implements OnInit, AfterViewInit {
     return this.partenaires.find(p => p.id === id)?.nomStructure || '—';
   }
 
-  // ✅ MIS À JOUR : Avec les 3 statuts simplifiés
   getStatusColor(status: ProjectStatus | undefined): string {
     if (!status) return '';
     
@@ -250,28 +252,47 @@ export class ProjetsListComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // ✅ MÉTHODE CORRIGÉE : changerStatut
   changerStatut(project: Project, nouveauStatut: ProjectStatus): void {
-    if (!project.id) return;
+    if (!project.id) {
+      this.snackBar.open('Projet non valide', 'Fermer', { duration: 3000 });
+      return;
+    }
 
-    // ✅ UTILISATION DE VOTRE ProjectWorkflow
     if (!ProjectWorkflow.canChangeStatus(project.statutProjet, nouveauStatut)) {
       this.snackBar.open('Transition de statut non autorisée', 'Fermer', { duration: 3000 });
       return;
     }
 
+    console.log(`🔄 Changement statut UI - Projet "${project.titre}":`, {
+      de: project.statutProjet,
+      vers: nouveauStatut
+    });
+
+    // Afficher un indicateur de chargement
+    const originalTitle = project.titre;
+    
     this.projectService.changerStatutProjet(project.id, nouveauStatut).subscribe({
       next: (updatedProject: Project) => {
-        const index = this.dataSource.data.findIndex(p => p.id === project.id);
-        if (index !== -1) {
-          this.dataSource.data[index] = updatedProject;
-          this.dataSource._updateChangeSubscription();
-        }
+        console.log(`✅ Projet mis à jour reçu:`, {
+          id: updatedProject.id,
+          titre: updatedProject.titre,
+          statut: updatedProject.statutProjet,
+          volontaires: `${updatedProject.nombreVolontairesActuels}/${updatedProject.nombreVolontairesRequis}`
+        });
+
+        // ✅ CORRECTION AMÉLIORÉE : Mettre à jour les données de manière robuste
+        this.updateProjectInDataSource(updatedProject);
         
         this.snackBar.open('Statut mis à jour avec succès', 'Fermer', { duration: 2000 });
-        this.applyFilters();
+        
+        // Recharger les filtres pour s'assurer que le projet est bien affiché dans la bonne catégorie
+        setTimeout(() => {
+          this.applyFilters();
+        }, 100);
       },
       error: (err: any) => {
-        console.error('Erreur changement statut', err);
+        console.error('❌ Erreur changement statut', err);
         
         let errorMessage = 'Erreur lors du changement de statut';
         if (err.message) {
@@ -279,8 +300,57 @@ export class ProjetsListComponent implements OnInit, AfterViewInit {
         }
         
         this.snackBar.open(errorMessage, 'Fermer', { duration: 3000 });
+        
+        // Rafraîchir les données pour éviter un état incohérent
+        this.loadData();
       }
     });
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Mettre à jour le projet dans le DataSource
+  private updateProjectInDataSource(updatedProject: Project): void {
+    // Créer une copie profonde des données actuelles
+    const currentData = [...this.dataSource.data];
+    const originalData = [...this.originalProjects];
+    
+    // Trouver l'index dans les deux tableaux
+    const dataIndex = currentData.findIndex(p => p.id === updatedProject.id);
+    const originalIndex = originalData.findIndex(p => p.id === updatedProject.id);
+    
+    if (dataIndex !== -1) {
+      // Fusionner les propriétés pour conserver les références
+      const mergedProject = { 
+        ...currentData[dataIndex], 
+        ...updatedProject,
+        // S'assurer que les propriétés critiques sont mises à jour
+        titre: updatedProject.titre || currentData[dataIndex].titre,
+        statutProjet: updatedProject.statutProjet,
+        dateDebut: updatedProject.dateDebut,
+        dateFin: updatedProject.dateFin,
+        dateCloture: updatedProject.dateCloture,
+        nombreVolontairesActuels: updatedProject.nombreVolontairesActuels,
+        nombreVolontairesRequis: updatedProject.nombreVolontairesRequis,
+        partenaireId: updatedProject.partenaireId,
+        regionAffectation: updatedProject.regionAffectation,
+        updated_at: updatedProject.updated_at
+      };
+      
+      // Mettre à jour les tableaux
+      currentData[dataIndex] = mergedProject;
+      if (originalIndex !== -1) {
+        originalData[originalIndex] = mergedProject;
+      }
+      
+      // Appliquer les nouvelles données
+      this.originalProjects = originalData;
+      this.dataSource.data = currentData;
+      
+      console.log(`🔄 Projet mis à jour dans le DataSource:`, mergedProject.titre);
+    } else {
+      // Si le projet n'est pas trouvé, recharger complètement
+      console.warn('Projet non trouvé dans le DataSource, rechargement complet');
+      this.loadData();
+    }
   }
 
   formatDate(dateString: string | undefined): string {
@@ -317,7 +387,7 @@ export class ProjetsListComponent implements OnInit, AfterViewInit {
     const diffTime = endDate.getTime() - today.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
-  // ✅ AJOUT : Méthode pour vérifier si on peut changer vers un statut
+
   canChangeToStatus(project: Project, targetStatus: ProjectStatus): boolean {
     return ProjectWorkflow.canChangeStatus(project.statutProjet, targetStatus);
   }

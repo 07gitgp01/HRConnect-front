@@ -1,26 +1,7 @@
 <div class="candidat-dashboard" *ngIf="user">
   <!-- En-tête personnalisée -->
   <div class="header-section">
-    <mat-card class="welcome-card">
-      <mat-card-content>
-        <div class="welcome-content">
-          <div class="welcome-text">
-            <!-- <h1 class="welcome-title">
-              <mat-icon class="welcome-icon">person</mat-icon>
-              Bienvenue, {{ user.prenom || user.username }} !
-            </h1> -->
-            <p class="welcome-subtitle">
-              Bienvenue dans votre espace personnel Programme National de Volontariat du Burkina Faso
-            </p>
-          </div>
-          <div class="status-badge">
-            <span class="statut-principal" [class]="getStatutBadgeClass(statutPrincipal.toLowerCase())">
-              {{ statutPrincipal }}
-            </span>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
+    
   </div>
 
   <!-- Widgets de Statistiques -->

@@ -1,7 +1,7 @@
 <div class="volontaires-container">
   <div class="container-header">
-    <h1>Mes Volontaires</h1>
-    <div class="header-stats">
+<!--     <h1>Mes Volontaires</h1>
+ -->    <div class="header-stats">
       <div class="stat-badge">
         <span class="stat-number">{{ getTotalVolontaires() }}</span>
         <span class="stat-label">Volontaires total</span>
@@ -138,7 +138,7 @@
           </div>
           <div class="mission-footer">
             <a [routerLink]="['/features/partenaires/projets', mission.projet?.id]" class="btn btn-sm btn-primary" *ngIf="mission.projet?.id">
-              Voir le projet
+              Voir la mission
             </a>
             <button class="btn btn-sm btn-outline-secondary">
               <i class="fas fa-file-alt me-1"></i> Rapports

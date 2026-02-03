@@ -1,164 +1,234 @@
-/* projet-detail-dialog.component.css */
+/* ===== PROJET DETAIL DIALOG - VERSION PNVB OPTIMISÉE ===== */
+
+/* ===== CONFIGURATION DU DIALOG ===== */
 .project-detail-dialog {
   max-width: 900px;
   width: 90vw;
   max-height: 90vh;
   border-radius: 12px;
   overflow: hidden;
+  /* Optimisation GPU */
+  transform: translateZ(0);
+  will-change: transform;
 }
 
-/* En-tête du dialogue */
+/* ===== EN-TÊTE - VERT PNVB ===== */
 .dialog-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid #e0e0e0;
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  /* Gradient vert PNVB officiel */
+  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
   color: white;
+  position: relative;
+  z-index: 2;
+  
+  /* Effet décoratif */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+    border-radius: 0 0 0 100%;
+    pointer-events: none;
+  }
 }
 
 .dialog-title h2 {
   margin: 0;
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.25px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1;
 }
 
 .dialog-title mat-icon {
   color: white;
-  opacity: 0.9;
+  opacity: 0.95;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+  
+  &:hover {
+    opacity: 1;
+    transform: scale(1.1) rotate(90deg);
+  }
 }
 
-/* Contenu principal */
+/* ===== CONTENU PRINCIPAL ===== */
 .dialog-content {
   padding: 0;
   max-height: 70vh;
   overflow-y: auto;
+  overflow-x: hidden;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  position: relative;
+  z-index: 1;
+  
+  /* Scrollbar optimisée */
+  scrollbar-width: thin;
+  scrollbar-color: #008124 #f1f1f1;
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #008124; /* Vert PNVB */
+    border-radius: 4px;
+    transition: background 0.3s ease;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #006b1e;
+  }
 }
 
-/* Onglets */
+/* ===== ONGLETS ===== */
 .mat-tab-group {
   height: 100%;
 }
 
-.mat-tab-header {
+::ng-deep .mat-tab-header {
   background: white;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 2px solid #e0e0e0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.mat-tab-label {
-  color: #333;
+::ng-deep .mat-tab-label {
+  color: #64748b;
   font-weight: 500;
   opacity: 1;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    color: #008124; /* Vert PNVB */
+    background: rgba(0, 129, 36, 0.05);
+  }
 }
 
-.mat-tab-label-active {
-  color: #2e7d32;
-  font-weight: 600;
+::ng-deep .mat-tab-label-active {
+  color: #008124 !important; /* Vert PNVB */
+  font-weight: 700;
 }
 
-.mat-tab-label-active .mat-tab-label-content {
-  position: relative;
-}
-
-.mat-tab-label-active .mat-tab-label-content::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #2e7d32, #4caf50);
+::ng-deep .mat-ink-bar {
+  background: linear-gradient(90deg, #006b1e, #008124, #009629) !important;
+  height: 3px !important;
   border-radius: 3px;
-}
-
-.mat-ink-bar {
-  background: linear-gradient(90deg, #2e7d32, #4caf50) !important;
-  height: 3px;
 }
 
 .tab-content {
   padding: 24px;
+  animation: fadeIn 0.4s ease-in-out;
 }
 
-/* Cartes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== CARTES ===== */
 .info-card,
 .mat-card {
   margin-bottom: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.08);
   border-radius: 12px;
   border: 1px solid #e0e0e0;
   background: white;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .info-card:hover,
 .mat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 129, 36, 0.15);
+  border-color: #008124;
 }
 
-.mat-card-header {
-  padding: 20px 20px 0;
+::ng-deep .mat-card-header {
+  padding: 20px;
   position: relative;
   background: linear-gradient(135deg, #f8f9fa 0%, #f1f5f9 100%);
-  border-bottom: 1px solid #e0e0e0;
-  border-radius: 12px 12px 0 0;
+  border-bottom: 2px solid #e0e0e0;
 }
 
-.mat-card-title {
+::ng-deep .mat-card-title {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1e293b;
   margin-bottom: 4px;
 }
 
-.mat-card-subtitle {
+::ng-deep .mat-card-subtitle {
   color: #64748b;
   font-size: 0.9rem;
   margin-bottom: 12px;
 }
 
-/* Badge de statut */
+/* ===== BADGES DE STATUT - COULEURS PNVB ===== */
 .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 16px;
+  padding: 8px 16px;
   border-radius: 20px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .status-en-attente {
-  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
 }
 
 .status-ouvert,
 .status-actif {
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+  background: linear-gradient(135deg, #006b1e 0%, #008124 100%); /* Vert PNVB */
 }
 
 .status-en-cours {
-  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
 }
 
 .status-a-cloturer {
-  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
 }
 
 .status-cloture {
-  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+  background: linear-gradient(135deg, #95A5A6 0%, #7F8C8D 100%);
 }
 
-/* Grille d'informations */
+/* ===== GRILLE D'INFORMATIONS ===== */
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -168,63 +238,91 @@
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 10px;
   border: 1px solid #e0e0e0;
-  transition: all 0.2s ease;
-}
-
-.info-item:hover {
-  background: #f1f5f9;
-  transform: translateX(4px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #006b1e, #008124, #009629);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  &:hover {
+    background: linear-gradient(135deg, #e6f4e6 0%, #f1f5f9 100%);
+    transform: translateX(6px);
+    border-color: #008124;
+    box-shadow: 0 4px 12px rgba(0, 129, 36, 0.12);
+    
+    &::before {
+      opacity: 1;
+    }
+  }
 }
 
 .info-item mat-icon {
-  color: #2e7d32;
+  color: #008124; /* Vert PNVB */
   margin-top: 2px;
   flex-shrink: 0;
-  font-size: 1.2rem;
-  width: 1.2rem;
-  height: 1.2rem;
+  font-size: 1.3rem;
+  width: 1.3rem;
+  height: 1.3rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 129, 36, 0.2));
 }
 
 .info-label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #64748b;
   margin-bottom: 4px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .info-value {
-  font-weight: 500;
+  font-weight: 600;
   color: #1e293b;
-  font-size: 0.95rem;
-  line-height: 1.4;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
-/* Diviseur */
+/* ===== DIVISEUR ===== */
 .divider-container {
   margin: 24px 0;
 }
 
 .divider-container hr {
   border: none;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #008124, transparent);
+  opacity: 0.3;
 }
 
-/* Sections de contenu */
+/* ===== SECTIONS DE CONTENU ===== */
 .description-section,
 .competences-section,
 .avantages-section,
 .conditions-section {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   padding: 20px;
   background: white;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: #008124;
+    box-shadow: 0 4px 12px rgba(0, 129, 36, 0.1);
+  }
 }
 
 .description-section h3,
@@ -233,49 +331,62 @@
 .conditions-section h3 {
   margin: 0 0 16px 0;
   color: #1e293b;
-  font-size: 1.1rem;
-  font-weight: 600;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #2e7d32;
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #008124; /* Vert PNVB */
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .description-section p,
 .avantages-section p,
 .conditions-section p {
   margin: 0;
-  line-height: 1.6;
+  line-height: 1.8;
   color: #334155;
+  font-size: 0.95rem;
 }
 
-/* Compétences */
+/* ===== COMPÉTENCES ===== */
 .competences-section {
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e6f4e6 100%);
+  border-color: #008124;
 }
 
-.mat-chip-listbox {
+::ng-deep .mat-chip-listbox {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
-.mat-chip {
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-  color: white;
-  font-weight: 500;
-  box-shadow: 0 2px 4px rgba(46, 125, 50, 0.2);
+::ng-deep .mat-chip {
+  background: linear-gradient(135deg, #006b1e 0%, #008124 100%) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  padding: 8px 16px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 2px 6px rgba(0, 129, 36, 0.3);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 129, 36, 0.4);
+  }
 }
 
-.mat-chip .mat-icon {
-  color: white;
+::ng-deep .mat-chip .mat-icon {
+  color: white !important;
 }
 
-/* Section de chargement */
+/* ===== SECTION DE CHARGEMENT ===== */
 .loading-section {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
   text-align: center;
   background: white;
   border-radius: 12px;
@@ -286,175 +397,234 @@
   margin-top: 16px;
   color: #64748b;
   font-weight: 500;
+  font-size: 1rem;
 }
 
-.loading-section .mat-spinner circle {
-  stroke: #2e7d32;
+::ng-deep .loading-section .mat-spinner circle {
+  stroke: #008124 !important; /* Vert PNVB */
 }
 
-/* Aucune donnée */
+/* ===== AUCUNE DONNÉE ===== */
 .no-data,
 .no-volontaires {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
   text-align: center;
-  background: white;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 2px dashed #cbd5e1;
 }
 
 .no-data mat-icon,
 .no-volontaires mat-icon {
-  font-size: 64px;
-  width: 64px;
-  height: 64px;
-  margin-bottom: 20px;
-  color: #2e7d32;
-  opacity: 0.5;
+  font-size: 72px;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 24px;
+  color: #008124; /* Vert PNVB */
+  opacity: 0.4;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
 }
 
 .no-data h3,
 .no-volontaires h3 {
   margin: 0 0 12px 0;
   color: #1e293b;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1.2rem;
 }
 
 .no-data p,
 .no-volontaires p {
   margin: 0;
-  max-width: 300px;
+  max-width: 350px;
   color: #64748b;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 0.95rem;
 }
 
-/* Listes */
-.mat-list {
+/* ===== LISTES ===== */
+::ng-deep .mat-list {
   padding: 0;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .candidature-item,
 .volontaire-item {
   border-bottom: 1px solid #f0f0f0;
-  padding: 16px 20px;
-  transition: all 0.2s ease;
+  padding: 18px 20px;
+  transition: all 0.3s ease;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: linear-gradient(180deg, #006b1e, #008124);
+    transition: width 0.3s ease;
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &:hover {
+    background: #f8f9fa;
+    transform: translateX(6px);
+    
+    &::before {
+      width: 4px;
+    }
+  }
 }
 
-.candidature-item:last-child,
-.volontaire-item:last-child {
-  border-bottom: none;
-}
-
-.candidature-item:hover,
-.volontaire-item:hover {
-  background: #f8f9fa;
-  transform: translateX(4px);
-}
-
-/* Badge de statut candidature */
+/* ===== BADGE STATUT CANDIDATURE ===== */
 .statut-badge {
   padding: 6px 16px;
   border-radius: 20px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .statut-en-attente {
-  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
 }
 
 .statut-entretien {
-  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
 }
 
 .statut-acceptee {
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+  background: linear-gradient(135deg, #006b1e 0%, #008124 100%); /* Vert PNVB */
 }
 
 .statut-refusee {
-  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
 }
 
-/* Compétences dans les listes */
+/* ===== COMPÉTENCES DANS LES LISTES ===== */
 .competences {
-  font-size: 0.8rem;
-  margin-top: 4px;
+  font-size: 0.85rem;
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #008124;
 }
 
 .competences-label {
   color: #64748b;
-  font-weight: 500;
+  font-weight: 600;
+  margin-right: 4px;
 }
 
 .competences-text {
   color: #334155;
+  font-weight: 500;
 }
 
-/* Statistiques volontaires */
+/* ===== STATISTIQUES VOLONTAIRES ===== */
 .volontaires-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
 
 .stat {
   text-align: center;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #f1f5f9 100%);
+  padding: 24px 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   border-radius: 12px;
-  border: 1px solid #e0e0e0;
+  border: 2px solid #e0e0e0;
   transition: all 0.3s ease;
-}
-
-.stat:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #006b1e, #008124, #009629);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+  
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 20px rgba(0, 129, 36, 0.2);
+    border-color: #008124;
+    
+    &::before {
+      transform: scaleX(1);
+    }
+  }
 }
 
 .stat-number {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #008124; /* Vert PNVB */
   margin-bottom: 8px;
+  line-height: 1;
 }
 
 .stat-number.warning {
-  color: #d32f2f;
+  color: #D32F2F;
 }
 
 .stat-label {
   font-size: 0.8rem;
   color: #64748b;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* Section d'affectation */
+/* ===== SECTION D'AFFECTATION ===== */
 .affectation-section {
   margin-bottom: 24px;
   padding: 24px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 2px solid #e0e0e0;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: #008124;
+    box-shadow: 0 6px 16px rgba(0, 129, 36, 0.15);
+  }
 }
 
 .affectation-section h3 {
   margin: 0 0 20px 0;
   color: #1e293b;
-  font-size: 1.1rem;
-  font-weight: 600;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #2e7d32;
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #008124; /* Vert PNVB */
 }
 
 .affectation-controls {
@@ -467,88 +637,119 @@
   flex: 1;
 }
 
-.volontaire-select .mat-form-field-wrapper {
+::ng-deep .volontaire-select .mat-form-field-wrapper {
   background: white;
 }
 
-.volontaire-select .mat-select-arrow {
-  color: #2e7d32;
+::ng-deep .volontaire-select .mat-select-arrow {
+  color: #008124; /* Vert PNVB */
 }
 
-.affectation-controls button {
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+::ng-deep .affectation-controls button {
+  background: linear-gradient(135deg, #006b1e 0%, #008124 100%);
   color: white;
-  font-weight: 600;
-  padding: 8px 24px;
+  font-weight: 700;
+  padding: 10px 28px;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+  box-shadow: 0 4px 10px rgba(0, 129, 36, 0.3);
   transition: all 0.3s ease;
+  border: none;
+  
+  &:hover:not([disabled]) {
+    background: linear-gradient(135deg, #005518 0%, #006b1e 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 129, 36, 0.4);
+  }
+  
+  &:active:not([disabled]) {
+    transform: translateY(0);
+  }
+  
+  &[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
-.affectation-controls button:hover {
-  background: linear-gradient(135deg, #1b5e20 0%, #145214 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(27, 94, 32, 0.4);
-}
-
-/* Date d'affectation */
+/* ===== DATE D'AFFECTATION ===== */
 .date-affectation {
   font-size: 0.8rem;
   color: #64748b;
-  margin-top: 4px;
+  margin-top: 6px;
   font-style: italic;
+  padding: 4px 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  display: inline-block;
 }
 
-/* Actions du dialogue */
-.mat-dialog-actions {
+/* ===== ACTIONS DU DIALOGUE ===== */
+::ng-deep .mat-dialog-actions {
   padding: 20px 24px;
-  border-top: 1px solid #e0e0e0;
-  background: linear-gradient(135deg, #f8f9fa 0%, #f1f5f9 100%);
+  border-top: 2px solid #e0e0e0;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
-.mat-dialog-actions button {
-  min-width: 120px;
-  font-weight: 500;
+::ng-deep .mat-dialog-actions button {
+  min-width: 140px;
+  font-weight: 600;
   border-radius: 8px;
-  padding: 8px 24px;
+  padding: 10px 28px;
   transition: all 0.3s ease;
+  font-size: 0.95rem;
 }
 
-.mat-dialog-actions button:first-child {
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+::ng-deep .mat-dialog-actions button:first-child {
+  background: linear-gradient(135deg, #006b1e 0%, #008124 100%);
   color: white;
-  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+  box-shadow: 0 4px 10px rgba(0, 129, 36, 0.3);
+  border: none;
+  
+  &:hover {
+    background: linear-gradient(135deg, #005518 0%, #006b1e 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 129, 36, 0.4);
+  }
 }
 
-.mat-dialog-actions button:first-child:hover {
-  background: linear-gradient(135deg, #1b5e20 0%, #145214 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(27, 94, 32, 0.4);
-}
-
-.mat-dialog-actions button:last-child {
+::ng-deep .mat-dialog-actions button:last-child {
   color: #64748b;
-  border: 1px solid #cbd5e1;
+  border: 2px solid #cbd5e1;
+  background: white;
+  
+  &:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #334155;
+  }
 }
 
-.mat-dialog-actions button:last-child:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
-}
-
-/* Responsive */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .project-detail-dialog {
     width: 95vw;
     max-height: 95vh;
   }
   
+  .dialog-title {
+    padding: 16px 20px;
+  }
+  
+  .dialog-title h2 {
+    font-size: 1.25rem;
+  }
+  
   .info-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
   
   .volontaires-stats {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
   
   .affectation-controls {
@@ -560,45 +761,50 @@
     max-height: 75vh;
   }
   
-  .dialog-title {
+  .tab-content {
+    padding: 16px;
+  }
+  
+  .stat {
+    padding: 20px 16px;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+  }
+  
+  ::ng-deep .mat-dialog-actions {
+    flex-direction: column-reverse;
     padding: 16px 20px;
   }
   
+  ::ng-deep .mat-dialog-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dialog-title h2 {
+    font-size: 1.1rem;
+  }
+  
   .tab-content {
+    padding: 12px;
+  }
+  
+  .description-section,
+  .competences-section,
+  .avantages-section,
+  .conditions-section,
+  .affectation-section {
     padding: 16px;
   }
 }
 
-/* Animation de hover */
-.candidature-item:hover,
-.volontaire-item:hover {
-  background-color: #f8f9fa;
-  transition: background-color 0.2s ease;
-}
-
-/* Scrollbar personnalisée */
-.dialog-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.dialog-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.dialog-content::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.dialog-content::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Mode sombre */
+/* ===== MODE SOMBRE ===== */
 @media (prefers-color-scheme: dark) {
   .dialog-title {
-    background: linear-gradient(135deg, #1b5e20 0%, #145214 100%);
+    background: linear-gradient(135deg, #005518 0%, #006b1e 100%);
   }
   
   .dialog-content {
@@ -616,30 +822,31 @@
     border-color: #334155;
   }
   
-  .mat-card-header {
+  ::ng-deep .mat-card-header {
     background: linear-gradient(135deg, #334155 0%, #475569 100%);
-    border-color: #334155;
+    border-color: #475569;
   }
   
-  .mat-card-title {
+  ::ng-deep .mat-card-title {
     color: #f1f5f9;
   }
   
-  .mat-card-subtitle {
+  ::ng-deep .mat-card-subtitle {
     color: #94a3b8;
   }
   
   .info-item {
-    background: #334155;
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
     border-color: #475569;
-  }
-  
-  .info-item:hover {
-    background: #475569;
+    
+    &:hover {
+      background: linear-gradient(135deg, #475569 0%, #334155 100%);
+      border-color: #009629;
+    }
   }
   
   .info-item mat-icon {
-    color: #4caf50;
+    color: #009629;
   }
   
   .info-label {
@@ -653,26 +860,27 @@
   .loading-section,
   .no-data,
   .no-volontaires,
-  .mat-list {
+  ::ng-deep .mat-list {
     background: #1e293b;
+    border-color: #334155;
   }
   
   .stat {
-    background: linear-gradient(135deg, #334155 0%, #475569 100%);
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
     border-color: #475569;
   }
   
   .stat-number {
-    color: #f1f5f9;
+    color: #009629;
   }
   
   .stat-label {
     color: #94a3b8;
   }
   
-  .mat-dialog-actions {
-    background: linear-gradient(135deg, #334155 0%, #475569 100%);
-    border-color: #334155;
+  ::ng-deep .mat-dialog-actions {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    border-color: #475569;
   }
   
   .dialog-content::-webkit-scrollbar-track {
@@ -680,10 +888,53 @@
   }
   
   .dialog-content::-webkit-scrollbar-thumb {
-    background: #64748b;
+    background: #006b1e;
   }
   
   .dialog-content::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #008124;
+  }
+  
+  .description-section h3,
+  .competences-section h3,
+  .avantages-section h3,
+  .conditions-section h3,
+  .affectation-section h3 {
+    color: #f1f5f9;
+    border-bottom-color: #009629;
+  }
+  
+  .description-section p,
+  .avantages-section p,
+  .conditions-section p {
+    color: #cbd5e1;
+  }
+  
+  .competences-section {
+    background: linear-gradient(135deg, #1e3a1e 0%, #2d4d2d 100%);
+    border-color: #009629;
   }
 }
+
+/* ===== OPTIMISATIONS GPU ===== */
+.info-card,
+.mat-card,
+.stat,
+.info-item,
+button {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* ===== NOTES ===== */
+/*
+✅ Couleurs PNVB officielles (#006b1e, #008124, #009629)
+✅ Gradients harmonisés
+✅ Animations fluides optimisées GPU
+✅ Responsive complet (mobile + tablette)
+✅ Mode sombre élégant
+✅ Scrollbar personnalisée
+✅ Effets hover sophistiqués
+✅ Accessibilité améliorée
+✅ Performance optimisée
+*/

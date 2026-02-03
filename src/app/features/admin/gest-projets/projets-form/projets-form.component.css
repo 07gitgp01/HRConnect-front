@@ -1,13 +1,19 @@
-/* ====== CONTAINER PRINCIPAL ====== */
+/* ===== RESET ET CONFIGURATION DE BASE ===== */
+* {
+  box-sizing: border-box;
+}
+
+/* ===== CONTAINER PRINCIPAL ===== */
 .project-form-container {
   padding: 20px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   min-height: 100vh;
   height: 100vh;
   overflow: hidden;
+  position: relative;
 }
 
-/* ====== CARD ====== */
+/* ===== CARD PRINCIPALE ===== */
 .form-card {
   max-width: 1000px;
   margin: 20px auto;
@@ -19,13 +25,15 @@
   height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
-/* ====== CARD HEADER ====== */
+/* ===== HEADER DE LA CARD ===== */
 .form-card mat-card-title {
   padding: 24px 24px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 30%, #145214 70%, #0f3a0f 100%);
+  /* Vert PNVB officiel */
+  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
   color: white;
   margin: 0 !important;
   font-size: 24px;
@@ -33,18 +41,24 @@
   flex-shrink: 0;
   letter-spacing: 0.5px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 2;
 }
 
-/* ====== CARD CONTENT ====== */
+/* ===== CONTENU DE LA CARD ===== */
 mat-card-content {
-  padding: 32px !important;
+  padding: 32px 24px 120px 24px !important; /* Padding bottom pour les boutons */
   background: #fafbfc;
   flex: 1;
   overflow-y: auto;
-  max-height: none;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 1;
+  /* Empêche le contenu de passer sous les boutons */
+  min-height: 0;
 }
 
-/* Style de la barre de défilement */
+/* Barre de défilement personnalisée */
 mat-card-content::-webkit-scrollbar {
   width: 8px;
 }
@@ -55,15 +69,15 @@ mat-card-content::-webkit-scrollbar-track {
 }
 
 mat-card-content::-webkit-scrollbar-thumb {
-  background: #2e7d32;
+  background: #008124; /* Vert PNVB */
   border-radius: 4px;
 }
 
 mat-card-content::-webkit-scrollbar-thumb:hover {
-  background: #1b5e20;
+  background: #006b1e;
 }
 
-/* ====== FORM GRID ====== */
+/* ===== GRILLE DE FORMULAIRE ===== */
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -71,13 +85,7 @@ mat-card-content::-webkit-scrollbar-thumb:hover {
   margin-bottom: 20px;
 }
 
-/* ====== FORM FIELDS ====== */
-mat-form-field {
-  width: 100%;
-  margin-bottom: 8px;
-}
-
-/* Style spécifique pour les champs pleine largeur */
+/* Classes utilitaires */
 .w-100 {
   grid-column: 1 / -1;
 }
@@ -86,116 +94,137 @@ mat-form-field {
   margin-top: 16px;
 }
 
-/* CORRECTION : Style simplifié pour les champs Material */
-.mat-form-field-appearance-outline .mat-form-field-outline {
+/* ===== CHAMPS DE FORMULAIRE ANGULAR MATERIAL ===== */
+mat-form-field {
+  width: 100%;
+  margin-bottom: 16px;
+  display: block;
+  position: relative;
+}
+
+/* Suppression des styles Material par défaut qui causent des problèmes */
+::ng-deep .mat-form-field-wrapper {
+  padding-bottom: 1.25em !important;
+  margin: 0 !important;
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
   background-color: white;
   border-radius: 8px;
+  color: #cbd5e1;
 }
 
-/* CORRECTION : Supprimer les bordures superposées */
-.mat-form-field-appearance-outline .mat-form-field-outline-thick {
-  border-width: 1px;
-  border-style: solid;
-  border-color: transparent;
-}
-
-/* CORRECTION : Style au focus simplifié */
-.mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
-  color: #2e7d32;
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline-thick {
+  color: #cbd5e1;
   opacity: 1;
 }
 
-/* CORRECTION : Supprimer les bordures inutiles */
-.mat-form-field-appearance-outline .mat-form-field-outline-start,
-.mat-form-field-appearance-outline .mat-form-field-outline-end,
-.mat-form-field-appearance-outline .mat-form-field-outline-gap {
-  border: none;
-  background: transparent;
+/* Focus */
+::ng-deep .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
+  color: #008124 !important; /* Vert PNVB */
+  opacity: 1;
 }
 
-/* ====== LABELS ====== */
-mat-label {
+/* Hover */
+::ng-deep .mat-form-field-appearance-outline:not(.mat-form-field-disabled):hover .mat-form-field-outline {
+  opacity: 1;
+  color: #94a3b8;
+}
+
+/* ===== LABELS ===== */
+::ng-deep mat-label {
   font-weight: 500;
-  color: #1e293b;
-  font-size: 0.9rem;
+  color: #1e293b !important;
+  font-size: 0.9rem !important;
 }
 
-/* ====== INPUTS ====== */
-input.mat-input-element, 
-textarea.mat-input-element {
-  padding: 12px 0;
-  font-size: 14px;
-  color: #334155;
+::ng-deep .mat-form-field-appearance-outline.mat-focused mat-label {
+  color: #008124 !important; /* Vert PNVB */
+}
+
+/* ===== INPUTS ET TEXTAREAS ===== */
+::ng-deep input.mat-input-element,
+::ng-deep textarea.mat-input-element {
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  color: #334155 !important;
   background: transparent;
-  border: none;
-  outline: none;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  line-height: 1.5 !important;
+  min-height: 24px;
 }
 
-/* CORRECTION : Supprimer les bordures des inputs */
-input:focus,
-textarea:focus {
-  outline: none;
-  border: none;
-  box-shadow: none;
+::ng-deep input.mat-input-element:focus,
+::ng-deep textarea.mat-input-element:focus {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
-/* ====== SELECTS ====== */
-mat-select {
+/* ===== SELECTS ===== */
+::ng-deep mat-select {
   font-size: 14px;
   color: #334155;
+  padding: 12px 16px;
 }
 
-.mat-select-arrow {
-  color: #2e7d32;
+::ng-deep .mat-select-arrow {
+  color: #008124; /* Vert PNVB */
 }
 
-/* ====== TEXTAREAS ====== */
-textarea {
+::ng-deep .mat-select-value {
+  padding: 0 !important;
+}
+
+/* ===== TEXTAREAS SPÉCIFIQUES ===== */
+::ng-deep textarea {
   resize: vertical;
-  min-height: 80px;
-  padding: 12px 0;
-  border: none;
-  outline: none;
+  min-height: 80px !important;
+  padding: 12px 16px !important;
+  border: none !important;
+  outline: none !important;
   background: transparent;
+  line-height: 1.6 !important;
+  font-family: inherit !important;
 }
 
-/* CORRECTION : Supprimer les bordures des textareas */
-textarea:focus {
-  border: none;
-  outline: none;
-  box-shadow: none;
+::ng-deep textarea[formControlName="descriptionLongue"] {
+  min-height: 150px !important;
 }
 
-/* Zone de texte plus grande pour les descriptions */
-textarea[formControlName="descriptionLongue"] {
-  min-height: 120px;
+::ng-deep textarea[formControlName="descriptionCourte"] {
+  min-height: 100px !important;
 }
 
-textarea[formControlName="descriptionCourte"] {
-  min-height: 80px;
+::ng-deep textarea[formControlName="competences_requises"],
+::ng-deep textarea[formControlName="avantagesVolontaire"],
+::ng-deep textarea[formControlName="conditions_particulieres"] {
+  min-height: 100px !important;
 }
 
-textarea[formControlName="competences_requises"],
-textarea[formControlName="avantagesVolontaire"],
-textarea[formControlName="conditions_particulieres"] {
-  min-height: 80px;
-}
-
-/* ====== BOUTONS D'ACTION ====== */
+/* ===== BOUTONS D'ACTION - STICKY FOOTER ===== */
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 32px;
-  padding: 24px 0;
-  border-top: 1px solid #e2e8f0;
-  flex-shrink: 0;
-  background: #fafbfc;
-  position: sticky;
+  padding: 20px 24px;
+  border-top: 2px solid #e2e8f0;
+  background: white;
+  
+  /* ⭐ STICKY FOOTER - Reste toujours visible ⭐ */
+  position: absolute;
   bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
 }
 
-button[mat-raised-button] {
+/* ===== STYLES DES BOUTONS ===== */
+button[mat-raised-button],
+button[mat-button] {
   padding: 12px 32px;
   border-radius: 8px;
   font-weight: 500;
@@ -203,28 +232,33 @@ button[mat-raised-button] {
   transition: all 0.3s ease;
   min-width: 140px;
   height: 44px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
+/* Bouton primaire (Enregistrer) */
 button[mat-raised-button][color="primary"] {
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 50%, #145214 100%);
+  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.3);
+  border: none;
 }
 
 button[mat-raised-button][color="primary"]:hover:not([disabled]) {
-  background: linear-gradient(135deg, #1b5e20 0%, #145214 50%, #0f3a0f 100%);
+  background: linear-gradient(135deg, #005518 0%, #006b1e 50%, #008124 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(27, 94, 32, 0.4);
+  box-shadow: 0 6px 16px rgba(0, 129, 36, 0.4);
 }
 
 button[mat-raised-button][color="primary"]:active:not([disabled]) {
   transform: translateY(0);
-  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+  box-shadow: 0 4px 8px rgba(0, 129, 36, 0.3);
 }
 
 button[mat-raised-button][color="primary"][disabled] {
@@ -233,12 +267,14 @@ button[mat-raised-button][color="primary"][disabled] {
   box-shadow: none;
   transform: none;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
+/* Bouton secondaire (Annuler) */
 button[mat-button][color="warn"] {
   color: #64748b;
-  border: 1px solid #e2e8f0;
-  padding: 11px 24px;
+  border: 2px solid #e2e8f0;
+  padding: 10px 24px;
   border-radius: 8px;
   background: white;
   font-weight: 500;
@@ -250,8 +286,8 @@ button[mat-button][color="warn"]:hover {
   border-color: #cbd5e1;
 }
 
-/* ====== ERREURS ====== */
-mat-error {
+/* ===== ERREURS DE VALIDATION ===== */
+::ng-deep mat-error {
   font-size: 12px;
   font-weight: 500;
   margin-top: 4px;
@@ -259,40 +295,33 @@ mat-error {
   display: flex;
   align-items: center;
   gap: 4px;
+  padding: 4px 0;
 }
 
-/* ====== ÉTATS DE VALIDATION ====== */
-mat-form-field.ng-valid.ng-dirty .mat-form-field-outline-thick {
-  color: #2e7d32;
+/* ===== ÉTATS DE VALIDATION ===== */
+::ng-deep mat-form-field.ng-valid.ng-dirty .mat-form-field-outline-thick {
+  color: #008124 !important; /* Vert PNVB */
 }
 
-mat-form-field.ng-invalid.ng-touched .mat-form-field-outline-thick {
-  color: #e53e3e;
+::ng-deep mat-form-field.ng-invalid.ng-touched .mat-form-field-outline-thick {
+  color: #e53e3e !important;
 }
 
-/* ====== CHARGEMENT ====== */
-mat-option[disabled] {
-  color: #a0aec0;
-  font-style: italic;
-}
-
-/* ====== PLACEHOLDER ====== */
-::placeholder {
+/* ===== PLACEHOLDER ===== */
+::ng-deep ::placeholder {
   color: #94a3b8;
   opacity: 1;
+  font-size: 14px;
 }
 
-/* CORRECTION : Simplifier les états de focus */
-mat-form-field.mat-focused .mat-form-field-label {
-  color: #2e7d32;
+/* ===== OPTIONS DÉSACTIVÉES ===== */
+::ng-deep mat-option[disabled] {
+  color: #a0aec0;
+  font-style: italic;
+  opacity: 0.6;
 }
 
-/* CORRECTION : Supprimer les effets de survol problématiques */
-mat-form-field:hover .mat-form-field-outline {
-  opacity: 0.8;
-}
-
-/* ====== ANIMATIONS ====== */
+/* ===== ANIMATIONS ===== */
 .form-card {
   animation: slideInUp 0.4s ease-out;
 }
@@ -308,7 +337,101 @@ mat-form-field:hover .mat-form-field-outline {
   }
 }
 
-/* ====== RESPONSIVE DESIGN ====== */
+/* ===== BOUTON AVEC SPINNER ===== */
+.submit-button {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 140px;
+  transition: all 0.3s ease;
+}
+
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.submit-button.loading {
+  pointer-events: none;
+}
+
+::ng-deep .submit-button mat-spinner {
+  margin: 0;
+  display: inline-block;
+}
+
+::ng-deep .submit-button mat-spinner circle {
+  stroke: white;
+}
+
+/* ===== SECTIONS DE FORMULAIRE ===== */
+.form-section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.form-section:hover {
+  border-color: #008124; /* Vert PNVB */
+  box-shadow: 0 4px 8px rgba(0, 129, 36, 0.1);
+}
+
+.form-section h3 {
+  margin: 0 0 16px 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #008124; /* Vert PNVB */
+}
+
+/* ===== MESSAGES DE SUCCÈS/ERREUR ===== */
+.form-message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-message.success {
+  background-color: rgba(0, 129, 36, 0.1);
+  color: #006b1e;
+  border: 1px solid rgba(0, 129, 36, 0.3);
+}
+
+.form-message.error {
+  background-color: rgba(229, 62, 62, 0.1);
+  color: #c53030;
+  border: 1px solid rgba(229, 62, 62, 0.3);
+}
+
+/* ===== CHAMP REQUIS ===== */
+.required-field::after {
+  content: " *";
+  color: #e53e3e;
+  font-weight: bold;
+}
+
+/* ===== FOCUS VISIBLE ===== */
+button:focus-visible {
+  outline: 2px solid #008124; /* Vert PNVB */
+  outline-offset: 2px;
+}
+
+::ng-deep .mat-form-field-appearance-outline.mat-focused .mat-form-field-label {
+  color: #008124 !important; /* Vert PNVB */
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
   .project-form-container {
     padding: 10px;
@@ -332,14 +455,13 @@ mat-form-field:hover .mat-form-field-outline {
   }
   
   mat-card-content {
-    padding: 24px 20px !important;
+    padding: 24px 20px 140px 20px !important;
   }
   
   .actions {
     flex-direction: column-reverse;
     gap: 12px;
-    position: relative;
-    padding: 20px 0;
+    padding: 16px 20px;
   }
   
   button[mat-raised-button],
@@ -367,7 +489,7 @@ mat-form-field:hover .mat-form-field-outline {
   }
   
   mat-card-content {
-    padding: 20px 16px !important;
+    padding: 20px 16px 160px 16px !important;
   }
   
   .grid-2 {
@@ -382,9 +504,13 @@ mat-form-field:hover .mat-form-field-outline {
     padding: 10px 24px;
     min-width: 120px;
   }
+  
+  .actions {
+    padding: 12px 16px;
+  }
 }
 
-/* ====== IMPRESSION ====== */
+/* ===== IMPRESSION ===== */
 @media print {
   .project-form-container {
     background: white;
@@ -401,6 +527,7 @@ mat-form-field:hover .mat-form-field-outline {
   
   mat-card-content {
     overflow: visible;
+    padding: 20px !important;
   }
   
   .actions {
@@ -408,7 +535,7 @@ mat-form-field:hover .mat-form-field-outline {
   }
 }
 
-/* ====== ACCESSIBILITÉ ====== */
+/* ===== MODE RÉDUIT MOTION ===== */
 @media (prefers-reduced-motion: reduce) {
   .form-card,
   button[mat-raised-button] {
@@ -417,7 +544,7 @@ mat-form-field:hover .mat-form-field-outline {
   }
 }
 
-/* ====== MODE SOMBRE ====== */
+/* ===== MODE SOMBRE ===== */
 @media (prefers-color-scheme: dark) {
   .project-form-container {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -434,24 +561,24 @@ mat-form-field:hover .mat-form-field-outline {
   }
   
   .form-card mat-card-title {
-    background: linear-gradient(135deg, #1b5e20 0%, #145214 30%, #0f3a0f 70%, #0a2a0a 100%);
+    background: linear-gradient(135deg, #005518 0%, #006b1e 50%, #008124 100%);
   }
   
-  .mat-form-field-appearance-outline .mat-form-field-outline {
+  ::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
     background-color: #334155;
   }
   
-  mat-label {
-    color: #cbd5e1;
+  ::ng-deep mat-label {
+    color: #cbd5e1 !important;
   }
   
-  input.mat-input-element, 
-  textarea.mat-input-element {
-    color: #f1f5f9;
+  ::ng-deep input.mat-input-element,
+  ::ng-deep textarea.mat-input-element {
+    color: #f1f5f9 !important;
   }
   
-  ::placeholder {
-    color: #94a3b8;
+  ::ng-deep ::placeholder {
+    color: #64748b;
   }
   
   .actions {
@@ -460,11 +587,11 @@ mat-form-field:hover .mat-form-field-outline {
   }
   
   button[mat-raised-button][color="primary"] {
-    background: linear-gradient(135deg, #1b5e20 0%, #145214 50%, #0f3a0f 100%);
+    background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
   }
   
   button[mat-raised-button][color="primary"]:hover:not([disabled]) {
-    background: linear-gradient(135deg, #145214 0%, #0f3a0f 50%, #0a2a0a 100%);
+    background: linear-gradient(135deg, #005518 0%, #006b1e 50%, #008124 100%);
   }
   
   button[mat-button][color="warn"] {
@@ -483,135 +610,95 @@ mat-form-field:hover .mat-form-field-outline {
   }
   
   mat-card-content::-webkit-scrollbar-thumb {
-    background: #1b5e20;
+    background: #006b1e;
   }
   
   mat-card-content::-webkit-scrollbar-thumb:hover {
-    background: #145214;
+    background: #005518;
+  }
+  
+  .form-section {
+    background: #334155;
+    border-color: #475569;
+  }
+  
+  .form-section:hover {
+    border-color: #008124;
+  }
+  
+  .form-section h3 {
+    color: #f1f5f9;
+    border-bottom-color: #008124;
   }
 }
 
-/* ====== BOUTON ENREGISTRER ====== */
-.submit-button {
-  position: relative;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-width: 140px;
-  transition: all 0.3s ease;
-}
+/* ===== CORRECTIONS POUR ÉVITER LES CHEVAUCHEMENTS ===== */
 
-.submit-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-.submit-button mat-spinner {
-  margin: 0;
-}
-
-.submit-button mat-spinner circle {
-  stroke: white;
-}
-
-/* État de chargement */
-.submit-button.loading {
+/* 1. Empêche les labels de chevaucher le contenu */
+::ng-deep .mat-form-field-appearance-outline.mat-form-field-can-float.mat-form-field-should-float .mat-form-field-label {
+  transform: translateY(-1.5em) scale(0.75) !important;
+  width: 133.33333%;
   pointer-events: none;
 }
 
-/* Validation des dates */
-mat-form-field.ng-invalid.ng-touched .mat-form-field-outline {
-  color: #e53e3e;
-}
-
-/* Indicateur de champ requis */
-.required-field::after {
-  content: " *";
-  color: #e53e3e;
-  font-weight: bold;
-}
-
-/* Amélioration de la lisibilité des champs */
-.mat-form-field-wrapper {
-  padding-bottom: 0;
-}
-
-.mat-form-field-subscript-wrapper {
+/* 2. Empêche les éléments de déborder */
+::ng-deep .mat-form-field-infix {
+  padding: 0.75em 0 !important;
+  border-top: 0.75em solid transparent;
+  display: block;
   position: relative;
-  margin-top: 4px;
+  flex: auto;
+  min-width: 0;
+  width: 180px;
 }
 
-/* Style pour les sections de formulaire */
-.form-section {
-  margin-bottom: 24px;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  transition: all 0.3s ease;
+/* 3. Assure un espacement correct entre les champs */
+::ng-deep .mat-form-field-subscript-wrapper {
+  position: relative;
+  margin-top: 0.5em;
+  min-height: 1.5em;
+  overflow: hidden;
 }
 
-.form-section:hover {
-  border-color: #2e7d32;
-  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.1);
-}
-
-.form-section h3 {
-  margin: 0 0 16px 0;
-  color: #1e293b;
-  font-size: 1.1rem;
-  font-weight: 600;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #2e7d32;
-}
-
-/* Messages de succès/erreur */
-.form-message {
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.form-message.success {
-  background-color: rgba(46, 125, 50, 0.1);
-  color: #1b5e20;
-  border: 1px solid rgba(46, 125, 50, 0.3);
-}
-
-.form-message.error {
-  background-color: rgba(229, 62, 62, 0.1);
-  color: #c53030;
-  border: 1px solid rgba(229, 62, 62, 0.3);
-}
-
-/* CORRECTION : Focus visible simplifié */
-button:focus-visible {
-  outline: 2px solid #2e7d32;
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* CORRECTION : Supprimer les bordures Material par défaut */
-::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
-  border: none !important;
-}
-
-::ng-deep .mat-form-field-appearance-outline .mat-form-field-flex {
-  padding: 0 !important;
-}
-
-/* CORRECTION : Style minimaliste pour les champs */
-::ng-deep .mat-form-field-appearance-outline.mat-form-field-can-float.mat-form-field-should-float .mat-form-field-label {
-  transform: translateY(-1.5em) scale(0.75) !important;
-}
-
-/* CORRECTION : Espacement interne */
+/* 4. Empêche le texte de dépasser */
+::ng-deep .mat-select-value-text,
 ::ng-deep .mat-input-element {
-  padding: 12px 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+/* 5. Fix pour les mat-option qui dépassent */
+::ng-deep .mat-option {
+  white-space: normal;
+  line-height: 1.5;
+  padding: 12px 16px;
+  min-height: 48px;
+}
+
+/* 6. Empêche les boutons de se chevaucher */
+.actions button {
+  flex-shrink: 0;
+}
+
+/* 7. Assure que le contenu ne passe pas sous le footer sticky */
+.form-card::after {
+  content: '';
+  display: block;
+  height: 100px;
+  pointer-events: none;
+}
+
+/* ===== NOTES D'OPTIMISATION ===== */
+/*
+✅ Footer sticky avec position absolute - toujours visible
+✅ Padding-bottom sur mat-card-content pour éviter chevauchement
+✅ Z-index appropriés (content: 1, footer: 10)
+✅ Couleurs PNVB officielles (#008124, #006b1e, #009629)
+✅ Tous les inputs avec padding uniforme
+✅ Pas de bordures multiples ou superposées
+✅ Labels qui ne chevauchent pas le texte
+✅ Responsive optimisé pour mobile
+✅ Mode sombre inclus
+✅ Animations fluides
+*/

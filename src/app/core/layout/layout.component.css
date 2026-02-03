@@ -26,8 +26,8 @@
   flex: 1;
   overflow-y: auto; /* Permet le défilement du contenu */
   overflow-x: hidden; /* Bloque le horizontal */
-  margin-top: 64px;
-  height: calc(100vh - 64px);
+/*   margin-top: 64px;
+ */  height: calc(100vh - 64px);
   
   /* Cache la barre tout en gardant le défilement fonctionnel */
   -ms-overflow-style: none;

@@ -28,34 +28,34 @@
   
   &.active {
     .step-number {
-      background-color: #007bff;
+      background-color: var(--pnvb-primary, #008124); /* Vert PNVB */
       color: white;
-      border-color: #007bff;
+      border-color: var(--pnvb-primary, #008124); /* Vert PNVB */
     }
     
     .step-label {
-      color: #007bff;
+      color: var(--pnvb-primary, #008124); /* Vert PNVB */
       font-weight: 600;
     }
     
     &::after {
-      background-color: #dee2e6;
+      background-color: var(--pnvb-light, #009629); /* Vert PNVB clair */
     }
   }
   
   &.completed {
     .step-number {
-      background-color: #28a745;
+      background-color: var(--pnvb-primary, #008124); /* Vert PNVB */
       color: white;
-      border-color: #28a745;
+      border-color: var(--pnvb-primary, #008124); /* Vert PNVB */
     }
     
     .step-label {
-      color: #28a745;
+      color: var(--pnvb-primary, #008124); /* Vert PNVB */
     }
     
     &::after {
-      background-color: #28a745;
+      background-color: var(--pnvb-primary, #008124); /* Vert PNVB */
     }
   }
 }
@@ -91,16 +91,173 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.125);
 }
 
+/* Focus avec vert PNVB */
 .form-control:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  border-color: var(--pnvb-primary, #008124); /* Vert PNVB */
+  box-shadow: 0 0 0 0.2rem rgba(0, 129, 36, 0.25); /* Vert PNVB avec transparence */
 }
 
 .btn {
   border-radius: 0.375rem;
 }
 
+/* Badge en vert PNVB */
 .badge {
   font-size: 0.75em;
   padding: 0.5em 0.75em;
+}
+
+/* Correction des couleurs bleues en vert PNVB pour tous les éléments */
+.btn-primary {
+  background-color: var(--pnvb-primary, #008124) !important;
+  border-color: var(--pnvb-primary, #008124) !important;
+  
+  &:hover {
+    background-color: var(--pnvb-dark, #006b1e) !important;
+    border-color: var(--pnvb-dark, #006b1e) !important;
+  }
+}
+
+.btn-outline-primary {
+  color: var(--pnvb-primary, #008124) !important;
+  border-color: var(--pnvb-primary, #008124) !important;
+  
+  &:hover {
+    background-color: var(--pnvb-primary, #008124) !important;
+    color: white !important;
+  }
+}
+
+/* Labels et textes en vert PNVB */
+label {
+  color: var(--pnvb-dark, #006b1e); /* Vert PNVB foncé */
+}
+
+.text-primary {
+  color: var(--pnvb-primary, #008124) !important; /* Vert PNVB */
+}
+
+/* Liens en vert PNVB */
+a {
+  color: var(--pnvb-primary, #008124);
+  
+  &:hover {
+    color: var(--pnvb-dark, #006b1e);
+  }
+}
+
+/* Alertes avec accent vert PNVB */
+.alert-info {
+  border-color: var(--pnvb-light, #009629);
+  background-color: rgba(0, 129, 36, 0.1);
+  color: var(--pnvb-dark, #006b1e);
+}
+
+/* Sélecteurs avec vert PNVB */
+select:focus {
+  border-color: var(--pnvb-primary, #008124);
+  box-shadow: 0 0 0 0.2rem rgba(0, 129, 36, 0.25);
+}
+
+/* Radio buttons et checkboxes avec vert PNVB */
+.form-check-input:checked {
+  background-color: var(--pnvb-primary, #008124);
+  border-color: var(--pnvb-primary, #008124);
+}
+
+/* Progress bar avec vert PNVB */
+.progress-bar {
+  background-color: var(--pnvb-primary, #008124);
+}
+
+/* Tables avec accents verts PNVB */
+.table thead {
+  background-color: rgba(0, 129, 36, 0.1);
+  color: var(--pnvb-dark, #006b1e);
+}
+
+/* Bordure verte pour les éléments actifs */
+.active {
+  border-color: var(--pnvb-primary, #008124) !important;
+}
+
+/* Icônes en vert PNVB */
+.text-success {
+  color: var(--pnvb-primary, #008124) !important; /* Remplacer le vert standard par vert PNVB */
+}
+
+/* Variables PNVB pour cohérence */
+:root {
+  --pnvb-primary: #008124;
+  --pnvb-dark: #006b1e;
+  --pnvb-light: #009629;
+  --pnvb-darker: #005518;
+  --pnvb-lighter: #00ad2e;
+}
+
+/* Pour les éléments qui utilisaient du bleu (#007bff) */
+.bg-primary {
+  background-color: var(--pnvb-primary, #008124) !important;
+}
+
+.border-primary {
+  border-color: var(--pnvb-primary, #008124) !important;
+}
+
+/* États focus avec vert PNVB */
+*:focus {
+  outline-color: var(--pnvb-primary, #008124);
+}
+
+/* Pagination avec vert PNVB */
+.page-item.active .page-link {
+  background-color: var(--pnvb-primary, #008124);
+  border-color: var(--pnvb-primary, #008124);
+}
+
+.page-link {
+  color: var(--pnvb-primary, #008124);
+  
+  &:hover {
+    color: var(--pnvb-dark, #006b1e);
+  }
+}
+
+/* Tooltips avec vert PNVB */
+.tooltip-inner {
+  background-color: var(--pnvb-dark, #006b1e);
+}
+
+.tooltip.bs-tooltip-top .arrow::before {
+  border-top-color: var(--pnvb-dark, #006b1e);
+}
+
+/* Modals avec accents verts PNVB */
+.modal-header {
+  border-bottom-color: var(--pnvb-light, #009629);
+}
+
+.modal-footer {
+  border-top-color: var(--pnvb-light, #009629);
+}
+
+/* List group avec vert PNVB */
+.list-group-item.active {
+  background-color: var(--pnvb-primary, #008124);
+  border-color: var(--pnvb-primary, #008124);
+}
+
+/* Breadcrumb avec vert PNVB */
+.breadcrumb-item.active {
+  color: var(--pnvb-primary, #008124);
+}
+
+/* Tabs avec vert PNVB */
+.nav-tabs .nav-link.active {
+  color: var(--pnvb-primary, #008124);
+  border-bottom-color: var(--pnvb-primary, #008124);
+}
+
+.nav-tabs .nav-link:hover {
+  color: var(--pnvb-dark, #006b1e);
 }

@@ -1,7 +1,7 @@
 <!-- src/app/features/admin/gest-projets/project-detail-dialog/project-detail-dialog.component.html -->
 <div class="project-detail-dialog">
   <div mat-dialog-title class="dialog-title">
-    <h2>Détails du Projet</h2>
+    <h2>Détails de la mission</h2>
     <button mat-icon-button (click)="onClose()" aria-label="Fermer">
       <mat-icon>close</mat-icon>
     </button>
@@ -121,7 +121,7 @@
         <div class="tab-content">
           <mat-card>
             <mat-card-header>
-              <mat-card-title>Candidatures liées à ce projet</mat-card-title>
+              <mat-card-title>Candidatures liées à cette mission</mat-card-title>
               <mat-card-subtitle>
                 {{ candidatures.length }} candidature(s) reçue(s)
               </mat-card-subtitle>
@@ -139,7 +139,7 @@
                 <div class="no-data">
                   <mat-icon>people_outline</mat-icon>
                   <h3>Aucune candidature</h3>
-                  <p>Aucune candidature n'est liée à ce projet pour le moment.</p>
+                  <p>Aucune candidature n'est liée à cette mission pour le moment.</p>
                 </div>
               }
 
@@ -177,7 +177,7 @@
             <mat-card-header>
               <mat-card-title>Volontaires affectés</mat-card-title>
               <mat-card-subtitle>
-                Gestion des volontaires pour ce projet
+                Gestion des volontaires pour cette mission
               </mat-card-subtitle>
             </mat-card-header>
 
@@ -252,7 +252,7 @@
 
                 <!-- Liste des volontaires affectés -->
                 <div class="volontaires-list">
-                  <h3>Volontaires affectés au projet</h3>
+                  <h3>Volontaires affectés a la mission</h3>
                   
                   @if (isLoadingVolontaires) {
                     <div class="loading-section">
@@ -265,7 +265,7 @@
                     <div class="no-data">
                       <mat-icon>person_outline</mat-icon>
                       <h3>Aucun volontaire affecté</h3>
-                      <p>Aucun volontaire n'est actuellement affecté à ce projet.</p>
+                      <p>Aucun volontaire n'est actuellement affecté à cette mission.</p>
                     </div>
                   }
 
@@ -292,7 +292,7 @@
                             color="warn" 
                             (click)="retirerVolontaire(affectation.id!)"
                             matListItemMeta
-                            matTooltip="Retirer du projet">
+                            matTooltip="Retirer la mission">
                             <mat-icon>person_remove</mat-icon>
                           </button>
                         </mat-list-item>

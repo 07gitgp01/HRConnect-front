@@ -1,7 +1,7 @@
 <!-- src/app/features/admin/gest-projets/projets-form/projets-form.component.html -->
 <mat-card class="form-card">
   <mat-card-title>
-    {{ isEdit ? 'Modifier un projet' : 'Créer un nouveau projet' }}
+    {{ isEdit ? 'Modifier une mission' : 'Créer une nouvelle mission' }}
   </mat-card-title>
 
   <mat-card-content>
@@ -11,7 +11,7 @@
 
         <!-- Titre -->
         <mat-form-field appearance="outline">
-          <mat-label>Titre du projet</mat-label>
+          <mat-label>Titre de la mission</mat-label>
           <input matInput formControlName="titre" placeholder="Ex: Soutien scolaire en zone rurale">
           <mat-error *ngIf="projectForm.get('titre')?.hasError('required')">
             Titre obligatoire
@@ -81,7 +81,6 @@
         <mat-form-field appearance="outline">
           <mat-label>Statut</mat-label>
           <mat-select formControlName="statutProjet">
-            <!-- ✅ CORRECTION : Uniquement les 3 statuts simplifiés -->
             <mat-option *ngFor="let statut of statuts" [value]="statut.value">
               {{ statut.label }}
             </mat-option>
@@ -200,18 +199,22 @@
         </mat-error>
       </mat-form-field>
 
-      <div class="actions">
-        <button mat-raised-button color="primary" type="submit" 
-                [disabled]="projectForm.invalid || isLoading"
-                class="submit-button">
-          <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
-          <span *ngIf="!isLoading">{{ isEdit ? 'Modifier' : 'Enregistrer' }}</span>
-          <span *ngIf="isLoading">{{ isEdit ? 'Modification...' : 'Enregistrement...' }}</span>
-        </button>
-        <button mat-button color="warn" type="button" (click)="closeOrBack()" [disabled]="isLoading">
-          Annuler
-        </button>
-      </div>
     </form>
   </mat-card-content>
+
+  <!-- ⭐ BOUTONS DÉPLACÉS ICI - EN DEHORS DU FORMULAIRE ⭐ -->
+  <div class="actions">
+    <button mat-raised-button color="primary" type="button" 
+            (click)="onSubmit()"
+            [disabled]="projectForm.invalid || isLoading"
+            class="submit-button">
+      <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+      <span *ngIf="!isLoading">{{ isEdit ? 'Modifier' : 'Enregistrer' }}</span>
+      <span *ngIf="isLoading">{{ isEdit ? 'Modification...' : 'Enregistrement...' }}</span>
+    </button>
+    <button mat-button color="warn" type="button" (click)="closeOrBack()" [disabled]="isLoading">
+      Annuler
+    </button>
+  </div>
+
 </mat-card>

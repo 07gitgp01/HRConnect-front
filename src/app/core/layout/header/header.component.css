@@ -1,4 +1,4 @@
-/* ===== HEADER PRINCIPAL - VERSION VERTE PNVB ===== */
+/* ===== HEADER PRINCIPAL - VERSION VERTE PNVB (COULEUR OFFICIELLE) ===== */
 mat-toolbar {
   position: sticky;
   top: 0;
@@ -13,8 +13,9 @@ mat-toolbar {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   user-select: none;
   overflow: hidden;
-  background: linear-gradient(135deg, #2E7D32 0%, #388E3C 50%, #43A047 100%) !important;
-  border-bottom: 3px solid #1B5E20;
+  /* NOUVELLE COULEUR: Vert officiel du logo PNVB #008124 */
+  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%) !important;
+  border-bottom: 3px solid #005518;
   
   button[mat-icon-button] {
     z-index: 1001;
@@ -197,7 +198,7 @@ mat-toolbar {
   gap: 10px;
 }
 
-/* ===== STYLES POUR LES LIENS - VERSION VERTE ===== */
+/* ===== STYLES POUR LES LIENS - VERSION VERTE PNVB ===== */
 /* LIENS NORMAUX (PAR DÉFAUT) - BLANC SUR FOND VERT */
 .desktop-auth-buttons {
   display: flex;
@@ -297,9 +298,9 @@ mat-toolbar {
       transform: translateY(-2px);
     }
     
-    /* Quand actif - changement complet */
+    /* Quand actif - utilise le vert PNVB officiel */
     &.active-link {
-      background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%) !important;
+      background: linear-gradient(135deg, #009629 0%, #008124 100%) !important;
       color: white !important;
       border-color: #FFFFFF;
       
@@ -308,7 +309,7 @@ mat-toolbar {
       }
       
       &:hover {
-        background: linear-gradient(135deg, #66BB6A 0%, #388E3C 100%) !important;
+        background: linear-gradient(135deg, #00ad2e 0%, #009629 100%) !important;
       }
     }
   }
@@ -367,13 +368,13 @@ mat-toolbar {
       font-size: 20px;
       width: 20px;
       height: 20px;
-      color: #2E7D32;
+      color: #008124; /* Vert PNVB officiel */
     }
     
     span {
       font-size: 0.95rem;
       font-weight: 500;
-      color: #2E7D32;
+      color: #008124; /* Vert PNVB officiel */
     }
     
     /* Éléments actifs dans le menu mobile */
@@ -392,7 +393,7 @@ mat-toolbar {
     }
     
     &:hover:not(.active-link) {
-      background-color: #F1F8E9;
+      background-color: #e6f4e6; /* Légèrement plus clair pour le hover */
     }
   }
 }
@@ -414,7 +415,7 @@ mat-toolbar {
     transition: all 0.2s ease;
     
     mat-icon {
-      color: #2E7D32;
+      color: #008124; /* Vert PNVB officiel */
       font-size: 20px;
       width: 20px;
       height: 20px;
@@ -423,7 +424,7 @@ mat-toolbar {
     span {
       font-size: 0.95rem;
       font-weight: 500;
-      color: #2E7D32;
+      color: #008124; /* Vert PNVB officiel */
     }
     
     /* Éléments actifs dans le menu profil */
@@ -442,7 +443,7 @@ mat-toolbar {
     }
     
     &:hover:not(.active-link) {
-      background: #F1F8E9;
+      background: #e6f4e6; /* Légèrement plus clair pour le hover */
     }
   }
 }
@@ -541,3 +542,14 @@ button:focus-visible {
 .auth-button {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
+
+/* ===== PALETTE DE COULEURS PNVB OFFICIELLE ===== */
+/*
+Couleur verte principale du logo: #008124 (RGB: 0, 129, 36)
+Variantes générées:
+- Plus foncée: #006b1e (pour gradient début)
+- Plus claire: #009629 (pour gradient fin)
+- Très foncée: #005518 (pour bordure)
+
+Cette palette garantit une cohérence parfaite avec l'identité visuelle du PNVB.
+*/

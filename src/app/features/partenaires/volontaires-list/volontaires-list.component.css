@@ -21,17 +21,114 @@
   box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
 }
 
-/* Badge colors */
+/* Badge colors - VERT PNVB */
 .badge-success { background-color: #d1e7dd; color: #0f5132; }
-.badge-primary { background-color: #cfe2ff; color: #052c65; }
+.badge-primary { background-color: #e6f4e6; color: #006b1e; } /* Vert PNVB clair sur fond clair */
 .badge-secondary { background-color: #e2e3e5; color: #2b2f32; }
 .badge-danger { background-color: #f8d7da; color: #842029; }
-.badge-info { background-color: #cff4fc; color: #055160; }
+.badge-info { background-color: #e6f4e6; color: #008124; } /* Vert PNVB sur fond clair */
 .badge-warning { background-color: #fff3cd; color: #664d03; }
+
+/* Bouton Excel - VERT PNVB au lieu de bleu */
+.btn-outline-primary {
+  border-color: #008124 !important; /* Vert PNVB */
+  color: #008124 !important; /* Vert PNVB */
+}
+
+.btn-outline-primary:hover {
+  background-color: #008124 !important; /* Vert PNVB */
+  border-color: #008124 !important; /* Vert PNVB */
+  color: white !important;
+}
+
+.btn-outline-primary:active,
+.btn-outline-primary:focus {
+  background-color: #006b1e !important; /* Vert PNVB foncé */
+  border-color: #006b1e !important; /* Vert PNVB foncé */
+  color: white !important;
+  box-shadow: 0 0 0 0.25rem rgba(0, 129, 36, 0.25) !important; /* Vert PNVB avec transparence */
+}
+
+/* Bouton Appliquer les filtres - VERT PNVB */
+.btn-primary {
+  background-color: #008124 !important; /* Vert PNVB */
+  border-color: #008124 !important; /* Vert PNVB */
+}
+
+.btn-primary:hover {
+  background-color: #006b1e !important; /* Vert PNVB foncé */
+  border-color: #006b1e !important; /* Vert PNVB foncé */
+}
+
+.btn-primary:active,
+.btn-primary:focus {
+  background-color: #005518 !important; /* Vert PNVB très foncé */
+  border-color: #005518 !important; /* Vert PNVB très foncé */
+  box-shadow: 0 0 0 0.25rem rgba(0, 129, 36, 0.5) !important; /* Vert PNVB avec transparence */
+}
+
+/* Bouton Réinitialiser - Gris avec vert au survol */
+.btn-outline-secondary {
+  border-color: #6c757d !important;
+  color: #6c757d !important;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #e6f4e6 !important; /* Vert PNVB très clair */
+  border-color: #008124 !important; /* Vert PNVB */
+  color: #008124 !important; /* Vert PNVB */
+}
 
 /* Dropdown dans les cartes */
 .dropdown-menu {
   min-width: 160px;
+}
+
+/* Pagination - VERT PNVB */
+.page-link {
+  color: #008124 !important; /* Vert PNVB */
+}
+
+.page-link:hover {
+  background-color: #e6f4e6 !important; /* Vert PNVB très clair */
+  color: #006b1e !important; /* Vert PNVB foncé */
+  border-color: #008124 !important; /* Vert PNVB */
+}
+
+.page-item.active .page-link {
+  background-color: #008124 !important; /* Vert PNVB */
+  border-color: #008124 !important; /* Vert PNVB */
+  color: white !important;
+}
+
+/* Alertes - VERT PNVB */
+.alert-info {
+  border-left: 4px solid #008124 !important; /* Vert PNVB */
+  background-color: #e6f4e6 !important; /* Vert PNVB très clair */
+  color: #006b1e !important; /* Vert PNVB foncé */
+}
+
+/* Spinner - VERT PNVB */
+.spinner-border.text-primary {
+  color: #008124 !important; /* Vert PNVB */
+  border-color: #008124 !important; /* Vert PNVB */
+  border-right-color: transparent !important;
+}
+
+/* Formulaires - focus VERT PNVB */
+.form-control:focus,
+.form-select:focus {
+  border-color: #008124 !important; /* Vert PNVB */
+  box-shadow: 0 0 0 0.25rem rgba(0, 129, 36, 0.25) !important; /* Vert PNVB avec transparence */
+}
+
+/* Icône de recherche dans la barre de filtres */
+.btn-outline-secondary i.bi-search {
+  color: #008124 !important; /* Vert PNVB */
+}
+
+.btn-outline-secondary:hover i.bi-search {
+  color: #006b1e !important; /* Vert PNVB foncé */
 }
 
 /* Responsive */
@@ -62,7 +159,21 @@ canvas {
   max-height: 250px;
 }
 
-/* Alertes */
-.alert-info {
-  border-left: 4px solid #0dcaf0;
+/* Carte de statistique avec bordure verte */
+.card.border-primary {
+  border-color: #008124 !important; /* Vert PNVB */
+}
+
+/* Icônes vertes dans les cartes de stats */
+.icon-shape.text-primary {
+  color: #008124 !important; /* Vert PNVB */
+}
+
+.icon-shape.bg-primary.bg-opacity-10 {
+  background-color: rgba(0, 129, 36, 0.1) !important; /* Vert PNVB avec 10% d'opacité */
+}
+
+/* Hover sur les cartes avec accent vert */
+.card.hover-shadow:hover {
+  border-color: #008124 !important; /* Vert PNVB */
 }

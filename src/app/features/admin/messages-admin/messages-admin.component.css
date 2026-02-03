@@ -23,7 +23,7 @@
     color: #2d3748; /* Noir */
     margin-bottom: 0.5rem;
     font-weight: 700;
-    font-size: 2rem;
+    font-size: 1.5rem; /* MODIFIÉ: 2rem → 1.5rem */
     letter-spacing: -0.25px;
     display: flex;
     align-items: center;
@@ -41,7 +41,7 @@
   
   p {
     color: #718096; /* Gris foncé pour le sous-titre */
-    font-size: 1.1rem;
+    font-size: 0.9375rem; /* MODIFIÉ: 1.1rem → 0.9375rem */
     margin: 0;
     line-height: 1.6;
   }
@@ -163,6 +163,8 @@
     border-radius: 8px;
     font-weight: 600;
     transition: all 0.3s ease;
+    font-size: 0.9375rem; /* AJOUTÉ */
+    padding: 0.75rem 1.5rem; /* AJOUTÉ */
     
     &[mat-raised-button] {
       background: #1a5f23; /* Vert PNVB */
@@ -222,7 +224,7 @@
   
   p {
     color: #6c757d; /* Gris foncé */
-    font-size: 1.1rem;
+    font-size: 0.9375rem; /* MODIFIÉ: 1.1rem → 0.9375rem */
     max-width: 400px;
     line-height: 1.5;
   }
@@ -339,11 +341,12 @@
     color: #2d3748; /* Noir */
     font-weight: 600;
     margin-bottom: 0.25rem;
+    font-size: 0.875rem; /* AJOUTÉ */
   }
   
   .email {
     color: #718096; /* Gris foncé */
-    font-size: 0.85rem;
+    font-size: 0.8125rem; /* MODIFIÉ: 0.85rem → 0.8125rem */
     font-weight: 500;
   }
 }
@@ -352,11 +355,12 @@
   font-weight: 500;
   color: #2d3748; /* Noir */
   line-height: 1.4;
+  font-size: 0.9375rem; /* AJOUTÉ */
 }
 
 .message-preview {
   color: #718096; /* Gris foncé */
-  font-size: 0.875rem;
+  font-size: 0.8125rem; /* MODIFIÉ: 0.875rem → 0.8125rem */
   margin-top: 0.25rem;
   line-height: 1.4;
   display: -webkit-box;
@@ -367,7 +371,7 @@
 
 .date-text {
   color: #718096; /* Gris foncé */
-  font-size: 0.875rem;
+  font-size: 0.8125rem; /* MODIFIÉ: 0.875rem → 0.8125rem */
   font-weight: 500;
   white-space: nowrap;
 }
@@ -382,6 +386,7 @@
     border-radius: 8px;
     transition: all 0.2s ease;
     min-width: 36px;
+    font-size: 0.8125rem; /* AJOUTÉ */
     
     &:hover {
       transform: translateY(-1px);
@@ -409,12 +414,14 @@
   background-color: #1a5f23 !important; /* Vert PNVB */
   color: white !important;
   border-radius: 8px;
+  font-size: 0.9375rem; /* AJOUTÉ */
 }
 
 .error-snackbar {
   background-color: #dc3545 !important;
   color: white !important;
   border-radius: 8px;
+  font-size: 0.9375rem; /* AJOUTÉ */
 }
 
 /* Stylage des champs Material */
@@ -431,11 +438,16 @@
   .mat-form-field-appearance-outline.mat-form-field-can-float.mat-form-field-should-float .mat-form-field-label,
   .mat-form-field-appearance-outline.mat-focused .mat-form-field-label {
     color: #1a5f23 !important; /* Vert PNVB */
+    font-size: 0.875rem; /* AJOUTÉ */
   }
   
   .mat-select-panel {
     border-radius: 8px;
     border: 1px solid #e2e8f0;
+  }
+  
+  .mat-option {
+    font-size: 0.875rem; /* AJOUTÉ */
   }
   
   .mat-option:hover:not(.mat-option-disabled),
@@ -462,7 +474,7 @@
     text-align: center;
     
     h1 {
-      font-size: 1.75rem;
+      font-size: 1.25rem; /* MODIFIÉ: 1.75rem → 1.25rem */
       justify-content: center;
       
       &::before {
@@ -472,7 +484,7 @@
     }
     
     p {
-      font-size: 1rem;
+      font-size: 0.875rem; /* MODIFIÉ: 1rem → 0.875rem */
     }
   }
   
@@ -492,6 +504,8 @@
     button {
       flex: 1;
       justify-content: center;
+      font-size: 0.875rem; /* AJOUTÉ */
+      padding: 0.625rem 1.25rem; /* AJOUTÉ */
     }
   }
   
@@ -523,6 +537,7 @@
     
     button {
       justify-content: center;
+      font-size: 0.75rem; /* AJOUTÉ */
     }
   }
   
@@ -551,7 +566,7 @@
     padding: 1.25rem;
     
     h1 {
-      font-size: 1.5rem;
+      font-size: 1.25rem; /* MODIFIÉ: 1.5rem → 1.25rem */
     }
   }
   
