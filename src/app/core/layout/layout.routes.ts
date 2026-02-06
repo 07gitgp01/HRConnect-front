@@ -1,6 +1,7 @@
 // src/app/core/layout/layout.routes.ts
 import { Routes } from '@angular/router';
 import { LayoutComponent } from './layout.component';
+import { RecrutementsComponent } from './recrutements/recrutements.component';
 
 export const layoutRoutes: Routes = [
   {
@@ -23,6 +24,15 @@ export const layoutRoutes: Routes = [
         path: 'features', 
         loadChildren: () => import('../../features/features-routing.module').then(m=>m.FeaturesRoutingModule)
       },
+
+       {
+          path: 'recrutements',
+           component: RecrutementsComponent,
+           data: { 
+           title: 'Opportunités de Volontariat',
+           description: 'Découvrez les projets qui recrutent des volontaires'
+         }
+        },
 
       { path: '**', redirectTo: 'home' }
     ]

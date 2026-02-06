@@ -1,0 +1,312 @@
+<!-- src/app/features/recrutements/recrutements.component.html -->
+<div class="recrutements-container">
+  <!-- Header -->
+  <div class="header-section">
+    <div class="header-content">
+      <h1>
+        <mat-icon class="header-icon">work</mat-icon>
+        Opportunités de Volontariat
+      </h1>
+      <p class="subtitle">Découvrez les missions qui recrutent actuellement des volontaires</p>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-cards" *ngIf="!isLoading">
+    <mat-card class="stat-card">
+      <mat-icon class="stat-icon">folder_open</mat-icon>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.totalProjets }}</div>
+        <div class="stat-label">Missions disponibles</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-icon class="stat-icon">people</mat-icon>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.postesDisponibles }}</div>
+        <div class="stat-label">Postes à pourvoir</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card urgent">
+      <mat-icon class="stat-icon">priority_high</mat-icon>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.projetsUrgents }}</div>
+        <div class="stat-label">Recrutements urgents</div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Filtres -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-grid">
+        <!-- Recherche -->
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Rechercher</mat-label>
+          <input 
+            matInput 
+            [(ngModel)]="searchQuery" 
+            (keyup)="appliquerFiltres()"
+            placeholder="Titre, description, domaine...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Région -->
+        <mat-form-field appearance="outline">
+          <mat-label>Région</mat-label>
+          <mat-select [(ngModel)]="selectedRegion" (selectionChange)="appliquerFiltres()">
+            <mat-option value="">Toutes les régions</mat-option>
+            <mat-option *ngFor="let region of regions" [value]="region">
+              {{ region }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Domaine -->
+        <mat-form-field appearance="outline">
+          <mat-label>Domaine d'activité</mat-label>
+          <mat-select [(ngModel)]="selectedDomaine" (selectionChange)="appliquerFiltres()">
+            <mat-option value="">Tous les domaines</mat-option>
+            <mat-option *ngFor="let domaine of domaines" [value]="domaine">
+              {{ domaine }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Type de mission -->
+        <mat-form-field appearance="outline">
+          <mat-label>Type de mission</mat-label>
+          <mat-select [(ngModel)]="selectedType" (selectionChange)="appliquerFiltres()">
+            <mat-option value="">Tous les types</mat-option>
+            <mat-option *ngFor="let type of typesMission" [value]="type">
+              {{ type }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Filtre urgents -->
+        <div class="urgent-filter">
+          <mat-icon>priority_high</mat-icon>
+          <label>
+            <input 
+              type="checkbox" 
+              [(ngModel)]="afficherUrgentsUniquement"
+              (change)="appliquerFiltres()">
+            Urgents uniquement
+          </label>
+        </div>
+
+        <!-- Bouton réinitialiser -->
+        <button 
+          mat-button 
+          (click)="reinitialiserFiltres()"
+          *ngIf="searchQuery || selectedRegion || selectedDomaine || selectedType || afficherUrgentsUniquement">
+          <mat-icon>clear</mat-icon>
+          Effacer les filtres
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Chargement -->
+  <div *ngIf="isLoading" class="loading-section">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Chargement des opportunités...</p>
+  </div>
+
+  <!-- Liste des projets -->
+  <div class="projets-grid" *ngIf="!isLoading && projetsFiltres.length > 0">
+    <mat-card *ngFor="let projet of projetsFiltres" class="projet-card">
+      
+      <!-- Badge urgent -->
+      <div class="urgent-badge" *ngIf="projet.estUrgent" [class]="getUrgenceClass(projet)">
+        <mat-icon>warning</mat-icon>
+        {{ getUrgenceTexte(projet) }}
+      </div>
+
+      <mat-card-header>
+        <div mat-card-avatar class="project-avatar">
+          <mat-icon>work</mat-icon>
+        </div>
+        <mat-card-title>{{ projet.titre }}</mat-card-title>
+        <mat-card-subtitle>
+          <mat-icon class="inline-icon">location_on</mat-icon>
+          {{ projet.ville_commune }}, {{ projet.regionAffectation }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Description -->
+        <p class="description">{{ projet.descriptionCourte }}</p>
+
+        <!-- Informations clés -->
+        <div class="info-grid">
+          <div class="info-item">
+            <mat-icon>category</mat-icon>
+            <span>{{ projet.domaineActivite }}</span>
+          </div>
+
+          <div class="info-item" *ngIf="projet.type_mission">
+            <mat-icon>assignment</mat-icon>
+            <span>{{ projet.type_mission }}</span>
+          </div>
+
+          <div class="info-item">
+            <mat-icon>event</mat-icon>
+            <span>{{ formatDate(projet.dateDebut) }}</span>
+          </div>
+
+          <div class="info-item">
+            <mat-icon>event_available</mat-icon>
+            <span>Jusqu'au {{ formatDate(projet.dateLimiteCandidature) }}</span>
+          </div>
+        </div>
+
+        <!-- Postes disponibles -->
+        <div class="postes-section">
+          <div class="postes-header">
+            <mat-icon>people</mat-icon>
+            <strong>{{ projet.nombrePostesDisponibles }}</strong>
+            <span>poste{{ projet.nombrePostesDisponibles > 1 ? 's' : '' }} disponible{{ projet.nombrePostesDisponibles > 1 ? 's' : '' }}</span>
+          </div>
+
+          <!-- Barre de progression -->
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div 
+                class="progress-fill" 
+                [style.width.%]="projet.tauxRemplissage"
+                [style.background-color]="getProgressColor(projet.tauxRemplissage)">
+              </div>
+            </div>
+            <span class="progress-text">
+              {{ projet.nombreVolontairesActuels }} / {{ projet.nombreVolontairesRequis }} volontaires
+            </span>
+          </div>
+        </div>
+
+        <!-- Compétences requises -->
+        <div class="competences-section" *ngIf="projet.competences_requises">
+          <mat-icon>verified_user</mat-icon>
+          <span class="label">Compétences:</span>
+          <mat-chip-set>
+            <mat-chip *ngFor="let competence of projet.competences_requises.split(',').slice(0, 3)">
+              {{ competence.trim() }}
+            </mat-chip>
+            <mat-chip *ngIf="projet.competences_requises.split(',').length > 3">
+              +{{ projet.competences_requises.split(',').length - 3 }}
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+
+        <!-- Avantages -->
+        <div class="avantages-section" *ngIf="projet.avantagesVolontaire">
+          <mat-icon>star</mat-icon>
+          <span class="label">Avantages:</span>
+          <span class="avantages-text">{{ projet.avantagesVolontaire }}</span>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <button 
+          mat-button 
+          color="primary"
+          (click)="voirDetails(projet)">
+          <mat-icon>visibility</mat-icon>
+          Voir détails
+        </button>
+
+        <button 
+          mat-raised-button 
+          color="accent"
+          (click)="postulerProjet(projet)">
+          <mat-icon>send</mat-icon>
+          Postuler
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <!-- Aucun projet -->
+  <div *ngIf="!isLoading && projetsFiltres.length === 0" class="no-data-section">
+    <mat-icon class="no-data-icon">search_off</mat-icon>
+    <h3>Aucune opportunité trouvée</h3>
+    <p *ngIf="searchQuery || selectedRegion || selectedDomaine || selectedType || afficherUrgentsUniquement">
+      Essayez de modifier vos critères de recherche
+    </p>
+    <p *ngIf="!searchQuery && !selectedRegion && !selectedDomaine && !selectedType && !afficherUrgentsUniquement">
+      Il n'y a actuellement aucun projet en recrutement
+    </p>
+    <button 
+      mat-raised-button 
+      color="primary" 
+      (click)="reinitialiserFiltres()"
+      *ngIf="searchQuery || selectedRegion || selectedDomaine || selectedType || afficherUrgentsUniquement">
+      <mat-icon>refresh</mat-icon>
+      Réinitialiser les filtres
+    </button>
+  </div>
+
+  <!-- Message non authentifié -->
+  <mat-card class="auth-info-card" *ngIf="!isAuthenticated && !isLoading && projetsFiltres.length > 0">
+    <mat-card-content>
+      <mat-icon>info</mat-icon>
+      <div class="auth-info-text">
+        <h4>Connectez-vous pour postuler</h4>
+        <p>Vous devez être connecté pour postuler à ces opportunités de volontariat</p>
+      </div>
+      <button mat-raised-button color="primary" routerLink="/auth/login">
+        <mat-icon>login</mat-icon>
+        Se connecter
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Guide d'utilisation -->
+  <mat-card class="guide-card" *ngIf="!isLoading">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>help</mat-icon>
+        Comment postuler ?
+      </mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="guide-steps">
+        <div class="guide-step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Parcourez les opportunités</h4>
+            <p>Utilisez les filtres pour trouver les missions qui correspondent à vos compétences et vos intérêts</p>
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Consultez les détails</h4>
+            <p>Cliquez sur "Voir détails" pour en savoir plus sur le projet et ses exigences</p>
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Postulez en ligne</h4>
+            <p>Cliquez sur "Postuler" et remplissez le formulaire de candidature</p>
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Suivez votre candidature</h4>
+            <p>Vous serez notifié de l'évolution de votre candidature par email</p>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
