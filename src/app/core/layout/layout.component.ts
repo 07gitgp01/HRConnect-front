@@ -48,6 +48,18 @@ export class LayoutComponent implements OnInit, OnDestroy {
     ]).subscribe(result => {
       this.isMobile = result.matches;
       console.log(`📱 Mobile: ${this.isMobile}`);
+      
+      // Sur desktop, ouvrir le sidenav automatiquement
+      if (!this.isMobile && this.sidenav) {
+        this.sidenav.mode = 'side';
+        this.sidenav.open();
+      }
+      
+      // Sur mobile, passer en mode overlay
+      if (this.isMobile && this.sidenav) {
+        this.sidenav.mode = 'over';
+        this.sidenav.close();
+      }
     });
   }
 

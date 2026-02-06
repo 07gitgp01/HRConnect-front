@@ -24,7 +24,7 @@
   </div>
 
   <!-- Statistiques -->
-  <div class="stats-section">
+  <!-- <div class="stats-section">
     <div class="stats-grid">
       <mat-card class="stat-card total">
         <mat-card-content>
@@ -86,7 +86,7 @@
         </mat-card-content>
       </mat-card>
     </div>
-  </div>
+  </div> -->
 
   <!-- Informations sur les résultats filtrés -->
   <div class="results-info" *ngIf="!loading && getCandidaturesFiltrees().length > 0">
@@ -120,9 +120,9 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Projet</mat-label>
+            <mat-label>Missions</mat-label>
             <mat-select [(ngModel)]="filtreProjet" (selectionChange)="getCandidaturesFiltrees()">
-              <mat-option value="">Tous les projets</mat-option>
+              <mat-option value="">Toutes les missions</mat-option>
               <mat-option *ngFor="let projet of projets" [value]="projet.id">
  {{ projet.titre }}              </mat-option>
             </mat-select>
@@ -155,10 +155,10 @@
           <p *ngIf="!filtreStatut && !filtreProjet && !searchTerm">
             Vous n'avez encore postulé à aucune mission.
           </p>
-          <button mat-raised-button color="primary" routerLink="/features/candidats/projets/">
+          <!-- <button mat-raised-button color="primary" routerLink="/features/candidats/projets/">
             <mat-icon>explore</mat-icon>
             Découvrir les missions
-          </button>
+          </button> -->
         </div>
 
         <div *ngFor="let candidature of getCandidaturesFiltrees()" class="candidature-item">

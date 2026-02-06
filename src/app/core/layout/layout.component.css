@@ -1,35 +1,75 @@
 .layout-container {
   height: 100vh;
-  display: flex;
+  display: block;
   background: #f5f5f5;
-  overflow: hidden; /* Empêche le défilement global */
+  overflow: hidden;
 }
 
+/* ===== SIDEBAR STYLES - SCROLLBAR CACHÉE ===== */
 .sidebar-container {
   width: 280px;
   border-right: 1px solid #e0e0e0;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  overflow-y: auto; /* Si la sidebar a du contenu long */
+  overflow-y: auto; /* ✅ Garder le scroll fonctionnel */
+  
+  /* ✅ MASQUER LA SCROLLBAR SUR DESKTOP */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE et Edge */
 }
 
+/* Chrome, Safari, Opera */
+.sidebar-container::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* CONTENT CONTAINER - FONDAMENTAL */
 .content-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  overflow: hidden; /* Contient tout à l'intérieur */
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
 }
 
+/* ===== STYLES POUR LE MODE DESKTOP ===== */
+:host ::ng-deep .mat-drawer-side {
+  border-right: 1px solid #e0e0e0;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  top: 0 !important;
+  height: 100vh !important;
+  z-index: 999 !important;
+  
+  /* ✅ MASQUER LA SCROLLBAR DU CONTENEUR MATERIAL */
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+:host ::ng-deep .mat-drawer-side::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+}
+
+:host ::ng-deep .mat-drawer-content {
+  transition: margin-left 0.3s ease !important;
+  overflow: hidden !important;
+}
+
+/* ✅ QUAND LA SIDEBAR EST OUVERTE SUR DESKTOP */
+:host ::ng-deep .mat-drawer-opened + .mat-drawer-content {
+  margin-left: 280px !important;
+}
+
+/* MAIN CONTENT WRAPPER */
 .main-content-wrapper {
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow-y: auto; /* Permet le défilement du contenu */
-  overflow-x: hidden; /* Bloque le horizontal */
-/*   margin-top: 64px;
- */  height: calc(100vh - 64px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100vh;
   
-  /* Cache la barre tout en gardant le défilement fonctionnel */
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -46,15 +86,73 @@
   min-height: fit-content;
 }
 
+/* ===== STYLES POUR LE MODE MOBILE ===== */
 @media (max-width: 768px) {
-  .main-content-wrapper {
-    margin-top: 56px;
-    height: calc(100vh - 56px);
-    /* Propriétés conservées */
-  }
-  
+  /* ✅ RÉACTIVER LA SCROLLBAR SUR MOBILE */
   .sidebar-container {
     width: 280px;
+    scrollbar-width: thin !important;
+    -ms-overflow-style: scrollbar !important;
+  }
+  
+  .sidebar-container::-webkit-scrollbar {
+    display: block !important;
+    width: 8px !important;
+  }
+  
+  .sidebar-container::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+  
+  .sidebar-container::-webkit-scrollbar-thumb {
+    background: #008124;
+    border-radius: 4px;
+  }
+  
+  .sidebar-container::-webkit-scrollbar-thumb:hover {
+    background: #006b1e;
+  }
+  
+  /* Sur mobile seulement, le header devient fixed */
+  :host ::ng-deep app-header mat-toolbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1002 !important;
+  }
+  
+  /* Contenu avec padding pour compenser le header fixed */
+  .content-container {
+    padding-top: 56px !important;
+    height: calc(100vh - 56px) !important;
+  }
+  
+  .main-content-wrapper {
+    height: calc(100vh - 56px) !important;
+  }
+  
+  /* Sidebar en overlay sous le header sur mobile */
+  :host ::ng-deep .mat-drawer-over {
+    top: 56px !important;
+    height: calc(100vh - 56px) !important;
+    z-index: 1001 !important;
+    
+    /* Scrollbar visible sur mobile */
+    scrollbar-width: thin !important;
+    -ms-overflow-style: scrollbar !important;
+  }
+  
+  :host ::ng-deep .mat-drawer-over::-webkit-scrollbar {
+    display: block !important;
+    width: 8px !important;
+  }
+  
+  :host ::ng-deep .mat-drawer-backdrop {
+    top: 56px !important;
+    height: calc(100vh - 56px) !important;
+    z-index: 1000 !important;
   }
   
   .main-content {
@@ -67,7 +165,7 @@
     padding: 10px;
   }
   
-  /* Sur mobile, on peut réafficher une barre très fine */
+  /* Sur très petit mobile, scrollbar fine pour le contenu principal */
   .main-content-wrapper::-webkit-scrollbar {
     display: block;
     width: 3px;

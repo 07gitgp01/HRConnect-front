@@ -56,16 +56,18 @@ export class RapportAdminDetailComponent implements OnInit {
     }
 
     this.isLoading = true;
+    console.log('🔍 Chargement du rapport', id);
     
     this.adminService.getRapportAdmin(id).subscribe({
       next: (data: RapportAdmin) => {
+        console.log('✅ Rapport chargé:', data);
         this.rapport = data;
         this.calculateMetrics();
         this.loadHistorique(id);
         this.isLoading = false;
       },
       error: (error: any) => {
-        console.error('Erreur:', error);
+        console.error('❌ Erreur chargement rapport:', error);
         this.error = 'Impossible de charger le rapport';
         this.isLoading = false;
       }
@@ -75,10 +77,12 @@ export class RapportAdminDetailComponent implements OnInit {
   loadHistorique(id: string): void {
     this.adminService.getHistorique(id).subscribe({
       next: (data) => {
+        console.log('📜 Historique chargé:', data);
         this.historique = data;
       },
       error: (error) => {
-        console.error('Erreur chargement historique:', error);
+        console.warn('⚠️ Erreur chargement historique:', error);
+        this.historique = [];
       }
     });
   }
@@ -118,15 +122,17 @@ export class RapportAdminDetailComponent implements OnInit {
     
     if (feedback !== null) {
       this.isSubmitting = true;
+      console.log('✅ Validation du rapport', this.rapport.id);
       
       this.adminService.validerRapport(this.rapport.id, feedback).subscribe({
-        next: () => {
-          this.loadRapport();
+        next: (result) => {
+          console.log('✅ Rapport validé:', result);
           this.successMessage = 'Rapport validé avec succès';
           this.isSubmitting = false;
+          setTimeout(() => this.loadRapport(), 500);
         },
         error: (error) => {
-          console.error('Erreur:', error);
+          console.error('❌ Erreur validation:', error);
           this.errorMessage = 'Erreur lors de la validation';
           this.isSubmitting = false;
         }
@@ -142,15 +148,17 @@ export class RapportAdminDetailComponent implements OnInit {
     
     if (raison && raison.trim()) {
       this.isSubmitting = true;
+      console.log('❌ Rejet du rapport', this.rapport.id);
       
       this.adminService.rejeterRapport(this.rapport.id, raison).subscribe({
-        next: () => {
-          this.loadRapport();
+        next: (result) => {
+          console.log('✅ Rapport rejeté:', result);
           this.successMessage = 'Rapport rejeté avec succès';
           this.isSubmitting = false;
+          setTimeout(() => this.loadRapport(), 500);
         },
         error: (error) => {
-          console.error('Erreur:', error);
+          console.error('❌ Erreur rejet:', error);
           this.errorMessage = 'Erreur lors du rejet';
           this.isSubmitting = false;
         }
@@ -161,15 +169,18 @@ export class RapportAdminDetailComponent implements OnInit {
   marquerCommeLu(): void {
     if (!this.rapport?.id) return;
     
+    console.log('👁️ Marquage comme lu du rapport', this.rapport.id);
+    
     this.adminService.marquerCommeLu(this.rapport.id).subscribe({
-      next: () => {
+      next: (result) => {
+        console.log('✅ Rapport marqué comme lu:', result);
         if (this.rapport) {
           this.rapport.statut = 'Lu par PNVB';
           this.successMessage = 'Rapport marqué comme lu';
         }
       },
       error: (error) => {
-        console.error('Erreur:', error);
+        console.error('❌ Erreur marquage:', error);
         this.errorMessage = 'Erreur lors du marquage';
       }
     });
@@ -183,6 +194,8 @@ export class RapportAdminDetailComponent implements OnInit {
     
     const action = formData.action;
     const commentaire = formData.commentaire;
+    
+    console.log('💬 Soumission feedback:', { action, commentaire });
     
     if (action === 'validation') {
       this.adminService.validerRapport(this.rapport.id, commentaire).subscribe({
@@ -219,11 +232,11 @@ export class RapportAdminDetailComponent implements OnInit {
     this.isSubmitting = false;
     this.showFeedbackForm = false;
     this.feedbackForm.reset({ action: 'validation' });
-    this.loadRapport();
     
     setTimeout(() => {
+      this.loadRapport();
       this.successMessage = '';
-    }, 3000);
+    }, 1000);
   }
 
   private handleFeedbackError(message: string, error: any): void {
@@ -303,21 +316,27 @@ export class RapportAdminDetailComponent implements OnInit {
   }
 
   getActionIcon(action: string): string {
-    switch(action) {
-      case 'validation': return 'check-circle';
-      case 'rejet': return 'x-circle';
-      case 'commentaire': return 'chat-left-text';
-      default: return 'pencil';
-    }
+    const actionLower = action.toLowerCase();
+    
+    if (actionLower.includes('création')) return 'plus-circle';
+    if (actionLower.includes('soumission')) return 'send';
+    if (actionLower.includes('validation')) return 'check-circle';
+    if (actionLower.includes('rejet')) return 'x-circle';
+    if (actionLower.includes('modification')) return 'pencil';
+    
+    return 'circle';
   }
 
   getActionColor(action: string): string {
-    switch(action) {
-      case 'validation': return 'success';
-      case 'rejet': return 'danger';
-      case 'commentaire': return 'info';
-      default: return 'secondary';
-    }
+    const actionLower = action.toLowerCase();
+    
+    if (actionLower.includes('création')) return 'secondary';
+    if (actionLower.includes('soumission')) return 'primary';
+    if (actionLower.includes('validation')) return 'success';
+    if (actionLower.includes('rejet')) return 'danger';
+    if (actionLower.includes('modification')) return 'info';
+    
+    return 'secondary';
   }
 
   getCriteresList(): any[] {
@@ -376,9 +395,13 @@ export class RapportAdminDetailComponent implements OnInit {
     return (score / 5) * 100;
   }
 
-  formatDate(dateString: string | Date): string {
+  formatDate(dateString: string | Date | undefined): string {
+    if (!dateString) return 'Non disponible';
+    
     try {
       const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Date invalide';
+      
       return date.toLocaleDateString('fr-FR', {
         day: '2-digit',
         month: '2-digit',
@@ -410,11 +433,14 @@ export class RapportAdminDetailComponent implements OnInit {
 
   copyRapportId(): void {
     if (this.rapport?.id) {
-      navigator.clipboard.writeText(this.rapport.id.toString());
-      this.successMessage = 'ID copié dans le presse-papier';
-      setTimeout(() => {
-        this.successMessage = '';
-      }, 2000);
+      navigator.clipboard.writeText(this.rapport.id.toString()).then(() => {
+        this.successMessage = 'ID copié dans le presse-papier';
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 2000);
+      }).catch(err => {
+        console.error('Erreur copie:', err);
+      });
     }
   }
 }

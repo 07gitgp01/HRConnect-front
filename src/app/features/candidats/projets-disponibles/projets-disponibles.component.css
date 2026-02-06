@@ -1,21 +1,34 @@
 /* src/app/features/candidats/projets-disponibles/projets-disponibles.component.css */
+
+/* ===== CONTENEUR PRINCIPAL ===== */
 .projets-disponibles-container {
   padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+  min-height: calc(100vh - 64px);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* En-tête */
+/* ===== EN-TÊTE (commenté dans le HTML mais prêt si besoin) ===== */
 .header-section {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
+  padding: 32px 40px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.08),
+    0 6px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .header-section h1 {
-  color: #1e293b;
+  color: #006b1e;
   font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 8px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
 }
 
 .header-section p {
@@ -23,42 +36,80 @@
   font-size: 1.1rem;
   max-width: 600px;
   margin: 0 auto;
+  line-height: 1.6;
+  font-weight: 400;
 }
 
-/* Filtres */
+/* ===== SECTION FILTRES ===== */
 .filters-section {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
 .filters-card {
-  padding: 24px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
+  padding: 28px 32px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 2px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .filters-grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr auto;
-  gap: 16px;
-  align-items: start;
+  gap: 20px;
+  align-items: end; /* ✅ Alignement au bas pour harmoniser les hauteurs */
 }
 
 .search-field {
   min-width: 300px;
 }
 
+/* ✅ Harmonisation des mat-form-field */
+::ng-deep .filters-grid mat-form-field {
+  width: 100%;
+}
+
+::ng-deep .filters-grid .mat-mdc-text-field-wrapper {
+  height: 56px;
+}
+
+/* Boutons */
 .reset-button {
   height: 56px;
   white-space: nowrap;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid #008124;
+  color: #008124;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* Contenu principal */
+.reset-button:hover {
+  background: #008124;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.2);
+}
+
+.reset-button mat-icon {
+  margin-right: 4px;
+}
+
+/* ===== SECTION CONTENU ===== */
 .content-section {
   min-height: 400px;
 }
 
-/* États */
-.loading-section, .error-section, .no-projects-section {
+/* ===== ÉTATS (CHARGEMENT, ERREUR, VIDE) ===== */
+.loading-section, 
+.error-section, 
+.no-projects-section {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -66,51 +117,77 @@
   padding: 80px 20px;
   text-align: center;
   color: #64748b;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin: 20px 0;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .loading-section mat-spinner {
   margin-bottom: 16px;
 }
 
-.error-section mat-icon, .no-projects-section mat-icon {
+::ng-deep .loading-section mat-spinner circle {
+  stroke: #008124 !important;
+}
+
+.error-section mat-icon, 
+.no-projects-section mat-icon {
   font-size: 4rem;
   width: 4rem;
   height: 4rem;
   margin-bottom: 20px;
   opacity: 0.5;
+  color: #008124;
 }
 
-.error-section h3, .no-projects-section h3 {
-  color: #1e293b;
+.error-section h3, 
+.no-projects-section h3 {
+  color: #006b1e;
   margin-bottom: 8px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1.5rem;
 }
 
-/* Grille des projets */
+.error-section p,
+.no-projects-section p {
+  margin-bottom: 20px;
+  font-size: 1rem;
+}
+
+/* ===== GRILLE DES PROJETS ===== */
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
+  gap: 28px;
+  margin-bottom: 40px;
 }
 
+/* ===== CARTE PROJET ===== */
 .project-card {
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  transition: all 0.3s ease;
-  border: 1px solid #e2e8f0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e9ecef;
   display: flex;
   flex-direction: column;
+  background: white;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 2px 12px rgba(0, 0, 0, 0.04);
+  will-change: transform, box-shadow;
 }
 
 .project-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(0, 129, 36, 0.15);
+  border-color: #008124;
 }
 
-/* ✅ CORRECTION : En-tête carte selon votre HTML */
+/* En-tête carte */
 .card-header {
-  padding: 20px 20px 0;
+  padding: 24px 24px 0;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -120,67 +197,60 @@
 }
 
 .card-header.urgent {
-  background: linear-gradient(135deg, #fef3c7 0%, #fef3c7 100%);
+  background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%);
   margin: -1px -1px 0 -1px;
-  padding: 16px 20px 0;
-  border-radius: 12px 12px 0 0;
+  padding: 20px 24px 0;
+  border-radius: 16px 16px 0 0;
 }
 
 .project-title {
   margin: 0;
-  color: #1e293b;
-  font-size: 1.25rem;
-  font-weight: 600;
+  color: #006b1e;
+  font-size: 1.3rem;
+  font-weight: 800;
   line-height: 1.3;
-  flex: 1;
-  min-width: 200px;
+  flex: 1 1 auto;
+  min-width: 0; /* ✅ Permet au titre de se rétrécir si besoin */
+  word-wrap: break-word;
 }
 
-/* ✅ CORRECTION : Badge d'urgence */
-.urgence-badge {
-  background: #dc2626;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-  order: 2;
-}
-
-/* ✅ CORRECTION : Badge de statut */
+/* Badges */
+.urgence-badge,
 .status-badge {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.7rem;
-  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
-  order: 1;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Classes pour les différents statuts */
+.urgence-badge {
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+  color: white;
+}
+
 .status-badge.en_attente {
-  background: #fbbf24;
-  color: #92400e;
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+  color: white;
 }
 
 .status-badge.actif {
-  background: #10b981;
-  color: #065f46;
+  background: linear-gradient(135deg, #008124 0%, #006b1e 100%);
+  color: white;
 }
 
 .status-badge.cloture {
-  background: #6b7280;
-  color: #ffffff;
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  color: white;
 }
 
-/* ✅ CORRECTION : Contenu carte selon votre HTML */
-mat-card-content {
-  padding: 16px 20px;
+/* Contenu */
+::ng-deep mat-card-content {
+  padding: 20px 24px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -189,91 +259,97 @@ mat-card-content {
 .project-description {
   color: #475569;
   line-height: 1.6;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   flex-shrink: 0;
+  font-size: 0.95rem;
+  font-weight: 400;
 }
 
-/* ✅ CORRECTION : Grille d'information selon votre HTML */
+/* Grille d'information */
 .project-info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
   flex-shrink: 0;
 }
 
 .info-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   color: #64748b;
   font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .info-item mat-icon {
   font-size: 18px;
   width: 18px;
   height: 18px;
-  color: #6366f1;
+  color: #008124;
   flex-shrink: 0;
 }
 
-/* ✅ CORRECTION : Section volontaires */
+/* Section volontaires */
 .volunteers-section {
-  margin-bottom: 20px;
-  padding: 16px;
-  background: #f8fafc;
-  border-radius: 8px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #e6f4e6;
+  border-radius: 12px;
   flex-shrink: 0;
+  border-left: 4px solid #008124;
 }
 
 .volunteers-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  color: #475569;
-  font-weight: 500;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: #006b1e;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .manquants {
-  color: #dc2626;
-  font-weight: 600;
+  color: #D32F2F;
+  font-weight: 700;
 }
 
 .progress-bar {
   width: 100%;
-  height: 6px;
-  background: #e2e8f0;
-  border-radius: 3px;
+  height: 8px;
+  background: #d1e7dd;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #10b981, #34d399);
-  border-radius: 3px;
+  background: linear-gradient(90deg, #008124, #009629);
+  border-radius: 4px;
   transition: width 0.3s ease;
 }
 
-/* ✅ CORRECTION : Dates */
+/* Dates */
 .dates-section {
-  margin-bottom: 20px;
-  padding: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
   background: #f0f9ff;
-  border-radius: 8px;
-  border-left: 4px solid #0ea5e9;
+  border-radius: 12px;
+  border-left: 4px solid #008124;
   flex-shrink: 0;
 }
 
 .date-item {
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   color: #475569;
   font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .date-item:last-child {
@@ -281,20 +357,22 @@ mat-card-content {
 }
 
 .date-item strong {
-  color: #0ea5e9;
+  color: #006b1e;
 }
 
-/* ✅ CORRECTION : Compétences */
+/* Compétences */
 .competences-section {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   flex-shrink: 0;
 }
 
 .competences-section h4 {
-  margin: 0 0 8px 0;
-  color: #1e293b;
-  font-size: 0.9rem;
-  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #006b1e;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .competences-chips {
@@ -302,199 +380,639 @@ mat-card-content {
   overflow-y: auto;
 }
 
-/* ✅ CORRECTION : Avantages */
-.avantages-section {
-  margin-bottom: 16px;
-  padding: 12px;
-  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-  border-radius: 8px;
-  border-left: 4px solid #16a34a;
-  flex-shrink: 0;
-}
-
-.avantages-section h4 {
-  margin: 0 0 4px 0;
-  color: #15803d;
-  font-size: 0.9rem;
-}
-
-.avantages-text {
-  margin: 0;
-  color: #475569;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-/* ✅ CORRECTION : Actions */
-mat-card-actions {
-  padding: 0 20px 20px !important;
-  gap: 8px;
-  margin-top: auto;
-}
-
-/* ✅ CORRECTION : Statistiques */
-.stats-section {
-  margin-top: 32px;
-}
-
-.stats-card {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  border-radius: 12px;
-}
-
-.stats-content {
-  display: flex;
-  justify-content: space-around;
-  padding: 24px;
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-number {
-  font-size: 2.5rem;
-  font-weight: 800;
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  opacity: 0.9;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* ✅ Améliorations pour l'accessibilité et performance */
-.project-card {
-  will-change: transform, box-shadow;
-}
-
-/* ✅ Badge d'urgence avec meilleur contraste */
-.urgence-badge {
-  background: #b91c1c;
-  color: #ffffff;
-}
-
-.info-item {
-  color: #4b5563;
-}
-
-/* ✅ Fallback pour gradient */
-.stats-card {
-  background: #6366f1;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-}
-
-/* ✅ Barre de défilement personnalisée */
 .competences-chips::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 
 .competences-chips::-webkit-scrollbar-track {
   background: #f1f5f9;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 .competences-chips::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 .competences-chips::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
-/* ✅ Styles pour les chips de compétences */
-mat-chip-set {
+::ng-deep mat-chip-set {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-mat-chip {
-  font-size: 0.8rem;
-  padding: 4px 8px;
-  min-height: 24px;
+::ng-deep mat-chip {
+  font-size: 0.8rem !important;
+  padding: 6px 12px !important;
+  min-height: 28px !important;
+  font-weight: 600 !important;
+  background: #e6f4e6 !important;
+  color: #008124 !important;
+  border: 1px solid rgba(0, 129, 36, 0.3) !important;
+  border-radius: 20px !important;
 }
 
-/* ✅ Responsive Design */
+/* Avantages */
+.avantages-section {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border-radius: 12px;
+  border-left: 4px solid #008124;
+  flex-shrink: 0;
+}
+
+.avantages-section h4 {
+  margin: 0 0 8px 0;
+  color: #006b1e;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.avantages-text {
+  margin: 0;
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* Actions */
+::ng-deep mat-card-actions {
+  padding: 0 24px 24px !important;
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+::ng-deep mat-card-actions button {
+  flex: 1 1 auto;
+  min-width: 140px;
+}
+
+/* Boutons d'action */
+.postuler-button,
+::ng-deep mat-card-actions button[color="primary"] {
+  background: linear-gradient(135deg, #008124 0%, #006b1e 100%) !important;
+  color: white !important;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+::ng-deep mat-card-actions button[color="primary"]:hover:not(:disabled) {
+  background: linear-gradient(135deg, #009629 0%, #008124 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.3);
+}
+
+::ng-deep mat-card-actions button[color="primary"]:disabled {
+  background: #e9ecef !important;
+  color: #adb5bd !important;
+  cursor: not-allowed;
+}
+
+.details-button,
+::ng-deep mat-card-actions button[color="accent"] {
+  border: 2px solid #008124 !important;
+  color: #008124 !important;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background: transparent !important;
+}
+
+::ng-deep mat-card-actions button[color="accent"]:hover {
+  background: #008124 !important;
+  color: white !important;
+}
+
+/* ===== STATISTIQUES ===== */
+.stats-section {
+  margin-top: 40px;
+}
+
+.stats-card {
+  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
+  color: white;
+  border-radius: 16px;
+  box-shadow: 
+    0 4px 20px rgba(0, 129, 36, 0.15),
+    0 2px 12px rgba(0, 129, 36, 0.08);
+}
+
+.stats-content {
+  display: flex;
+  justify-content: space-around;
+  padding: 32px 24px;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.stat-item {
+  text-align: center;
+  flex: 1 1 150px;
+  min-width: 150px;
+}
+
+.stat-number {
+  font-size: 2.8rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 8px;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+/* ===== ANIMATION D'ENTRÉE ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.project-card {
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+.project-card:nth-child(1) { animation-delay: 0.05s; }
+.project-card:nth-child(2) { animation-delay: 0.1s; }
+.project-card:nth-child(3) { animation-delay: 0.15s; }
+.project-card:nth-child(4) { animation-delay: 0.2s; }
+.project-card:nth-child(5) { animation-delay: 0.25s; }
+.project-card:nth-child(6) { animation-delay: 0.3s; }
+
+/* ===== ACCESSIBILITÉ ===== */
+button:focus-visible {
+  outline: 2px solid #008124;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 129, 36, 0.1);
+}
+
+.project-card:focus-within {
+  border-color: #008124;
+  box-shadow: 0 0 0 2px rgba(0, 129, 36, 0.1);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* ✅ Grands écrans (1200px - 1440px) */
+@media (max-width: 1440px) {
+  .projects-grid {
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 24px;
+  }
+}
+
+/* ✅ Écrans moyens / Tablettes paysage (992px - 1200px) */
 @media (max-width: 1200px) {
+  .projets-disponibles-container {
+    padding: 20px;
+  }
+  
   .filters-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .search-field {
+    grid-column: 1 / -1;
+    min-width: 100%;
+  }
+  
+  .reset-button {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
   }
   
   .projects-grid {
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+  }
+  
+  .header-section {
+    padding: 28px 32px;
+    margin-bottom: 32px;
+  }
+  
+  .header-section h1 {
+    font-size: 2.2rem;
   }
 }
 
-@media (max-width: 768px) {
+/* ✅ Tablettes portrait (768px - 992px) */
+@media (max-width: 992px) {
   .projets-disponibles-container {
-    padding: 16px;
+    padding: 20px 16px;
   }
   
-  .filters-grid {
-    grid-template-columns: 1fr;
+  .filters-card {
+    padding: 20px;
   }
   
   .projects-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
   }
   
   .project-info-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
   
   .stats-content {
-    flex-direction: column;
     gap: 20px;
   }
   
-  .header-section h1 {
-    font-size: 2rem;
+  .stat-item {
+    flex: 1 1 calc(50% - 10px);
   }
   
-  .card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  
-  .project-title {
-    min-width: 100%;
-    order: 1;
-  }
-  
-  .status-badge {
-    order: 2;
-    align-self: flex-start;
-  }
-  
-  .urgence-badge {
-    order: 3;
-    align-self: flex-start;
+  .stat-number {
+    font-size: 2.4rem;
   }
 }
 
-@media (max-width: 480px) {
+/* ✅ Mobiles larges (576px - 768px) */
+@media (max-width: 768px) {
+  .projets-disponibles-container {
+    padding: 16px 12px;
+    min-height: calc(100vh - 56px);
+  }
+  
+  .header-section {
+    padding: 24px 20px;
+    margin-bottom: 24px;
+    border-radius: 12px;
+  }
+  
+  .header-section h1 {
+    font-size: 1.8rem;
+  }
+  
+  .header-section p {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  
+  .filters-card {
+    padding: 16px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+  }
+  
+  .filters-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  
+  .search-field,
+  .reset-button {
+    grid-column: 1;
+    width: 100%;
+  }
+  
+  .projects-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
   .project-card {
-    margin: 0 -8px;
-    border-radius: 8px;
+    border-radius: 12px;
+  }
+  
+  .card-header {
+    padding: 20px 20px 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .project-title {
+    width: 100%;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+  
+  .status-badge,
+  .urgence-badge {
+    align-self: flex-start;
+  }
+  
+  ::ng-deep mat-card-content {
+    padding: 16px 20px;
+  }
+  
+  .volunteers-section,
+  .dates-section,
+  .avantages-section {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .competences-section {
+    margin-bottom: 16px;
+  }
+  
+  .stats-content {
+    padding: 24px 16px;
+    gap: 16px;
+  }
+  
+  .stat-item {
+    flex: 1 1 calc(50% - 8px);
+  }
+  
+  ::ng-deep mat-card-actions {
+    padding: 0 20px 20px !important;
+    gap: 10px;
+  }
+  
+  ::ng-deep mat-card-actions button {
+    min-width: 120px;
+    padding: 10px 16px;
+  }
+}
+
+/* ✅ Mobiles moyens (480px - 576px) */
+@media (max-width: 576px) {
+  .projets-disponibles-container {
+    padding: 12px 8px;
+  }
+  
+  .header-section {
+    padding: 20px 16px;
+    margin-bottom: 20px;
+  }
+  
+  .header-section h1 {
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+  }
+  
+  .header-section p {
+    font-size: 0.95rem;
+  }
+  
+  .filters-card {
+    padding: 14px;
+  }
+  
+  .card-header {
+    padding: 16px 16px 0;
   }
   
   .project-title {
     font-size: 1.1rem;
+    line-height: 1.4;
   }
   
-  mat-card-actions {
+  .project-description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  
+  .info-item {
+    font-size: 0.85rem;
+  }
+  
+  .info-item mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+  
+  .volunteers-info,
+  .avantages-section h4,
+  .competences-section h4,
+  .dates-section {
+    font-size: 0.9rem;
+  }
+  
+  .volunteers-section,
+  .dates-section,
+  .avantages-section {
+    padding: 14px;
+    margin-bottom: 14px;
+    border-radius: 10px;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+  }
+  
+  .stat-item {
+    flex: 1 1 100%;
+    padding: 12px 0;
+  }
+  
+  ::ng-deep mat-card-actions {
     flex-direction: column;
     gap: 8px;
   }
   
-  mat-card-actions button {
+  ::ng-deep mat-card-actions button {
     width: 100%;
+    min-width: unset;
+    justify-content: center;
   }
+}
+
+/* ✅ Petits mobiles (320px - 480px) */
+@media (max-width: 480px) {
+  .projets-disponibles-container {
+    padding: 10px 6px;
+  }
+  
+  .header-section h1 {
+    font-size: 1.4rem;
+  }
+  
+  .header-section p {
+    font-size: 0.9rem;
+  }
+  
+  .filters-card {
+    padding: 12px;
+    border-radius: 10px;
+  }
+  
+  .projects-grid {
+    gap: 16px;
+  }
+  
+  .project-card {
+    border-radius: 10px;
+  }
+  
+  .card-header {
+    padding: 14px 14px 0;
+  }
+  
+  .project-title {
+    font-size: 1rem;
+  }
+  
+  .status-badge,
+  .urgence-badge {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+  }
+  
+  ::ng-deep mat-card-content {
+    padding: 12px 14px;
+  }
+  
+  .project-description {
+    font-size: 0.85rem;
+    margin-bottom: 14px;
+  }
+  
+  .info-item {
+    font-size: 0.8rem;
+    gap: 8px;
+  }
+  
+  .volunteers-section,
+  .dates-section,
+  .avantages-section {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .progress-bar {
+    height: 6px;
+  }
+  
+  ::ng-deep mat-chip {
+    font-size: 0.75rem !important;
+    padding: 4px 10px !important;
+    min-height: 26px !important;
+  }
+  
+  ::ng-deep mat-card-actions {
+    padding: 0 14px 14px !important;
+  }
+  
+  ::ng-deep mat-card-actions button {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .stats-content {
+    padding: 20px 12px;
+  }
+  
+  .stat-number {
+    font-size: 1.8rem;
+  }
+  
+  .stat-label {
+    font-size: 0.75rem;
+  }
+}
+
+/* ✅ Très petits mobiles (<400px) */
+@media (max-width: 400px) {
+  .project-title {
+    font-size: 0.95rem;
+  }
+  
+  .card-header {
+    padding: 12px 12px 0;
+  }
+  
+  ::ng-deep mat-card-content {
+    padding: 10px 12px;
+  }
+  
+  ::ng-deep mat-card-actions {
+    padding: 0 12px 12px !important;
+  }
+}
+
+/* ===== AMÉLIORATION EXPÉRIENCE TACTILE ===== */
+@media (hover: none) and (pointer: coarse) {
+  .project-card:hover {
+    transform: none;
+    box-shadow: 
+      0 4px 20px rgba(0, 0, 0, 0.08),
+      0 2px 12px rgba(0, 0, 0, 0.04);
+  }
+  
+  ::ng-deep mat-card-actions button:hover {
+    transform: none;
+  }
+  
+  .reset-button:hover {
+    transform: none;
+  }
+  
+  /* ✅ Zones tactiles minimum 44px */
+  button, 
+  .status-badge, 
+  .urgence-badge,
+  ::ng-deep mat-chip {
+    min-height: 44px;
+  }
+}
+
+/* ===== CORRECTION ZOOM iOS ===== */
+input, 
+select, 
+textarea,
+::ng-deep .mat-mdc-input-element {
+  font-size: 16px !important;
+}
+
+/* ===== OPTIMISATION SAFARI ===== */
+@supports (-webkit-touch-callout: none) {
+  .project-card {
+    -webkit-backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+  }
+}
+
+/* ===== TYPOGRAPHIE COHÉRENTE ===== */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 700;
+  color: #006b1e;
+}
+
+/* ===== ICÔNES VERTES ===== */
+mat-icon {
+  color: #008124;
+}
+
+.urgence-badge mat-icon,
+.status-badge mat-icon,
+::ng-deep mat-card-actions button mat-icon {
+  color: currentColor !important;
 }

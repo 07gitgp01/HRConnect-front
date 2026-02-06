@@ -1,44 +1,51 @@
-/* ===== HEADER PRINCIPAL - VERSION VERTE PNVB (COULEUR OFFICIELLE) ===== */
-mat-toolbar {
-  position: sticky;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  user-select: none;
-  overflow: hidden;
-  /* NOUVELLE COULEUR: Vert officiel du logo PNVB #008124 */
-  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%) !important;
-  border-bottom: 3px solid #005518;
-  
-  button[mat-icon-button] {
-    z-index: 1001;
+/* ===== HEADER PRINCIPAL - VERSION VERTE PNVB ===== */
+
+/* ✅ DESKTOP : Header dans le flux (poussé par le sidebar) */
+:host {
+  mat-toolbar {
+    /* SUR DESKTOP : position relative, dans le flux normal */
     position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    z-index: 1000;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    
+    /* ✅ SUPPRESSION COMPLÈTE DE L'OMBRE */
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+    user-select: none;
+    overflow: hidden;
+    
+    /* NOUVELLE COULEUR: Vert officiel du logo PNVB #008124 */
+    background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%) !important;
+    border-bottom: 3px solid #005518 !important;
+    
+    /* ✅ Supprime les variables Material */
+    --mdc-elevated-card-container-elevation: 0 !important;
+    --mat-toolbar-container-elevation-shadow: none !important;
+    --mat-toolbar-standard-container-elevation-shadow: none !important;
+    
+    button[mat-icon-button] {
+      z-index: 1001;
+      position: relative;
+    }
+    
+    /* ✅ Supprime les pseudo-éléments */
+    &::before,
+    &::after {
+      display: none !important;
+      content: none !important;
+    }
   }
 }
 
-@media (max-width: 768px) {
-  mat-toolbar {
-    height: 56px;
-    padding: 0 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  mat-toolbar {
-    padding: 0 8px;
-    height: 56px;
-    min-height: 56px;
-    overflow: visible;
-  }
-}
-
+/* ===== STYLES COMMUNS (restent inchangés) ===== */
 /* Logo */
 .logo-container {
   display: flex;
@@ -74,36 +81,6 @@ mat-toolbar {
   }
 }
 
-@media (max-width: 768px) {
-  .logo-container {
-    margin-right: 12px;
-    gap: 8px;
-    
-    .app-logo {
-      height: 36px;
-    }
-    
-    .app-title {
-      font-size: 1.4rem;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .logo-container {
-    margin-right: 8px;
-    
-    .app-logo {
-      height: 32px;
-    }
-    
-    .app-title {
-      font-size: 1.2rem;
-      display: block !important;
-    }
-  }
-}
-
 /* Texte défilant */
 .scrolling-container {
   flex: 1;
@@ -135,23 +112,6 @@ mat-toolbar {
   100% { transform: translateX(-100%); }
 }
 
-@media (max-width: 1024px) {
-  .scrolling-container {
-    margin: 0 16px;
-    
-    .scrolling-text {
-      font-size: 0.9rem;
-      animation-duration: 25s;
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .scrolling-container {
-    display: none; 
-  }
-}
-
 /* Spacer */
 .spacer {
   flex: 1;
@@ -180,17 +140,6 @@ mat-toolbar {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-@media (max-width: 768px) {
-  .welcome-message {
-    display: none;
-  }
-  
-  .user-section {
-    gap: 6px;
-    padding: 4px 8px;
-  }
-}
-
 /* Section authentification */
 .auth-section {
   display: flex;
@@ -198,8 +147,7 @@ mat-toolbar {
   gap: 10px;
 }
 
-/* ===== STYLES POUR LES LIENS - VERSION VERTE PNVB ===== */
-/* LIENS NORMAUX (PAR DÉFAUT) - BLANC SUR FOND VERT */
+/* ===== STYLES POUR LES LIENS ===== */
 .desktop-auth-buttons {
   display: flex;
   gap: 4px;
@@ -209,7 +157,6 @@ mat-toolbar {
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   
-  /* Style de base pour TOUS les boutons auth-button */
   .auth-button {
     font-weight: 600;
     white-space: nowrap;
@@ -222,7 +169,6 @@ mat-toolbar {
     border-radius: 16px;
     overflow: hidden;
     
-    /* Effet au survol */
     &:hover:not(.active-link) {
       color: #FFFFFF !important;
       background-color: rgba(255, 255, 255, 0.2);
@@ -230,7 +176,6 @@ mat-toolbar {
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     
-    /* Animation de pulsation au survol */
     &:hover:not(.active-link)::before {
       content: '';
       position: absolute;
@@ -243,15 +188,13 @@ mat-toolbar {
     }
   }
   
-  /* LIENS ACTIFS (APRÈS CLIC) - ORANGE/AMBRE POUR CONTRASTE */
   .active-link {
-    color: #FF9800 !important; /* Orange/ambre Material */
+    color: #FF9800 !important;
     font-weight: 700 !important;
     background-color: rgba(255, 255, 255, 0.95) !important;
     text-shadow: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     
-    /* Indicateur visuel pour les liens actifs */
     &::after {
       content: '';
       position: absolute;
@@ -265,7 +208,6 @@ mat-toolbar {
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     
-    /* Effet au survol quand actif */
     &:hover {
       color: #FF9800 !important;
       background-color: #FFFFFF !important;
@@ -274,17 +216,6 @@ mat-toolbar {
     }
   }
   
-  /* Style spécifique pour le bouton Accueil */
-  .home-button.active-link {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFECB3 100%) !important;
-  }
-  
-  /* Style spécifique pour le bouton Se connecter */
-  .auth-button:nth-child(2).active-link {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFECB3 100%) !important;
-  }
-  
-  /* Style spécifique pour le bouton d'inscription */
   .signup-button {
     background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%) !important;
     color: white !important;
@@ -298,7 +229,6 @@ mat-toolbar {
       transform: translateY(-2px);
     }
     
-    /* Quand actif - utilise le vert PNVB officiel */
     &.active-link {
       background: linear-gradient(135deg, #009629 0%, #008124 100%) !important;
       color: white !important;
@@ -313,19 +243,8 @@ mat-toolbar {
       }
     }
   }
-  
-  /* Style spécifique pour le bouton Recrutements */
-  .auth-button:nth-last-child(2).active-link {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFECB3 100%) !important;
-  }
-  
-  /* Style spécifique pour le bouton Contact */
-  .auth-button:last-child.active-link {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFECB3 100%) !important;
-  }
 }
 
-/* Animation ripple */
 @keyframes ripple {
   0% {
     transform: scale(0);
@@ -368,16 +287,15 @@ mat-toolbar {
       font-size: 20px;
       width: 20px;
       height: 20px;
-      color: #008124; /* Vert PNVB officiel */
+      color: #008124;
     }
     
     span {
       font-size: 0.95rem;
       font-weight: 500;
-      color: #008124; /* Vert PNVB officiel */
+      color: #008124;
     }
     
-    /* Éléments actifs dans le menu mobile */
     &.active-link {
       background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%) !important;
       border-left: 4px solid #FF9800;
@@ -393,7 +311,7 @@ mat-toolbar {
     }
     
     &:hover:not(.active-link) {
-      background-color: #e6f4e6; /* Légèrement plus clair pour le hover */
+      background-color: #e6f4e6;
     }
   }
 }
@@ -415,7 +333,7 @@ mat-toolbar {
     transition: all 0.2s ease;
     
     mat-icon {
-      color: #008124; /* Vert PNVB officiel */
+      color: #008124;
       font-size: 20px;
       width: 20px;
       height: 20px;
@@ -424,10 +342,9 @@ mat-toolbar {
     span {
       font-size: 0.95rem;
       font-weight: 500;
-      color: #008124; /* Vert PNVB officiel */
+      color: #008124;
     }
     
-    /* Éléments actifs dans le menu profil */
     &.active-link {
       background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%) !important;
       border-left: 4px solid #FF9800;
@@ -443,7 +360,7 @@ mat-toolbar {
     }
     
     &:hover:not(.active-link) {
-      background: #e6f4e6; /* Légèrement plus clair pour le hover */
+      background: #e6f4e6;
     }
   }
 }
@@ -483,10 +400,28 @@ mat-toolbar {
   }
 }
 
-/* Responsive Design */
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* ✅ MOBILE : Header devient fixed */
 @media (max-width: 768px) {
-  mat-toolbar {
-    padding: 0 12px;
+  :host {
+    mat-toolbar {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 1002 !important;
+      height: 56px !important;
+      padding: 0 12px !important;
+    }
+  }
+  
+  .scrolling-container {
+    display: none; 
+  }
+  
+  .welcome-message {
+    display: none;
   }
   
   .desktop-auth-buttons {
@@ -500,16 +435,40 @@ mat-toolbar {
   .auth-section {
     gap: 6px;
   }
+  
+  .logo-container {
+    margin-right: 12px;
+    gap: 8px;
+    
+    .app-logo {
+      height: 36px;
+    }
+    
+    .app-title {
+      font-size: 1.4rem;
+    }
+  }
 }
 
 @media (max-width: 480px) {
-  mat-toolbar {
-    padding: 0 8px;
+  :host {
+    mat-toolbar {
+      padding: 0 8px !important;
+      height: 56px !important;
+      min-height: 56px !important;
+    }
   }
   
   .logo-container {
+    margin-right: 8px;
+    
+    .app-logo {
+      height: 32px;
+    }
+    
     .app-title {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
+      display: block !important;
     }
   }
   
@@ -525,7 +484,7 @@ button:focus-visible {
   box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.3);
 }
 
-/* Animation pour le changement d'état */
+/* Animation pour les liens actifs */
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.05); }
@@ -542,14 +501,3 @@ button:focus-visible {
 .auth-button {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
-
-/* ===== PALETTE DE COULEURS PNVB OFFICIELLE ===== */
-/*
-Couleur verte principale du logo: #008124 (RGB: 0, 129, 36)
-Variantes générées:
-- Plus foncée: #006b1e (pour gradient début)
-- Plus claire: #009629 (pour gradient fin)
-- Très foncée: #005518 (pour bordure)
-
-Cette palette garantit une cohérence parfaite avec l'identité visuelle du PNVB.
-*/

@@ -82,21 +82,9 @@ export class PnvbAdminService {
     console.log('🔍 Chargement dynamique de tous les rapports...');
     
     return forkJoin({
-      rapportsEvaluation: this.http.get<any[]>(`${this.baseUrl}/rapports-evaluation`).pipe(
-        catchError(() => {
-          console.log('⚠️ Collection rapports-evaluation non trouvée');
-          return of([]);
-        })
-      ),
       rapports: this.http.get<any[]>(`${this.baseUrl}/rapports`).pipe(
         catchError(() => {
           console.log('⚠️ Collection rapports non trouvée');
-          return of([]);
-        })
-      ),
-      evaluations: this.http.get<any[]>(`${this.baseUrl}/evaluations`).pipe(
-        catchError(() => {
-          console.log('⚠️ Collection evaluations non trouvée');
           return of([]);
         })
       ),
@@ -119,11 +107,10 @@ export class PnvbAdminService {
         })
       )
     }).pipe(
-      map(({ rapportsEvaluation, rapports, evaluations, partenaires, volontaires, projets }) => {
-        const tousLesRapports = [...rapportsEvaluation, ...rapports, ...evaluations];
-        console.log(`📊 ${tousLesRapports.length} rapports trouvés`);
+      map(({ rapports, partenaires, volontaires, projets }) => {
+        console.log(`📊 ${rapports.length} rapports trouvés`);
         
-        const rapportsAdmin = tousLesRapports.map(rapport => {
+        const rapportsAdmin = rapports.map(rapport => {
           const partenaireInfo = this.trouverPartenaire(rapport, partenaires);
           const volontaireInfo = this.trouverVolontaire(rapport, volontaires);
           const projetInfo = this.trouverProjet(rapport, projets);
@@ -183,7 +170,7 @@ export class PnvbAdminService {
   }
 
   getHistorique(id: number | string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/rapports-evaluation/${id}/historique`).pipe(
+    return this.http.get<any[]>(`${this.baseUrl}/rapports/${id}/historique`).pipe(
       catchError(() => {
         console.log('ℹ️ Calcul historique à partir des données');
         return this.calculerHistoriqueLocal(id);
@@ -313,16 +300,21 @@ export class PnvbAdminService {
       statut: 'Validé',
       feedbackPNVB: feedback || 'Rapport validé par l\'administration PNVB',
       dateValidation: new Date().toISOString(),
-      validePar: 'Administrateur PNVB'
+      validePar: 'Administrateur PNVB',
+      updated_at: new Date().toISOString()
     };
     
-    return this.http.patch(`${this.baseUrl}/rapports-evaluation/${id}`, {
-      ...updates,
-      updated_at: new Date().toISOString()
-    }).pipe(
+    return this.http.patch(`${this.baseUrl}/rapports/${id}`, updates).pipe(
       catchError(error => {
-        console.error('❌ Erreur API, mise à jour locale:', error);
-        return this.mettreAJourRapportLocal(id, updates);
+        console.error('❌ Erreur API, tentative de mise à jour avec PUT');
+        return this.http.put(`${this.baseUrl}/rapports/${id}`, {
+          ...updates
+        }).pipe(
+          catchError(err => {
+            console.error('❌ Erreur PUT, mise à jour locale:', err);
+            return this.mettreAJourRapportLocal(id, updates);
+          })
+        );
       })
     );
   }
@@ -334,16 +326,21 @@ export class PnvbAdminService {
       statut: 'Rejeté',
       feedbackPNVB: raison,
       dateValidation: new Date().toISOString(),
-      validePar: 'Administrateur PNVB'
+      validePar: 'Administrateur PNVB',
+      updated_at: new Date().toISOString()
     };
     
-    return this.http.patch(`${this.baseUrl}/rapports-evaluation/${id}`, {
-      ...updates,
-      updated_at: new Date().toISOString()
-    }).pipe(
+    return this.http.patch(`${this.baseUrl}/rapports/${id}`, updates).pipe(
       catchError(error => {
-        console.error('❌ Erreur API, mise à jour locale:', error);
-        return this.mettreAJourRapportLocal(id, updates);
+        console.error('❌ Erreur API, tentative de mise à jour avec PUT');
+        return this.http.put(`${this.baseUrl}/rapports/${id}`, {
+          ...updates
+        }).pipe(
+          catchError(err => {
+            console.error('❌ Erreur PUT, mise à jour locale:', err);
+            return this.mettreAJourRapportLocal(id, updates);
+          })
+        );
       })
     );
   }
@@ -352,16 +349,21 @@ export class PnvbAdminService {
     console.log(`👁️ Marquage comme lu du rapport ${id}`);
     
     const updates = {
-      statut: 'Lu par PNVB'
+      statut: 'Lu par PNVB',
+      updated_at: new Date().toISOString()
     };
     
-    return this.http.patch(`${this.baseUrl}/rapports-evaluation/${id}`, {
-      ...updates,
-      updated_at: new Date().toISOString()
-    }).pipe(
+    return this.http.patch(`${this.baseUrl}/rapports/${id}`, updates).pipe(
       catchError(error => {
-        console.error('❌ Erreur API, mise à jour locale:', error);
-        return this.mettreAJourRapportLocal(id, updates);
+        console.error('❌ Erreur API, tentative de mise à jour avec PUT');
+        return this.http.put(`${this.baseUrl}/rapports/${id}`, {
+          ...updates
+        }).pipe(
+          catchError(err => {
+            console.error('❌ Erreur PUT, mise à jour locale:', err);
+            return this.mettreAJourRapportLocal(id, updates);
+          })
+        );
       })
     );
   }
@@ -372,13 +374,11 @@ export class PnvbAdminService {
     const updates = {
       feedbackPNVB: commentaire,
       commentairePar: 'Admin PNVB',
-      commentaireDate: new Date().toISOString()
+      commentaireDate: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     
-    return this.http.patch(`${this.baseUrl}/rapports-evaluation/${id}`, {
-      ...updates,
-      updated_at: new Date().toISOString()
-    }).pipe(
+    return this.http.patch(`${this.baseUrl}/rapports/${id}`, updates).pipe(
       catchError(error => {
         console.error('❌ Erreur API, mise à jour locale:', error);
         return this.mettreAJourRapportLocal(id, updates);
@@ -464,7 +464,7 @@ export class PnvbAdminService {
     
     return {
       id: partenaireId || 'inconnu',
-      nom: `Partenaire ${partenaireId || 'inconnu'}`
+      nom: rapport.partenaireNom || `Partenaire ${partenaireId || 'inconnu'}`
     };
   }
 
@@ -484,7 +484,7 @@ export class PnvbAdminService {
     }
     
     return {
-      nom: `Volontaire ${volontaireId || 'inconnu'}`
+      nom: rapport.volontaireNomComplet || `Volontaire ${volontaireId || 'inconnu'}`
     };
   }
 
@@ -499,17 +499,21 @@ export class PnvbAdminService {
   }
 
   private calculerPeriode(rapport: any): string {
+    if (rapport.periode) {
+      return rapport.periode;
+    }
+    
     const dateStr = rapport.dateSoumission || rapport.created_at || rapport.date;
     
     if (!dateStr) {
-      return rapport.periode || 'Non spécifié';
+      return 'Non spécifié';
     }
     
     try {
       const date = new Date(dateStr);
       
       if (isNaN(date.getTime())) {
-        return rapport.periode || 'Date invalide';
+        return 'Date invalide';
       }
       
       const mois = date.getMonth() + 1;
@@ -520,9 +524,9 @@ export class PnvbAdminService {
       if (mois >= 7 && mois <= 9) trimestre = 3;
       if (mois >= 10) trimestre = 4;
       
-      return rapport.periode || `Trimestre ${trimestre} ${annee}`;
+      return `Trimestre ${trimestre} ${annee}`;
     } catch (error) {
-      return rapport.periode || 'Période non spécifiée';
+      return 'Période non spécifiée';
     }
   }
 
@@ -567,8 +571,10 @@ export class PnvbAdminService {
   }
 
   private determinerMission(rapport: any, projet: any): string {
+    if (rapport.missionVolontaire) return rapport.missionVolontaire;
     if (rapport.mission) return rapport.mission;
     
+    if (projet?.titre) return projet.titre;
     if (projet?.title) return projet.title;
     if (projet?.nom) return projet.nom;
     

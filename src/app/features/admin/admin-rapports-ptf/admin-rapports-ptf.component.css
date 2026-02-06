@@ -1,28 +1,51 @@
-/* src/app/features/admin/components/rapports-ptf/admin-rapports-ptf.component.scss */
+/* ===== RAPPORTS PTF - ADMINISTRATION - STYLE HARMONISÉ PNVB ===== */
+
+/* ✅ CONTENEUR PRINCIPAL */
 .admin-rapports-container {
   padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
+  
+  /* ✅ SUPPRESSION DE TOUTES LES OMBRES INUTILES */
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
 }
 
+/* ===== HEADER SECTION ===== */
 .header-section {
   margin-bottom: 32px;
   text-align: center;
+  animation: fadeIn 0.5s ease;
   
   h1 {
     color: #2d3748;
     margin-bottom: 8px;
     font-size: 32px;
     font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
     
+    /* ✅ LIGNE VERTE PNVB À GAUCHE */
     &::before {
       content: '';
       display: inline-block;
       width: 6px;
       height: 32px;
-      background: #1a5f23; /* Vert PNVB */
+      background: #008124; /* Vert officiel PNVB */
       border-radius: 3px;
-      margin-right: 12px;
+      vertical-align: middle;
+    }
+    
+    &::after {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 32px;
+      background: #008124; /* Vert officiel PNVB */
+      border-radius: 3px;
       vertical-align: middle;
     }
   }
@@ -33,41 +56,49 @@
     max-width: 600px;
     margin: 0 auto;
     line-height: 1.6;
+    padding: 8px 0;
   }
 }
 
+/* ===== SECTIONS COMMUNES ===== */
 .upload-section, .rapports-list {
   margin-bottom: 32px;
   animation: fadeIn 0.5s ease;
-}
-
-.upload-section mat-card-header,
-.rapports-list mat-card-header {
-  margin-bottom: 24px;
-  background: #1a5f23; /* Vert PNVB */
-  color: white;
-  padding: 20px;
-  border-radius: 8px 8px 0 0;
   
-  mat-card-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 20px;
-    font-weight: 600;
+  mat-card-header {
+    margin-bottom: 24px;
+    background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%) !important;
+    color: white;
+    padding: 20px;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 3px solid #005518 !important;
     
-    mat-icon {
-      font-size: 24px;
+    /* ✅ SUPPRESSION DES OMBRES */
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 600;
+      
+      mat-icon {
+        font-size: 24px;
+        color: white;
+      }
+    }
+    
+    mat-card-subtitle {
+      color: rgba(255, 255, 255, 0.85);
+      margin-top: 4px;
+      font-weight: 400;
     }
   }
-  
-  mat-card-subtitle {
-    color: rgba(255, 255, 255, 0.85);
-    margin-top: 4px;
-    font-weight: 400;
-  }
 }
 
+/* ===== FORMULAIRE ===== */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -79,6 +110,7 @@
   width: 100%;
 }
 
+/* ===== UPLOAD DE FICHIER ===== */
 .file-upload {
   grid-column: 1 / -1;
   
@@ -87,15 +119,15 @@
     align-items: center;
     gap: 12px;
     padding: 16px;
-    border: 2px dashed #1a5f23; /* Vert PNVB */
+    border: 2px dashed #008124; /* Vert PNVB */
     border-radius: 8px;
     background: #f8f9fa;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     
     &:hover {
       background: #f0fff4; /* Vert très clair */
-      border-color: #2e7d32; /* Vert PNVB plus clair */
+      border-color: #009629; /* Vert PNVB plus clair */
       transform: translateY(-2px);
     }
     
@@ -104,7 +136,7 @@
     }
     
     mat-icon {
-      color: #1a5f23; /* Vert PNVB */
+      color: #008124; /* Vert PNVB */
       font-size: 24px;
     }
     
@@ -140,22 +172,13 @@
   .progress-text {
     text-align: center;
     margin-top: 8px;
-    color: #1a5f23; /* Vert PNVB */
+    color: #008124; /* Vert PNVB */
     font-weight: 500;
     font-size: 14px;
   }
 }
 
-::ng-deep {
-  .mat-progress-bar-fill::after {
-    background-color: #1a5f23 !important; /* Vert PNVB */
-  }
-  
-  .mat-progress-bar-buffer {
-    background-color: #e2e8f0 !important;
-  }
-}
-
+/* ===== BOUTONS D'ACTION ===== */
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -171,25 +194,31 @@
     min-height: 48px;
     border-radius: 8px;
     font-weight: 600;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     
     &[mat-raised-button] {
-      background: #1a5f23; /* Vert PNVB */
-      box-shadow: 0 2px 10px rgba(26, 95, 35, 0.3);
+      background: linear-gradient(135deg, #006b1e 0%, #008124 100%) !important;
+      color: white;
+      border: none;
       
       &:hover:not([disabled]) {
-        background: #2e7d32; /* Vert PNVB plus clair */
+        background: linear-gradient(135deg, #008124 0%, #009629 100%) !important;
         transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(26, 95, 35, 0.4);
+      }
+      
+      &:active {
+        transform: translateY(0);
       }
     }
     
     &[mat-button] {
       border: 1px solid #cbd5e0;
+      background: white;
       
       &:hover {
         background-color: #f7fafc;
-        border-color: #1a5f23; /* Vert PNVB */
+        border-color: #008124; /* Vert PNVB */
+        color: #008124;
       }
     }
     
@@ -199,6 +228,7 @@
   }
 }
 
+/* ===== FILTRES ===== */
 .filters-section {
   display: flex;
   gap: 16px;
@@ -220,9 +250,19 @@
     align-items: center;
     gap: 8px;
     height: 56px;
+    
+    button {
+      background: linear-gradient(135deg, #006b1e 0%, #008124 100%) !important;
+      color: white;
+      
+      &:hover {
+        background: linear-gradient(135deg, #008124 0%, #009629 100%) !important;
+      }
+    }
   }
 }
 
+/* ===== TABLEAU ===== */
 .table-responsive {
   overflow-x: auto;
   margin-bottom: 16px;
@@ -240,7 +280,7 @@
   .file-icon {
     margin-top: 4px;
     font-size: 20px;
-    color: #1a5f23; /* Vert PNVB */
+    color: #008124; /* Vert PNVB */
   }
   
   .description {
@@ -256,9 +296,10 @@
   vertical-align: middle;
   margin-right: 8px;
   font-size: 18px;
-  color: #1a5f23; /* Vert PNVB */
+  color: #008124; /* Vert PNVB */
 }
 
+/* ===== BADGES DE TYPE ===== */
 .type-badge {
   display: inline-block;
   padding: 6px 12px;
@@ -267,35 +308,61 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: all 0.3s ease;
   
   &.rapport_trimestriel {
-    background: #f0fff4;
-    color: #1a5f23; /* Vert PNVB */
-    border: 1px solid #c6f6d5;
+    background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+    color: #008124; /* Vert PNVB */
+    border: 1px solid #a5d6a7;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 129, 36, 0.2);
+    }
   }
   
   &.rapport_annuel {
-    background: #e8f5e9;
-    color: #2e7d32; /* Vert PNVB plus clair */
-    border: 1px solid #a5d6a7;
+    background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%);
+    color: #006b1e; /* Vert PNVB foncé */
+    border: 1px solid #81c784;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 107, 30, 0.2);
+    }
   }
   
   &.rapport_impact {
-    background: #fff3e0;
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
     color: #f57c00;
-    border: 1px solid #ffe0b2;
+    border: 1px solid #ffcc80;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(245, 124, 0, 0.2);
+    }
   }
   
   &.rapport_special {
-    background: #f3e5f5;
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
     color: #7b1fa2;
-    border: 1px solid #e1bee7;
+    border: 1px solid #ce93d8;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(123, 31, 162, 0.2);
+    }
   }
   
   &.autre {
-    background: #f5f5f5;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
     color: #616161;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #bdbdbd;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(97, 97, 97, 0.2);
+    }
   }
 }
 
@@ -317,24 +384,31 @@
   }
 }
 
+/* ===== BOUTONS D'ACTION TABLEAU ===== */
 .action-buttons {
   display: flex;
   gap: 8px;
   
   button {
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     min-width: 36px;
+    border-radius: 6px;
     
     &:hover {
       transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    &:active {
+      transform: translateY(0);
     }
     
     &[color="primary"] {
-      background: #1a5f23; /* Vert PNVB */
+      background: linear-gradient(135deg, #006b1e 0%, #008124 100%) !important;
       color: white;
       
       &:hover {
-        background: #2e7d32; /* Vert PNVB plus clair */
+        background: linear-gradient(135deg, #008124 0%, #009629 100%) !important;
       }
     }
     
@@ -344,10 +418,12 @@
   }
 }
 
+/* ===== SECTION AUCUNE DONNÉE ===== */
 .no-data-section {
   text-align: center;
   padding: 48px;
   color: #a0aec0;
+  animation: fadeIn 0.5s ease;
   
   .no-data-icon {
     font-size: 64px;
@@ -355,7 +431,7 @@
     width: 64px;
     margin-bottom: 16px;
     opacity: 0.5;
-    color: #1a5f23; /* Vert PNVB */
+    color: #008124; /* Vert PNVB */
   }
   
   h3 {
@@ -375,12 +451,14 @@
   }
 }
 
+/* ===== PAGINATION ===== */
 .rapports-paginator {
   margin-top: 16px;
   border-top: 1px solid #e2e8f0;
   padding-top: 16px;
 }
 
+/* ===== ANIMATIONS ===== */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -392,22 +470,28 @@
   }
 }
 
-/* Amélioration des champs de formulaire */
+/* ===== STYLES MATERIAL HARMONISÉS ===== */
 ::ng-deep {
-  .mat-form-field-outline {
-    background-color: #f8f9fa;
-    border-radius: 8px;
+  /* Barre de progression */
+  .mat-progress-bar-fill::after {
+    background: linear-gradient(135deg, #006b1e 0%, #008124 100%) !important;
   }
   
+  .mat-progress-bar-buffer {
+    background-color: #e2e8f0 !important;
+  }
+  
+  /* Champs de formulaire */
   .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
-    color: #1a5f23 !important; /* Vert PNVB */
+    color: #008124 !important; /* Vert PNVB */
   }
   
   .mat-form-field-appearance-outline.mat-form-field-can-float.mat-form-field-should-float .mat-form-field-label,
   .mat-form-field-appearance-outline.mat-focused .mat-form-field-label {
-    color: #1a5f23 !important; /* Vert PNVB */
+    color: #008124 !important; /* Vert PNVB */
   }
   
+  /* Menu déroulant */
   .mat-select-panel {
     border-radius: 8px;
     border: 1px solid #e2e8f0;
@@ -415,44 +499,92 @@
   
   .mat-option:hover:not(.mat-option-disabled),
   .mat-option.mat-active {
-    background-color: #f0fff4 !important; /* Vert très clair */
+    background: linear-gradient(135deg, #f0fff4 0%, #e6f4e6 100%) !important;
   }
   
   .mat-option.mat-selected:not(.mat-option-multiple) {
-    background-color: #e8f5e9 !important; /* Vert clair */
-    color: #1a5f23 !important; /* Vert PNVB */
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%) !important;
+    color: #008124 !important; /* Vert PNVB */
   }
 }
 
-/* Responsive */
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* ✅ TABLETTE */
+@media (max-width: 1024px) {
+  .admin-rapports-container {
+    padding: 20px;
+    max-width: 100%;
+  }
+  
+  .header-section {
+    h1 {
+      font-size: 28px;
+      
+      &::before,
+      &::after {
+        height: 28px;
+        width: 4px;
+      }
+    }
+    
+    p {
+      font-size: 15px;
+    }
+  }
+  
+  .form-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+  }
+}
+
+/* ✅ MOBILE */
 @media (max-width: 768px) {
   .admin-rapports-container {
     padding: 16px;
   }
   
   .header-section {
+    margin-bottom: 24px;
+    
     h1 {
       font-size: 24px;
+      flex-direction: column;
+      gap: 8px;
       
-      &::before {
+      &::before,
+      &::after {
         height: 24px;
-        width: 4px;
+        width: 3px;
       }
     }
     
     p {
       font-size: 14px;
+      padding: 0 12px;
+    }
+  }
+  
+  .upload-section mat-card-header,
+  .rapports-list mat-card-header {
+    padding: 16px;
+    
+    mat-card-title {
+      font-size: 18px;
     }
   }
   
   .form-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
   
   .filters-section {
     flex-direction: column;
     align-items: stretch;
     padding: 16px;
+    gap: 12px;
     
     .search-field {
       min-width: 100%;
@@ -467,26 +599,6 @@
   .action-buttons {
     flex-wrap: wrap;
     justify-content: center;
-  }
-  
-  .upload-section mat-card-header,
-  .rapports-list mat-card-header {
-    padding: 16px;
-    
-    mat-card-title {
-      font-size: 18px;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .form-actions {
-    flex-direction: column;
-    
-    button {
-      width: 100%;
-      justify-content: center;
-    }
   }
   
   .no-data-section {
@@ -505,5 +617,74 @@
     p {
       font-size: 14px;
     }
+  }
+}
+
+/* ✅ TRÈS PETITS ÉCRANS */
+@media (max-width: 480px) {
+  .form-actions {
+    flex-direction: column;
+    
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  
+  .admin-rapports-container {
+    padding: 12px;
+  }
+  
+  .header-section {
+    h1 {
+      font-size: 20px;
+      
+      &::before,
+      &::after {
+        height: 20px;
+      }
+    }
+  }
+  
+  .type-badge {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+
+/* ===== EFFETS D'ANIMATION SUPPLÉMENTAIRES ===== */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.action-buttons button:hover,
+.type-badge:hover {
+  animation: pulse 0.3s ease;
+}
+
+/* Touch de focus pour accessibilité */
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #008124;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 129, 36, 0.3);
+}
+
+/* Transition pour tous les éléments interactifs */
+button, .file-label, .type-badge, .auth-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Effet de chargement */
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  
+  ::ng-deep .mat-progress-spinner circle {
+    stroke: #008124 !important; /* Vert PNVB */
   }
 }

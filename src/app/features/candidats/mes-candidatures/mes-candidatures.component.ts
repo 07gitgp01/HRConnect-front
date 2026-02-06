@@ -126,28 +126,30 @@ export class MesCandidaturesComponent implements OnInit {
   getCandidaturesFiltrees(): Candidature[] {
     let filtered = this.mesCandidatures;
 
-    // Filtre par statut
+    // ✅ Filtre par statut
     if (this.filtreStatut) {
       filtered = filtered.filter(c => c.statut === this.filtreStatut);
     }
 
-    // Filtre par projet (gestion sécurisée des IDs)
+    // ✅ Filtre par projet (corrigé - gestion sécurisée des IDs)
     if (this.filtreProjet) {
-      filtered = filtered.filter(c => {
-        const candidatureProjectId = c.projectId?.toString();
-        const filterProjectId = this.filtreProjet.toString();
-        return candidatureProjectId === filterProjectId;
-      });
+      const filterProjectId = Number(this.filtreProjet);
+      filtered = filtered.filter(c => 
+        c.projectId !== undefined && c.projectId === filterProjectId
+      );
     }
 
-    // Filtre par recherche
+    // ✅ Filtre par recherche (corrigé - éviter les faux positifs)
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(c => 
-        c.poste_vise.toLowerCase().includes(term) ||
-        (c.nom + ' ' + c.prenom).toLowerCase().includes(term) ||
-        this.getProjectName(c.projectId).toLowerCase().includes(term)
-      );
+      filtered = filtered.filter(c => {
+        const projectName = this.getProjectName(c.projectId);
+        const isValidProjectName = projectName !== 'Projet inconnu' && projectName !== 'Non spécifié';
+        
+        return c.poste_vise.toLowerCase().includes(term) ||
+               (c.nom + ' ' + c.prenom).toLowerCase().includes(term) ||
+               (isValidProjectName && projectName.toLowerCase().includes(term));
+      });
     }
 
     return filtered;
@@ -198,18 +200,21 @@ export class MesCandidaturesComponent implements OnInit {
     return niveau ? (niveaux[niveau] || niveau) : 'Non spécifié';
   }
 
+  /**
+   * ✅ CORRIGÉ: Éviter la shadow variable
+   */
   getProjectName(projectId?: number | string): string {
-  if (!projectId) return 'Non spécifié';
-  
-  const idToFind = typeof projectId === 'string' ? parseInt(projectId, 10) : projectId;
-  
-  const project = this.projets.find(p => {
-    const projectId = typeof p.id === 'string' ? parseInt(p.id, 10) : p.id;
-    return projectId === idToFind;
-  });
-  
-  return project ? (project.titre || 'Projet inconnu') : 'Projet inconnu'; // Supprimer project.title
-}
+    if (!projectId) return 'Non spécifié';
+    
+    const idToFind = typeof projectId === 'string' ? parseInt(projectId, 10) : projectId;
+    
+    const project = this.projets.find(p => {
+      const pId = typeof p.id === 'string' ? parseInt(p.id, 10) : p.id; // ✅ Renommé
+      return pId === idToFind;
+    });
+    
+    return project ? (project.titre || 'Projet inconnu') : 'Projet inconnu';
+  }
 
   getCompetencesArray(competences: any): string[] {
     if (!competences) return [];

@@ -7,8 +7,6 @@ import { AuthService } from '../../services/service_auth/auth.service';
 import { Subscription } from 'rxjs';
 import { environment } from '../../environment/environment';
 
-// 🔥 Import correct de l'environnement
-
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -22,19 +20,17 @@ export class LoginComponent implements OnInit, OnDestroy {
   private queryParamsSubscription?: Subscription;
   private redirectAttempted = false;
 
-  // 🔥 Nouvelles propriétés pour les fonctionnalités avancées
+  // Propriétés UI
   showPassword = false;
   currentYear = new Date().getFullYear();
   appVersion = '1.0.0';
-  
-  // ✅ Utilisation correcte de l'environnement
   isProduction = environment.production;
 
-  // ✅ Définition du formulaire avec rememberMe
+  // Formulaire de connexion
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(1)]],
-    rememberMe: [false] // Option "se souvenir de moi"
+    rememberMe: [false]
   });
 
   constructor(
@@ -164,6 +160,9 @@ export class LoginComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * ✅ CORRIGÉ: Redirection selon le rôle avec support candidat/volontaire
+   */
   private redirectByRole(): void {
     const role = this.auth.getUserRole();
     
@@ -171,6 +170,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     
     setTimeout(() => {
       switch (role) {
+        // Admin (tous les formats)
         case 'admin':
         case 'super admin':
         case 'SUPER_ADMIN':
@@ -179,12 +179,18 @@ export class LoginComponent implements OnInit, OnDestroy {
         case 'super-admin':
           this.router.navigate(['/features/admin/']);
           break;
+          
+        // Partenaire
         case 'partenaire':
           this.verifyAndRedirectPartenaire();
           break;
+          
+        // ✅ NOUVEAU: Candidat ET Volontaire → même espace
         case 'candidat':
+        case 'volontaire':
           this.router.navigate(['/features/candidats/']);
           break;
+          
         default:
           console.warn('Rôle inconnu ou non défini:', role);
           this.router.navigate(['/home']);
@@ -218,7 +224,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * 🔥 NOUVELLE MÉTHODE : Basculer la visibilité du mot de passe
+   * Basculer la visibilité du mot de passe
    */
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
@@ -230,18 +236,19 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * 🔥 NOUVELLE MÉTHODE : Remplissage automatique pour le développement
+   * Remplissage automatique pour le développement
+   * ⚠️ Désactivé en production
    */
   quickLogin(role: string): void {
-    // 🔥 Vérifier que nous sommes en environnement de développement
     if (this.isProduction) {
-      console.warn('⚠️  Quick login désactivé en production');
+      console.warn('⚠️ Quick login désactivé en production');
       return;
     }
 
     const testAccounts: { [key: string]: { email: string, password: string } } = {
       admin: { email: 'admin@pnvb.gov.bf', password: 'admin123' },
       candidat: { email: 'candidat@test.com', password: 'candidat123' },
+      volontaire: { email: 'volontaire@test.com', password: 'volontaire123' }, // ✅ NOUVEAU
       partenaire: { email: 'partenaire@test.com', password: 'partenaire123' }
     };
 
@@ -253,7 +260,6 @@ export class LoginComponent implements OnInit, OnDestroy {
       });
       console.log(`🔧 Remplissage automatique pour ${role}`);
       
-      // Focus sur le bouton de connexion
       setTimeout(() => {
         const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
         if (submitButton) submitButton.focus();
@@ -274,14 +280,13 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.redirectAttempted = false;
     this.showPassword = false;
     
-    // 🔥 Réinitialiser aussi le type du champ password
     const passwordField = document.getElementById('password') as HTMLInputElement;
     if (passwordField) {
       passwordField.type = 'password';
     }
   }
 
-  // ✅ Getters pour le template
+  // Getters pour le template
   get email() { return this.loginForm.get('email'); }
   get password() { return this.loginForm.get('password'); }
   get rememberMe() { return this.loginForm.get('rememberMe'); }

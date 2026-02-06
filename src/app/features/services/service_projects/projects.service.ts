@@ -1,6 +1,4 @@
-// AJOUTS ET CORRECTIONS pour project.service.ts
-// Ajouter ces méthodes à votre ProjectService existant
-
+// src/app/features/services/service_projects/projects.service.ts
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, forkJoin, BehaviorSubject, interval, Subscription } from 'rxjs';
@@ -8,7 +6,7 @@ import { catchError, map, switchMap, take } from 'rxjs/operators';
 import { Project, ProjectStatus, ProjectWorkflow } from '../../models/projects.model';
 import { Volontaire } from '../../models/volontaire.model';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { AuthService } from '../../services/service_auth/auth.service';
+import { AuthService } from '../service_auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -35,90 +33,95 @@ export class ProjectService implements OnDestroy {
     }
   }
 
-  // ===== ✅ NOUVELLE MÉTHODE: Statistiques détaillées pour le partenaire =====
-  /**
-   * Récupère les statistiques détaillées pour un partenaire
-   * Inclut les projets ET les candidatures
-   */
-  getStatistiquesPartenaire(partenaireId: string | number): Observable<{
-    totalProjets: number;
-    projetsActifs: number;
-    projetsEnAttente: number;
-    projetsTermines: number;
-    volontairesAffectes: number;
-    candidatures: number;
-    nouvellesCandidatures: number;
-  }> {
-    console.log('📊 Calcul statistiques pour partenaire:', partenaireId);
-    
-    return forkJoin({
-      projets: this.getProjetsByPartenaire(partenaireId),
-      candidatures: this.http.get<any[]>(`${this.apiUrl}/candidatures`).pipe(
-        map(allCandidatures => {
-          // Filtrer les candidatures liées aux projets du partenaire
-          return allCandidatures.filter(c => {
-            // Vous pouvez ajuster cette logique selon votre structure de données
-            return c.partenaireId === partenaireId.toString() || 
-                   c.partenaireId === Number(partenaireId);
-          });
-        }),
-        catchError(error => {
-          console.warn('⚠️ Erreur chargement candidatures:', error);
-          return of([]);
-        })
-      )
-    }).pipe(
-      map(({ projets, candidatures }) => {
-        const stats = {
-          totalProjets: projets.length,
-          projetsActifs: projets.filter(p => p.statutProjet === 'actif').length,
-          projetsEnAttente: projets.filter(p => p.statutProjet === 'en_attente').length,
-          projetsTermines: projets.filter(p => p.statutProjet === 'cloture').length,
-          volontairesAffectes: projets.reduce((sum, p) => sum + (p.nombreVolontairesActuels ?? 0), 0),
-          candidatures: candidatures.length,
-          nouvellesCandidatures: candidatures.filter(c => 
-            c.statut === 'en_attente' && 
-            this.isRecent(c.dateCreation || c.created_at || c.date)
-          ).length
-        };
-        
-        console.log('✅ Stats calculées pour partenaire', partenaireId, ':', stats);
-        return stats;
-      }),
+  // ==================== MÉTHODES CRUD DE BASE ====================
+
+  getProjects(): Observable<Project[]> {
+    return this.http.get<Project[]>(`${this.apiUrl}/projets`).pipe(
+      map(projects => this.normalizeProjects(projects)),
       catchError(error => {
-        console.error('❌ Erreur calcul stats partenaire:', error);
-        // Retourner des valeurs par défaut en cas d'erreur
-        return of({
-          totalProjets: 0,
-          projetsActifs: 0,
-          projetsEnAttente: 0,
-          projetsTermines: 0,
-          volontairesAffectes: 0,
-          candidatures: 0,
-          nouvellesCandidatures: 0
-        });
+        console.error('❌ Erreur chargement projets:', error);
+        return of([]);
+      })
+    );
+  }
+
+  getProject(id: number | string): Observable<Project> {
+    return this.http.get<Project>(`${this.apiUrl}/projets/${id}`).pipe(
+      map(project => this.normalizeProject(project)),
+      catchError(error => {
+        console.error(`❌ Erreur chargement projet ${id}:`, error);
+        throw error;
+      })
+    );
+  }
+
+  createProject(project: Omit<Project, 'id'>): Observable<Project> {
+    const newProject = {
+      ...project,
+      statutProjet: 'en_attente' as ProjectStatus,
+      nombreVolontairesActuels: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    console.log('📤 Création nouveau projet:', {
+      titre: newProject.titre,
+      partenaireId: newProject.partenaireId,
+      statut: newProject.statutProjet
+    });
+    
+    return this.http.post<Project>(`${this.apiUrl}/projets`, newProject).pipe(
+      map(createdProject => this.normalizeProject(createdProject)),
+      catchError(error => {
+        console.error('❌ Erreur création projet:', error);
+        throw error;
       })
     );
   }
 
   /**
-   * Vérifie si une date est récente (moins de 7 jours)
+   * ✅ CORRIGÉ: updateProject avec gestion updated_at
    */
-  private isRecent(dateString: string): boolean {
-    if (!dateString) return false;
-    try {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffDays = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
-      return diffDays <= 7;
-    } catch (error) {
-      return false;
-    }
+  updateProject(id: number | string, project: Partial<Project>): Observable<Project> {
+    const updatedData = {
+      ...project,
+      updated_at: project.updated_at ?? new Date().toISOString()
+    };
+    
+    console.log(`📤 Envoi mise à jour projet ${id}:`, {
+      proprietesEnvoyees: Object.keys(updatedData).length,
+      statut: updatedData.statutProjet,
+      volontairesActuels: updatedData.nombreVolontairesActuels
+    });
+    
+    return this.http.put<Project>(`${this.apiUrl}/projets/${id}`, updatedData).pipe(
+      map(updatedProject => {
+        console.log(`✅ Projet ${id} mis à jour avec succès`);
+        return this.normalizeProject(updatedProject);
+      }),
+      catchError(error => {
+        console.error(`❌ Erreur mise à jour projet ${id}:`, error);
+        console.error('Données envoyées:', updatedData);
+        throw error;
+      })
+    );
   }
 
-  // ===== ✅ CORRECTION: normalizeProject avec nullish coalescing =====
+  deleteProject(id: number | string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/projets/${id}`).pipe(
+      catchError(error => {
+        console.error(`❌ Erreur suppression projet ${id}:`, error);
+        throw error;
+      })
+    );
+  }
+
+  // ==================== NORMALISATION ====================
+
+  /**
+   * ✅ CORRIGÉ: Utilisation de ?? au lieu de || pour préserver les valeurs 0
+   */
   private normalizeProject(project: any): Project {
-    // ✅ Utiliser ?? au lieu de || pour préserver les valeurs 0
     const normalized: Project = {
       id: project.id,
       titre: project.titre ?? project.title ?? '',
@@ -130,13 +133,13 @@ export class ProjectService implements OnDestroy {
                          (project.descriptionLongue?.substring(0, 150)) ?? '',
       
       domaineActivite: project.domaineActivite ?? project.domain ?? '',
-      competences_requises: project.competences_requises ?? project.requiredSkills ?? [],
-      type_mission: project.type_mission ?? project.missionType ?? '',
+      competences_requises: project.competences_requises ?? project.requiredSkills ?? '',
+      type_mission: project.type_mission ?? project.missionType ?? undefined,
       
       regionAffectation: project.regionAffectation ?? project.region ?? '',
       ville_commune: project.ville_commune ?? project.city ?? '',
       
-      // ✅ CRITIQUE: Préserver 0 comme valeur valide
+      // ✅ CRITIQUE: Utiliser ?? pour préserver les valeurs 0
       nombreVolontairesRequis: project.nombreVolontairesRequis ?? project.neededVolunteers ?? 0,
       nombreVolontairesActuels: project.nombreVolontairesActuels ?? project.volontairesAffectes ?? 0,
       avantagesVolontaire: project.avantagesVolontaire ?? project.volunteerBenefits ?? '',
@@ -169,216 +172,45 @@ export class ProjectService implements OnDestroy {
     return normalized;
   }
 
-  // ===== ✅ CORRECTION: updateProject =====
-  updateProject(id: number | string, project: Partial<Project>): Observable<Project> {
-    // ✅ Ne pas écraser updated_at s'il est déjà fourni
-    const updatedData = {
-      ...project,
-      updated_at: project.updated_at ?? new Date().toISOString()
+  private normalizeProjects(projects: any[]): Project[] {
+    return projects.map(project => this.normalizeProject(project));
+  }
+
+  private normalizeStatut(statut: any): ProjectStatus {
+    if (!statut) return 'en_attente';
+    
+    const statutStr = statut.toString().toLowerCase();
+    
+    const mapping: { [key: string]: ProjectStatus } = {
+      'en_attente': 'en_attente',
+      'en attente': 'en_attente',
+      'waiting': 'en_attente',
+      'pending': 'en_attente',
+      
+      'actif': 'actif',
+      'active': 'actif',
+      'ouvert': 'actif',
+      'open': 'actif',
+      
+      'cloture': 'cloture',
+      'closed': 'cloture',
+      'completed': 'cloture',
+      'termine': 'cloture',
+      
+      'soumis': 'en_attente',
+      'submitted': 'en_attente',
+      'en_attente_validation': 'en_attente',
+      'pending_validation': 'en_attente',
+      'ouvert_aux_candidatures': 'actif',
+      'open_for_applications': 'actif',
+      'en_cours': 'actif',
+      'in_progress': 'actif'
     };
     
-    console.log(`📤 Envoi mise à jour projet ${id}:`, {
-      proprietesEnvoyees: Object.keys(updatedData).length,
-      statut: updatedData.statutProjet,
-      volontairesActuels: updatedData.nombreVolontairesActuels
-    });
-    
-    return this.http.put<Project>(`${this.apiUrl}/projets/${id}`, updatedData).pipe(
-      map(updatedProject => {
-        console.log(`✅ Projet ${id} mis à jour avec succès`);
-        return this.normalizeProject(updatedProject);
-      }),
-      catchError(error => {
-        console.error(`❌ Erreur mise à jour projet ${id}:`, error);
-        console.error('Données envoyées:', updatedData);
-        throw error;
-      })
-    );
+    return mapping[statutStr] ?? 'en_attente';
   }
 
-  // ===== AUTRES MÉTHODES EXISTANTES (garder telles quelles) =====
-
-  getVolontairesDisponibles(): Observable<Volontaire[]> {
-    return this.http.get<Volontaire[]>(`${this.apiUrl}/volontaires`).pipe(
-      map(volontaires => {
-        return volontaires.filter(volontaire => 
-          volontaire.statut === 'Actif' || volontaire.statut === 'En attente'
-        );
-      }),
-      catchError(error => {
-        console.error('❌ Erreur chargement volontaires disponibles:', error);
-        return of([]);
-      })
-    );
-  }
-
-  getAllProjectsWithStats(): Observable<any> {
-    return this.getProjects().pipe(
-      switchMap(projects => {
-        const projectsWithStats = projects.map(project => 
-          this.getCandidaturesByProject(project.id!).pipe(
-            map(candidatures => ({
-              ...project,
-              stats: {
-                candidatures: candidatures.length,
-                volontairesAffectes: project.nombreVolontairesActuels ?? 0,
-                candidaturesEnAttente: candidatures.filter(c => c.statut === 'en_attente').length
-              }
-            }))
-          )
-        );
-        return forkJoin(projectsWithStats);
-      }),
-      catchError(error => {
-        console.error('❌ Erreur chargement projets avec stats:', error);
-        return of([]);
-      })
-    );
-  }
-
-  getStatistiquesEcheances(): Observable<any> {
-    return this.getProjects().pipe(
-      map(projects => {
-        const aujourdhui = new Date();
-        return {
-          projetsEnRetard: projects.filter(p => 
-            p.dateFin && new Date(p.dateFin) < aujourdhui && p.statutProjet !== 'cloture'
-          ).length,
-          projetsAEcheance: projects.filter(p => 
-            p.dateFin && this.getDaysUntil(new Date(p.dateFin)) <= 3 && p.statutProjet !== 'cloture'
-          ).length,
-          totalProjets: projects.length
-        };
-      })
-    );
-  }
-
-  private getDaysUntil(date: Date): number {
-    const aujourdhui = new Date();
-    const diffTime = date.getTime() - aujourdhui.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  }
-
-  updateAdminStatus(): void {
-    console.log('Mise à jour statut admin - méthode appelée');
-  }
-
-  private initializeService(): void {
-    this.checkAdminStatus();
-    
-    console.log('🔧 Initialisation ProjectService - Statut admin:', this.isAdminUser);
-    
-    if (this.isAdminUser) {
-      console.log('🔐 Démarrage surveillance initial - Admin déjà connecté');
-      this.startEcheanceMonitoring();
-    }
-    
-    this.userSubscription = this.authService.currentUser$.subscribe(user => {
-      const wasAdmin = this.isAdminUser;
-      this.checkAdminStatus();
-      
-      console.log('🔄 Changement statut utilisateur ProjectService:', {
-        ancien: wasAdmin ? 'admin' : 'non-admin',
-        nouveau: this.isAdminUser ? 'admin' : 'non-admin'
-      });
-      
-      if (!user || !this.isAdminUser) {
-        console.log('🔕 Arrêt surveillance - Déconnexion ou non-admin');
-        this.stopEcheanceMonitoring();
-        this.clearEcheanceNotifications();
-      }
-      
-      if (user && this.isAdminUser && !wasAdmin) {
-        console.log('🔐 Démarrage surveillance - Admin connecté');
-        this.startEcheanceMonitoring();
-      }
-    });
-  }
-
-  private checkAdminStatus(): void {
-    this.isAdminUser = this.authService.isAdmin();
-  }
-
-  private startEcheanceMonitoring(): void {
-    if (!this.isAdminUser) {
-      console.log('🔕 Surveillance échéances désactivée - Utilisateur non admin');
-      return;
-    }
-
-    this.stopEcheanceMonitoring();
-    this.verifierEcheancesProjets();
-
-    this.monitoringSubscription = interval(60000).subscribe(() => {
-      if (this.isAdminUser && this.authService.isAdmin()) {
-        this.verifierEcheancesProjets();
-      } else {
-        console.log('🔕 Intervalle ignoré - Plus admin');
-        this.stopEcheanceMonitoring();
-      }
-    });
-
-    console.log('✅ Surveillance échéances démarrée pour admin');
-  }
-
-  private stopEcheanceMonitoring(): void {
-    if (this.monitoringSubscription) {
-      this.monitoringSubscription.unsubscribe();
-      this.monitoringSubscription = null;
-      console.log('🛑 Surveillance échéances arrêtée');
-    }
-  }
-
-  clearEcheanceNotifications(): void {
-    console.log('🗑️ Vider les notifications d\'échéance');
-    this.notificationSubject.next([]);
-  }
-
-  getProjects(): Observable<Project[]> {
-    return this.http.get<Project[]>(`${this.apiUrl}/projets`).pipe(
-      map(projects => this.normalizeProjects(projects)),
-      catchError(error => {
-        console.error('Erreur chargement projets:', error);
-        return of([]);
-      })
-    );
-  }
-
-  getProject(id: number | string): Observable<Project> {
-    return this.http.get<Project>(`${this.apiUrl}/projets/${id}`).pipe(
-      map(project => this.normalizeProject(project)),
-      catchError(error => {
-        console.error(`Erreur chargement projet ${id}:`, error);
-        throw error;
-      })
-    );
-  }
-
-  createProject(project: Omit<Project, 'id'>): Observable<Project> {
-    const newProject = {
-      ...project,
-      statutProjet: 'en_attente' as ProjectStatus,
-      nombreVolontairesActuels: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    return this.http.post<Project>(`${this.apiUrl}/projets`, newProject).pipe(
-      map(createdProject => this.normalizeProject(createdProject))
-    );
-  }
-
-  soumettrePourValidation(id: number | string): Observable<Project> {
-    return this.changerStatutProjet(id, 'en_attente').pipe(
-      catchError(error => {
-        console.error(`❌ Erreur soumission projet ${id} pour validation:`, error);
-        throw error;
-      })
-    );
-  }
-
-  deleteProject(id: number | string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/projets/${id}`);
-  }
+  // ==================== GESTION DES STATUTS ====================
 
   changerStatutProjet(id: number | string, nouveauStatut: ProjectStatus): Observable<Project> {
     console.log(`🔄 Début changement statut projet ${id} vers ${nouveauStatut}`);
@@ -472,6 +304,15 @@ export class ProjectService implements OnDestroy {
     );
   }
 
+  soumettrePourValidation(id: number | string): Observable<Project> {
+    return this.changerStatutProjet(id, 'en_attente').pipe(
+      catchError(error => {
+        console.error(`❌ Erreur soumission projet ${id} pour validation:`, error);
+        throw error;
+      })
+    );
+  }
+
   validerProjet(id: number | string): Observable<Project> {
     return this.changerStatutProjet(id, 'actif');
   }
@@ -503,17 +344,33 @@ export class ProjectService implements OnDestroy {
     return this.changerStatutProjet(id, 'actif');
   }
 
+  // ==================== GESTION DES VOLONTAIRES ====================
+
+  getVolontairesDisponibles(): Observable<Volontaire[]> {
+    return this.http.get<Volontaire[]>(`${this.apiUrl}/volontaires`).pipe(
+      map(volontaires => {
+        return volontaires.filter(volontaire => 
+          volontaire.statut === 'Actif' || volontaire.statut === 'En attente'
+        );
+      }),
+      catchError(error => {
+        console.error('❌ Erreur chargement volontaires disponibles:', error);
+        return of([]);
+      })
+    );
+  }
+
   getVolontairesByProject(projectId: number | string): Observable<any[]> {
     return forkJoin({
       affectations: this.http.get<any[]>(`${this.apiUrl}/affectations?projectId=${projectId}`).pipe(
         catchError(error => {
-          console.error(`Erreur chargement affectations pour projet ${projectId}:`, error);
+          console.error(`❌ Erreur chargement affectations pour projet ${projectId}:`, error);
           return of([]);
         })
       ),
       volontaires: this.http.get<any[]>(`${this.apiUrl}/volontaires`).pipe(
         catchError(error => {
-          console.error('Erreur chargement volontaires:', error);
+          console.error('❌ Erreur chargement volontaires:', error);
           return of([]);
         })
       )
@@ -574,21 +431,25 @@ export class ProjectService implements OnDestroy {
     );
   }
 
+  // ==================== GESTION DES CANDIDATURES ====================
+
   getCandidaturesByProject(projectId: number | string): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/candidatures?projectId=${projectId}`).pipe(
       catchError(error => {
-        console.error(`Erreur chargement candidatures pour projet ${projectId}:`, error);
+        console.error(`❌ Erreur chargement candidatures pour projet ${projectId}:`, error);
         return of([]);
       })
     );
   }
+
+  // ==================== MÉTHODES POUR LES PARTENAIRES ====================
 
   getProjetsByPartenaire(partenaireId: string | number): Observable<Project[]> {
     const id = partenaireId.toString();
     return this.http.get<Project[]>(`${this.apiUrl}/projets?partenaireId=${id}`).pipe(
       map(projects => this.normalizeProjects(projects)),
       catchError(error => {
-        console.error(`Erreur chargement projets partenaire ${id}:`, error);
+        console.error(`❌ Erreur chargement projets partenaire ${id}:`, error);
         return of([]);
       })
     );
@@ -609,6 +470,62 @@ export class ProjectService implements OnDestroy {
 
         console.log(`📊 Stats partenaire ${partenaireId}:`, stats);
         return stats;
+      })
+    );
+  }
+
+  /**
+   * ✅ CORRIGÉ: Statistiques détaillées avec filtrage par projectId
+   */
+  getStatistiquesPartenaire(partenaireId: string | number): Observable<{
+    totalProjets: number;
+    projetsActifs: number;
+    projetsEnAttente: number;
+    projetsTermines: number;
+    volontairesAffectes: number;
+    candidatures: number;
+    nouvellesCandidatures: number;
+  }> {
+    console.log('📊 Calcul statistiques pour partenaire:', partenaireId);
+    
+    return forkJoin({
+      projets: this.getProjetsByPartenaire(partenaireId),
+      candidatures: this.http.get<any[]>(`${this.apiUrl}/candidatures`)
+    }).pipe(
+      map(({ projets, candidatures }) => {
+        // ✅ CORRECTION: Filtrer par projectId, pas partenaireId
+        const projetIds = projets.map(p => p.id).filter(id => id !== undefined);
+        
+        const candidaturesPartenaire = candidatures.filter(c => 
+          c.projectId !== undefined && projetIds.includes(c.projectId)
+        );
+        
+        const stats = {
+          totalProjets: projets.length,
+          projetsActifs: projets.filter(p => p.statutProjet === 'actif').length,
+          projetsEnAttente: projets.filter(p => p.statutProjet === 'en_attente').length,
+          projetsTermines: projets.filter(p => p.statutProjet === 'cloture').length,
+          volontairesAffectes: projets.reduce((sum, p) => sum + (p.nombreVolontairesActuels ?? 0), 0),
+          candidatures: candidaturesPartenaire.length,
+          nouvellesCandidatures: candidaturesPartenaire.filter(c => 
+            c.statut === 'en_attente' && this.isRecent(c.cree_le)
+          ).length
+        };
+        
+        console.log('✅ Stats calculées pour partenaire', partenaireId, ':', stats);
+        return stats;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur calcul stats partenaire:', error);
+        return of({
+          totalProjets: 0,
+          projetsActifs: 0,
+          projetsEnAttente: 0,
+          projetsTermines: 0,
+          volontairesAffectes: 0,
+          candidatures: 0,
+          nouvellesCandidatures: 0
+        });
       })
     );
   }
@@ -638,13 +555,15 @@ export class ProjectService implements OnDestroy {
     );
   }
 
+  // ==================== MÉTHODES PUBLIQUES ====================
+
   getProjetsPublic(): Observable<Project[]> {
     return this.getProjects().pipe(
       map(projets => projets.filter(projet => 
         projet.statutProjet === 'actif'
       )),
       catchError(error => {
-        console.error('Erreur chargement projets publics:', error);
+        console.error('❌ Erreur chargement projets publics:', error);
         return of([]);
       })
     );
@@ -656,48 +575,137 @@ export class ProjectService implements OnDestroy {
         projet.statutProjet === 'en_attente'
       )),
       catchError(error => {
-        console.error('Erreur chargement projets en attente:', error);
+        console.error('❌ Erreur chargement projets en attente:', error);
         return of([]);
       })
     );
   }
 
-  private normalizeProjects(projects: any[]): Project[] {
-    return projects.map(project => this.normalizeProject(project));
+  getProjetsEligiblesPourCandidature(): Observable<Project[]> {
+    return this.getProjects().pipe(
+      map(projets => projets.filter(projet => 
+        ProjectWorkflow.canAcceptApplications(projet.statutProjet)
+      ))
+    );
   }
 
-  private normalizeStatut(statut: any): ProjectStatus {
-    if (!statut) return 'en_attente';
+  canApplyToProject(project: Project): boolean {
+    return ProjectWorkflow.canAcceptApplications(project.statutProjet);
+  }
+
+  // ==================== STATISTIQUES GLOBALES ====================
+
+  getAllProjectsWithStats(): Observable<any> {
+    return this.getProjects().pipe(
+      switchMap(projects => {
+        const projectsWithStats = projects.map(project => 
+          this.getCandidaturesByProject(project.id!).pipe(
+            map(candidatures => ({
+              ...project,
+              stats: {
+                candidatures: candidatures.length,
+                volontairesAffectes: project.nombreVolontairesActuels ?? 0,
+                candidaturesEnAttente: candidatures.filter(c => c.statut === 'en_attente').length
+              }
+            }))
+          )
+        );
+        return forkJoin(projectsWithStats);
+      }),
+      catchError(error => {
+        console.error('❌ Erreur chargement projets avec stats:', error);
+        return of([]);
+      })
+    );
+  }
+
+  getStatistiquesEcheances(): Observable<any> {
+    return this.getProjects().pipe(
+      map(projects => {
+        const aujourdhui = new Date();
+        return {
+          projetsEnRetard: projects.filter(p => 
+            p.dateFin && new Date(p.dateFin) < aujourdhui && p.statutProjet !== 'cloture'
+          ).length,
+          projetsAEcheance: projects.filter(p => 
+            p.dateFin && this.getDaysUntil(new Date(p.dateFin)) <= 3 && p.statutProjet !== 'cloture'
+          ).length,
+          totalProjets: projects.length
+        };
+      })
+    );
+  }
+
+  // ==================== SURVEILLANCE DES ÉCHÉANCES ====================
+
+  private initializeService(): void {
+    this.checkAdminStatus();
     
-    const statutStr = statut.toString().toLowerCase();
+    console.log('🔧 Initialisation ProjectService - Statut admin:', this.isAdminUser);
     
-    const mapping: { [key: string]: ProjectStatus } = {
-      'en_attente': 'en_attente',
-      'en attente': 'en_attente',
-      'waiting': 'en_attente',
-      'pending': 'en_attente',
-      
-      'actif': 'actif',
-      'active': 'actif',
-      'ouvert': 'actif',
-      'open': 'actif',
-      
-      'cloture': 'cloture',
-      'closed': 'cloture',
-      'completed': 'cloture',
-      'termine': 'cloture',
-      
-      'soumis': 'en_attente',
-      'submitted': 'en_attente',
-      'en_attente_validation': 'en_attente',
-      'pending_validation': 'en_attente',
-      'ouvert_aux_candidatures': 'actif',
-      'open_for_applications': 'actif',
-      'en_cours': 'actif',
-      'in_progress': 'actif'
-    };
+    if (this.isAdminUser) {
+      console.log('🔐 Démarrage surveillance initial - Admin déjà connecté');
+      this.startEcheanceMonitoring();
+    }
     
-    return mapping[statutStr] ?? 'en_attente';
+    this.userSubscription = this.authService.currentUser$.subscribe(user => {
+      const wasAdmin = this.isAdminUser;
+      this.checkAdminStatus();
+      
+      console.log('🔄 Changement statut utilisateur ProjectService:', {
+        ancien: wasAdmin ? 'admin' : 'non-admin',
+        nouveau: this.isAdminUser ? 'admin' : 'non-admin'
+      });
+      
+      if (!user || !this.isAdminUser) {
+        console.log('🔕 Arrêt surveillance - Déconnexion ou non-admin');
+        this.stopEcheanceMonitoring();
+        this.clearEcheanceNotifications();
+      }
+      
+      if (user && this.isAdminUser && !wasAdmin) {
+        console.log('🔐 Démarrage surveillance - Admin connecté');
+        this.startEcheanceMonitoring();
+      }
+    });
+  }
+
+  private checkAdminStatus(): void {
+    this.isAdminUser = this.authService.isAdmin();
+  }
+
+  private startEcheanceMonitoring(): void {
+    if (!this.isAdminUser) {
+      console.log('🔕 Surveillance échéances désactivée - Utilisateur non admin');
+      return;
+    }
+
+    this.stopEcheanceMonitoring();
+    this.verifierEcheancesProjets();
+
+    this.monitoringSubscription = interval(60000).subscribe(() => {
+      if (this.isAdminUser && this.authService.isAdmin()) {
+        this.verifierEcheancesProjets();
+      } else {
+        console.log('🔕 Intervalle ignoré - Plus admin');
+        this.stopEcheanceMonitoring();
+      }
+    });
+
+    console.log('✅ Surveillance échéances démarrée pour admin');
+  }
+
+  private stopEcheanceMonitoring(): void {
+    if (this.monitoringSubscription) {
+      this.monitoringSubscription.unsubscribe();
+      this.monitoringSubscription = null;
+      console.log('🛑 Surveillance échéances arrêtée');
+    }
+  }
+
+  clearEcheanceNotifications(): void {
+    console.log('🗑️ Vider les notifications d\'échéance');
+    this.notificationSubject.next([]);
   }
 
   private async verifierEcheancesProjets(): Promise<void> {
@@ -727,7 +735,7 @@ export class ProjectService implements OnDestroy {
       }
 
     } catch (error) {
-      console.error('Erreur lors de la vérification des échéances:', error);
+      console.error('❌ Erreur lors de la vérification des échéances:', error);
     }
   }
 
@@ -775,7 +783,7 @@ export class ProjectService implements OnDestroy {
 
       return null;
     } catch (error) {
-      console.error(`Erreur vérification projet ${projet.id}:`, error);
+      console.error(`❌ Erreur vérification projet ${projet.id}:`, error);
       return null;
     }
   }
@@ -809,14 +817,6 @@ export class ProjectService implements OnDestroy {
     }
   }
 
-  private formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  }
-
   getEcheanceNotifications(): Observable<string[]> {
     if (!this.authService.isAdmin() || !this.isAdminUser) {
       console.log('🔕 Accès REFUSÉ aux notifications - Utilisateur non admin');
@@ -833,17 +833,42 @@ export class ProjectService implements OnDestroy {
     return this.verifierEcheancesProjets();
   }
 
-  canApplyToProject(project: Project): boolean {
-    return ProjectWorkflow.canAcceptApplications(project.statutProjet);
+  updateAdminStatus(): void {
+    console.log('Mise à jour statut admin - méthode appelée');
   }
 
-  getProjetsEligiblesPourCandidature(): Observable<Project[]> {
-    return this.getProjects().pipe(
-      map(projets => projets.filter(projet => 
-        ProjectWorkflow.canAcceptApplications(projet.statutProjet)
-      ))
-    );
+  // ==================== UTILITAIRES ====================
+
+  /**
+   * ✅ Vérifie si une date est récente (moins de 7 jours)
+   */
+  private isRecent(dateString: string): boolean {
+    if (!dateString) return false;
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffDays = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
+      return diffDays <= 7;
+    } catch (error) {
+      return false;
+    }
   }
+
+  private getDaysUntil(date: Date): number {
+    const aujourdhui = new Date();
+    const diffTime = date.getTime() - aujourdhui.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  private formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+
+  // ==================== DIAGNOSTIC ====================
 
   diagnostiquerProjet(id: number | string): void {
     this.http.get<any>(`${this.apiUrl}/projets/${id}`).subscribe({

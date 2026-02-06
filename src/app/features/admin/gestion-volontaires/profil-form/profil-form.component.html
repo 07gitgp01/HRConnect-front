@@ -57,14 +57,15 @@
     </div>
 
     <div class="two-cols">
+      <!-- CORRECTION ICI : remplacer nip par numeroPiece -->
       <mat-form-field appearance="outline">
-        <mat-label>NIP</mat-label>
-        <input matInput formControlName="nip" maxlength="17" />
+        <mat-label>Numéro de pièce d'identité</mat-label>
+        <input matInput formControlName="numeroPiece" maxlength="17" />
         <mat-hint align="end">17 chiffres</mat-hint>
-        @if (profilForm.get('nip')?.hasError('required')) {
-          <mat-error>NIP requis</mat-error>
+        @if (profilForm.get('numeroPiece')?.hasError('required')) {
+          <mat-error>Numéro de pièce requis</mat-error>
         }
-        @if (profilForm.get('nip')?.hasError('pattern')) {
+        @if (profilForm.get('numeroPiece')?.hasError('pattern')) {
           <mat-error>17 chiffres requis</mat-error>
         }
       </mat-form-field>

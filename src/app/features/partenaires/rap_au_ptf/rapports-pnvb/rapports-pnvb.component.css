@@ -2,6 +2,7 @@
   padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .header-section {
@@ -15,16 +16,18 @@
     gap: 16px;
     
     h1 {
-      color: #2c3e50;
+      /* Couleur du texte du header PNVB */
+      color: #FFFFFF;
       margin-bottom: 8px;
       font-size: 32px;
-      font-weight: 600;
+      font-weight: 700;
       display: flex;
       align-items: center;
       gap: 12px;
       
       .header-icon {
-        color: #3498db;
+        /* Accent doré/orange pour contraster avec le vert */
+        color: #FFD700;
         font-size: 36px;
         height: 36px;
         width: 36px;
@@ -32,9 +35,11 @@
     }
     
     .subtitle {
-      color: #7f8c8d;
+      /* Texte plus clair pour le sous-titre */
+      color: rgba(255, 255, 255, 0.9);
       font-size: 16px;
       max-width: 600px;
+      font-weight: 400;
     }
   }
 }
@@ -46,12 +51,16 @@
   margin-bottom: 32px;
   
   .stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Même gradient vert que le header PNVB */
+    background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
     color: white;
-    transition: transform 0.3s;
+    transition: transform 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     
     &:hover {
       transform: translateY(-4px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
     }
     
     .stat-content {
@@ -65,24 +74,31 @@
         height: 40px;
         width: 40px;
         opacity: 0.9;
+        color: #FFD700;
       }
       
       .stat-number {
         font-size: 28px;
-        font-weight: bold;
+        font-weight: 900;
         line-height: 1;
+        color: #FFFFFF;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
       }
       
       .stat-date {
         font-size: 20px;
-        font-weight: bold;
+        font-weight: 700;
         line-height: 1;
+        color: #FFFFFF;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
       }
       
       .stat-label {
         font-size: 14px;
         opacity: 0.9;
         margin-top: 4px;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
       }
     }
   }
@@ -111,6 +127,14 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        /* Style bouton vert PNVB */
+        background: linear-gradient(135deg, #006b1e 0%, #008124 100%);
+        color: white;
+        border: none;
+        
+        &:hover {
+          background: linear-gradient(135deg, #008124 0%, #009629 100%);
+        }
       }
     }
   }
@@ -122,7 +146,7 @@
   
   mat-card-header {
     margin-bottom: 24px;
-    background: #f8f9fa;
+    background: linear-gradient(135deg, rgba(0, 107, 30, 0.1) 0%, rgba(0, 129, 36, 0.1) 100%);
     padding: 20px;
     border-radius: 8px 8px 0 0;
     
@@ -130,14 +154,18 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      /* Couleur du texte du header PNVB */
       color: #2c3e50;
+      font-weight: 600;
       
       mat-icon {
-        color: #3498db;
+        /* Accent vert PNVB */
+        color: #008124;
       }
     }
     
     mat-card-subtitle {
+      /* Couleur secondaire harmonisée */
       color: #7f8c8d;
       margin-top: 4px;
     }
@@ -151,10 +179,15 @@
   
   mat-spinner {
     margin: 0 auto 20px;
+    /* Couleur du spinner en vert PNVB */
+    circle {
+      stroke: #008124;
+    }
   }
   
   p {
     font-size: 16px;
+    font-weight: 500;
   }
 }
 
@@ -164,7 +197,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -173,8 +206,9 @@
   
   p {
     margin-top: 16px;
-    color: #3498db;
-    font-weight: 500;
+    /* Couleur vert PNVB */
+    color: #008124;
+    font-weight: 600;
   }
 }
 
@@ -182,7 +216,7 @@
   overflow-x: auto;
   margin-bottom: 16px;
   border-radius: 8px;
-  border: 1px solid #eee;
+  border: 1px solid #e0e0e0;
 }
 
 .rapport-title {
@@ -195,6 +229,8 @@
     font-size: 24px;
     margin-top: 4px;
     flex-shrink: 0;
+    /* Couleur vert PNVB */
+    color: #008124;
   }
   
   .title-content {
@@ -204,6 +240,7 @@
   
   .rapport-titre {
     display: block;
+    /* Couleur texte principal */
     color: #2c3e50;
     font-weight: 600;
     margin-bottom: 4px;
@@ -211,6 +248,7 @@
   }
   
   .rapport-description {
+    /* Couleur texte secondaire */
     color: #7f8c8d;
     font-size: 13px;
     line-height: 1.4;
@@ -246,7 +284,8 @@
   vertical-align: middle;
   margin-right: 8px;
   font-size: 18px;
-  color: #3498db;
+  /* Accent vert PNVB */
+  color: #008124;
 }
 
 .type-cell {
@@ -265,33 +304,33 @@
     width: fit-content;
     
     &.rapport_trimestriel {
-      background: #e3f2fd;
-      color: #1976d2;
-      border: 1px solid #bbdefb;
+      background: linear-gradient(135deg, rgba(0, 129, 36, 0.1) 0%, rgba(0, 107, 30, 0.1) 100%);
+      color: #008124;
+      border: 1px solid rgba(0, 129, 36, 0.2);
     }
     
     &.rapport_annuel {
-      background: #e8f5e9;
-      color: #388e3c;
-      border: 1px solid #c8e6c9;
+      background: linear-gradient(135deg, rgba(0, 129, 36, 0.15) 0%, rgba(0, 107, 30, 0.15) 100%);
+      color: #006b1e;
+      border: 1px solid rgba(0, 107, 30, 0.3);
     }
     
     &.rapport_impact {
-      background: #fff3e0;
-      color: #f57c00;
-      border: 1px solid #ffe0b2;
+      background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(245, 124, 0, 0.1) 100%);
+      color: #F57C00;
+      border: 1px solid rgba(245, 124, 0, 0.2);
     }
     
     &.rapport_special {
-      background: #f3e5f5;
+      background: linear-gradient(135deg, rgba(123, 31, 162, 0.1) 0%, rgba(106, 27, 154, 0.1) 100%);
       color: #7b1fa2;
-      border: 1px solid #e1bee7;
+      border: 1px solid rgba(123, 31, 162, 0.2);
     }
     
     &.autre {
-      background: #f5f5f5;
+      background: linear-gradient(135deg, rgba(97, 97, 97, 0.1) 0%, rgba(66, 66, 66, 0.1) 100%);
       color: #616161;
-      border: 1px solid #e0e0e0;
+      border: 1px solid rgba(97, 97, 97, 0.2);
     }
   }
   
@@ -303,7 +342,8 @@
 
 .date-cell {
   .date-value {
-    font-weight: 500;
+    font-weight: 600;
+    /* Couleur texte principal */
     color: #2c3e50;
   }
   
@@ -330,18 +370,18 @@
   gap: 4px;
   
   button {
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     
     &:hover {
       transform: scale(1.1);
     }
     
     &:first-child:hover {
-      color: #1976d2;
+      color: #006b1e;
     }
     
     &:last-child:hover {
-      color: #4CAF50;
+      color: #008124;
     }
   }
 }
@@ -357,12 +397,14 @@
     width: 64px;
     margin-bottom: 16px;
     opacity: 0.5;
+    color: #b0bec5;
   }
   
   h3 {
     font-size: 20px;
     margin-bottom: 8px;
     color: #7f8c8d;
+    font-weight: 600;
   }
   
   p {
@@ -371,16 +413,20 @@
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
+    font-weight: 400;
   }
   
   .hint {
     font-size: 14px;
     font-style: italic;
+    color: #90a4ae;
   }
 }
 
 .rapports-paginator {
   margin-top: 16px;
+  background: linear-gradient(135deg, rgba(0, 107, 30, 0.05) 0%, rgba(0, 129, 36, 0.05) 100%);
+  border-radius: 8px;
 }
 
 .guide-card {
@@ -394,8 +440,10 @@
       align-items: center;
       gap: 12px;
       color: #2c3e50;
+      font-weight: 600;
       
       mat-icon {
+        /* Accent doré pour contraster */
         color: #FF9800;
       }
     }
@@ -412,7 +460,8 @@
       gap: 16px;
       
       .step-number {
-        background: #3498db;
+        /* Couleur vert PNVB pour les numéros d'étape */
+        background: linear-gradient(135deg, #006b1e 0%, #008124 100%);
         color: white;
         width: 32px;
         height: 32px;
@@ -420,9 +469,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
+        font-weight: 700;
         font-size: 16px;
         flex-shrink: 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
       
       .step-content {
@@ -430,12 +480,14 @@
           color: #2c3e50;
           margin-bottom: 4px;
           font-size: 16px;
+          font-weight: 600;
         }
         
         p {
           color: #7f8c8d;
           font-size: 14px;
           line-height: 1.4;
+          font-weight: 400;
         }
       }
     }
@@ -453,6 +505,7 @@
   }
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
   .rapports-pnvb-container {
     padding: 16px;
@@ -527,4 +580,121 @@
     flex-direction: column;
     gap: 2px;
   }
+}
+
+/* ===== AMÉLIORATIONS D'HARMONISATION ===== */
+
+/* Appliquer le style de texte du header PNVB */
+.rapports-pnvb-container,
+.rapports-pnvb-container * {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Couleurs principales harmonisées avec le header */
+.primary-text {
+  color: #2c3e50 !important;
+}
+
+.secondary-text {
+  color: #7f8c8d !important;
+}
+
+.accent-green {
+  color: #008124 !important;
+}
+
+.accent-gold {
+  color: #FFD700 !important;
+}
+
+/* Boutons harmonisés */
+button.mat-raised-button,
+button.mat-button {
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+}
+
+button.mat-raised-button.primary {
+  background: linear-gradient(135deg, #006b1e 0%, #008124 100%) !important;
+  color: white !important;
+  
+  &:hover {
+    background: linear-gradient(135deg, #008124 0%, #009629 100%) !important;
+  }
+}
+
+/* Cartes harmonisées */
+mat-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: 12px !important;
+}
+
+/* Table harmonisée */
+.mat-table {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.mat-header-cell {
+  background: linear-gradient(135deg, rgba(0, 107, 30, 0.05) 0%, rgba(0, 129, 36, 0.05) 100%) !important;
+  color: #2c3e50 !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+
+.mat-row:hover {
+  background: linear-gradient(135deg, rgba(0, 129, 36, 0.03) 0%, rgba(0, 107, 30, 0.03) 100%) !important;
+}
+
+/* Paginator harmonisé */
+.mat-paginator {
+  background: linear-gradient(135deg, rgba(0, 107, 30, 0.02) 0%, rgba(0, 129, 36, 0.02) 100%) !important;
+  border-radius: 8px !important;
+}
+
+/* Champs de formulaire harmonisés */
+.mat-form-field {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+.mat-form-field-appearance-outline .mat-form-field-outline {
+  color: rgba(0, 0, 0, 0.12) !important;
+}
+
+.mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
+  color: #008124 !important;
+}
+
+.mat-input-element {
+  color: #2c3e50 !important;
+}
+
+/* Icônes harmonisées */
+.mat-icon {
+  font-family: 'Material Icons' !important;
+}
+
+/* Ombre et effets cohérents */
+.elevated {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.elevated-hover:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Texte avec ombre pour meilleur contraste (comme dans le header) */
+.text-with-shadow {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Bordures vertes PNVB */
+.border-green {
+  border-color: #008124 !important;
+}
+
+.border-green-light {
+  border-color: rgba(0, 129, 36, 0.2) !important;
 }

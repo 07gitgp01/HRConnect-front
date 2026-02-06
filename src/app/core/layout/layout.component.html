@@ -10,7 +10,8 @@
   }
   
   <mat-sidenav-content class="content-container">
-    <app-header (toggleMenu)="toggleSidebar()" [isMobile]="isMobile"></app-header>
+    <!-- ✅ PAS de [isMobile] ici, on gère tout par CSS -->
+    <app-header (toggleMenu)="toggleSidebar()"></app-header>
     
     <div class="main-content-wrapper">
       <main class="main-content">

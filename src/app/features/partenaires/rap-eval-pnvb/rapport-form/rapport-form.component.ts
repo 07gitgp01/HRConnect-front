@@ -339,4 +339,5 @@ getFileSize(size: number | undefined): string {
   const sizeInMB = size / 1024 / 1024;
   return sizeInMB.toFixed(1); // Format à 1 décimale
 }
+
 }

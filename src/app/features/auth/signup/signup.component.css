@@ -1,4 +1,6 @@
-/* signup.component.css */
+/* ===== SIGNUP COMPONENT - VERSION RESPONSIVE AMÉLIORÉE ===== */
+
+/* Container principal */
 .signup-container {
   width: 100%;
   max-width: 600px;
@@ -21,38 +23,42 @@
 
 .signup-container h2 {
   text-align: center;
-  font-size: 26px;
+  font-size: clamp(22px, 5vw, 26px); /* ✅ Taille fluide */
   font-weight: 700;
   margin-bottom: 25px;
-  color: #2e7d32; /* Changé de #0d47a1 à #2e7d32 (vert) */
+  color: #2e7d32;
 }
 
+/* ===== INFO RÔLE ===== */
 .role-info {
-  background: #e8f5e9; /* Changé de #e8f0fe à #e8f5e9 (vert clair) */
+  background: #e8f5e9;
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 25px;
-  border-left: 4px solid #2e7d32; /* Changé de #0d47a1 à #2e7d32 (vert) */
+  border-left: 4px solid #2e7d32;
 }
 
 .role-info p {
   margin: 5px 0;
   text-align: left;
-  color: #2e7d32; /* Changé de #0d47a1 à #2e7d32 (vert) */
-  font-size: 14px;
+  color: #2e7d32;
+  font-size: clamp(13px, 3vw, 14px); /* ✅ Taille fluide */
+  word-wrap: break-word; /* ✅ Évite le débordement */
 }
 
 .role-info p:first-child {
   font-weight: 600;
 }
 
+/* ===== MESSAGES D'ALERTE ===== */
 .alert {
   padding: 12px 15px;
   border-radius: 8px;
   margin-bottom: 20px;
-  font-size: 14px;
+  font-size: clamp(13px, 3vw, 14px); /* ✅ Taille fluide */
   font-weight: 500;
   border: 1px solid;
+  word-wrap: break-word;
 }
 
 .alert-danger {
@@ -61,6 +67,27 @@
   border-color: #ffcdd2;
 }
 
+.success-message {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  word-wrap: break-word;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  word-wrap: break-word;
+}
+
+/* ===== SECTIONS DU FORMULAIRE ===== */
 .form-section {
   margin-bottom: 25px;
   padding-bottom: 20px;
@@ -68,18 +95,19 @@
 }
 
 .form-section h3 {
-  font-size: 18px;
+  font-size: clamp(16px, 4vw, 18px); /* ✅ Taille fluide */
   font-weight: 600;
   margin-bottom: 15px;
-  color: #2e7d32; /* Changé de #0d47a1 à #2e7d32 (vert) */
+  color: #2e7d32;
   padding-bottom: 8px;
-  border-bottom: 2px solid #e8f5e9; /* Changé de #e8f0fe à #e8f5e9 (vert clair) */
+  border-bottom: 2px solid #e8f5e9;
 }
 
 .form-section:last-of-type {
   border-bottom: none;
 }
 
+/* ===== GRILLE DE FORMULAIRE ===== */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -94,31 +122,33 @@
   display: block;
   font-weight: 600;
   margin-bottom: 6px;
-  font-size: 14px;
-  color: #2e7d32; /* Changé de #333 à #2e7d32 (vert) */
+  font-size: clamp(13px, 3vw, 14px); /* ✅ Taille fluide */
+  color: #2e7d32;
 }
 
+/* ===== CHAMPS DE FORMULAIRE ===== */
 .form-control {
   width: 100%;
   padding: 13px 14px;
   border: 1px solid #c7c7c7;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: clamp(14px, 3.5vw, 15px); /* ✅ Taille fluide */
   transition: all 0.25s ease;
   background: #fafafa;
   box-sizing: border-box;
 }
 
 .form-control:focus {
-  border-color: #2e7d32; /* Changé de #0d47a1 à #2e7d32 (vert) */
-  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2); /* Changé de rgba(13, 71, 161, 0.2) */
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
   background: #fff;
   outline: none;
 }
 
+/* ✅ Champs spéciaux avec styles adaptés */
 input[formControlName="nip"].form-control {
-  font-family: monospace;
-  font-size: 16px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: clamp(14px, 3.5vw, 16px);
   letter-spacing: 1px;
   text-align: center;
   background: #f8f9fa;
@@ -126,14 +156,26 @@ input[formControlName="nip"].form-control {
 }
 
 input[formControlName="nip"].form-control:focus {
-  border-color: #2e7d32; /* Changé de #0d47a1 à #2e7d32 (vert) */
+  border-color: #2e7d32;
   background: #fff;
 }
 
 input[formControlName="telephone"].form-control {
-  font-family: monospace;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 0.5px;
 }
 
+/* ===== MESSAGES D'ERREUR ===== */
+.error {
+  color: #d32f2f;
+  font-size: clamp(11px, 2.5vw, 12px); /* ✅ Taille fluide */
+  margin-top: 5px;
+  display: block;
+  font-weight: 500;
+  word-wrap: break-word;
+}
+
+/* ===== CONSENTEMENT ===== */
 .consentement {
   background: #f8f9fa;
   padding: 15px;
@@ -149,35 +191,30 @@ input[formControlName="telephone"].form-control {
   font-weight: normal;
   cursor: pointer;
   margin: 0;
-  font-size: 14px;
+  font-size: clamp(13px, 3vw, 14px); /* ✅ Taille fluide */
   line-height: 1.4;
 }
 
 .consentement-checkbox {
   width: 18px;
   height: 18px;
+  min-width: 18px; /* ✅ Empêche le rétrécissement */
   margin-top: 2px;
-  accent-color: #2e7d32; /* Changé de #0d47a1 à #2e7d32 (vert) */
+  accent-color: #2e7d32;
+  cursor: pointer;
 }
 
 .consentement-text {
   flex: 1;
 }
 
-.error {
-  color: #d32f2f;
-  font-size: 12px;
-  margin-top: 5px;
-  display: block;
-  font-weight: 500;
-}
-
+/* ===== BOUTONS ===== */
 .btn {
   width: 100%;
   padding: 14px;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: clamp(15px, 3.5vw, 16px); /* ✅ Taille fluide */
   font-weight: 700;
   cursor: pointer;
   transition: 0.25s ease;
@@ -187,23 +224,24 @@ input[formControlName="telephone"].form-control {
 }
 
 .btn-primary {
-  background: #2e7d32; /* Changé de #0d47a1 à #2e7d32 (vert) */
+  background: #2e7d32;
   color: #fff;
 }
 
-.btn-primary:hover {
-  background: #1b5e20; /* Changé de #08306b à #1b5e20 (vert foncé) */
+.btn-primary:hover:not(:disabled) {
+  background: #1b5e20;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3); /* Changé de rgba(13, 71, 161, 0.3) */
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
 }
 
 .btn-primary:disabled {
-  background: #a5d6a7; /* Changé de #9bb7df à #a5d6a7 (vert clair) */
+  background: #a5d6a7;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
+/* Spinner de chargement */
 .loading-spinner {
   display: inline-block;
   width: 16px;
@@ -213,12 +251,14 @@ input[formControlName="telephone"].form-control {
   border-top-color: transparent;
   animation: spin 1s ease-in-out infinite;
   margin-right: 8px;
+  vertical-align: middle;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
+/* ===== LIEN DE CONNEXION ===== */
 .login-link {
   text-align: center;
   margin-top: 20px;
@@ -229,19 +269,21 @@ input[formControlName="telephone"].form-control {
 .login-link p {
   margin: 0;
   color: #666;
+  font-size: clamp(13px, 3vw, 14px);
 }
 
 .login-link a {
-  color: #2e7d32; /* Changé de #0d47a1 à #2e7d32 (vert) */
+  color: #2e7d32;
   font-weight: 600;
   text-decoration: none;
 }
 
 .login-link a:hover {
   text-decoration: underline;
-  color: #1b5e20; /* Changé pour ajouter une couleur au survol (vert foncé) */
+  color: #1b5e20;
 }
 
+/* ===== AUTRES COMPTES ===== */
 .other-accounts {
   margin-top: 25px;
   padding: 15px;
@@ -254,7 +296,7 @@ input[formControlName="telephone"].form-control {
   text-align: left;
   margin: 0 0 10px 0;
   color: #495057;
-  font-size: 14px;
+  font-size: clamp(13px, 3vw, 14px);
 }
 
 .other-accounts ul {
@@ -265,80 +307,184 @@ input[formControlName="telephone"].form-control {
 
 .other-accounts li {
   margin-bottom: 5px;
-  font-size: 13px;
+  font-size: clamp(12px, 2.5vw, 13px);
   line-height: 1.4;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+
+/* Tablettes (769px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
   .signup-container {
-    margin: 20px 15px;
-    padding: 20px;
+    max-width: 650px;
+    margin: 50px auto;
   }
   
   .form-row {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  
-  .signup-container h2 {
-    font-size: 22px;
+    gap: 18px;
   }
 }
 
+/* Tablettes portrait et grands mobiles (481px - 768px) */
+@media (max-width: 768px) {
+  .signup-container {
+    max-width: 90%;
+    margin: 30px auto;
+    padding: 25px;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr; /* ✅ Une colonne sur tablette */
+    gap: 12px;
+  }
+  
+  .signup-container h2 {
+    margin-bottom: 20px;
+  }
+  
+  .form-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+  }
+  
+  .role-info {
+    padding: 12px;
+  }
+  
+  .consentement {
+    padding: 12px;
+  }
+  
+  .other-accounts {
+    padding: 12px;
+  }
+}
+
+/* Mobiles (320px - 480px) */
 @media (max-width: 480px) {
+  .signup-container {
+    max-width: 95%;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 12px;
+  }
+  
+  .signup-container h2 {
+    margin-bottom: 18px;
+  }
+  
+  .form-section {
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+  }
+  
   .form-section h3 {
-    font-size: 16px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+  }
+  
+  .form-row {
+    gap: 10px;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
   }
   
   .form-control {
     padding: 11px 12px;
-    font-size: 14px;
+  }
+  
+  .btn {
+    padding: 12px;
+  }
+  
+  .role-info,
+  .consentement,
+  .other-accounts {
+    padding: 10px;
+    margin-top: 15px;
+  }
+  
+  .consentement-label {
+    gap: 8px;
+  }
+  
+  .login-link {
+    margin-top: 15px;
+    padding-top: 15px;
   }
 }
 
-.success-message {
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
-  color: #155724;
-  padding: 12px;
-  border-radius: 4px;
-  margin-bottom: 16px;
+/* Très petits mobiles (< 360px) */
+@media (max-width: 360px) {
+  .signup-container {
+    max-width: 98%;
+    margin: 15px auto;
+    padding: 16px;
+  }
+  
+  .form-control {
+    padding: 10px;
+  }
+  
+  .btn {
+    padding: 11px;
+  }
+  
+  .alert,
+  .success-message,
+  .error-message {
+    padding: 10px 12px;
+  }
+  
+  .form-section {
+    margin-bottom: 15px;
+  }
 }
 
-.error-message {
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  color: #721c24;
-  padding: 12px;
-  border-radius: 4px;
-  margin-bottom: 16px;
+/* ===== MODE PAYSAGE (LANDSCAPE) ===== */
+@media (max-height: 600px) and (orientation: landscape) {
+  .signup-container {
+    margin: 15px auto;
+    max-height: 95vh;
+    overflow-y: auto; /* ✅ Scroll si nécessaire */
+  }
+  
+  .signup-container h2 {
+    margin-bottom: 12px;
+  }
+  
+  .form-section {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
+  
+  .form-section h3 {
+    margin-bottom: 10px;
+  }
+  
+  .form-group {
+    margin-bottom: 12px;
+  }
+  
+  .role-info,
+  .other-accounts {
+    margin-top: 12px;
+    margin-bottom: 12px;
+  }
 }
 
-.loading-spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid #ffffff;
-  border-radius: 50%;
-  border-top-color: transparent;
-  animation: spin 1s ease-in-out infinite;
-  margin-right: 8px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Ajout pour la compatibilité avec le mode sombre */
+/* ===== MODE SOMBRE ===== */
 @media (prefers-color-scheme: dark) {
   .signup-container {
     background: #1e1e1e;
     color: #e0e0e0;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   }
   
   .signup-container h2 {
-    color: #4caf50; /* Vert pour mode sombre */
+    color: #4caf50;
   }
   
   .role-info {
@@ -356,15 +502,7 @@ input[formControlName="telephone"].form-control {
   }
   
   .form-group label {
-    color: #4caf50;
-  }
-  
-  .login-link a {
-    color: #4caf50;
-  }
-  
-  .login-link a:hover {
-    color: #81c784;
+    color: #a5d6a7;
   }
   
   .form-control {
@@ -376,5 +514,91 @@ input[formControlName="telephone"].form-control {
   .form-control:focus {
     border-color: #4caf50;
     background-color: #363636;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+  }
+  
+  input[formControlName="nip"].form-control {
+    background: #2d2d2d;
+    border-color: #404040;
+  }
+  
+  input[formControlName="nip"].form-control:focus {
+    border-color: #4caf50;
+  }
+  
+  .consentement,
+  .other-accounts {
+    background: #2d2d2d;
+    border-color: #404040;
+  }
+  
+  .login-link p {
+    color: #a5a5a5;
+  }
+  
+  .login-link a {
+    color: #4caf50;
+  }
+  
+  .login-link a:hover {
+    color: #81c784;
+  }
+  
+  .other-accounts p {
+    color: #a5a5a5;
+  }
+  
+  .other-accounts ul {
+    color: #8c8c8c;
+  }
+}
+
+/* ===== RÉDUCTION DES ANIMATIONS (ACCESSIBILITÉ) ===== */
+@media (prefers-reduced-motion: reduce) {
+  .signup-container,
+  .form-control,
+  .btn-primary,
+  .login-link a {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    transform: none !important;
+  }
+  
+  .loading-spinner {
+    animation: none !important;
+  }
+}
+
+/* ===== SUPPORT HAUTE RÉSOLUTION ===== */
+@media (min-width: 1440px) {
+  .signup-container {
+    max-width: 700px;
+    padding: 35px;
+  }
+  
+  .form-row {
+    gap: 20px;
+  }
+}
+
+/* ===== AMÉLIORATION TACTILE (TOUCH) ===== */
+@media (hover: none) and (pointer: coarse) {
+  /* Augmentation de la zone tactile sur les écrans tactiles */
+  .consentement-checkbox {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+  }
+  
+  .btn {
+    padding: 16px; /* ✅ Boutons plus grands */
+    min-height: 48px; /* ✅ Norme d'accessibilité tactile */
+  }
+  
+  .form-control {
+    min-height: 48px; /* ✅ Champs plus faciles à toucher */
   }
 }

@@ -11,7 +11,7 @@
       <div class="filters-grid">
         <!-- Recherche -->
         <mat-form-field appearance="outline" class="search-field">
-          <mat-label>Rechercher un projet</mat-label>
+          <mat-label>Rechercher une mission</mat-label>
           <input matInput 
                  [(ngModel)]="recherche" 
                  (input)="appliquerFiltres()"
@@ -68,14 +68,14 @@
     <!-- État de chargement -->
     <div *ngIf="isLoading" class="loading-section">
       <mat-spinner diameter="50"></mat-spinner>
-      <p>Chargement des projets...</p>
+      <p>Chargement des missions...</p>
     </div>
 
     <!-- Erreur -->
     <div *ngIf="hasError && !isLoading" class="error-section">
       <mat-icon>error_outline</mat-icon>
       <h3>Erreur de chargement</h3>
-      <p>Impossible de charger les projets. Veuillez réessayer.</p>
+      <p>Impossible de charger les missions. Veuillez réessayer.</p>
       <button mat-raised-button color="primary" (click)="chargerProjets()">
         <mat-icon>refresh</mat-icon>
         Réessayer
@@ -85,12 +85,12 @@
     <!-- Aucun projet -->
     <div *ngIf="!isLoading && !hasError && projetsFiltres.length === 0" class="no-projects-section">
       <mat-icon>search_off</mat-icon>
-      <h3>Aucun projet trouvé</h3>
-      <p>Aucun projet ne correspond à vos critères de recherche.</p>
-      <button mat-raised-button color="primary" (click)="reinitialiserFiltres()">
+      <h3>Aucune mission trouvée</h3>
+      <p>Aucune mission ne correspond à vos critères de recherche.</p>
+      <!-- <button mat-raised-button color="primary" (click)="reinitialiserFiltres()">
         <mat-icon>clear_all</mat-icon>
         Voir tous les projets
-      </button>
+      </button> -->
     </div>
 
     <!-- Grille des projets -->

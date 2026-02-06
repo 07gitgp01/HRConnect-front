@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,11 +11,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { RouterModule } from '@angular/router';
 
 import { Project, ProjectWorkflow } from '../../models/projects.model';
 import { ProjectService } from '../../services/service_projects/projects.service';
 import { CandidatureService } from '../../services/service_candi/candidature.service';
+import { AuthService } from '../../services/service_auth/auth.service';
 
 @Component({
   selector: 'app-projets-disponibles',
@@ -56,6 +57,8 @@ export class ProjetsDisponiblesComponent implements OnInit {
   constructor(
     private projectService: ProjectService,
     private candidatureService: CandidatureService,
+    private authService: AuthService,
+    private router: Router,
     private snackBar: MatSnackBar
   ) {}
 
@@ -67,7 +70,6 @@ export class ProjetsDisponiblesComponent implements OnInit {
     this.isLoading = true;
     this.hasError = false;
 
-    // ✅ CORRECTION : getProjetsPublic() utilise maintenant les statuts 'actif'
     this.projectService.getProjetsPublic().subscribe({
       next: (projets: Project[]) => {
         this.projets = projets;
@@ -89,36 +91,36 @@ export class ProjetsDisponiblesComponent implements OnInit {
   }
 
   private extraireFiltres(projets: Project[]): void {
-  // Régions
-  const regionsFiltrees = projets
-    .map(p => p.regionAffectation)
-    .filter((r: string | undefined): r is string => !!r && r.trim() !== '');
-  
-  this.regions = [...new Set(regionsFiltrees)].sort();
+    // Régions
+    const regionsFiltrees = projets
+      .map(p => p.regionAffectation)
+      .filter((r: string | undefined): r is string => !!r && r.trim() !== '');
+    
+    this.regions = [...new Set(regionsFiltrees)].sort();
 
-  // Domaines d'activité
-  const domainesFiltres = projets
-    .map(p => p.domaineActivite)
-    .filter((d: string | undefined): d is string => !!d && d.trim() !== '');
-  
-  this.domaineActivites = [...new Set(domainesFiltres)].sort();
+    // Domaines d'activité
+    const domainesFiltres = projets
+      .map(p => p.domaineActivite)
+      .filter((d: string | undefined): d is string => !!d && d.trim() !== '');
+    
+    this.domaineActivites = [...new Set(domainesFiltres)].sort();
 
-  // ✅ CORRECTION : Types de mission avec conversion explicite en string
-  const typesMission = projets
-    .map(p => p.type_mission)
-    .filter((t): t is NonNullable<Project['type_mission']> => 
-      t !== undefined && t !== null
-    )
-    .map(t => String(t)); // Conversion en string pour garantir le type
+    // Types de mission
+    const typesMission = projets
+      .map(p => p.type_mission)
+      .filter((t): t is NonNullable<Project['type_mission']> => 
+        t !== undefined && t !== null
+      )
+      .map(t => String(t));
 
-  this.typeMissions = [...new Set(typesMission)].sort();
+    this.typeMissions = [...new Set(typesMission)].sort();
 
-  console.log('🔍 Filtres extraits:', {
-    regions: this.regions,
-    domaines: this.domaineActivites,
-    typesMission: this.typeMissions
-  });
-}
+    console.log('🔍 Filtres extraits:', {
+      regions: this.regions,
+      domaines: this.domaineActivites,
+      typesMission: this.typeMissions
+    });
+  }
 
   appliquerFiltres(): void {
     let projetsFiltres = [...this.projets];
@@ -174,19 +176,22 @@ export class ProjetsDisponiblesComponent implements OnInit {
     });
   }
 
-  // Méthodes utilitaires
+  // ==================== MÉTHODES UTILITAIRES ====================
+
+  /**
+   * ✅ AMÉLIORÉ: Gestion simplifiée des compétences
+   */
   getCompetencesText(competences: string[] | string | undefined): string {
     if (!competences) return 'Aucune compétence spécifiée';
     
-    if (Array.isArray(competences)) {
-      if (competences.length === 0) return 'Aucune compétence spécifiée';
-      return competences.slice(0, 3).join(', ') + 
-             (competences.length > 3 ? `... (+${competences.length - 3})` : '');
-    }
+    const competencesList = Array.isArray(competences) 
+      ? competences 
+      : competences.split(',').map(c => c.trim()).filter(c => c.length > 0);
     
-    return competences.length > 100 
-      ? competences.substring(0, 100) + '...' 
-      : competences;
+    if (competencesList.length === 0) return 'Aucune compétence spécifiée';
+    
+    return competencesList.slice(0, 3).join(', ') + 
+           (competencesList.length > 3 ? `... (+${competencesList.length - 3})` : '');
   }
 
   getCompetencesList(competences: string[] | string | undefined): string[] {
@@ -200,8 +205,8 @@ export class ProjetsDisponiblesComponent implements OnInit {
   }
 
   getVolontairesManquants(projet: Project): number {
-    const requis = projet.nombreVolontairesRequis || 0;
-    const actuels = projet.nombreVolontairesActuels || 0;
+    const requis = projet.nombreVolontairesRequis ?? 0;
+    const actuels = projet.nombreVolontairesActuels ?? 0;
     return Math.max(0, requis - actuels);
   }
 
@@ -244,11 +249,13 @@ export class ProjetsDisponiblesComponent implements OnInit {
     }
   }
 
-  // ✅ CORRECTION : Utilisation de la méthode du service pour vérifier si on peut postuler
   peutPostuler(projet: Project): boolean {
     return this.projectService.canApplyToProject(projet);
   }
 
+  /**
+   * ✅ CORRIGÉ: Redirection vers le formulaire de candidature
+   */
   postuler(projet: Project): void {
     if (!projet.id) {
       this.snackBar.open('Impossible de postuler à ce projet', 'Fermer', {
@@ -257,7 +264,19 @@ export class ProjetsDisponiblesComponent implements OnInit {
       return;
     }
 
-    // ✅ CORRECTION : Vérification via la méthode du service
+    // Vérifier si l'utilisateur est connecté
+    const user = this.authService.getCurrentUser();
+    
+    if (!user) {
+      this.snackBar.open('Vous devez être connecté pour postuler', 'Fermer', {
+        duration: 3000
+      });
+      this.router.navigate(['/login'], {
+        queryParams: { returnUrl: `/features/candidats/postuler/${projet.id}` }
+      });
+      return;
+    }
+
     if (!this.peutPostuler(projet)) {
       let message = '';
       
@@ -278,34 +297,31 @@ export class ProjetsDisponiblesComponent implements OnInit {
       return;
     }
 
-    const confirmation = confirm(`Souhaitez-vous postuler au projet "${projet.titre}" ?`);
+    // ✅ Vérifier si l'utilisateur a déjà postulé
+    this.isLoading = true;
     
-    if (confirmation) {
-      this.isLoading = true;
-      
-      const nouvelleCandidature = {
-        projectId: projet.id,
-        projetTitre: projet.titre,
-        dateCandidature: new Date().toISOString(),
-        statut: 'en_attente'
-      };
-
-      this.candidatureService.createCandidature(nouvelleCandidature).subscribe({
-        next: () => {
-          this.snackBar.open('Candidature envoyée avec succès !', 'Fermer', {
+    this.candidatureService.emailDejaPostule(user.email, projet.id).subscribe({
+      next: (dejaPostule) => {
+        this.isLoading = false;
+        
+        if (dejaPostule) {
+          this.snackBar.open('Vous avez déjà postulé à ce projet', 'Fermer', {
             duration: 3000
           });
-          this.isLoading = false;
-        },
-        error: (error: any) => {
-          console.error('Erreur envoi candidature:', error);
-          this.snackBar.open('Erreur lors de l\'envoi de la candidature', 'Fermer', {
-            duration: 3000
-          });
-          this.isLoading = false;
+          return;
         }
-      });
-    }
+
+        // Rediriger vers le formulaire complet de candidature
+        this.router.navigate(['/features/candidats/postuler', projet.id]);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Erreur vérification candidature:', error);
+        
+        // En cas d'erreur, on redirige quand même vers le formulaire
+        this.router.navigate(['/features/candidats/postuler', projet.id]);
+      }
+    });
   }
 
   getUrgenceCandidature(projet: Project): string {
@@ -337,7 +353,6 @@ export class ProjetsDisponiblesComponent implements OnInit {
     }
   }
 
-  // ✅ CORRECTION : Nouvelle méthode pour obtenir le label du statut
   getStatusLabel(status: string): string {
     return ProjectWorkflow.getStatusLabel(status as any);
   }

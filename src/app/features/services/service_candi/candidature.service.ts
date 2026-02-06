@@ -41,20 +41,30 @@ export class CandidatureService {
     );
   }
 
+  /**
+   * ✅ CORRIGÉ: Normalisation AVANT envoi HTTP
+   */
   create(candidature: Candidature): Observable<Candidature> {
     // ✅ VALIDATION: Vérifier que le volontaireId est présent
     if (!candidature.volontaireId) {
       return throwError(() => new Error('Le volontaireId est requis pour créer une candidature'));
     }
 
-    const candidatureAvecDates = {
+    // ✅ Normaliser AVANT d'envoyer à l'API
+    const candidatureNormalisee = this.normalizeCandidature({
       ...candidature,
       cree_le: new Date().toISOString(),
       mis_a_jour_le: new Date().toISOString(),
       statut: candidature.statut || 'en_attente'
-    };
+    });
     
-    return this.http.post<Candidature>(`${this.apiUrl}/candidatures`, candidatureAvecDates).pipe(
+    console.log('📤 Création candidature normalisée:', {
+      volontaireId: candidatureNormalisee.volontaireId,
+      projectId: candidatureNormalisee.projectId,
+      nom: candidatureNormalisee.nom
+    });
+    
+    return this.http.post<Candidature>(`${this.apiUrl}/candidatures`, candidatureNormalisee).pipe(
       map(newCandidature => this.normalizeCandidature(newCandidature)),
       catchError(error => {
         console.error('❌ Erreur création candidature:', error);
@@ -95,7 +105,7 @@ export class CandidatureService {
     return {
       ...candidature,
       volontaireId: this.normalizeVolontaireId(candidature.volontaireId),
-      projectId: candidature.projectId, // Déjà number dans le modèle
+      projectId: this.normalizeProjectId(candidature.projectId), // ✅ Ajouté
       competences: this.normalizeCompetences(candidature.competences),
       statut: candidature.statut || 'en_attente',
       typePiece: candidature.typePiece || 'CNIB'
@@ -120,6 +130,22 @@ export class CandidatureService {
     const idNumber = Number(id);
     if (isNaN(idNumber)) {
       throw new Error(`ID volontaire invalide: ${id}`);
+    }
+    
+    return idNumber;
+  }
+
+  /**
+   * ✅ NOUVEAU: Normaliser projectId (assurer que c'est un number)
+   */
+  private normalizeProjectId(id: number): number {
+    if (typeof id === 'number') {
+      return id;
+    }
+    
+    const idNumber = Number(id);
+    if (isNaN(idNumber)) {
+      throw new Error(`ID projet invalide: ${id}`);
     }
     
     return idNumber;

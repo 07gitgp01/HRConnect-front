@@ -1,5 +1,6 @@
 <!-- src/app/core/layout/header/header.component.html -->
-<mat-toolbar color="primary" class="mat-elevation-z4">
+<!-- ✅ CORRIGÉ : Suppression de class="mat-elevation-z4" qui ajoutait l'ombre grise -->
+<mat-toolbar color="primary">
   
   <!-- Bouton pour ouvrir/fermer la sidebar (visible uniquement si connecté) -->
   @if (username()) {

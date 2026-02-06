@@ -13,7 +13,7 @@
             <mat-icon class="stat-icon">folder_open</mat-icon>
             <div class="stat-info">
               <div class="stat-number">{{ stats.totalCandidatures }}</div>
-              <div class="stat-label">Total Candidatures</div>
+              <div class="stat-label">Total</div>
             </div>
           </div>
         </mat-card-content>
@@ -108,10 +108,10 @@
             <mat-icon class="empty-icon">inbox</mat-icon>
             <h3>Aucune candidature pour le moment</h3>
             <p>Découvrez les missions disponibles et postulez !</p>
-            <button mat-raised-button color="primary" (click)="voirTousProjets()">
+            <!-- <button mat-raised-button color="primary" (click)="voirTousProjets()">
               <mat-icon>search</mat-icon>
               Découvrir les missions
-            </button>
+            </button> -->
           </div>
 
           <div *ngFor="let candidature of mesCandidatures" class="candidature-item">

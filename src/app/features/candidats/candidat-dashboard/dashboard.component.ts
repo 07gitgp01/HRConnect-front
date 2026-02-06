@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
-// Angular Material imports
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,10 +14,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AuthService } from '../../services/service_auth/auth.service';
 import { CandidatureService } from '../../services/service_candi/candidature.service';
-import { VolontaireService } from '../../services/service_volont/volontaire.service';
+import { VolontaireService, calculerCompletionProfil } from '../../services/service_volont/volontaire.service';
 import { ProjectService } from '../../services/service_projects/projects.service';
 import { Candidature } from '../../models/candidature.model';
-import { Project } from '../../models/projects.model';
+import { Volontaire } from '../../models/volontaire.model';
 
 @Component({
   selector: 'app-candidat-dashboard',
@@ -41,14 +40,13 @@ import { Project } from '../../models/projects.model';
 })
 export class CandidatDashboardComponent implements OnInit {
   user: any;
-  volontaire: any = null;
+  volontaire: Volontaire | null = null;
   statutPrincipal: string = 'Candidat';
   notifications: any[] = [];
   mesCandidatures: Candidature[] = [];
   projetsDisponibles: any[] = [];
   loading = true;
 
-  // Statistiques
   stats = {
     totalCandidatures: 0,
     enAttente: 0,
@@ -56,6 +54,9 @@ export class CandidatDashboardComponent implements OnInit {
     acceptee: 0,
     refusee: 0
   };
+
+  // ✅ pourcentage calculé une seule fois après chargement du volontaire
+  profilCompletion = 0;
 
   constructor(
     private authService: AuthService,
@@ -67,38 +68,119 @@ export class CandidatDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.user = this.authService.getCurrentUser();
-    if (this.user) {
-      this.loadDashboardData();
-    } else {
+    if (!this.user) {
       this.router.navigate(['/login']);
+      return;
     }
-  }
 
-  loadDashboardData(): void {
-    this.loadUserData();
-    this.loadMesCandidatures();
+    // ✅ deux branches indépendantes :
+    //   1) charger le volontaire → puis candidatures → puis notifications
+    //   2) charger les projets disponibles (pas de dépendance)
+    this.chargerVolontairePuisSuite();
     this.loadProjetsDisponiblesAvecStats();
-    this.loadNotifications();
   }
 
-  loadUserData(): void {
-    if (this.user.id && this.user.role === 'volontaire') {
-      this.volontaireService.getVolontaire(this.user.id).subscribe({
-        next: (volontaire) => {
-          this.volontaire = volontaire;
-          this.statutPrincipal = this.getStatutPrincipal(volontaire.statut);
-        },
-        error: () => {
-          this.statutPrincipal = 'Candidat';
-        }
-      });
-    } else {
-      this.statutPrincipal = 'Candidat';
+  // ============================================================
+  // ✅ BRANCHE 1 — volontaire → candidatures → notifications
+  //    Chaque étape attend que la précédente soit terminée.
+  // ============================================================
+
+  /**
+   * Charge le volontaire via getVolontaireId() (fonctionne pour
+   * role === 'candidat' ET role === 'volontaire').
+   * Puis enchaîne les étapes suivantes dans le callback next.
+   */
+  private chargerVolontairePuisSuite(): void {
+    const volontaireId = this.authService.getVolontaireId();
+
+    if (!volontaireId) {
+      // pas de volontaireId → on reste "Candidat", on charge quand même les candidatures
+      console.warn('⚠️ Aucun volontaireId dans la session. Tentative avec user.id.');
+
+      if (this.user?.id) {
+        this.volontaireService.getVolontaire(this.user.id).subscribe({
+          next:  (v) => this.appliquerVolontaire(v),
+          error: ()  => this.finirChargementSansVolontaire()
+        });
+      } else {
+        this.finirChargementSansVolontaire();
+      }
+      return;
     }
+
+    this.volontaireService.getVolontaire(volontaireId).subscribe({
+      next:  (v) => this.appliquerVolontaire(v),
+      error: ()  => this.finirChargementSansVolontaire()
+    });
   }
+
+  /** Applique les données du volontaire puis charge les candidatures */
+  private appliquerVolontaire(volontaire: Volontaire): void {
+    this.volontaire       = volontaire;
+    this.statutPrincipal  = this.getStatutPrincipal(volontaire.statut);
+    // ✅ calcul du pourcentage avec la fonction centralisée du service
+    this.profilCompletion = calculerCompletionProfil(volontaire);
+    console.log('✅ Volontaire chargé — completion:', this.profilCompletion, '%');
+
+    // maintenant on peut charger les candidatures
+    this.loadMesCandidatures();
+  }
+
+  /** Chemin d'erreur : pas de volontaire → candidatures quand même */
+  private finirChargementSansVolontaire(): void {
+    this.volontaire       = null;
+    this.statutPrincipal  = 'Candidat';
+    this.profilCompletion = 0;
+    this.loadMesCandidatures();   // on essaie quand même
+  }
+
+  // ============================================================
+  // CANDIDATURES
+  // ============================================================
+
+  /**
+   * Charge les candidatures puis calcule les stats et les notifications.
+   * Filtre par volontaireId si disponible, sinon par email (fallback).
+   */
+  loadMesCandidatures(): void {
+    this.candidatureService.getAll().subscribe({
+      next: (candidatures) => {
+        const volontaireId = this.authService.getVolontaireId();
+
+        if (volontaireId) {
+          this.mesCandidatures = candidatures
+            .filter(c => c.volontaireId?.toString() === volontaireId.toString());
+        } else if (this.user?.email) {
+          console.warn('⚠️ Filtrage par email (fallback)');
+          this.mesCandidatures = candidatures
+            .filter(c => c.email === this.user.email);
+        }
+
+        // trier par date desc et limiter à 5
+        this.mesCandidatures = this.mesCandidatures
+          .sort((a, b) => new Date(b.cree_le || '').getTime() - new Date(a.cree_le || '').getTime())
+          .slice(0, 5);
+
+        this.calculerStats();
+
+        // ✅ notifications APRÈS que volontaire + candidatures sont prêts
+        this.loadNotifications();
+
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('❌ Erreur chargement candidatures:', err);
+        this.loadNotifications(); // quand même
+        this.loading = false;
+      }
+    });
+  }
+
+  // ============================================================
+  // NOTIFICATIONS  (appelée uniquement après candidatures)
+  // ============================================================
 
   loadNotifications(): void {
-    // Notifications de base
     this.notifications = [
       {
         id: 1,
@@ -109,36 +191,35 @@ export class CandidatDashboardComponent implements OnInit {
       }
     ];
 
-    // Ajouter des notifications basées sur les candidatures
-    if (this.mesCandidatures.length > 0) {
-      const candidaturesEnAttente = this.mesCandidatures.filter(c => c.statut === 'en_attente');
-      if (candidaturesEnAttente.length > 0) {
-        this.notifications.push({
-          id: 2,
-          message: `Vous avez ${candidaturesEnAttente.length} candidature(s) en attente de traitement`,
-          date: new Date().toISOString(),
-          type: 'warning',
-          lu: false
-        });
-      }
+    // basées sur les candidatures (déjà chargées à ce point)
+    const enAttente  = this.mesCandidatures.filter(c => c.statut === 'en_attente');
+    const entretien  = this.mesCandidatures.filter(c => c.statut === 'entretien');
 
-      const candidaturesEntretien = this.mesCandidatures.filter(c => c.statut === 'entretien');
-      if (candidaturesEntretien.length > 0) {
-        this.notifications.push({
-          id: 3,
-          message: `Félicitations ! ${candidaturesEntretien.length} de vos candidatures ont été présélectionnées`,
-          date: new Date().toISOString(),
-          type: 'success',
-          lu: false
-        });
-      }
+    if (enAttente.length > 0) {
+      this.notifications.push({
+        id: 2,
+        message: `Vous avez ${enAttente.length} candidature(s) en attente de traitement`,
+        date: new Date().toISOString(),
+        type: 'warning',
+        lu: false
+      });
     }
 
-    // Notification pour profil incomplet
+    if (entretien.length > 0) {
+      this.notifications.push({
+        id: 3,
+        message: `Félicitations ! ${entretien.length} de vos candidatures ont été présélectionnées`,
+        date: new Date().toISOString(),
+        type: 'success',
+        lu: false
+      });
+    }
+
+    // ✅ utilise profilCompletion déjà calculé (pas de re-calcul)
     if (!this.isProfilComplet()) {
       this.notifications.push({
         id: 4,
-        message: 'Votre profil doit être complété à 100% pour pouvoir postuler',
+        message: `Votre profil est complété à ${this.profilCompletion}%. Complétez-le à 100% pour pouvoir postuler.`,
         date: new Date().toISOString(),
         type: 'error',
         lu: false
@@ -146,45 +227,30 @@ export class CandidatDashboardComponent implements OnInit {
     }
   }
 
+  // ============================================================
+  // ✅ COMPLÉTION DU PROFIL — délègue à calculerCompletionProfil()
+  // ============================================================
+
   isProfilComplet(): boolean {
-    // Implémentez la logique de vérification du profil complet
-    // Vérifiez si tous les champs obligatoires sont remplis
-    if (!this.volontaire) return false;
-    
-    const champsObligatoires = [
-      'adresseResidence',
-      'regionGeographique', 
-      'niveauEtudes',
-      'domaineEtudes',
-      'competences',
-      'motivation',
-      'disponibilite',
-      'typePiece',
-      'numeroPiece'
-    ];
-    
-    return champsObligatoires.every(champ => 
-      this.volontaire[champ] && this.volontaire[champ].toString().trim() !== ''
-    );
+    return this.profilCompletion >= 100;
   }
+
+  getProfilCompletion(): number {
+    return this.profilCompletion;
+  }
+
+  // ============================================================
+  // BRANCHE 2 — projets disponibles (indépendant du volontaire)
+  // ============================================================
 
   loadProjetsDisponiblesAvecStats(): void {
     this.projectService.getAllProjectsWithStats().subscribe({
       next: (projetsAvecStats) => {
-        console.log('📊 Dashboard - Projets avec stats:', projetsAvecStats);
-        
-        // Filtrer les projets qui sont en cours ET qui ont besoin de volontaires
         this.projetsDisponibles = projetsAvecStats
-          .filter((projet: any) => this.estProjetEnCours(projet) && this.aBesoinDeVolontaires(projet))
+          .filter((p: any) => this.estProjetEnCours(p) && this.aBesoinDeVolontaires(p))
           .slice(0, 6);
-        
-        console.log('✅ Dashboard - Projets disponibles:', this.projetsDisponibles);
       },
-      error: (error) => {
-        console.error('❌ Erreur chargement projets dashboard:', error);
-        // Fallback
-        this.loadProjetsDisponiblesNormaux();
-      }
+      error: () => this.loadProjetsDisponiblesNormaux()
     });
   }
 
@@ -192,167 +258,131 @@ export class CandidatDashboardComponent implements OnInit {
     this.projectService.getProjects().subscribe({
       next: (projets) => {
         this.projetsDisponibles = projets
-          .filter((projet: any) => this.estProjetEnCours(projet) && this.aBesoinDeVolontaires(projet))
+          .filter((p: any) => this.estProjetEnCours(p) && this.aBesoinDeVolontaires(p))
           .slice(0, 6);
       },
-      error: (error) => {
-        console.error('Erreur chargement projets:', error);
-      }
+      error: (err) => console.error('❌ Erreur chargement projets:', err)
     });
   }
 
-  // CORRIGÉ : Utilise les propriétés du modèle Project
   private aBesoinDeVolontaires(projet: any): boolean {
-    const needed = projet.nombreVolontairesRequis || 0;
-    const affectes = projet.nombreVolontairesActuels || 0;
-    return needed > affectes;
+    return (projet.nombreVolontairesRequis ?? 0) > (projet.nombreVolontairesActuels ?? 0);
   }
 
-  // CORRIGÉ : Utilise statutProjet au lieu de status
   private estProjetEnCours(projet: any): boolean {
-    const statut = projet.statutProjet?.toLowerCase() || '';
-    
-    const statutsEnCours = [
-      'en cours',
-      'encours', 
-      'en_cours',
-      'active',
-      'actif',
-      'en progression',
-      'disponible',
-      'ouvert',
-      'planifié',
-      'soumis',
-      'ouvert_aux_candidatures'
+    const statut = (projet.statutProjet || '').toLowerCase();
+    const statutsValides = [
+      'en cours', 'encours', 'en_cours', 'active', 'actif',
+      'en progression', 'disponible', 'ouvert', 'planifié',
+      'soumis', 'ouvert_aux_candidatures'
     ];
-    
-    return statutsEnCours.some(statutEnCours => 
-      statut.includes(statutEnCours)
-    );
+    return statutsValides.some(s => statut.includes(s));
   }
 
-  loadMesCandidatures(): void {
-    this.candidatureService.getAll().subscribe({
-      next: (candidatures) => {
-        this.mesCandidatures = candidatures
-          .filter(c => c.email === this.user.email)
-          .sort((a, b) => new Date(b.cree_le || '').getTime() - new Date(a.cree_le || '').getTime())
-          .slice(0, 5);
-        
-        this.calculerStats();
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Erreur chargement candidatures:', error);
-        this.loading = false;
-      }
-    });
-  }
+  // ============================================================
+  // STATS CANDIDATURES
+  // ============================================================
 
   calculerStats(): void {
     this.stats = {
       totalCandidatures: this.mesCandidatures.length,
-      enAttente: this.mesCandidatures.filter(c => c.statut === 'en_attente').length,
-      entretien: this.mesCandidatures.filter(c => c.statut === 'entretien').length,
-      acceptee: this.mesCandidatures.filter(c => c.statut === 'acceptee').length,
-      refusee: this.mesCandidatures.filter(c => c.statut === 'refusee').length
+      enAttente:  this.mesCandidatures.filter(c => c.statut === 'en_attente').length,
+      entretien:  this.mesCandidatures.filter(c => c.statut === 'entretien').length,
+      acceptee:   this.mesCandidatures.filter(c => c.statut === 'acceptee').length,
+      refusee:    this.mesCandidatures.filter(c => c.statut === 'refusee').length
     };
   }
 
-  // NOUVELLE MÉTHODE : Pour formater l'affichage du statut du projet
+  // ============================================================
+  // ACTIONS
+  // ============================================================
+
+  postulerAuProjet(projet: any): void {
+    if (!this.isProfilComplet()) {
+      if (confirm(`Votre profil est complété à ${this.profilCompletion}%.\nVoulez-vous le compléter maintenant ?`)) {
+        this.router.navigate(['/features/candidats/profil']);
+      }
+      return;
+    }
+    this.router.navigate(['/features/candidats/postuler', projet.id?.toString()]);
+  }
+
+  retirerCandidature(candidatureId: number): void {
+    if (!confirm('Êtes-vous sûr ? Cette action est irréversible.')) return;
+
+    this.candidatureService.delete(candidatureId).subscribe({
+      next: () => {
+        this.mesCandidatures = this.mesCandidatures.filter(c => c.id !== candidatureId);
+        this.calculerStats();
+        this.loadNotifications();
+      },
+      error: () => alert('Erreur lors du retrait de la candidature')
+    });
+  }
+
+  // ============================================================
+  // HELPERS D'AFFICHAGE
+  // ============================================================
+
   getProjectStatusLabel(statut: string): string {
-    const statusMap: { [key: string]: string } = {
+    const map: Record<string, string> = {
       'soumis': 'Soumis',
       'en_attente_validation': 'En attente',
       'ouvert_aux_candidatures': 'Ouvert',
       'en_cours': 'En cours',
+      'actif': 'Actif',
       'a_cloturer': 'À clôturer',
       'cloture': 'Clôturé'
     };
-    return statusMap[statut] || statut;
+    return map[statut] || statut;
   }
 
-  // CORRIGÉ : Utilise les propriétés du modèle Project
   getVolontairesNecessaires(projet: any): number {
-    return projet.nombreVolontairesRequis || 0;
+    return projet.nombreVolontairesRequis ?? 0;
   }
 
-  // CORRIGÉ : Utilise les propriétés du modèle Project
   getVolontairesAffectes(projet: any): number {
-    return projet.nombreVolontairesActuels || 0;
+    return projet.nombreVolontairesActuels ?? 0;
   }
 
   getStatutPrincipal(statutVolontaire: string): string {
-    const statuts: { [key: string]: string } = {
-      'Actif': 'Volontaire Actif',
-      'Inactif': 'En attente de mission',
+    const map: Record<string, string> = {
+      'Actif':          'Volontaire Actif',
+      'Inactif':        'En attente de mission',
       'Fin de mission': 'Mission terminée',
-      'Candidat': 'Candidat',
-      'En attente': 'En attente de validation'
+      'Candidat':       'Candidat',
+      'En attente':     'En attente de validation'
     };
-    return statuts[statutVolontaire] || 'Candidat';
-  }
-
-  postulerAuProjet(projet: any): void {
-    // Vérifier si le profil est complet
-    if (!this.isProfilComplet()) {
-      if (confirm('Votre profil doit être complété à 100% pour pouvoir postuler. Voulez-vous compléter votre profil maintenant ?')) {
-        this.router.navigate(['/features/candidats/profil']);
-        return;
-      } else {
-        return;
-      }
-    }
-
-    const projectId = typeof projet.id === 'string' ? projet.id : projet.id?.toString();
-    this.router.navigate(['/features/candidats/postuler', projectId]);
-  }
-
-  retirerCandidature(candidatureId: number): void {
-    if (confirm('Êtes-vous sûr de vouloir retirer cette candidature ? Cette action est irréversible.')) {
-      this.candidatureService.delete(candidatureId).subscribe({
-        next: () => {
-          this.mesCandidatures = this.mesCandidatures.filter(c => c.id !== candidatureId);
-          this.calculerStats();
-          this.loadNotifications();
-        },
-        error: (error) => {
-          console.error('Erreur:', error);
-          alert('Erreur lors du retrait de la candidature');
-        }
-      });
-    }
+    return map[statutVolontaire] || 'Candidat';
   }
 
   getStatutBadgeClass(statut: string): string {
-    const classes: { [key: string]: string } = {
-      'en_attente': 'statut-en-attente',
-      'entretien': 'statut-entretien',
-      'acceptee': 'statut-acceptee',
-      'refusee': 'statut-refusee',
-      'candidat': 'statut-candidat',
-      'volontaire actif': 'statut-actif',
-      'en attente de mission': 'statut-en-attente',
-      'mission terminée': 'statut-termine'
+    const map: Record<string, string> = {
+      'en_attente':           'statut-en-attente',
+      'entretien':            'statut-entretien',
+      'acceptee':             'statut-acceptee',
+      'refusee':              'statut-refusee',
+      'candidat':             'statut-candidat',
+      'volontaire actif':     'statut-actif',
+      'en attente de mission':'statut-en-attente',
+      'mission terminée':     'statut-termine'
     };
-    return classes[statut.toLowerCase()] || 'statut-default';
+    return map[statut.toLowerCase()] || 'statut-default';
   }
 
   getStatutText(statut: string): string {
-    const textes: { [key: string]: string } = {
+    const map: Record<string, string> = {
       'en_attente': 'En attente',
-      'entretien': 'En entretien',
-      'acceptee': 'Acceptée',
-      'refusee': 'Refusée'
+      'entretien':  'En entretien',
+      'acceptee':   'Acceptée',
+      'refusee':    'Refusée'
     };
-    return textes[statut] || statut;
+    return map[statut] || statut;
   }
 
   getCompetencesArray(competences: any): string[] {
     if (!competences) return [];
-    if (Array.isArray(competences)) {
-      return competences;
-    }
+    if (Array.isArray(competences)) return competences;
     return String(competences).split(',').map(c => c.trim());
   }
 

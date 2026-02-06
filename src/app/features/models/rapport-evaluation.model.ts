@@ -30,7 +30,7 @@ export interface RapportEvaluation {
   nomDocumentAnnexe?: string;
   
   // === STATUT ET VALIDATION ===
-  statut: 'Brouillon' | 'Soumis' | 'Lu par PNVB' | 'Validé' | 'Rejeté';
+  statut: 'Brouillon' | 'Soumis' | 'En attente' | 'Lu par PNVB' | 'Validé' | 'Rejeté';
   feedbackPNVB?: string;
   dateValidation?: string;
   validePar?: string;

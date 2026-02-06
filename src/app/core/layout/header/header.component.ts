@@ -1,5 +1,4 @@
-// src/app/core/layout/header/header.component.ts
-import { Component, signal, OnInit, inject, Output, EventEmitter, OnDestroy, Input } from '@angular/core';
+import { Component, signal, OnInit, inject, Output, EventEmitter, OnDestroy } from '@angular/core';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule, TitleCasePipe } from '@angular/common';
 import { Subscription, filter } from 'rxjs';
@@ -35,27 +34,23 @@ export class HeaderComponent implements OnInit, OnDestroy {
   username = signal<string | null>(null);
   userRole = signal<'candidat' | 'partenaire' | 'admin' | null>(null);
   userInitials = signal<string>('');
-  currentRoute = signal<string>(''); // Signal pour suivre la route actuelle
+  currentRoute = signal<string>('');
 
   private authService = inject(AuthService);
   private router = inject(Router);
   private authSubscription!: Subscription; 
-  private routerSubscription!: Subscription; // Abonnement aux changements de route
+  private routerSubscription!: Subscription;
 
-  // ✅ CORRECTION : Changer le nom de l'Output pour correspondre au template
+  // ✅ SUPPRIMEZ l'@Input() isMobile
   @Output() toggleMenu = new EventEmitter<void>();
-  @Input() isMobile = false;
 
   ngOnInit(): void {
-    // Initialiser la route actuelle
     this.currentRoute.set(this.router.url);
     
-    // S'abonner aux changements d'authentification
     this.authSubscription = this.authService.currentUser$.subscribe((user: User | Partenaire | any | null) => {
       this.updateUserInfo(user);
     });
     
-    // S'abonner aux changements de route
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
@@ -111,7 +106,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.userInitials.set('');
   }
 
-  // Méthodes pour vérifier les routes actives (utilisées dans le template)
   isActiveRoute(route: string): boolean {
     return this.currentRoute() === route;
   }
@@ -120,7 +114,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     return this.currentRoute().startsWith(route);
   }
   
-  // Méthode pour les routes complexes (avec sous-routes)
   isActiveForRole(route: string): boolean {
     const current = this.currentRoute();
     const role = this.userRole();
@@ -171,9 +164,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ✅ CORRECTION : S'assurer que la méthode est bien appelée
   onToggleMenu(): void {
-    console.log('Toggle menu clicked'); // Pour debug
     this.toggleMenu.emit();
   }
 
