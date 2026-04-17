@@ -1,314 +1,347 @@
-<!-- src/app/features/admin/gest-projets/project-detail-dialog/project-detail-dialog.component.html -->
-<div class="project-detail-dialog">
-  <div mat-dialog-title class="dialog-title">
-    <h2>Détails de la mission</h2>
-    <button mat-icon-button (click)="onClose()" aria-label="Fermer">
+<div class="cl-dialog">
+
+  <!-- ===== EN-TÊTE ===== -->
+  <div class="cl-dialog-header" mat-dialog-title>
+    <div class="cl-dialog-header-left">
+      <div class="cl-dialog-icon">
+        <mat-icon>folder_open</mat-icon>
+      </div>
+      <div>
+        <h2 class="cl-dialog-title">Détails de la Mission</h2>
+        <p class="cl-dialog-subtitle">{{ getProjectTitle() }}</p>
+      </div>
+    </div>
+    <button class="cl-close-btn" (click)="onClose()">
       <mat-icon>close</mat-icon>
     </button>
   </div>
 
-  <div mat-dialog-content class="dialog-content">
-    <mat-tab-group>
-      <!-- Onglet Informations générales -->
+  <!-- ===== CONTENU ===== -->
+  <div mat-dialog-content class="cl-dialog-content">
+    <mat-tab-group class="cl-tabs">
+
+      <!-- ======= ONGLET INFORMATIONS ======= -->
       <mat-tab label="Informations">
-        <div class="tab-content">
-          <mat-card class="info-card">
-            <mat-card-header>
-              <mat-card-title>{{ getProjectTitle() }}</mat-card-title>
-              <mat-card-subtitle>
-                Partenaire: {{ getPartenaireNom(data.project.partenaireId) }}
-              </mat-card-subtitle>
-              
-              <span [class]="'status-badge ' + getStatusColor()">
-                <mat-icon>{{ getStatusIcon() }}</mat-icon>
-                {{ getStatusLabel() }}
-              </span>
-            </mat-card-header>
+        <div class="cl-tab-content">
 
-            <mat-card-content>
-              <div class="info-grid">
-                <div class="info-item">
-                  <mat-icon>place</mat-icon>
-                  <div>
-                    <div class="info-label">Région</div>
-                    <div class="info-value">{{ getProjectRegion() }}</div>
-                  </div>
-                </div>
-
-                <div class="info-item">
-                  <mat-icon>people</mat-icon>
-                  <div>
-                    <div class="info-label">Volontaires requis</div>
-                    <div class="info-value">{{ getNeededVolunteers() }}</div>
-                  </div>
-                </div>
-
-                <div class="info-item">
-                  <mat-icon>event</mat-icon>
-                  <div>
-                    <div class="info-label">Date de début</div>
-                    <div class="info-value">{{ getStartDate() }}</div>
-                  </div>
-                </div>
-
-                <div class="info-item">
-                  <mat-icon>event_available</mat-icon>
-                  <div>
-                    <div class="info-label">Date de fin</div>
-                    <div class="info-value">{{ getEndDate() }}</div>
-                  </div>
-                </div>
-
-                <div class="info-item">
-                  <mat-icon>category</mat-icon>
-                  <div>
-                    <div class="info-label">Domaine</div>
-                    <div class="info-value">{{ data.project.domaineActivite || 'Non spécifié' }}</div>
-                  </div>
-                </div>
-
-                <div class="info-item">
+          <div class="cl-project-hero">
+            <div class="cl-project-hero-left">
+              <div class="cl-project-avatar">
+                <mat-icon>work_outline</mat-icon>
+              </div>
+              <div>
+                <h3 class="cl-project-name">{{ getProjectTitle() }}</h3>
+                <p class="cl-project-partner">
                   <mat-icon>business</mat-icon>
-                  <div>
-                    <div class="info-label">Type de mission</div>
-                    <div class="info-value">{{ data.project.type_mission || 'Non spécifié' }}</div>
-                  </div>
-                </div>
+                  {{ getPartenaireNom(data.project.partenaireId) }}
+                </p>
               </div>
+            </div>
+            <span [ngClass]="{
+              'cl-badge': true,
+              'cl-badge-en_attente': data.project.statutProjet === 'en_attente',
+              'cl-badge-actif':      data.project.statutProjet === 'actif',
+              'cl-badge-cloture':    data.project.statutProjet === 'cloture'
+            }">
+              <mat-icon>{{ getStatusIcon() }}</mat-icon>
+              {{ getStatusLabel() }}
+            </span>
+          </div>
 
-              <div class="divider-container">
-                <mat-divider></mat-divider>
+          <div class="cl-info-grid">
+            <div class="cl-info-item">
+              <div class="cl-info-icon"><mat-icon>place</mat-icon></div>
+              <div>
+                <div class="cl-info-label">Région</div>
+                <div class="cl-info-value">{{ getProjectRegion() }}</div>
               </div>
-
-              <div class="description-section">
-                <h3>Description détaillée</h3>
-                <p>{{ getProjectDescription() }}</p>
+            </div>
+            <div class="cl-info-item">
+              <div class="cl-info-icon"><mat-icon>people</mat-icon></div>
+              <div>
+                <div class="cl-info-label">Volontaires requis</div>
+                <div class="cl-info-value">{{ getNeededVolunteers() }}</div>
               </div>
+            </div>
+            <div class="cl-info-item">
+              <div class="cl-info-icon"><mat-icon>event</mat-icon></div>
+              <div>
+                <div class="cl-info-label">Date de début</div>
+                <div class="cl-info-value">{{ getStartDate() }}</div>
+              </div>
+            </div>
+            <div class="cl-info-item">
+              <div class="cl-info-icon"><mat-icon>event_available</mat-icon></div>
+              <div>
+                <div class="cl-info-label">Date de fin</div>
+                <div class="cl-info-value">{{ getEndDate() }}</div>
+              </div>
+            </div>
+            <div class="cl-info-item" *ngIf="data.project.domaineActivite">
+              <div class="cl-info-icon"><mat-icon>category</mat-icon></div>
+              <div>
+                <div class="cl-info-label">Domaine</div>
+                <div class="cl-info-value">{{ data.project.domaineActivite }}</div>
+              </div>
+            </div>
+            <div class="cl-info-item" *ngIf="data.project.type_mission">
+              <div class="cl-info-icon"><mat-icon>assignment</mat-icon></div>
+              <div>
+                <div class="cl-info-label">Type de mission</div>
+                <div class="cl-info-value">{{ data.project.type_mission }}</div>
+              </div>
+            </div>
+          </div>
 
-              @if (hasProjectCompetences()) {
-                <div class="competences-section">
-                  <h3>Compétences requises</h3>
-                  <mat-chip-listbox>
-                    @for (competence of getProjectCompetences(); track competence) {
-                      <mat-chip-option [selectable]="false">
-                        {{ competence }}
-                      </mat-chip-option>
-                    }
-                  </mat-chip-listbox>
-                </div>
-              }
+          <mat-divider class="cl-divider"></mat-divider>
 
-              @if (data.project.avantagesVolontaire) {
-                <div class="avantages-section">
-                  <h3>Avantages pour le volontaire</h3>
-                  <p>{{ data.project.avantagesVolontaire }}</p>
-                </div>
-              }
+          <div class="cl-section">
+            <h4 class="cl-section-title">
+              <mat-icon>description</mat-icon>
+              Description détaillée
+            </h4>
+            <p class="cl-section-text">{{ getProjectDescription() }}</p>
+          </div>
 
-              @if (data.project.conditions_particulieres) {
-                <div class="conditions-section">
-                  <h3>Conditions particulières</h3>
-                  <p>{{ data.project.conditions_particulieres }}</p>
-                </div>
-              }
-            </mat-card-content>
-          </mat-card>
+          <div class="cl-section cl-section-chips" *ngIf="hasProjectCompetences()">
+            <h4 class="cl-section-title">
+              <mat-icon>psychology</mat-icon>
+              Compétences requises
+            </h4>
+            <div class="cl-chips">
+              <span class="cl-chip" *ngFor="let c of getProjectCompetences()">{{ c }}</span>
+            </div>
+          </div>
+
+          <div class="cl-section" *ngIf="data.project.avantagesVolontaire">
+            <h4 class="cl-section-title"><mat-icon>star_outline</mat-icon>Avantages</h4>
+            <p class="cl-section-text">{{ data.project.avantagesVolontaire }}</p>
+          </div>
+
+          <div class="cl-section" *ngIf="data.project.conditions_particulieres">
+            <h4 class="cl-section-title"><mat-icon>info_outline</mat-icon>Conditions particulières</h4>
+            <p class="cl-section-text">{{ data.project.conditions_particulieres }}</p>
+          </div>
+
         </div>
       </mat-tab>
 
-      <!-- Onglet Candidatures -->
+      <!-- ======= ONGLET CANDIDATURES ======= -->
       <mat-tab label="Candidatures">
-        <div class="tab-content">
-          <mat-card>
-            <mat-card-header>
-              <mat-card-title>Candidatures liées à cette mission</mat-card-title>
-              <mat-card-subtitle>
-                {{ candidatures.length }} candidature(s) reçue(s)
-              </mat-card-subtitle>
-            </mat-card-header>
+        <div class="cl-tab-content">
+          <div class="cl-tab-meta">
+            <span class="cl-count">
+              <mat-icon>people</mat-icon>
+              {{ candidatures.length }} candidature(s)
+            </span>
+          </div>
 
-            <mat-card-content>
-              @if (isLoadingCandidatures) {
-                <div class="loading-section">
-                  <mat-spinner diameter="40"></mat-spinner>
-                  <p>Chargement des candidatures...</p>
-                </div>
-              }
+          <div class="cl-loading" *ngIf="isLoadingCandidatures">
+            <div class="cl-spinner"></div>
+            <p>Chargement des candidatures…</p>
+          </div>
 
-              @if (!isLoadingCandidatures && candidatures.length === 0) {
-                <div class="no-data">
-                  <mat-icon>people_outline</mat-icon>
-                  <h3>Aucune candidature</h3>
-                  <p>Aucune candidature n'est liée à cette mission pour le moment.</p>
-                </div>
-              }
+          <div class="cl-empty" *ngIf="!isLoadingCandidatures && candidatures.length === 0">
+            <mat-icon class="cl-empty-icon">people_outline</mat-icon>
+            <h3>Aucune candidature</h3>
+            <p>Aucune candidature n'est liée à cette mission pour le moment.</p>
+          </div>
 
-              @if (!isLoadingCandidatures && candidatures.length > 0) {
-                <mat-list>
-                  @for (candidature of candidatures; track candidature.id) {
-                    <mat-list-item class="candidature-item" lines="3">
-                      <div matListItemIcon>
-                        <mat-icon>person</mat-icon>
-                      </div>
-                      <div matListItemTitle>{{ candidature.prenom }} {{ candidature.nom }}</div>
-                      <div matListItemLine>{{ candidature.email }}</div>
-                      <div matListItemLine class="competences">
-                        <span class="competences-label">Compétences: </span>
-                        <span class="competences-text">
-                          {{ getCompetencesText(candidature.competences) }}
-                        </span>
-                      </div>
-                      <span matListItemMeta [class]="'statut-badge ' + getCandidatureStatutClass(candidature.statut)">
-                        {{ getCandidatureStatutLabel(candidature.statut) }}
-                      </span>
-                    </mat-list-item>
-                  }
-                </mat-list>
-              }
-            </mat-card-content>
-          </mat-card>
-        </div>
-      </mat-tab>
-
-      <!-- Onglet Volontaires -->
-      <mat-tab label="Volontaires">
-        <div class="tab-content">
-          <mat-card>
-            <mat-card-header>
-              <mat-card-title>Volontaires affectés</mat-card-title>
-              <mat-card-subtitle>
-                Gestion des volontaires pour cette mission
-              </mat-card-subtitle>
-            </mat-card-header>
-
-            <mat-card-content>
-              <div class="volontaires-section">
-                <!-- Statistiques -->
-                <div class="volontaires-stats">
-                  <div class="stat">
-                    <div class="stat-number">{{ getNeededVolunteers() }}</div>
-                    <div class="stat-label">Requis</div>
-                  </div>
-                  <div class="stat">
-                    <div class="stat-number">{{ volontairesAffectes.length }}</div>
-                    <div class="stat-label">Affectés</div>
-                  </div>
-                  <div class="stat">
-                    <div class="stat-number" [class.warning]="getVolontairesManquants() > 0">
-                      {{ getVolontairesManquants() }}
-                    </div>
-                    <div class="stat-label">Manquants</div>
-                  </div>
-                </div>
-
-                <div class="divider-container">
-                  <mat-divider></mat-divider>
-                </div>
-
-                <!-- Affectation manuelle -->
-                @if (volontairesDisponibles.length > 0) {
-                  <div class="affectation-section">
-                    <h3>Affecter un volontaire</h3>
-                    <div class="affectation-controls">
-                      <mat-form-field appearance="outline" class="volontaire-select">
-                        <mat-label>Sélectionner un volontaire</mat-label>
-                        <mat-select [(value)]="volontaireSelectionne">
-                          <mat-option value="">Choisir un volontaire...</mat-option>
-                          @for (volontaire of volontairesDisponibles; track volontaire.id) {
-                            <mat-option 
-                              [value]="volontaire.id" 
-                              [disabled]="estDejaAffecte(volontaire.id)">
-                              {{ volontaire.prenom }} {{ volontaire.nom }} 
-                              @if (volontaire.competences) {
-                                - {{ getCompetencesText(volontaire.competences) }}
-                              }
-                            </mat-option>
-                          }
-                        </mat-select>
-                      </mat-form-field>
-                      
-                      <button 
-                        mat-raised-button 
-                        color="primary" 
-                        (click)="affecterVolontaire()"
-                        [disabled]="!volontaireSelectionne || getVolontairesManquants() <= 0">
-                        <mat-icon>person_add</mat-icon>
-                        Affecter
-                      </button>
-                    </div>
-                  </div>
-                }
-
-                @if (volontairesDisponibles.length === 0 && !isLoadingVolontaires) {
-                  <div class="no-volontaires">
-                    <mat-icon>warning</mat-icon>
-                    <p>Aucun volontaire disponible pour affectation</p>
-                  </div>
-                }
-
-                <div class="divider-container">
-                  <mat-divider></mat-divider>
-                </div>
-
-                <!-- Liste des volontaires affectés -->
-                <div class="volontaires-list">
-                  <h3>Volontaires affectés a la mission</h3>
-                  
-                  @if (isLoadingVolontaires) {
-                    <div class="loading-section">
-                      <mat-spinner diameter="40"></mat-spinner>
-                      <p>Chargement des volontaires...</p>
-                    </div>
-                  }
-
-                  @if (!isLoadingVolontaires && volontairesAffectes.length === 0) {
-                    <div class="no-data">
-                      <mat-icon>person_outline</mat-icon>
-                      <h3>Aucun volontaire affecté</h3>
-                      <p>Aucun volontaire n'est actuellement affecté à cette mission.</p>
-                    </div>
-                  }
-
-                  @if (!isLoadingVolontaires && volontairesAffectes.length > 0) {
-                    <mat-list>
-                      @for (affectation of volontairesAffectes; track affectation.id) {
-                        <mat-list-item class="volontaire-item" lines="3">
-                          <div matListItemIcon>
-                            <mat-icon>person</mat-icon>
-                          </div>
-                          <div matListItemTitle>{{ affectation.volontaire.prenom }} {{ affectation.volontaire.nom }}</div>
-                          <div matListItemLine>{{ affectation.volontaire.email || 'Email non disponible' }}</div>
-                          <div matListItemLine class="competences">
-                            <span class="competences-label">Compétences: </span>
-                            <span class="competences-text">
-                              {{ getCompetencesText(affectation.volontaire.competences) }}
-                            </span>
-                          </div>
-                          <div matListItemLine class="date-affectation">
-                            Affecté le: {{ getFormattedDate(affectation.dateAffectation) || 'Date inconnue' }}
-                          </div>
-                          <button 
-                            mat-icon-button 
-                            color="warn" 
-                            (click)="retirerVolontaire(affectation.id!)"
-                            matListItemMeta
-                            matTooltip="Retirer la mission">
-                            <mat-icon>person_remove</mat-icon>
-                          </button>
-                        </mat-list-item>
-                      }
-                    </mat-list>
-                  }
+          <div class="cl-list" *ngIf="!isLoadingCandidatures && candidatures.length > 0">
+            <div class="cl-list-item" *ngFor="let c of candidatures">
+              <div class="cl-list-avatar">{{ c.prenom.charAt(0) }}{{ c.nom.charAt(0) }}</div>
+              <div class="cl-list-info">
+                <div class="cl-list-name">{{ c.prenom }} {{ c.nom }}</div>
+                <div class="cl-list-email"><mat-icon>email</mat-icon>{{ c.email }}</div>
+                <div class="cl-list-competences" *ngIf="c.competences">
+                  <mat-icon>psychology</mat-icon>{{ getCompetencesText(c.competences) }}
                 </div>
               </div>
-            </mat-card-content>
-          </mat-card>
+              <span [ngClass]="{
+                'cl-badge': true,
+                'cl-badge-en_attente': c.statut === 'en_attente',
+                'cl-badge-entretien':  c.statut === 'entretien',
+                'cl-badge-actif':      c.statut === 'acceptee',
+                'cl-badge-cloture':    c.statut === 'refusee'
+              }">{{ getCandidatureStatutLabel(c.statut) }}</span>
+            </div>
+          </div>
         </div>
       </mat-tab>
+
+      <!-- ======= ONGLET VOLONTAIRES ======= -->
+      <mat-tab label="Volontaires">
+        <div class="cl-tab-content">
+
+          <!-- ✅ BANNIÈRE ALERTE : missions expirées détectées automatiquement -->
+          <div class="cl-alert-expiration" *ngIf="projetExpire && nbMissionsExpirees > 0">
+            <div class="cl-alert-expiration-left">
+              <mat-icon>timer_off</mat-icon>
+              <div>
+                <strong>Date de fin du projet dépassée</strong>
+                <p>
+                  {{ nbMissionsExpirees }} volontaire(s) sont encore en statut « Actif » sur cette mission expirée.
+                  Terminez leurs missions pour les remettre en « En attente ».
+                </p>
+              </div>
+            </div>
+            <button class="cl-btn-terminer-tout" (click)="terminerToutesLesMissions()">
+              <mat-icon>done_all</mat-icon>
+              Terminer toutes les missions
+            </button>
+          </div>
+
+          <!-- Stats -->
+          <div class="cl-stats-grid">
+            <div class="cl-stat">
+              <div class="cl-stat-number">{{ getNeededVolunteers() }}</div>
+              <div class="cl-stat-label">Requis</div>
+            </div>
+            <div class="cl-stat">
+              <div class="cl-stat-number cl-stat-green">{{ volontairesAffectes.length }}</div>
+              <div class="cl-stat-label">Affectés</div>
+            </div>
+            <div class="cl-stat">
+              <div class="cl-stat-number" [class.cl-stat-red]="getVolontairesManquants() > 0">
+                {{ getVolontairesManquants() }}
+              </div>
+              <div class="cl-stat-label">Manquants</div>
+            </div>
+            <div class="cl-stat">
+              <div class="cl-stat-number cl-stat-orange">{{ candidatsDisponiblesForAffectation.length }}</div>
+              <div class="cl-stat-label">Acceptés (à affecter)</div>
+            </div>
+          </div>
+
+          <mat-divider class="cl-divider"></mat-divider>
+
+          <!-- Section affectation candidats acceptés -->
+          <div class="cl-affectation-section">
+            <h4 class="cl-section-title">
+              <mat-icon>how_to_reg</mat-icon>
+              Affecter un candidat accepté
+            </h4>
+
+            <div *ngIf="isLoadingCandidatsAcceptes" class="cl-loading-inline">
+              <div class="cl-spinner-sm"></div>
+              <span>Chargement des candidats acceptés…</span>
+            </div>
+
+            <div *ngIf="!isLoadingCandidatsAcceptes && candidatsAcceptes.length === 0" class="cl-empty-inline">
+              <mat-icon>info_outline</mat-icon>
+              <span>Aucun candidat accepté pour cette mission. Acceptez d'abord des candidatures depuis l'onglet Candidatures.</span>
+            </div>
+
+            <div *ngIf="!isLoadingCandidatsAcceptes && candidatsAcceptes.length > 0" class="cl-affectation-form">
+              <div class="cl-select-row">
+                <div class="cl-select-wrap">
+                  <mat-icon class="cl-select-icon">person_search</mat-icon>
+                  <select class="cl-select" [(ngModel)]="candidatAccepteSelectionne">
+                    <option [value]="null">— Sélectionner un candidat accepté —</option>
+                    <ng-container *ngFor="let c of candidatsAcceptes">
+                      <option [value]="c.candidature.volontaireId" [disabled]="c.dejaAffecte">
+                        {{ c.candidature.prenom }} {{ c.candidature.nom }}
+                        {{ c.dejaAffecte ? '(déjà affecté)' : '' }}
+                        — {{ c.candidature.poste_vise }}
+                      </option>
+                    </ng-container>
+                  </select>
+                </div>
+                <button class="cl-btn-affecter" (click)="affecterCandidatAccepte()" [disabled]="!candidatAccepteSelectionne">
+                  <mat-icon>add_task</mat-icon>
+                  Affecter
+                </button>
+              </div>
+              <div class="cl-already-list" *ngIf="candidatsAcceptes.length > candidatsDisponiblesForAffectation.length">
+                <span class="cl-already-label">
+                  <mat-icon>check_circle</mat-icon>
+                  {{ candidatsAcceptes.length - candidatsDisponiblesForAffectation.length }} candidat(s) déjà affecté(s)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <mat-divider class="cl-divider"></mat-divider>
+
+          <!-- Liste volontaires affectés -->
+          <h4 class="cl-section-title" style="margin-bottom:16px">
+            <mat-icon>group</mat-icon>
+            Volontaires affectés à la mission
+          </h4>
+
+          <div class="cl-loading" *ngIf="isLoadingVolontaires">
+            <div class="cl-spinner"></div>
+            <p>Chargement des volontaires…</p>
+          </div>
+
+          <div class="cl-empty" *ngIf="!isLoadingVolontaires && volontairesAffectes.length === 0">
+            <mat-icon class="cl-empty-icon">person_outline</mat-icon>
+            <h3>Aucun volontaire affecté</h3>
+            <p>Aucun volontaire n'est actuellement affecté à cette mission.</p>
+          </div>
+
+          <div class="cl-list" *ngIf="!isLoadingVolontaires && volontairesAffectes.length > 0">
+            <div class="cl-list-item" *ngFor="let a of volontairesAffectes"
+                 [class.cl-list-item-expired]="a.missionExpiree">
+              <div class="cl-list-avatar">
+                {{ a.volontaire.prenom.charAt(0) }}{{ a.volontaire.nom.charAt(0) }}
+              </div>
+              <div class="cl-list-info">
+                <div class="cl-list-name-row">
+                  <span class="cl-list-name">{{ a.volontaire.prenom }} {{ a.volontaire.nom }}</span>
+                  <!-- ✅ Badge "En fin de mission" si projet expiré -->
+                  <span class="cl-badge-fin-mission" *ngIf="a.missionExpiree">
+                    <mat-icon>timer_off</mat-icon>
+                    En fin de mission
+                  </span>
+                </div>
+                <div class="cl-list-email">
+                  <mat-icon>email</mat-icon>{{ a.volontaire.email || 'Email non disponible' }}
+                </div>
+                <div class="cl-list-competences" *ngIf="a.volontaire.competences">
+                  <mat-icon>psychology</mat-icon>{{ getCompetencesText(a.volontaire.competences) }}
+                </div>
+                <div class="cl-list-date" *ngIf="a.dateAffectation">
+                  <mat-icon>calendar_today</mat-icon>
+                  Affecté le {{ getFormattedDate(a.dateAffectation) }}
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="cl-list-actions">
+                <!-- ✅ Bouton Terminer la mission -->
+                <button
+                  class="cl-action-btn cl-action-terminer"
+                  (click)="terminerMission(a.id, a.volontaire.prenom + ' ' + a.volontaire.nom)"
+                  [matTooltip]="a.missionExpiree ? 'Mission expirée — cliquez pour terminer' : 'Terminer la mission'"
+                  matTooltipPosition="left">
+                  <mat-icon>task_alt</mat-icon>
+                </button>
+
+                <!-- Retirer du projet -->
+                <button
+                  class="cl-action-btn cl-action-delete"
+                  (click)="retirerVolontaire(a.id!)"
+                  matTooltip="Retirer du projet"
+                  matTooltipPosition="left">
+                  <mat-icon>person_remove</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </mat-tab>
+
     </mat-tab-group>
   </div>
 
-  <div mat-dialog-actions align="end">
-    <button mat-button (click)="onClose()">Fermer</button>
+  <!-- ===== ACTIONS ===== -->
+  <div mat-dialog-actions class="cl-dialog-actions">
+    <button class="cl-btn-close" (click)="onClose()">
+      <mat-icon>close</mat-icon>
+      Fermer
+    </button>
   </div>
+
 </div>

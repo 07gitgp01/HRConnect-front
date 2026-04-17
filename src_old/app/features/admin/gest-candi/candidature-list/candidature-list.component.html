@@ -1,0 +1,199 @@
+<div class="candidature-list-container">
+  <!-- En-tête -->
+  <div class="header-section">
+    <mat-card class="header-card">
+      <mat-card-content>
+        <div class="header-content">
+          <div class="header-text">
+            <h1 class="page-title">
+              <mat-icon class="title-icon">list_alt</mat-icon>
+              Gestion des Candidatures
+            </h1>
+            <p class="page-subtitle">
+              Consultez et gérez toutes les candidatures reçues
+            </p>
+          </div>
+          <button mat-raised-button color="primary" class="new-candidature-btn" (click)="nouvelleCandidature()">
+            <mat-icon>add</mat-icon>
+            Nouvelle Candidature
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section">
+    <mat-card class="filters-card">
+      <mat-card-content>
+        <div class="filters-grid">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Rechercher</mat-label>
+            <input matInput [(ngModel)]="searchTerm" 
+                   placeholder="Candidat, email, poste, projet...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Statut</mat-label>
+            <mat-select [(ngModel)]="filtreStatut">
+              <mat-option value="">Tous les statuts</mat-option>
+              <mat-option value="en_attente">En attente</mat-option>
+              <mat-option value="entretien">Entretien</mat-option>
+              <mat-option value="acceptee">Acceptée</mat-option>
+              <mat-option value="refusee">Refusée</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Projet</mat-label>
+            <mat-select [(ngModel)]="filtreProjet">
+              <mat-option value="">Tous les projets</mat-option>
+              <mat-option *ngFor="let projet of projets" [value]="projet.id">
+                {{ projet.titre }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-stroked-button color="warn" (click)="clearFilters()" class="clear-filters">
+            <mat-icon>clear</mat-icon>
+            Effacer
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Liste des candidatures -->
+  <div class="candidatures-section">
+    <mat-card class="candidatures-card">
+      <mat-card-content>
+        <div *ngIf="loading" class="loading-container">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Chargement des candidatures...</p>
+        </div>
+
+        <div *ngIf="!loading && getCandidaturesFiltrees().length === 0" class="empty-state">
+          <mat-icon class="empty-icon">inbox</mat-icon>
+          <h3>Aucune candidature trouvée</h3>
+          <p *ngIf="filtreStatut || filtreProjet || searchTerm">
+            Aucune candidature ne correspond à vos critères de recherche.
+          </p>
+          <p *ngIf="!filtreStatut && !filtreProjet && !searchTerm">
+            Aucune candidature n'a été enregistrée pour le moment.
+          </p>
+        </div>
+
+        <div *ngIf="!loading && getCandidaturesFiltrees().length > 0" class="results-info">
+          <div class="results-count">
+            <mat-icon>filter_list</mat-icon>
+            <span>{{ getCandidaturesFiltrees().length }} candidature(s) sur {{ candidatures.length }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="!loading && getCandidaturesFiltrees().length > 0" class="table-container">
+          <table mat-table [dataSource]="getCandidaturesFiltrees()" class="mat-elevation-z2">
+            <!-- Colonne Candidat -->
+            <ng-container matColumnDef="candidat">
+              <th mat-header-cell *matHeaderCellDef>Candidat</th>
+              <td mat-cell *matCellDef="let candidature">
+                <div class="candidat-info">
+                  <div class="candidat-nom">{{ candidature.prenom }} {{ candidature.nom }}</div>
+                  <div class="candidat-email">{{ candidature.email }}</div>
+                  <div class="candidat-telephone" *ngIf="candidature.telephone">
+                    {{ candidature.telephone }}
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Colonne Projet -->
+            <ng-container matColumnDef="projet">
+              <th mat-header-cell *matHeaderCellDef>Projet</th>
+              <td mat-cell *matCellDef="let candidature">
+                <div class="projet-info">
+                  <div class="projet-titre">{{ getProjectName(candidature.projectId) }}</div>
+                  <div class="projet-region" *ngIf="getProjectRegion(candidature.projectId)">
+                    {{ getProjectRegion(candidature.projectId) }}
+                  </div>
+                  <div class="poste-vise">{{ candidature.poste_vise }}</div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Colonne Compétences -->
+            <ng-container matColumnDef="competences">
+              <th mat-header-cell *matHeaderCellDef>Compétences</th>
+              <td mat-cell *matCellDef="let candidature">
+                <mat-chip-set>
+                  <mat-chip *ngFor="let competence of getCompetencesArray(candidature.competences).slice(0, 3)" 
+                           class="competence-chip">
+                    {{ competence }}
+                  </mat-chip>
+                  <mat-chip *ngIf="getCompetencesArray(candidature.competences).length > 3" 
+                           class="more-chip">
+                    +{{ getCompetencesArray(candidature.competences).length - 3 }}
+                  </mat-chip>
+                </mat-chip-set>
+              </td>
+            </ng-container>
+
+            <!-- Colonne Statut -->
+            <ng-container matColumnDef="statut">
+              <th mat-header-cell *matHeaderCellDef>Statut</th>
+              <td mat-cell *matCellDef="let candidature">
+                <span [class]="'statut-badge ' + getStatutBadgeClass(candidature.statut)">
+                  {{ getStatutText(candidature.statut) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Colonne Date -->
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef>Date</th>
+              <td mat-cell *matCellDef="let candidature">
+                <div class="date-info">
+                  <div class="date-candidature">
+                    Postulé le {{ candidature.cree_le | date:'dd/MM/yyyy' }}
+                  </div>
+                  <div class="date-maj" *ngIf="candidature.mis_a_jour_le">
+                    MAJ: {{ candidature.mis_a_jour_le | date:'dd/MM/yyyy' }}
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Colonne Actions -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let candidature">
+                <div class="actions-container">
+                  <button mat-icon-button color="primary" 
+                          (click)="voirDetails(candidature)"
+                          matTooltip="Voir les détails">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                  
+                  <button mat-icon-button color="accent"
+                          (click)="modifierCandidature(candidature)"
+                          matTooltip="Modifier">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  
+                  <button mat-icon-button color="warn"
+                          (click)="supprimerCandidature(candidature.id!)"
+                          matTooltip="Supprimer">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+/* src/app/features/admin/gestion-volontaires/gestion-volontaires.component.css */
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+.gestion-volontaires-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px); /* Hauteur totale moins le header */
+  margin-top: 64px; /* Hauteur du header principal */
+  background: #f8fafc;
+}
+
+/* Conteneur pour le router-outlet */
+.router-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Style pour que le composant enfant prenne toute la hauteur */
+::ng-deep .router-container > * {
+  display: block;
+  height: 100%;
+}

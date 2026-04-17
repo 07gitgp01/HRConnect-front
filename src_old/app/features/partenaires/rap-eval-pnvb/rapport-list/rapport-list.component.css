@@ -1,0 +1,249 @@
+/* Styles pour les rapports d'évaluation */
+
+/* Bouton "Nouveau Rapport" - VERT PNVB */
+.btn-primary {
+  background-color: #008124 !important; /* Vert PNVB */
+  border-color: #008124 !important; /* Vert PNVB */
+  color: white !important;
+}
+
+.btn-primary:hover {
+  background-color: #006b1e !important; /* Vert PNVB foncé */
+  border-color: #006b1e !important; /* Vert PNVB foncé */
+  color: white !important;
+}
+
+.btn-primary:active,
+.btn-primary:focus {
+  background-color: #005518 !important; /* Vert PNVB très foncé */
+  border-color: #005518 !important; /* Vert PNVB très foncé */
+  box-shadow: 0 0 0 0.25rem rgba(0, 129, 36, 0.5) !important; /* Vert PNVB avec transparence */
+}
+
+/* Bouton "Exporter" - OUTLINE VERT PNVB */
+.btn-outline-primary {
+  border-color: #008124 !important; /* Vert PNVB */
+  color: #008124 !important; /* Vert PNVB */
+}
+
+.btn-outline-primary:hover {
+  background-color: #008124 !important; /* Vert PNVB */
+  border-color: #008124 !important; /* Vert PNVB */
+  color: white !important;
+}
+
+.btn-outline-primary:active,
+.btn-outline-primary:focus {
+  background-color: #006b1e !important; /* Vert PNVB foncé */
+  border-color: #006b1e !important; /* Vert PNVB foncé */
+  color: white !important;
+  box-shadow: 0 0 0 0.25rem rgba(0, 129, 36, 0.25) !important; /* Vert PNVB avec transparence */
+}
+
+/* Bouton "Réinitialiser les filtres" - Gris avec vert au survol */
+.btn-outline-secondary {
+  border-color: #6c757d !important;
+  color: #6c757d !important;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #e6f4e6 !important; /* Vert PNVB très clair */
+  border-color: #008124 !important; /* Vert PNVB */
+  color: #008124 !important; /* Vert PNVB */
+}
+
+.btn-outline-secondary:active,
+.btn-outline-secondary:focus {
+  background-color: #e6f4e6 !important; /* Vert PNVB très clair */
+  border-color: #008124 !important; /* Vert PNVB */
+  color: #008124 !important; /* Vert PNVB */
+  box-shadow: 0 0 0 0.25rem rgba(0, 129, 36, 0.1) !important; /* Vert PNVB très clair */
+}
+
+/* Icône de recherche dans les filtres */
+.btn-outline-secondary i.bi-search {
+  color: #6c757d !important;
+}
+
+.btn-outline-secondary:hover i.bi-search {
+  color: #008124 !important; /* Vert PNVB */
+}
+
+/* Boutons d'actions dans le tableau - Petit format */
+.btn-outline-primary.btn-sm {
+  border-color: #008124 !important; /* Vert PNVB */
+  color: #008124 !important; /* Vert PNVB */
+}
+
+.btn-outline-primary.btn-sm:hover {
+  background-color: #008124 !important; /* Vert PNVB */
+  border-color: #008124 !important; /* Vert PNVB */
+  color: white !important;
+}
+
+.btn-outline-success.btn-sm {
+  border-color: #2E7D32 !important; /* Vert foncé */
+  color: #2E7D32 !important; /* Vert foncé */
+}
+
+.btn-outline-success.btn-sm:hover {
+  background-color: #2E7D32 !important; /* Vert foncé */
+  border-color: #2E7D32 !important; /* Vert foncé */
+  color: white !important;
+}
+
+.btn-outline-danger.btn-sm {
+  border-color: #D32F2F !important; /* Rouge */
+  color: #D32F2F !important; /* Rouge */
+}
+
+.btn-outline-danger.btn-sm:hover {
+  background-color: #D32F2F !important; /* Rouge */
+  border-color: #D32F2F !important; /* Rouge */
+  color: white !important;
+}
+
+/* Pagination - VERT PNVB */
+.page-link {
+  color: #008124 !important; /* Vert PNVB */
+}
+
+.page-link:hover {
+  background-color: #e6f4e6 !important; /* Vert PNVB très clair */
+  color: #006b1e !important; /* Vert PNVB foncé */
+  border-color: #008124 !important; /* Vert PNVB */
+}
+
+.page-item.active .page-link {
+  background-color: #008124 !important; /* Vert PNVB */
+  border-color: #008124 !important; /* Vert PNVB */
+  color: white !important;
+}
+
+/* Spinner - VERT PNVB */
+.spinner-border.text-primary {
+  color: #008124 !important; /* Vert PNVB */
+  border-color: #008124 !important; /* Vert PNVB */
+  border-right-color: transparent !important;
+}
+
+/* Badges - VERT PNVB */
+.badge.bg-info {
+  background-color: #e6f4e6 !important; /* Vert PNVB très clair */
+  color: #008124 !important; /* Vert PNVB */
+  border: 1px solid rgba(0, 129, 36, 0.2);
+}
+
+/* Cartes de statistiques avec bordures vertes */
+.card.border-primary {
+  border-color: #008124 !important; /* Vert PNVB */
+}
+
+.card.border-success {
+  border-color: #2E7D32 !important; /* Vert succès */
+}
+
+.card.border-warning {
+  border-color: #FF9800 !important; /* Ambre PNVB */
+}
+
+.card.border-secondary {
+  border-color: #6c757d !important; /* Gris */
+}
+
+/* Icônes dans les cartes de stats */
+.icon-shape.bg-primary {
+  background-color: #008124 !important; /* Vert PNVB */
+}
+
+.icon-shape.bg-success {
+  background-color: #2E7D32 !important; /* Vert succès */
+}
+
+.icon-shape.bg-warning {
+  background-color: #FF9800 !important; /* Ambre PNVB */
+}
+
+.icon-shape.bg-secondary {
+  background-color: #6c757d !important; /* Gris */
+}
+
+/* Évaluation - couleurs harmonisées */
+.evaluation-excellente { color: #2E7D32 !important; } /* Vert succès */
+.evaluation-bonne { color: #008124 !important; } /* Vert PNVB */
+.evaluation-moyenne { color: #FF9800 !important; } /* Ambre PNVB */
+.evaluation-faible { color: #ED6C02 !important; } /* Orange */
+.evaluation-insuffisante { color: #D32F2F !important; } /* Rouge */
+
+/* Badges de statut */
+.badge.bg-success {
+  background-color: rgba(46, 125, 50, 0.1) !important;
+  color: #2E7D32 !important;
+  border: 1px solid rgba(46, 125, 50, 0.2);
+}
+
+.badge.bg-warning {
+  background-color: rgba(255, 152, 0, 0.1) !important;
+  color: #FF9800 !important;
+  border: 1px solid rgba(255, 152, 0, 0.2);
+}
+
+.badge.bg-secondary {
+  background-color: rgba(108, 117, 125, 0.1) !important;
+  color: #6c757d !important;
+  border: 1px solid rgba(108, 117, 125, 0.2);
+}
+
+.badge.bg-info {
+  background-color: rgba(0, 129, 36, 0.1) !important;
+  color: #008124 !important;
+  border: 1px solid rgba(0, 129, 36, 0.2);
+}
+
+/* Avatar dans le tableau */
+.avatar-sm {
+  width: 40px;
+  height: 40px;
+  background-color: #e6f4e6; /* Vert PNVB très clair */
+  color: #008124; /* Vert PNVB */
+}
+
+/* Header de tableau */
+.table-light {
+  background-color: #f8f9fa !important;
+}
+
+/* Lignes du tableau au survol */
+.table-hover tbody tr:hover {
+  background-color: #e6f4e6 !important; /* Vert PNVB très clair */
+}
+
+/* Formulaires - focus VERT PNVB */
+.form-control:focus,
+.form-select:focus {
+  border-color: #008124 !important; /* Vert PNVB */
+  box-shadow: 0 0 0 0.25rem rgba(0, 129, 36, 0.25) !important; /* Vert PNVB avec transparence */
+}
+
+/* Carte de filtres */
+.card-header.bg-light {
+  background-color: #f8f9fa !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  h1.h3 {
+    font-size: 1.5rem;
+  }
+}

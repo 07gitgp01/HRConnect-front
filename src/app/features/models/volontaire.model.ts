@@ -15,6 +15,10 @@ export interface Volontaire {
   nationalite: string;
   sexe: 'M' | 'F';
   
+  // ✅ PIÈCE D'IDENTITÉ (copie depuis User - lecture seule dans le profil)
+  typePiece: 'CNIB' | 'PASSEPORT';
+  numeroPiece: string;
+  
   // === PROFIL À COMPLÉTER (optionnel lors de l'inscription, requis pour candidater) ===
   adresseResidence?: string;
   regionGeographique?: string;
@@ -25,14 +29,18 @@ export interface Volontaire {
   disponibilite?: 'Temps plein' | 'Temps partiel';
   urlCV?: string;
   
-  // === PIÈCE D'IDENTITÉ (à compléter dans le profil) ===
-  typePiece?: 'CNIB' | 'PASSEPORT';
-  numeroPiece?: string;
-  urlPieceIdentite?: string; // ✅ Document scanné de la pièce d'identité
+  // ✅ Document scanné de la pièce d'identité (à uploader dans le profil)
+  urlPieceIdentite?: string;
   
   // === STATUT PNVB ===
   // Candidat → En attente → Actif | Refusé | Inactif
   statut: 'Candidat' | 'En attente' | 'Actif' | 'Inactif' | 'Refusé';
+  
+  // ✅ NOUVEAU: Statut avant inactivation (pour restauration)
+  statutAvantInactif?: 'Candidat' | 'En attente' | 'Actif' | 'Refusé';
+  
+  // ✅ NOUVEAU: Flag actif/inactif du compte
+  actif?: boolean;  // Par défaut true à la création
   
   // === DATES IMPORTANTES ===
   dateInscription: string;
@@ -65,6 +73,10 @@ export interface InscriptionVolontaire {
   sexe: 'M' | 'F';
   nationalite: string;
   
+  // Pièce d'identité à l'inscription
+  typePiece: 'CNIB' | 'PASSEPORT';
+  numeroPiece: string;
+  
   // Compte utilisateur
   motDePasse: string;
   confirmerMotDePasse: string;
@@ -74,7 +86,6 @@ export interface InscriptionVolontaire {
 /**
  * Interface pour la complétion du profil
  * Tous les champs sont REQUIS pour atteindre 100% de complétion
- * Utilisée pour la mise à jour du profil après inscription
  */
 export interface ProfilVolontaire {
   // Informations de résidence
@@ -90,16 +101,11 @@ export interface ProfilVolontaire {
   
   // Documents
   urlCV: string;
-  
-  // ✅ CORRECTION: Pièce d'identité REQUISE dans le profil complet
-  typePiece: 'CNIB' | 'PASSEPORT';
-  numeroPiece: string;
-  urlPieceIdentite: string; // ✅ OBLIGATOIRE (non optionnel)
+  urlPieceIdentite: string; // Document scanné (OBLIGATOIRE)
 }
 
 /**
  * Interface pour les statistiques des volontaires
- * Utilisée dans le dashboard admin
  */
 export interface VolontaireStats {
   // Compteurs globaux
@@ -127,6 +133,7 @@ export interface VolontaireFiltres {
   competence?: string;
   typePiece?: 'CNIB' | 'PASSEPORT';
   profilComplet?: boolean;
+  actif?: boolean;
   dateInscriptionDebut?: string;
   dateInscriptionFin?: string;
 }

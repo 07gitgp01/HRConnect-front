@@ -97,8 +97,8 @@ export class ContactComponent implements OnInit {
     email: 'pnvb@fasovolontariat.bf',
     hours: 'Lun - Ven: 08h00 - 16h00',
     coordinates: {
-      lat: 12.3714,
-      lng: -1.5197
+      lat: 12.3171464,
+      lng: -1.5232131
     }
   };
 

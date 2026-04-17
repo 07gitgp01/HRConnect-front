@@ -1,4 +1,5 @@
 // src/app/features/admin/admin-dashboard/admin-dashboard.component.ts
+
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin, catchError, of } from 'rxjs';
@@ -18,22 +19,35 @@ import { Project, ProjectStatus } from '../../models/projects.model';
 
 Chart.register(...registerables);
 
+// Helper pour convertir id en number
+function toNumericId(id: string | number | undefined): number {
+  if (id === undefined) return 0;
+  const n = Number(id);
+  return isNaN(n) ? 0 : n;
+}
+
 interface DashboardData {
   totalVolontairesActifs: number;
   totalProjetsOuverts: number;
+  projetsEnAttente: number;
   candidaturesEnAttente: number;
   tauxCompletion: number;
-  projetsEcheance: ProjetEcheance[];
+  projetsEcheanceImminente: ProjetEcheanceImminente[];  // Missions avec dateLimiteCandidature dépassée OU ≤ 2 jours
   candidaturesUrgentes: CandidatureUrgente[];
   evolutionCandidatures: EvolutionMensuelle[];
   projetsParStatut: RepartitionStatut[];
-  statistiquesEcheances: StatistiquesEcheances;
+  statistiques: Statistiques;
 }
 
-interface ProjetEcheance {
+// Interface pour les missions à échéance imminente
+interface ProjetEcheanceImminente {
   id: number;
   titre: string;
-  dateEcheance: string;
+  dateLimiteCandidature: string;
+  joursRestants: number;
+  statut: string;
+  nombrePostesDisponibles: number;
+  estDepassee: boolean;  // ✅ Nouveau: indique si la date est dépassée
 }
 
 interface CandidatureUrgente {
@@ -54,10 +68,8 @@ interface RepartitionStatut {
   count: number;
 }
 
-interface StatistiquesEcheances {
-  enRetard: number;
-  cetteSemaine: number;
-  ceMois: number;
+interface Statistiques {
+  missionsTerminees: number;
 }
 
 @Component({
@@ -79,19 +91,19 @@ interface StatistiquesEcheances {
 })
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   isLoading = true;
+  
   dashboardData: DashboardData = {
     totalVolontairesActifs: 0,
     totalProjetsOuverts: 0,
+    projetsEnAttente: 0,
     candidaturesEnAttente: 0,
     tauxCompletion: 0,
-    projetsEcheance: [],
+    projetsEcheanceImminente: [],
     candidaturesUrgentes: [],
     evolutionCandidatures: [],
     projetsParStatut: [],
-    statistiquesEcheances: {
-      enRetard: 0,
-      cetteSemaine: 0,
-      ceMois: 0
+    statistiques: {
+      missionsTerminees: 0
     }
   };
 
@@ -115,16 +127,13 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Vérifier si l'utilisateur est admin
     this.isUserAdmin = this.authService.isAdmin();
     console.log('👤 Utilisateur admin:', this.isUserAdmin);
     
-    // Mettre à jour le statut admin dans le service
     this.projectService.updateAdminStatus();
     
     this.loadDashboardData();
     
-    // Configurer les notifications SEULEMENT si admin
     if (this.isUserAdmin) {
       this.setupEcheanceNotifications();
     } else {
@@ -136,25 +145,24 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     // Les graphiques seront créés après le chargement des données
   }
 
-  /**
-   * 👁️ Voir les détails d'un projet
-   */
+  // ==================== NAVIGATION ====================
+
   voirProjet(projectId: number): void {
     console.log('🔗 Navigation vers projet ID:', projectId);
-    this.router.navigate(['/features/admin/projets', projectId]);
+    this.router.navigate(['/features/admin/projets'], {
+      queryParams: { projetId: projectId }
+    });
   }
 
-  /**
-   * 📋 Voir les détails d'une candidature
-   */
   voirCandidature(candidatureId: number): void {
     console.log('🔗 Navigation vers candidature ID:', candidatureId);
-    this.router.navigate(['/features/admin/candidatures', candidatureId]);
+    this.router.navigate(['/features/admin/candidatures'], {
+      queryParams: { candidatureId: candidatureId }
+    });
   }
 
-  /**
-   * 🔔 Configurer les notifications d'échéance (UNIQUEMENT POUR ADMIN)
-   */
+  // ==================== NOTIFICATIONS ====================
+
   private setupEcheanceNotifications(): void {
     if (!this.isUserAdmin) {
       console.log('🔕 Notifications désactivées - Utilisateur non admin');
@@ -176,9 +184,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  /**
-   * 📊 Chargement des données du tableau de bord
-   */
+  // ==================== CHARGEMENT DES DONNÉES ====================
+
   loadDashboardData(): void {
     this.isLoading = true;
 
@@ -214,11 +221,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         console.log('✅ DONNÉES CHARGÉES AVEC SUCCÈS');
         this.processDashboardData(results);
         
-        // Charger les statistiques d'échéance SEULEMENT si admin
-        if (this.isUserAdmin) {
-          this.loadStatistiquesEcheances();
-        }
-        
         this.isLoading = false;
         
         setTimeout(() => {
@@ -232,42 +234,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  /**
-   * 📊 Charger les statistiques d'échéance (UNIQUEMENT POUR ADMIN)
-   */
-  private loadStatistiquesEcheances(): void {
-    if (!this.isUserAdmin) {
-      this.dashboardData.statistiquesEcheances = { 
-        enRetard: 0, 
-        cetteSemaine: 0, 
-        ceMois: 0 
-      };
-      return;
-    }
-
-    this.projectService.getStatistiquesEcheances().subscribe({
-      next: (stats) => {
-        this.dashboardData.statistiquesEcheances = {
-          enRetard: stats.projetsEnRetard || 0,
-          cetteSemaine: stats.projetsAEcheance || 0,
-          ceMois: 0 // À implémenter si nécessaire
-        };
-        console.log('📊 Statistiques échéances chargées:', this.dashboardData.statistiquesEcheances);
-      },
-      error: (error) => {
-        console.error('Erreur chargement statistiques échéances:', error);
-        this.dashboardData.statistiquesEcheances = { 
-          enRetard: 0, 
-          cetteSemaine: 0, 
-          ceMois: 0 
-        };
-      }
-    });
-  }
-
-  /**
-   * 📈 Traitement des données pour le tableau de bord
-   */
   private processDashboardData(data: any): void {
     const { volontaires, projets, candidatures } = data;
 
@@ -277,21 +243,27 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       candidatures: candidatures.length
     });
 
-    // KPIs principaux
+    // Volontaires actifs
     this.dashboardData.totalVolontairesActifs = volontaires.filter((v: any) => 
       this.normaliserStatut(v.statut).includes('actif')
     ).length;
 
-    // ✅ CORRECTION : Utiliser statutProjet au lieu de status
+    // Projets actifs (ouverts aux candidatures)
     this.dashboardData.totalProjetsOuverts = projets.filter((p: Project) => 
       p.statutProjet === 'actif'
     ).length;
 
+    // Projets en attente de validation
+    this.dashboardData.projetsEnAttente = projets.filter((p: Project) => 
+      p.statutProjet === 'en_attente'
+    ).length;
+
+    // Candidatures en attente
     this.dashboardData.candidaturesEnAttente = candidatures.filter((c: any) => 
       c.statut === 'en_attente'
     ).length;
 
-    // Taux de complétion basé sur les projets
+    // Taux de complétion (missions terminées)
     const projetsTermines = projets.filter((p: Project) => 
       p.statutProjet === 'cloture'
     ).length;
@@ -299,67 +271,95 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dashboardData.tauxCompletion = projets.length > 0 ? 
       Math.round((projetsTermines / projets.length) * 100) : 0;
 
-    // Projets arrivant à échéance
-    this.dashboardData.projetsEcheance = this.getProjetsEcheance(projets);
-
+    // ✅ Missions à échéance imminente (date limite candidature dépassée OU ≤ 2 jours)
+    this.dashboardData.projetsEcheanceImminente = this.getProjetsEcheanceImminente(projets);
+    
+    // Statistiques
+    this.dashboardData.statistiques.missionsTerminees = projetsTermines;
+    
     // Candidatures urgentes
     this.dashboardData.candidaturesUrgentes = this.getCandidaturesUrgentes(candidatures);
 
-    // Données pour les graphiques
+    // Préparer les données pour les graphiques
     this.prepareChartData(candidatures, projets);
 
-    console.log('📊 Tableau de bord traité:', this.dashboardData);
+    console.log('📊 Tableau de bord traité:', {
+      totalVolontairesActifs: this.dashboardData.totalVolontairesActifs,
+      totalProjetsOuverts: this.dashboardData.totalProjetsOuverts,
+      projetsEnAttente: this.dashboardData.projetsEnAttente,
+      candidaturesEnAttente: this.dashboardData.candidaturesEnAttente,
+      missionsTerminees: this.dashboardData.statistiques.missionsTerminees,
+      echeancesImminentes: this.dashboardData.projetsEcheanceImminente.length
+    });
   }
 
-  /**
-   * 🔧 Normalisation des statuts (pour volontaires uniquement)
-   */
   private normaliserStatut(statut: any): string {
     if (!statut) return '';
     return statut.toString().toLowerCase().trim();
   }
 
-  /**
-   * ⏰ Projets arrivant à échéance (15 prochains jours)
-   */
-  private getProjetsEcheance(projets: Project[]): ProjetEcheance[] {
+  // ==================== MÉTHODES DE FILTRAGE ====================
+
+  // ✅ Missions à échéance imminente: date limite candidature dépassée OU dans les 2 jours
+  private getProjetsEcheanceImminente(projets: Project[]): ProjetEcheanceImminente[] {
     const aujourdhui = new Date();
     aujourdhui.setHours(0, 0, 0, 0);
     
-    const dans15Jours = new Date(aujourdhui);
-    dans15Jours.setDate(aujourdhui.getDate() + 15);
+    const dans2Jours = new Date(aujourdhui);
+    dans2Jours.setDate(aujourdhui.getDate() + 2);
     
     return projets
       .filter((p: Project) => {
-        // Exclure les projets clôturés
-        if (p.statutProjet === 'cloture') return false;
-        
-        if (!p.dateFin) return false;
+        // ✅ Uniquement les projets ACTIFS (candidatures encore ouvertes)
+        if (p.statutProjet !== 'actif') return false;
+        if (!p.dateLimiteCandidature) return false;
         
         try {
-          const dateEcheance = new Date(p.dateFin);
-          dateEcheance.setHours(0, 0, 0, 0);
-          return dateEcheance > aujourdhui && dateEcheance <= dans15Jours;
+          const dateLimite = new Date(p.dateLimiteCandidature);
+          dateLimite.setHours(0, 0, 0, 0);
+          
+          // ✅ Date limite dépassée OU dans les 2 prochains jours
+          const estDepassee = dateLimite < aujourdhui;
+          const estDans2Jours = dateLimite >= aujourdhui && dateLimite <= dans2Jours;
+          
+          return estDepassee || estDans2Jours;
         } catch {
           return false;
         }
       })
-      .map((p: Project) => ({
-        id: p.id!,
-        titre: p.titre,
-        dateEcheance: p.dateFin
-      }))
-      .sort((a, b) => {
-        const dateA = new Date(a.dateEcheance).getTime();
-        const dateB = new Date(b.dateEcheance).getTime();
-        return dateA - dateB;
+      .map((p: Project) => {
+        const dateLimite = new Date(p.dateLimiteCandidature);
+        dateLimite.setHours(0, 0, 0, 0);
+        const aujourdhuiDate = new Date();
+        aujourdhuiDate.setHours(0, 0, 0, 0);
+        
+        const estDepassee = dateLimite < aujourdhuiDate;
+        let joursRestants = 0;
+        
+        if (!estDepassee) {
+          joursRestants = this.calculerJoursRestants(p.dateLimiteCandidature);
+        }
+        
+        const postesDisponibles = (p.nombreVolontairesRequis || 0) - (p.nombreVolontairesActuels || 0);
+        
+        return {
+          id: toNumericId(p.id),
+          titre: p.titre,
+          dateLimiteCandidature: p.dateLimiteCandidature,
+          joursRestants: joursRestants,
+          statut: p.statutProjet,
+          nombrePostesDisponibles: postesDisponibles,
+          estDepassee: estDepassee
+        };
       })
-      .slice(0, 5);
+      .sort((a, b) => {
+        // Trier: d'abord les dates dépassées, puis par jours restants croissants
+        if (a.estDepassee && !b.estDepassee) return -1;
+        if (!a.estDepassee && b.estDepassee) return 1;
+        return a.joursRestants - b.joursRestants;
+      });
   }
 
-  /**
-   * 🚨 Candidatures urgentes (plus de 7 jours en attente)
-   */
   private getCandidaturesUrgentes(candidatures: any[]): CandidatureUrgente[] {
     const aujourdhui = new Date();
     const ilYa7Jours = new Date();
@@ -390,9 +390,33 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       .slice(0, 5);
   }
 
-  /**
-   * 📊 Préparation des données pour les graphiques
-   */
+  // ==================== MÉTHODES UTILITAIRES ====================
+
+  calculerJoursRestants(dateString: string): number {
+    if (!dateString) return 0;
+    try {
+      const date = new Date(dateString);
+      const aujourdhui = new Date();
+      aujourdhui.setHours(0, 0, 0, 0);
+      date.setHours(0, 0, 0, 0);
+      
+      const diffTime = date.getTime() - aujourdhui.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays > 0 ? diffDays : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  getJoursRestantsClasse(jours: number, estDepassee: boolean): string {
+    if (estDepassee) return 'urgence-rouge';
+    if (jours === 0) return 'urgence-rouge';
+    if (jours <= 1) return 'urgence-rouge';
+    return 'urgence-orange';
+  }
+
+  // ==================== PRÉPARATION DES GRAPHIQUES ====================
+
   private prepareChartData(candidatures: any[], projets: Project[]): void {
     this.dashboardData.evolutionCandidatures = this.calculerEvolutionMensuelle(candidatures);
     this.dashboardData.projetsParStatut = this.calculerRepartitionProjets(projets);
@@ -403,9 +427,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  /**
-   * 📈 Évolution mensuelle des candidatures (6 derniers mois)
-   */
   private calculerEvolutionMensuelle(candidatures: any[]): EvolutionMensuelle[] {
     const mois = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
     const aujourdhui = new Date();
@@ -433,13 +454,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     return result;
   }
 
-  /**
-   * 📊 Répartition des projets par statut (CORRIGÉ ✅)
-   */
   private calculerRepartitionProjets(projets: Project[]): RepartitionStatut[] {
     const statuts: { [key: string]: number } = {};
     
-    // Mapping des statuts vers des labels lisibles
     const statusLabels: { [key in ProjectStatus]: string } = {
       'en_attente': 'En Attente',
       'actif': 'Actif',
@@ -449,30 +466,21 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     projets.forEach((p: Project) => {
       const statutLabel = statusLabels[p.statutProjet] || 'Non spécifié';
       statuts[statutLabel] = (statuts[statutLabel] || 0) + 1;
-      
-      console.log(`📌 Projet "${p.titre}": statutProjet="${p.statutProjet}" -> label="${statutLabel}"`);
     });
 
-    const result = Object.entries(statuts)
+    return Object.entries(statuts)
       .map(([statut, count]) => ({ statut, count }))
       .sort((a, b) => b.count - a.count);
-    
-    console.log('📊 Répartition projets par statut:', result);
-    return result;
   }
 
-  /**
-   * 📊 Création des graphiques (CORRIGÉ ✅)
-   */
+  // ==================== CRÉATION DES GRAPHIQUES ====================
+
   private createCharts(): void {
     console.log('🎨 Création des graphiques...');
     this.createCandidaturesChart();
     this.createProjetsChart();
   }
 
-  /**
-   * 📈 Graphique d'évolution des candidatures
-   */
   private createCandidaturesChart(): void {
     if (!this.candidaturesChart?.nativeElement) {
       console.warn('⚠️ Canvas candidaturesChart introuvable');
@@ -481,7 +489,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const ctx = this.candidaturesChart.nativeElement.getContext('2d');
     
-    // Détruire le graphique existant s'il existe
     if (this.chart1) {
       this.chart1.destroy();
     }
@@ -513,47 +520,27 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             display: true,
             position: 'top',
             labels: {
-              font: {
-                size: 12,
-                weight: 'bold'
-              }
+              font: { size: 12, weight: 'bold' }
             }
-          },
-          title: {
-            display: false
           },
           tooltip: {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
             padding: 12,
-            titleFont: {
-              size: 14
-            },
-            bodyFont: {
-              size: 13
-            },
+            titleFont: { size: 14 },
+            bodyFont: { size: 13 },
             callbacks: {
-              label: (context) => {
-                const value = context.parsed.y;
-                return `Candidatures: ${value}`;
-              }
+              label: (context) => `Candidatures: ${context.parsed.y}`
             }
           }
         },
         scales: {
           y: {
             beginAtZero: true,
-            ticks: {
-              stepSize: 1,
-              precision: 0
-            },
-            grid: {
-              color: 'rgba(0, 0, 0, 0.05)'
-            }
+            ticks: { stepSize: 1, precision: 0 },
+            grid: { color: 'rgba(0, 0, 0, 0.05)' }
           },
           x: {
-            grid: {
-              display: false
-            }
+            grid: { display: false }
           }
         }
       }
@@ -562,14 +549,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log('✅ Graphique candidatures créé avec succès');
   }
 
-  /**
-   * 📊 Graphique de répartition des projets par statut
-   */
   private createProjetsChart(): void {
-    console.log('🎨 Création graphique projets...');
-    console.log('Canvas element:', this.projetsChart?.nativeElement);
-    console.log('Données projets:', this.dashboardData.projetsParStatut);
-    
     if (!this.projetsChart?.nativeElement) {
       console.error('❌ Canvas projetsChart introuvable');
       return;
@@ -582,17 +562,15 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const ctx = this.projetsChart.nativeElement.getContext('2d');
     
-    // Détruire le graphique existant s'il existe
     if (this.chart2) {
       this.chart2.destroy();
     }
     
-    // Couleurs adaptées aux statuts
     const colorMap: { [key: string]: string } = {
-      'En Attente': '#FF9800',       // Orange
-      'Actif': '#4CAF50',            // Vert
-      'Clôturé': '#9E9E9E',          // Gris
-      'Non spécifié': '#757575'      // Gris foncé
+      'En Attente': '#FF9800',
+      'Actif': '#4CAF50',
+      'Clôturé': '#9E9E9E',
+      'Non spécifié': '#757575'
     };
     
     const colors = this.dashboardData.projetsParStatut.map(item => 
@@ -621,27 +599,16 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             position: 'bottom',
             labels: {
               padding: 15,
-              font: {
-                size: 12,
-                weight: 'bold'
-              },
+              font: { size: 12, weight: 'bold' },
               usePointStyle: true,
               pointStyle: 'circle'
             }
           },
-          title: {
-            display: false
-          },
           tooltip: {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
             padding: 12,
-            titleFont: {
-              size: 14,
-              weight: 'bold'
-            },
-            bodyFont: {
-              size: 13
-            },
+            titleFont: { size: 14, weight: 'bold' },
+            bodyFont: { size: 13 },
             callbacks: {
               label: (context) => {
                 const label = context.label || '';
@@ -659,9 +626,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log('✅ Graphique projets créé avec succès');
   }
 
-  /**
-   * 🔄 Vérifier manuellement les échéances (UNIQUEMENT POUR ADMIN)
-   */
+  // ==================== ACTIONS ====================
+
   verifierEcheances(): void {
     if (!this.isUserAdmin) {
       this.snackBar.open('Action réservée aux administrateurs', 'Fermer', {
@@ -674,22 +640,14 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       this.snackBar.open('Vérification des échéances terminée', 'Fermer', {
         duration: 3000
       });
-      // Recharger les données pour mettre à jour les statistiques
-      this.loadStatistiquesEcheances();
       this.loadDashboardData();
     });
   }
 
-  /**
-   * 🔒 Déconnexion
-   */
   logout(): void {
     this.authService.logout();
   }
 
-  /**
-   * 🗑️ Nettoyage
-   */
   ngOnDestroy(): void {
     if (this.chart1) {
       this.chart1.destroy();

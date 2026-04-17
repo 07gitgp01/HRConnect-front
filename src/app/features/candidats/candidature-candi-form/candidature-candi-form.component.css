@@ -1,24 +1,38 @@
+/* src/app/features/candidat/candidature-candi-form/candidature-candi-form.component.css */
+
+/* ===== CONTENEUR PRINCIPAL ===== */
 .candidature-form-container {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: calc(100vh - 64px);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Alerte profil incomplet */
+/* ===== ALERTE PROFIL INCOMPLET ===== */
 .alert {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
   animation: slideIn 0.3s ease-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .alert-warning {
-  background-color: #fff3cd;
-  border: 1px solid #ffeaa7;
-  color: #856404;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-left: 4px solid #FF9800;
+  color: #E65100;
+}
+
+.alert mat-icon {
+  color: #FF9800;
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
 }
 
 .alert-content {
@@ -27,154 +41,393 @@
 
 .alert-content strong {
   display: block;
-  margin-bottom: 4px;
-  font-size: 1rem;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  color: #E65100;
+  font-weight: 700;
 }
 
 .alert-content p {
-  margin: 0 0 12px 0;
-  font-size: 0.9rem;
+  margin: 0 0 16px 0;
+  font-size: 0.95rem;
+  color: #6c757d;
+  line-height: 1.5;
 }
 
-/* Carte principale */
-.form-card {
-  margin-bottom: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-}
-
-.form-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.alert-content button {
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
   color: white;
-  padding: 24px;
-  border-radius: 12px 12px 0 0;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+/* ===== CARTE PRINCIPALE ===== */
+.form-card {
+  margin-bottom: 24px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 2px 12px rgba(0, 0, 0, 0.04);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 129, 36, 0.1);
+}
+
+/* ===== EN-TÊTE ===== */
+.form-header {
+  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
+  color: white;
+  padding: 32px 40px;
+  border-radius: 16px 16px 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.form-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #FF9800, #008124, #009629);
 }
 
 .form-header mat-card-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 1.5rem;
-  margin-bottom: 8px;
+  gap: 12px;
+  font-size: 1.8rem;
+  margin-bottom: 12px;
+  color: white;
+  font-weight: 700;
+}
+
+.form-header mat-card-title mat-icon {
+  font-size: 2rem;
+  width: 2rem;
+  height: 2rem;
+  color: white;
 }
 
 .form-header mat-card-subtitle {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1.05rem;
+  font-weight: 400;
+  line-height: 1.5;
 }
 
-/* Informations du projet */
+/* ===== INFORMATIONS DU PROJET ===== */
 .projet-info {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 24px;
-  border-left: 4px solid #667eea;
+  background: linear-gradient(135deg, #e6f4e6 0%, #d1e7dd 100%);
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 28px;
+  border-left: 4px solid #008124;
+  box-shadow: 0 2px 8px rgba(0, 129, 36, 0.08);
 }
 
 .projet-info h3 {
-  margin: 0 0 12px 0;
-  color: #333;
-  font-size: 1.3rem;
+  margin: 0 0 16px 0;
+  color: #006b1e;
+  font-size: 1.4rem;
+  font-weight: 700;
 }
 
 .projet-description {
-  color: #666;
-  line-height: 1.5;
-  margin-bottom: 16px;
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
 }
 
 .projet-details {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
 .projet-detail {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #666;
-  font-size: 0.9rem;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
-/* Sections du formulaire */
+.projet-detail mat-icon {
+  color: #008124;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* ===== SECTIONS DU FORMULAIRE ===== */
 .form-section {
-  margin-bottom: 32px;
+  margin-bottom: 36px;
   padding: 0 8px;
 }
 
 .section-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 20px;
-  color: #333;
-  font-size: 1.2rem;
-  font-weight: 500;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 8px;
+  color: #006b1e;
+  font-size: 1.3rem;
+  font-weight: 700;
+  border-bottom: 2px solid #e6f4e6;
+  padding-bottom: 12px;
+  flex-wrap: wrap;
 }
 
-/* Grilles */
+.section-title mat-icon {
+  color: #008124;
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+/* ===== SECTION PRÉ-REMPLIE UNIFIÉE ===== */
+/*
+ * CORRECTION : la pièce d'identité et les infos personnelles
+ * reçoivent le MÊME traitement visuel — fond légèrement teinté,
+ * bordure gauche verte, encart unique signalant la lecture seule.
+ */
+.prerempli-section {
+  background: linear-gradient(135deg, #f0faf0 0%, #e8f5e9 100%);
+  border: 1px solid rgba(0, 129, 36, 0.18);
+  border-left: 4px solid #008124;
+  border-radius: 12px;
+  padding: 24px 24px 20px;
+}
+
+.prerempli-section .section-title {
+  border-bottom-color: rgba(0, 129, 36, 0.2);
+  margin-bottom: 16px;
+}
+
+/* Badge "Pré-remplies" dans le titre de section */
+.prerempli-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  background: rgba(0, 129, 36, 0.1);
+  color: #006b1e;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 129, 36, 0.25);
+  white-space: nowrap;
+}
+
+.prerempli-badge mat-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  color: #006b1e !important;
+}
+
+/* Séparateur interne entre les infos perso et la pièce d'identité */
+.section-separator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #006b1e;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 20px 0 16px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(0, 129, 36, 0.3);
+}
+
+.section-separator mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #008124;
+}
+
+/* ===== NOTE D'INFORMATION ===== */
+.user-info-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(0, 129, 36, 0.07);
+  border-radius: 8px;
+  color: #006b1e;
+  font-size: 0.88rem;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.user-info-note mat-icon {
+  color: #008124;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ===== CHAMPS EN LECTURE SEULE ===== */
+/*
+ * Tous les champs readonly (perso + pièce) ont exactement
+ * le même aspect : fond grisé uniforme, curseur not-allowed.
+ */
+.readonly-field,
+.numero-piece-readonly {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  cursor: not-allowed !important;
+  color: #374151 !important;
+  font-weight: 500;
+}
+
+/* Le numéro de pièce garde sa typo monospace pour la lisibilité */
+.numero-piece-readonly {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+/* Atténuer légèrement la bordure sur les champs readonly */
+::ng-deep .prerempli-section .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__leading,
+::ng-deep .prerempli-section .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__notch,
+::ng-deep .prerempli-section .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__trailing {
+  border-color: rgba(0, 129, 36, 0.25);
+}
+
+/* Pas de surbrillance au focus sur les champs readonly */
+::ng-deep .prerempli-section .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+::ng-deep .prerempli-section .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+::ng-deep .prerempli-section .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: rgba(0, 129, 36, 0.35) !important;
+  border-width: 1px !important;
+}
+
+/* ===== GRILLES ===== */
 .two-cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 20px;
 }
 
 .full-width {
   width: 100%;
 }
 
-/* Champs de formulaire */
-mat-form-field {
+/* ===== CHAMPS ÉDITABLES (hors section pré-remplie) ===== */
+::ng-deep .candidature-form-container mat-form-field {
   width: 100%;
 }
 
-/* Note d'information utilisateur */
-.user-info-note {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: #e3f2fd;
-  border-radius: 6px;
-  color: #1976d2;
-  font-size: 0.9rem;
-  margin-top: 16px;
+::ng-deep .candidature-form-container .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__leading,
+::ng-deep .candidature-form-container .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__notch,
+::ng-deep .candidature-form-container .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__trailing {
+  border-color: rgba(0, 129, 36, 0.3);
+  transition: border-color 0.2s ease;
 }
 
-/* Conseils */
+::ng-deep .candidature-form-container .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+::ng-deep .candidature-form-container .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+::ng-deep .candidature-form-container .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: #008124 !important;
+  border-width: 2px !important;
+}
+
+::ng-deep .candidature-form-container .mat-mdc-form-field.mat-focused .mat-mdc-floating-label {
+  color: #008124 !important;
+}
+
+::ng-deep .candidature-form-container .mat-mdc-form-field.mat-focused .mat-mdc-form-field-focus-overlay {
+  background-color: rgba(0, 129, 36, 0.08);
+}
+
+::ng-deep .candidature-form-container mat-icon {
+  color: #008124;
+}
+
+::ng-deep .candidature-form-container .mat-mdc-select-arrow {
+  color: #008124;
+}
+
+::ng-deep .candidature-form-container .mat-mdc-text-field-wrapper:hover .mdc-notched-outline__leading,
+::ng-deep .candidature-form-container .mat-mdc-text-field-wrapper:hover .mdc-notched-outline__notch,
+::ng-deep .candidature-form-container .mat-mdc-text-field-wrapper:hover .mdc-notched-outline__trailing {
+  border-color: rgba(0, 129, 36, 0.5);
+}
+
+::ng-deep .candidature-form-container .mat-mdc-input-element {
+  caret-color: #008124;
+}
+
+/* ===== PANEL DES SELECT ===== */
+::ng-deep .mat-mdc-select-panel {
+  border: 2px solid rgba(0, 129, 36, 0.2);
+  border-radius: 8px;
+}
+
+::ng-deep .mat-mdc-option.mat-mdc-option-active,
+::ng-deep .mat-mdc-option:hover {
+  background-color: rgba(0, 129, 36, 0.08) !important;
+}
+
+::ng-deep .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+  background-color: rgba(0, 129, 36, 0.12) !important;
+}
+
+::ng-deep .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) .mdc-list-item__primary-text {
+  color: #006b1e !important;
+  font-weight: 600;
+}
+
+/* ===== CONSEILS ===== */
 .form-hints {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 16px;
+  background: #f8fdf8;
+  border-radius: 8px;
+  border-left: 3px solid #008124;
 }
 
 .form-hint {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #666;
-  font-size: 0.85rem;
+  gap: 10px;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .form-hint mat-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
+  color: #008124;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
 
-/* Upload de fichiers */
+/* ===== UPLOAD DE FICHIERS ===== */
 .file-upload-section {
-  margin-top: 16px;
+  margin-top: 20px;
+}
+
+.file-upload-section label {
+  color: #006b1e;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 12px;
+  display: block;
 }
 
 .file-input-container {
   position: relative;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .file-input {
@@ -187,158 +440,266 @@ mat-form-field {
 .file-input-label {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: #f5f5f5;
-  border: 2px dashed #ddd;
-  border-radius: 6px;
+  gap: 10px;
+  padding: 16px 24px;
+  background: white;
+  border: 2px dashed rgba(0, 129, 36, 0.3);
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #666;
+  color: #008124;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
 .file-input-label:hover {
-  background: #e8e8e8;
-  border-color: #667eea;
+  background: #e6f4e6;
+  border-color: #008124;
+  border-style: solid;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.15);
+}
+
+.file-input-label mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
 }
 
 .file-preview-container {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  background: #f8f9fa;
-  border-radius: 6px;
+  padding: 16px 20px;
+  background: #e6f4e6;
+  border-radius: 8px;
   margin-top: 12px;
+  border: 1px solid rgba(0, 129, 36, 0.2);
 }
 
 .file-preview {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex: 1;
-  color: #333;
+  color: #006b1e;
+  font-weight: 600;
+}
+
+.file-preview mat-icon {
+  color: #008124;
 }
 
 .remove-file-btn {
   margin-left: auto;
 }
 
+.remove-file-btn mat-icon {
+  color: #D32F2F;
+}
+
 .file-hint {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #666;
-  font-size: 0.8rem;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-top: 8px;
+  font-weight: 500;
 }
 
-/* Champs spécifiques pour la pièce d'identité */
-.numero-piece-input.type-cnib {
-  font-family: 'Courier New', monospace;
-  font-weight: bold;
-  letter-spacing: 1px;
+.file-hint mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
-.numero-piece-input.type-passeport {
-  font-family: 'Courier New', monospace;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-/* Actions du formulaire */
+/* ===== ACTIONS DU FORMULAIRE ===== */
 .form-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 8px 8px;
-  border-top: 1px solid #f0f0f0;
-  margin-top: 24px;
+  padding: 28px 8px 8px;
+  border-top: 2px solid #e6f4e6;
+  margin-top: 32px;
+  gap: 16px;
+}
+
+.form-actions button[type="button"] {
+  border: 2px solid #6c757d;
+  color: #6c757d;
+  font-weight: 600;
+  padding: 12px 28px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.form-actions button[type="button"]:hover {
+  background: #6c757d;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
 }
 
 .submit-button {
-  min-width: 200px;
+  min-width: 240px;
+  background: linear-gradient(135deg, #008124 0%, #006b1e 100%) !important;
+  color: white !important;
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: 10px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.3);
+  transition: all 0.3s ease;
+  font-size: 1rem;
 }
 
-/* État de chargement */
+.submit-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #009629 0%, #008124 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 129, 36, 0.4);
+}
+
+.submit-button:disabled {
+  background: #e9ecef !important;
+  color: #adb5bd !important;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ===== ÉTAT DE CHARGEMENT ===== */
 .loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
-  color: #666;
+  padding: 80px 20px;
+  color: #64748b;
 }
 
 .loading-container p {
-  margin-top: 16px;
+  margin-top: 20px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #006b1e;
 }
 
-/* Animation */
+::ng-deep .loading-container mat-spinner circle {
+  stroke: #008124 !important;
+}
+
+/* ===== MESSAGES D'ERREUR ===== */
+::ng-deep .candidature-form-container .mat-mdc-form-field-error {
+  color: #D32F2F;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+::ng-deep .candidature-form-container .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__leading,
+::ng-deep .candidature-form-container .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__notch,
+::ng-deep .candidature-form-container .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__trailing {
+  border-color: #D32F2F !important;
+}
+
+/* ===== ANIMATION ===== */
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .candidature-form-container {
-    padding: 10px;
+    padding: 16px 12px;
   }
-  
+
   .two-cols {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 16px;
   }
-  
+
   .form-header {
-    padding: 16px;
+    padding: 24px 20px;
   }
-  
+
   .form-header mat-card-title {
-    font-size: 1.3rem;
+    font-size: 1.5rem;
   }
-  
+
   .projet-details {
     flex-direction: column;
-    gap: 8px;
-  }
-  
-  .form-actions {
-    flex-direction: column;
     gap: 12px;
   }
-  
-  .submit-button {
-    width: 100%;
+
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 12px;
   }
-  
+
+  .submit-button,
+  .form-actions button[type="button"] {
+    width: 100%;
+    min-width: unset;
+    justify-content: center;
+  }
+
   .alert {
     flex-direction: column;
     text-align: center;
+    padding: 20px;
+  }
+
+  .prerempli-badge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+
+  .prerempli-section {
+    padding: 16px 14px;
   }
 }
 
-/* Améliorations d'accessibilité */
-mat-form-field.mat-form-field-appearance-outline .mat-form-field-outline-thick {
-  color: #667eea;
+@media (max-width: 480px) {
+  .form-header {
+    padding: 20px 16px;
+  }
+
+  .form-header mat-card-title {
+    font-size: 1.3rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    gap: 8px;
+  }
+
+  .prerempli-badge {
+    display: none; /* masqué sur très petit écran, le cadre visuel suffit */
+  }
 }
 
-mat-form-field.mat-focused .mat-form-field-label {
-  color: #667eea;
+/* ===== ACCESSIBILITÉ ===== */
+button:focus-visible {
+  outline: 2px solid #008124;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 129, 36, 0.1);
 }
 
-/* États de validation */
-.ng-valid[required], .ng-valid.required {
-  border-left: 5px solid #42A948;
+/* ===== TYPOGRAPHIE ===== */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #006b1e;
 }
 
-.ng-invalid:not(form) {
-  border-left: 5px solid #a94442;
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #008124; }
+
+/* ===== HINTS ===== */
+::ng-deep .mat-mdc-form-field-hint {
+  color: #64748b;
+  font-size: 0.85rem;
 }

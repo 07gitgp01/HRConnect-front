@@ -2,14 +2,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { PartenaireDashboardComponent } from './dashboard/dashboard.component';
-import { DetailProjetComponent } from './detail-projet/detail-projet.component';
-import { EditProjetComponent } from './edit-projet/edit-projet.component';
+
 import { PartenaireActifGuard } from '../../core/guards/partenaire-actif.guard'; // ✅ AJOUT
 import { PartenairePermissionGuard } from '../../core/guards/partenaire-permission.guard';
-import { RapportsComponent } from './rapports/rapports.component';
+
 import { OffresMissionComponent } from './offres-mission/offres-mission.component';
-import { GestionRapportsComponent } from './gestion-rapports/gestion-rapports.component';
-import { MesVolontairesComponent } from './mes-volontaires/mes-volontaires.component';
+
 import { RapportsPnvbComponent } from './rap_au_ptf/rapports-pnvb/rapports-pnvb.component';
 import { RapportListComponent } from './rap-eval-pnvb/rapport-list/rapport-list.component';
 import { RapportFormComponent } from './rap-eval-pnvb/rapport-form/rapport-form.component';

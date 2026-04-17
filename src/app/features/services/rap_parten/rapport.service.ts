@@ -1,392 +1,328 @@
-// src/app/features/services/service_rapports/rapport.service.ts
+// src/app/features/services/rap_parten/rapport.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, BehaviorSubject, forkJoin } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
-import { 
-  Rapport, 
-  TypeRapport, 
-  RapportStatistiques,
-  PieceJointe
-} from '../../models/rapport.model';
+import { Observable, forkJoin, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import {
+  RapportEvaluation,
+  RapportAvecDetails,
+  NouveauRapport,
+  RapportStats,
+} from '../../models/rapport-evaluation.model';
+import { Partenaire } from '../../models/partenaire.model';
 
-@Injectable({
-  providedIn: 'root'
-})
+// Type local pour compatibilité avec gestion-rapports.component
+// qui utilise le modèle Rapport (rapport.model.ts).
+// Dans rapport.service.ts — remplacez la définition de AnyRapport
+
+type AnyRapport = RapportEvaluation & {
+  titre?:          string;
+  typeRapportId?:  number;
+  missionId?:      number | string;
+  dateCreation?:   string;
+  dateEcheance?:   string;
+  description?:    string;
+  contenu?:        any;
+  // ✅ On élargit le type de statut pour accepter les deux conventions
+  statut?:         RapportEvaluation['statut'] | 'brouillon' | 'soumis' | 'valide' | 'rejete' | 'en_retard';
+  [key: string]:   any;
+};
+
+@Injectable({ providedIn: 'root' })
 export class RapportService {
-  private apiUrl = 'http://localhost:3000/rapports';
-  private typesRapportUrl = 'http://localhost:3000/types-rapport';
-  
-  private rapportsSubject = new BehaviorSubject<Rapport[]>([]);
-  public rapports$ = this.rapportsSubject.asObservable();
-  
-  private notificationsSubject = new BehaviorSubject<number>(0);
-  public notificationsCount$ = this.notificationsSubject.asObservable();
+  private apiUrl = 'http://localhost:3000';
 
-  constructor(private http: HttpClient) {
-    this.initialiserNotifications();
+  constructor(private http: HttpClient) {}
+
+  // ============================================================
+  // CRUD BASIQUE
+  // ============================================================
+
+  getRapports(): Observable<RapportEvaluation[]> {
+    return this.http.get<RapportEvaluation[]>(`${this.apiUrl}/rapports`);
   }
 
-  // ==================== TYPES DE RAPPORTS ====================
+  getRapport(id: number | string): Observable<RapportEvaluation> {
+    return this.http.get<RapportEvaluation>(`${this.apiUrl}/rapports/${id}`);
+  }
 
-  getTypesRapport(): Observable<TypeRapport[]> {
-    return this.http.get<TypeRapport[]>(this.typesRapportUrl).pipe(
-      catchError(() => {
-        // Types par défaut si l'API n'est pas disponible
-        return of(this.getTypesRapportParDefaut());
-      })
+  createRapport(rapport: NouveauRapport): Observable<RapportEvaluation> {
+    const now = new Date().toISOString();
+    const payload = {
+      ...rapport,
+      partenaireId:     rapport.partenaireId || this.getPartenaireIdFromStorage(),
+      dateSoumission:   now,
+      dateModification: now,
+      created_at:       now,
+      updated_at:       now
+    };
+    return this.http.post<RapportEvaluation>(`${this.apiUrl}/rapports`, payload);
+  }
+
+  updateRapport(
+    id: number | string,
+    rapport: Partial<RapportEvaluation>
+  ): Observable<RapportEvaluation> {
+    return this.http.patch<RapportEvaluation>(`${this.apiUrl}/rapports/${id}`, {
+      ...rapport,
+      dateModification: new Date().toISOString(),
+      updated_at:       new Date().toISOString()
+    });
+  }
+
+  deleteRapport(id: number | string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/rapports/${id}`);
+  }
+
+  // ============================================================
+  // RAPPORTS PAR PARTENAIRE
+  // ============================================================
+
+  getRapportsByPartenaire(partenaireId: number | string): Observable<RapportAvecDetails[]> {
+    return forkJoin({
+      rapports:    this.http.get<any[]>(
+                     `${this.apiUrl}/rapports?partenaireId=${partenaireId}`
+                   ).pipe(catchError(() => of([]))),
+      projets:     this.http.get<any[]>(`${this.apiUrl}/projets`).pipe(catchError(() => of([]))),
+      partenaires: this.http.get<Partenaire[]>(`${this.apiUrl}/partenaires`).pipe(catchError(() => of([])))
+    }).pipe(
+      map(({ rapports, projets, partenaires }) =>
+        rapports.map((rapport: any) => {
+          const projet     = projets.find((p: any) => String(p.id) === String(rapport.projetId));
+          const partenaire = partenaires.find(p => String(p.id) === String(rapport.partenaireId));
+          return {
+            ...rapport,
+            partenaireNom:     partenaire?.nomStructure ?? `Partenaire #${rapport.partenaireId}`,
+            missionNom:        rapport.missionNom ?? projet?.titre ?? `Mission #${rapport.projetId}`,
+            missionVolontaire: rapport.missionNom ?? projet?.titre ?? ''
+          } as RapportAvecDetails;
+        })
+      )
     );
   }
 
-  private getTypesRapportParDefaut(): TypeRapport[] {
-    return [
-      {
-        id: 1,
-        code: 'TRIM',
-        label: 'Rapport Trimestriel',
-        frequence: 'trimestriel',
-        delaiSoumission: 15,
-        template: this.getTemplateTrimestriel()
-      },
-      {
-        id: 2,
-        code: 'FIN_MISSION',
-        label: 'Rapport de Fin de Mission',
-        frequence: 'fin_mission',
-        delaiSoumission: 30,
-        template: this.getTemplateFinMission()
-      },
-      {
-        id: 3,
-        code: 'SEM',
-        label: 'Rapport Semestriel',
-        frequence: 'semestriel',
-        delaiSoumission: 20,
-        template: this.getTemplateSemestriel()
-      },
-      {
-        id: 4,
-        code: 'ANNUEL',
-        label: 'Rapport Annuel',
-        frequence: 'annuel',
-        delaiSoumission: 30,
-        template: this.getTemplateAnnuel()
-      }
-    ];
-  }
+  // ============================================================
+  // PROJETS ÉLIGIBLES
+  // ============================================================
 
-  // ==================== GESTION DES RAPPORTS ====================
-
-  getRapportsParPartenaire(partenaireId: number): Observable<Rapport[]> {
-    return this.http.get<Rapport[]>(`${this.apiUrl}?partenaireId=${partenaireId}`).pipe(
-      tap(rapports => this.rapportsSubject.next(rapports)),
+  getProjetsEligibles(partenaireId: number | string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/projets`).pipe(
+      map((projets: any[]) =>
+        projets.filter((p: any) =>
+          String(p.partenaireId) === String(partenaireId) &&
+          p.statutProjet === 'cloture'
+        )
+      ),
       catchError(() => of([]))
     );
   }
 
-  getRapport(id: number): Observable<Rapport> {
-    return this.http.get<Rapport>(`${this.apiUrl}/${id}`).pipe(
-      catchError(error => {
-        console.error('Erreur récupération rapport:', error);
-        throw error;
-      })
+  // ============================================================
+  // STATISTIQUES
+  // ============================================================
+
+  getStatsPartenaire(partenaireId: number | string): Observable<RapportStats> {
+    return this.getRapportsByPartenaire(partenaireId).pipe(
+      map(rapports => this.calculerStats(rapports))
     );
   }
 
-  creerRapport(rapport: Partial<Rapport>): Observable<Rapport> {
-    const rapportComplet: Rapport = {
-      ...rapport,
-      id: Date.now(),
-      statut: 'brouillon',
-      dateCreation: new Date().toISOString(),
-      piecesJointes: [],
-      notifications: [],
-      dateEcheance: this.calculerDateEcheance(rapport.typeRapportId!)
-    } as Rapport;
+  // ============================================================
+  // GESTION DES ÉTATS
+  // ============================================================
 
-    return this.http.post<Rapport>(this.apiUrl, rapportComplet).pipe(
-      tap(nouveauRapport => {
-        const rapports = this.rapportsSubject.value;
-        this.rapportsSubject.next([...rapports, nouveauRapport]);
-      })
-    );
-  }
-
-  mettreAJourRapport(id: number, rapport: Partial<Rapport>): Observable<Rapport> {
-    return this.http.patch<Rapport>(`${this.apiUrl}/${id}`, rapport).pipe(
-      tap(rapportMaj => {
-        const rapports = this.rapportsSubject.value;
-        const index = rapports.findIndex(r => r.id === id);
-        if (index !== -1) {
-          rapports[index] = rapportMaj;
-          this.rapportsSubject.next([...rapports]);
-        }
-      })
-    );
-  }
-
-  soumettreRapport(id: number): Observable<Rapport> {
-    return this.http.patch<Rapport>(`${this.apiUrl}/${id}`, {
-      statut: 'soumis',
+  soumettreRapport(id: number | string): Observable<any> {
+    return this.updateRapport(id, {
+      statut:         'Soumis',
       dateSoumission: new Date().toISOString()
-    }).pipe(
-      tap(() => this.verifierNotifications())
-    );
-  }
-
-  // ==================== PIÈCES JOINTES ====================
-
-  ajouterPieceJointe(rapportId: number, fichier: File): Observable<PieceJointe> {
-    const formData = new FormData();
-    formData.append('fichier', fichier);
-    
-    return this.http.post<PieceJointe>(`${this.apiUrl}/${rapportId}/pieces-jointes`, formData);
-  }
-
-  supprimerPieceJointe(rapportId: number, pieceJointeId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${rapportId}/pieces-jointes/${pieceJointeId}`);
-  }
-
-  // ==================== STATISTIQUES ====================
-
-  getStatistiques(partenaireId: number): Observable<RapportStatistiques> {
-    return this.getRapportsParPartenaire(partenaireId).pipe(
-      map(rapports => this.calculerStatistiques(rapports))
-    );
-  }
-
-  private calculerStatistiques(rapports: Rapport[]): RapportStatistiques {
-    const maintenant = new Date();
-    
-    const rapportsEnRetard = rapports.filter(r => {
-      if (r.statut === 'soumis' || r.statut === 'valide') return false;
-      return new Date(r.dateEcheance) < maintenant;
     });
-
-    const prochainsEcheances = rapports
-      .filter(r => r.statut === 'brouillon')
-      .filter(r => new Date(r.dateEcheance) > maintenant)
-      .sort((a, b) => new Date(a.dateEcheance).getTime() - new Date(b.dateEcheance).getTime())
-      .slice(0, 5);
-
-    return {
-      total: rapports.length,
-      soumis: rapports.filter(r => r.statut === 'soumis').length,
-      enRetard: rapportsEnRetard.length,
-      valides: rapports.filter(r => r.statut === 'valide').length,
-      brouillons: rapports.filter(r => r.statut === 'brouillon').length,
-      tauxSoumission: rapports.length > 0 
-        ? Math.round((rapports.filter(r => r.statut === 'soumis' || r.statut === 'valide').length / rapports.length) * 100)
-        : 0,
-      prochainsEcheances,
-      rapportsEnRetard
-    };
   }
 
-  // ==================== NOTIFICATIONS ====================
-
-  private initialiserNotifications(): void {
-    // Vérifier les notifications toutes les heures
-    setInterval(() => this.verifierNotifications(), 3600000);
-    this.verifierNotifications();
+  sauvegarderBrouillon(rapport: NouveauRapport): Observable<RapportEvaluation> {
+    return this.createRapport({ ...rapport, statut: 'Brouillon' });
   }
 
-  private verifierNotifications(): void {
-    // Dans une vraie app, on appellerait le backend
-    // Pour la démo, on simule
-    this.notificationsSubject.next(3); // 3 notifications non lues
+  validerRapport(id: number | string, feedback?: string): Observable<RapportEvaluation> {
+    return this.updateRapport(id, {
+      statut:         'Validé',
+      feedbackPNVB:   feedback,
+      dateValidation: new Date().toISOString(),
+      validePar:      'admin@pnvb.sn'
+    });
   }
 
-  getRapportsAvecNotifications(partenaireId: number): Observable<{
-    rapports: Rapport[];
-    notifications: number;
-    rapportsEnRetard: Rapport[];
-  }> {
-    return this.getRapportsParPartenaire(partenaireId).pipe(
-      map(rapports => {
-        const maintenant = new Date();
-        const rapportsEnRetard = rapports.filter(r => 
-          r.statut !== 'soumis' && 
-          r.statut !== 'valide' && 
-          new Date(r.dateEcheance) < maintenant
-        );
-        
-        const notifications = rapportsEnRetard.length + 
-          rapports.filter(r => r.notifications?.some(n => !n.lue)).length;
-
-        return {
-          rapports,
-          notifications,
-          rapportsEnRetard
-        };
-      })
-    );
+  rejeterRapport(id: number | string, raison: string): Observable<RapportEvaluation> {
+    return this.updateRapport(id, { statut: 'Rejeté', feedbackPNVB: raison });
   }
 
-  marquerNotificationLue(rapportId: number, notificationId: number): Observable<void> {
-    return this.http.patch<void>(
-      `${this.apiUrl}/${rapportId}/notifications/${notificationId}`, 
-      { lue: true }
-    );
-  }
+  // ============================================================
+  // UTILITAIRES
+  // ============================================================
 
-  // ==================== TEMPLATES ====================
-
-  private getTemplateTrimestriel(): any {
-    return {
-      sections: [
-        {
-          titre: 'Activités réalisées',
-          type: 'textarea',
-          required: true,
-          placeholder: 'Décrivez les principales activités réalisées durant le trimestre...'
-        },
-        {
-          titre: 'Résultats obtenus',
-          type: 'textarea',
-          required: true,
-          placeholder: 'Indiquez les résultats concrets obtenus...'
-        },
-        {
-          titre: 'Difficultés rencontrées',
-          type: 'textarea',
-          required: false,
-          placeholder: 'Listez les difficultés rencontrées...'
-        },
-        {
-          titre: 'Perspectives',
-          type: 'textarea',
-          required: true,
-          placeholder: 'Précisez les perspectives pour le prochain trimestre...'
-        },
-        {
-          titre: 'Indicateurs de performance',
-          type: 'table',
-          colonnes: ['Indicateur', 'Valeur cible', 'Valeur atteinte', 'Commentaires'],
-          lignes: []
-        }
-      ]
-    };
-  }
-
-  private getTemplateFinMission(): any {
-    return {
-      sections: [
-        {
-          titre: 'Bilan général de la mission',
-          type: 'textarea',
-          required: true
-        },
-        {
-          titre: 'Objectifs atteints',
-          type: 'textarea',
-          required: true
-        },
-        {
-          titre: 'Impacts sur la communauté',
-          type: 'textarea',
-          required: true
-        },
-        {
-          titre: 'Recommandations',
-          type: 'textarea',
-          required: true
-        },
-        {
-          titre: 'Évaluation des volontaires',
-          type: 'table',
-          colonnes: ['Volontaire', 'Contribution', 'Points forts', 'Axes d\'amélioration', 'Note (1-5)'],
-          lignes: []
-        }
-      ]
-    };
-  }
-
-  private getTemplateSemestriel(): any {
-    return {
-      sections: [
-        {
-          titre: 'Synthèse des activités',
-          type: 'textarea',
-          required: true
-        },
-        {
-          titre: 'Analyse financière',
-          type: 'textarea',
-          required: true
-        },
-        {
-          titre: 'Impact et résultats',
-          type: 'textarea',
-          required: true
-        }
-      ]
-    };
-  }
-
-  private getTemplateAnnuel(): any {
-    return {
-      sections: [
-        {
-          titre: 'Rapport annuel d\'activités',
-          type: 'textarea',
-          required: true
-        },
-        {
-          titre: 'Bilan financier',
-          type: 'textarea',
-          required: true
-        },
-        {
-          titre: 'Perspectives stratégiques',
-          type: 'textarea',
-          required: true
-        }
-      ]
-    };
-  }
-
-  private calculerDateEcheance(typeRapportId: number): string {
-    const date = new Date();
-    // Ajouter le délai de soumission selon le type
-    const delais: {[key: number]: number} = {
-      1: 15,  // Trimestriel: 15 jours
-      2: 30,  // Fin mission: 30 jours
-      3: 20,  // Semestriel: 20 jours
-      4: 30   // Annuel: 30 jours
-    };
-    
-    date.setDate(date.getDate() + (delais[typeRapportId] || 30));
-    return date.toISOString();
-  }
-
-  // ==================== UTILITAIRES ====================
-
-  formaterDateEcheance(dateEcheance: string): { texte: string; classe: string } {
-    const echeance = new Date(dateEcheance);
-    const aujourdhui = new Date();
-    const diffJours = Math.ceil((echeance.getTime() - aujourdhui.getTime()) / (1000 * 3600 * 24));
-    
-    if (diffJours < 0) {
-      return { texte: `${Math.abs(diffJours)} jours de retard`, classe: 'danger' };
-    } else if (diffJours === 0) {
-      return { texte: 'Aujourd\'hui', classe: 'warning' };
-    } else if (diffJours <= 7) {
-      return { texte: `Dans ${diffJours} jours`, classe: 'warning' };
-    } else {
-      return { texte: `Dans ${diffJours} jours`, classe: 'success' };
+  getPartenaireIdFromStorage(): string {
+    try {
+      const userData = localStorage.getItem('userData');
+      if (userData) {
+        const user = JSON.parse(userData);
+        if (user?.id) return String(user.id);
+      }
+      const currentUser = localStorage.getItem('currentUser');
+      if (currentUser) {
+        const user = JSON.parse(currentUser);
+        if (user?.id) return String(user.id);
+      }
+    } catch (e) {
+      console.error('RapportService — Erreur lecture localStorage:', e);
     }
+    return '';
   }
 
-  genererRapportPDF(rapportId: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/${rapportId}/pdf`, {
-      responseType: 'blob'
-    });
+  // ============================================================
+  // CONFIGURATION
+  // ============================================================
+
+  getPeriodesDisponibles(): string[] {
+    const y = new Date().getFullYear();
+    return [`T1-${y}`, `T2-${y}`, `T3-${y}`, `T4-${y}`, 'Final', 'Exceptionnel'];
   }
 
-  exporterRapports(partenaireId: number, format: 'excel' | 'pdf'): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/export?partenaireId=${partenaireId}&format=${format}`, {
-      responseType: 'blob'
-    });
+  getStatutsDisponibles(): string[] {
+    return ['Brouillon', 'Soumis', 'Lu par PNVB', 'Validé', 'Rejeté'];
+  }
+
+  getCriteresEvaluation(): { code: string; libelle: string; description: string }[] {
+    return [
+      { code: 'integration',       libelle: 'Intégration',             description: "Capacité à s'intégrer dans l'équipe et la structure" },
+      { code: 'competences',       libelle: 'Compétences',             description: 'Maîtrise des compétences requises pour la mission' },
+      { code: 'initiative',        libelle: 'Initiative',              description: "Prise d'initiative et autonomie" },
+      { code: 'collaboration',     libelle: 'Collaboration',           description: 'Travail en équipe et communication' },
+      { code: 'respectEngagement', libelle: 'Respect des engagements', description: 'Ponctualité et respect des délais' }
+    ];
+  }
+
+  // ============================================================
+  // ALIAS DE COMPATIBILITÉ — gestion-rapports.component.ts
+  // ============================================================
+
+  /** Alias de deleteRapport(). */
+  supprimerRapport(id: number | string): Observable<void> {
+    return this.deleteRapport(id);
+  }
+
+  /** Alias de getRapportsByPartenaire(). */
+  getRapportsParPartenaire(partenaireId: number | string): Observable<any[]> {
+    return this.getRapportsByPartenaire(partenaireId);
+  }
+
+  /**
+   * Accepte Partial<any> pour compatibilité avec gestion-rapports
+   * qui passe des objets partiels de type Rapport (rapport.model.ts).
+   */
+  creerRapport(data: Partial<AnyRapport>): Observable<any> {
+    const partenaireId = data.partenaireId || this.getPartenaireIdFromStorage();
+    const now = new Date().toISOString();
+    const payload: any = {
+      // Champs NouveauRapport
+      partenaireId,
+      projetId:          data.projetId      ?? data.missionId ?? '',
+      missionNom:        data.titre         ?? data.missionNom ?? '',
+      periode:           data.periode       ?? 'Non spécifié',
+      evaluationGlobale: data.evaluationGlobale ?? 0,
+      criteres: data.criteres ?? {
+        integration: 0, competences: 0, initiative: 0,
+        collaboration: 0, respectEngagement: 0
+      },
+      commentaires:  data.description ?? data.commentaires ?? '',
+      statut:        data.statut      ?? 'Brouillon',
+      // Champs propres à rapport.model.ts
+      titre:         data.titre,
+      typeRapportId: data.typeRapportId,
+      missionId:     data.missionId,
+      dateEcheance:  data.dateEcheance,
+      contenu:       data.contenu,
+      // Timestamps
+      dateCreation:     now,
+      dateSoumission:   now,
+      dateModification: now,
+      created_at:       now,
+      updated_at:       now,
+      // Spread en dernier pour préserver toutes les propriétés supplémentaires
+      ...data
+    };
+    return this.http.post<any>(`${this.apiUrl}/rapports`, payload);
+  }
+
+  /** Génère un PDF (stub — retourne un Blob vide). */
+  genererRapportPDF(_id: number | string): Observable<Blob> {
+    return of(new Blob([''], { type: 'application/pdf' }));
+  }
+
+  /**
+   * Formate une date d'échéance.
+   * Retourne { texte, classe } attendu par gestion-rapports.component.ts.
+   */
+  formaterDateEcheance(date?: string): { texte: string; classe: string } {
+    if (!date) return { texte: '—', classe: 'secondary' };
+
+    const echeance  = new Date(date);
+    const now       = new Date();
+    const diffJours = Math.ceil((echeance.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const texteDate = echeance.toLocaleDateString('fr-FR');
+
+    if (diffJours < 0)   return { texte: `${Math.abs(diffJours)}j de retard`, classe: 'danger'    };
+    if (diffJours === 0) return { texte: "Aujourd'hui",                        classe: 'warning'   };
+    if (diffJours <= 7)  return { texte: `Dans ${diffJours}j`,                 classe: 'warning'   };
+    if (diffJours <= 30) return { texte: texteDate,                            classe: 'info'      };
+    return               { texte: texteDate,                                   classe: 'secondary' };
+  }
+
+  /**
+   * Retourne les types de rapport depuis json-server.
+   * Ajouter une entrée "typesRapport" dans db.json pour l'activer.
+   */
+  getTypesRapport(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/typesRapport`).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  // ============================================================
+  // PRIVÉ
+  // ============================================================
+
+  private calculerStats(rapports: RapportAvecDetails[]): RapportStats {
+    const total     = rapports.length;
+    const soumis    = rapports.filter(r => r.statut === 'Soumis').length;
+    const valide    = rapports.filter(r => r.statut === 'Validé').length;
+    const brouillon = rapports.filter(r => r.statut === 'Brouillon').length;
+    const rejete    = rapports.filter(r => r.statut === 'Rejeté').length;
+    const enAttente = rapports.filter(r =>
+      r.statut === 'Lu par PNVB' || r.statut === 'En attente'
+    ).length;
+
+    const vals = rapports
+      .filter(r => r.statut === 'Validé' || r.statut === 'Soumis')
+      .map(r => r.evaluationGlobale);
+
+    const moyenneEvaluation = vals.length > 0
+      ? vals.reduce((a, b) => a + b, 0) / vals.length
+      : 0;
+
+    const parStatut = rapports.reduce((acc: Record<string, number>, r) => {
+      acc[r.statut] = (acc[r.statut] || 0) + 1; return acc;
+    }, {});
+    const parPeriode = rapports.reduce((acc: Record<string, number>, r) => {
+      acc[r.periode] = (acc[r.periode] || 0) + 1; return acc;
+    }, {});
+    const parPartenaire = rapports.reduce((acc: Record<string, number>, r) => {
+      const id = String(r.partenaireId);
+      acc[id] = (acc[id] || 0) + 1; return acc;
+    }, {});
+
+    return {
+      total, soumis, valide, brouillon, rejete, enAttente,
+      moyenneEvaluation: Number(moyenneEvaluation.toFixed(1)),
+      parStatut, parPeriode, parPartenaire
+    };
   }
 }

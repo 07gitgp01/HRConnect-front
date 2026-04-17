@@ -1,940 +1,1005 @@
-/* ===== PROJET DETAIL DIALOG - VERSION PNVB OPTIMISÉE ===== */
+/* ============================================================
+   PROJECT DETAIL DIALOG — même système de design que candidature-list
+   ============================================================ */
 
-/* ===== CONFIGURATION DU DIALOG ===== */
-.project-detail-dialog {
+:host {
+  --green-900: #003d10;
+  --green-800: #005518;
+  --green-700: #006b1e;
+  --green-600: #008124;
+  --green-100: #e8f5e9;
+  --green-50:  #f1f8f2;
+
+  --slate-900: #0f172a;
+  --slate-700: #334155;
+  --slate-500: #64748b;
+  --slate-300: #cbd5e1;
+  --slate-100: #f1f5f9;
+  --slate-50:  #f8fafc;
+
+  --red:   #ef4444;
+  --white: #ffffff;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+  --shadow-lg: 0 10px 28px rgba(0,0,0,.10);
+}
+
+/* ===== DIALOG CONTAINER ===== */
+.cl-dialog {
+  min-width: 720px;
   max-width: 900px;
   width: 90vw;
-  max-height: 90vh;
-  border-radius: 12px;
-  overflow: hidden;
-  /* Optimisation GPU */
-  transform: translateZ(0);
-  will-change: transform;
-}
-
-/* ===== EN-TÊTE - VERT PNVB ===== */
-.dialog-title {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  background: var(--slate-50);
+}
+
+/* ===== HEADER ===== */
+.cl-dialog-header {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, var(--green-600) 0%, var(--green-800) 100%);
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  /* Gradient vert PNVB officiel */
-  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
-  color: white;
-  position: relative;
-  z-index: 2;
-  
-  /* Effet décoratif */
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 120px;
-    height: 120px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
-    border-radius: 0 0 0 100%;
-    pointer-events: none;
-  }
+  gap: 16px;
 }
 
-.dialog-title h2 {
+.cl-dialog-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.cl-dialog-icon {
+  width: 46px;
+  height: 46px;
+  background: rgba(255,255,255,.18);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cl-dialog-icon mat-icon {
+  color: white;
+  font-size: 1.4rem;
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.cl-dialog-title {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: 0.25px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  position: relative;
-  z-index: 1;
-}
-
-.dialog-title mat-icon {
   color: white;
-  opacity: 0.95;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 1;
-  
-  &:hover {
-    opacity: 1;
-    transform: scale(1.1) rotate(90deg);
-  }
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 
-/* ===== CONTENU PRINCIPAL ===== */
-.dialog-content {
-  padding: 0;
-  max-height: 70vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  position: relative;
-  z-index: 1;
-  
-  /* Scrollbar optimisée */
-  scrollbar-width: thin;
-  scrollbar-color: #008124 #f1f1f1;
-  
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #008124; /* Vert PNVB */
-    border-radius: 4px;
-    transition: background 0.3s ease;
-  }
-  
-  &::-webkit-scrollbar-thumb:hover {
-    background: #006b1e;
-  }
+.cl-dialog-subtitle {
+  margin: 3px 0 0;
+  color: rgba(255,255,255,.75);
+  font-size: 0.825rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
 }
+
+.cl-close-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.18);
+  border: 1.5px solid rgba(255,255,255,.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all .2s ease;
+}
+
+.cl-close-btn mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: white;
+}
+
+.cl-close-btn:hover {
+  background: rgba(255,255,255,.28);
+}
+
+/* ===== CONTENU ===== */
+.cl-dialog-content {
+  padding: 0 !important;
+  max-height: 65vh;
+  overflow-y: auto;
+  background: var(--slate-50);
+  scrollbar-width: thin;
+  scrollbar-color: var(--green-600) var(--slate-100);
+}
+
+.cl-dialog-content::-webkit-scrollbar { width: 6px; }
+.cl-dialog-content::-webkit-scrollbar-track { background: var(--slate-100); }
+.cl-dialog-content::-webkit-scrollbar-thumb { background: var(--green-600); border-radius: 3px; }
 
 /* ===== ONGLETS ===== */
-.mat-tab-group {
-  height: 100%;
+.cl-tabs {
+  background: white;
 }
 
-::ng-deep .mat-tab-header {
+/* Override Angular Material tabs */
+::ng-deep .cl-tabs .mat-mdc-tab-header {
   background: white;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 2px solid var(--slate-300);
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
-::ng-deep .mat-tab-label {
-  color: #64748b;
-  font-weight: 500;
-  opacity: 1;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    color: #008124; /* Vert PNVB */
-    background: rgba(0, 129, 36, 0.05);
-  }
+::ng-deep .cl-tabs .mat-mdc-tab .mdc-tab__text-label {
+  color: var(--slate-500);
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 
-::ng-deep .mat-tab-label-active {
-  color: #008124 !important; /* Vert PNVB */
-  font-weight: 700;
+::ng-deep .cl-tabs .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+  color: var(--green-600) !important;
 }
 
-::ng-deep .mat-ink-bar {
-  background: linear-gradient(90deg, #006b1e, #008124, #009629) !important;
-  height: 3px !important;
-  border-radius: 3px;
+::ng-deep .cl-tabs .mdc-tab-indicator__content--underline {
+  border-color: var(--green-600) !important;
+  border-width: 2px !important;
 }
 
-.tab-content {
+::ng-deep .cl-tabs .mat-mdc-tab-body-wrapper {
+  background: var(--slate-50);
+}
+
+.cl-tab-content {
   padding: 24px;
-  animation: fadeIn 0.4s ease-in-out;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ===== META (compteur dans onglets) ===== */
+.cl-tab-meta {
+  margin-bottom: 16px;
 }
 
-/* ===== CARTES ===== */
-.info-card,
-.mat-card {
-  margin-bottom: 24px;
-  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.08);
-  border-radius: 12px;
-  border: 1px solid #e0e0e0;
-  background: white;
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.info-card:hover,
-.mat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 129, 36, 0.15);
-  border-color: #008124;
-}
-
-::ng-deep .mat-card-header {
-  padding: 20px;
-  position: relative;
-  background: linear-gradient(135deg, #f8f9fa 0%, #f1f5f9 100%);
-  border-bottom: 2px solid #e0e0e0;
-}
-
-::ng-deep .mat-card-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 4px;
-}
-
-::ng-deep .mat-card-subtitle {
-  color: #64748b;
-  font-size: 0.9rem;
-  margin-bottom: 12px;
-}
-
-/* ===== BADGES DE STATUT - COULEURS PNVB ===== */
-.status-badge {
+.cl-count {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--green-700);
+  background: var(--green-100);
+  border: 1px solid rgba(0,129,36,.2);
   border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 700;
+  padding: 5px 14px;
+}
+
+.cl-count mat-icon {
+  font-size: 1rem !important;
+  width: 1rem !important;
+  height: 1rem !important;
+}
+
+/* ===== HERO DU PROJET ===== */
+.cl-project-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cl-project-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.cl-project-avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--green-600), var(--green-800));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cl-project-avatar mat-icon {
   color: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 1.4rem;
+  width: 1.4rem;
+  height: 1.4rem;
 }
 
-.status-en-attente {
-  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+.cl-project-name {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--slate-900);
 }
 
-.status-ouvert,
-.status-actif {
-  background: linear-gradient(135deg, #006b1e 0%, #008124 100%); /* Vert PNVB */
+.cl-project-partner {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font-size: 0.825rem;
+  color: var(--slate-500);
 }
 
-.status-en-cours {
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-}
-
-.status-a-cloturer {
-  background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
-}
-
-.status-cloture {
-  background: linear-gradient(135deg, #95A5A6 0%, #7F8C8D 100%);
+.cl-project-partner mat-icon {
+  font-size: 0.9rem !important;
+  width: 0.9rem !important;
+  height: 0.9rem !important;
+  color: var(--green-600);
 }
 
 /* ===== GRILLE D'INFORMATIONS ===== */
-.info-grid {
+.cl-info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.info-item {
+.cl-info-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 16px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-radius: 10px;
-  border: 1px solid #e0e0e0;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: linear-gradient(180deg, #006b1e, #008124, #009629);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  
-  &:hover {
-    background: linear-gradient(135deg, #e6f4e6 0%, #f1f5f9 100%);
-    transform: translateX(6px);
-    border-color: #008124;
-    box-shadow: 0 4px 12px rgba(0, 129, 36, 0.12);
-    
-    &::before {
-      opacity: 1;
-    }
-  }
+  background: white;
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  transition: border-color .2s, box-shadow .2s;
 }
 
-.info-item mat-icon {
-  color: #008124; /* Vert PNVB */
-  margin-top: 2px;
+.cl-info-item:hover {
+  border-color: var(--green-600);
+  box-shadow: 0 0 0 3px rgba(0,129,36,.06);
+}
+
+.cl-info-icon {
+  width: 34px;
+  height: 34px;
+  background: var(--green-100);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  font-size: 1.3rem;
-  width: 1.3rem;
-  height: 1.3rem;
-  filter: drop-shadow(0 1px 2px rgba(0, 129, 36, 0.2));
 }
 
-.info-label {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-bottom: 4px;
+.cl-info-icon mat-icon {
+  color: var(--green-700);
+  font-size: 1.05rem !important;
+  width: 1.05rem !important;
+  height: 1.05rem !important;
+}
+
+.cl-info-label {
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: var(--slate-500);
+  margin-bottom: 3px;
 }
 
-.info-value {
+.cl-info-value {
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #1e293b;
-  font-size: 1rem;
-  line-height: 1.5;
+  color: var(--slate-900);
 }
 
-/* ===== DIVISEUR ===== */
-.divider-container {
-  margin: 24px 0;
+/* ===== SÉPARATEUR ===== */
+.cl-divider {
+  margin: 20px 0;
 }
 
-.divider-container hr {
-  border: none;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #008124, transparent);
-  opacity: 0.3;
-}
-
-/* ===== SECTIONS DE CONTENU ===== */
-.description-section,
-.competences-section,
-.avantages-section,
-.conditions-section {
-  margin-bottom: 24px;
-  padding: 20px;
+/* ===== SECTIONS ===== */
+.cl-section {
   background: white;
-  border-radius: 10px;
-  border: 1px solid #e0e0e0;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    border-color: #008124;
-    box-shadow: 0 4px 12px rgba(0, 129, 36, 0.1);
-  }
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  margin-bottom: 16px;
 }
 
-.description-section h3,
-.competences-section h3,
-.avantages-section h3,
-.conditions-section h3 {
-  margin: 0 0 16px 0;
-  color: #1e293b;
-  font-size: 1.15rem;
-  font-weight: 700;
-  padding-bottom: 10px;
-  border-bottom: 3px solid #008124; /* Vert PNVB */
+.cl-section-chips {
+  background: var(--green-50);
+  border-color: rgba(0,129,36,.2);
+}
+
+.cl-section-title {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin: 0 0 12px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--slate-900);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--green-100);
 }
 
-.description-section p,
-.avantages-section p,
-.conditions-section p {
+.cl-section-title mat-icon {
+  font-size: 1.1rem !important;
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+  color: var(--green-600);
+}
+
+.cl-section-text {
   margin: 0;
-  line-height: 1.8;
-  color: #334155;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--slate-700);
 }
 
-/* ===== COMPÉTENCES ===== */
-.competences-section {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e6f4e6 100%);
-  border-color: #008124;
-}
-
-::ng-deep .mat-chip-listbox {
+/* ===== CHIPS ===== */
+.cl-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
-::ng-deep .mat-chip {
-  background: linear-gradient(135deg, #006b1e 0%, #008124 100%) !important;
-  color: white !important;
-  font-weight: 600 !important;
-  padding: 8px 16px !important;
-  border-radius: 20px !important;
-  box-shadow: 0 2px 6px rgba(0, 129, 36, 0.3);
-  transition: all 0.3s ease;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 129, 36, 0.4);
-  }
+.cl-chip {
+  display: inline-block;
+  background: var(--green-100);
+  color: var(--green-800);
+  border: 1px solid rgba(0,129,36,.2);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
-::ng-deep .mat-chip .mat-icon {
-  color: white !important;
-}
-
-/* ===== SECTION DE CHARGEMENT ===== */
-.loading-section {
-  display: flex;
-  flex-direction: column;
+/* ===== BADGES STATUT ===== */
+.cl-badge {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  text-align: center;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.loading-section p {
-  margin-top: 16px;
-  color: #64748b;
-  font-weight: 500;
-  font-size: 1rem;
-}
-
-::ng-deep .loading-section .mat-spinner circle {
-  stroke: #008124 !important; /* Vert PNVB */
-}
-
-/* ===== AUCUNE DONNÉE ===== */
-.no-data,
-.no-volontaires {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  text-align: center;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-radius: 12px;
-  border: 2px dashed #cbd5e1;
-}
-
-.no-data mat-icon,
-.no-volontaires mat-icon {
-  font-size: 72px;
-  width: 72px;
-  height: 72px;
-  margin-bottom: 24px;
-  color: #008124; /* Vert PNVB */
-  opacity: 0.4;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.05); }
-}
-
-.no-data h3,
-.no-volontaires h3 {
-  margin: 0 0 12px 0;
-  color: #1e293b;
-  font-weight: 700;
-  font-size: 1.2rem;
-}
-
-.no-data p,
-.no-volontaires p {
-  margin: 0;
-  max-width: 350px;
-  color: #64748b;
-  line-height: 1.6;
-  font-size: 0.95rem;
-}
-
-/* ===== LISTES ===== */
-::ng-deep .mat-list {
-  padding: 0;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-}
-
-.candidature-item,
-.volontaire-item {
-  border-bottom: 1px solid #f0f0f0;
-  padding: 18px 20px;
-  transition: all 0.3s ease;
-  position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 0;
-    background: linear-gradient(180deg, #006b1e, #008124);
-    transition: width 0.3s ease;
-  }
-  
-  &:last-child {
-    border-bottom: none;
-  }
-  
-  &:hover {
-    background: #f8f9fa;
-    transform: translateX(6px);
-    
-    &::before {
-      width: 4px;
-    }
-  }
-}
-
-/* ===== BADGE STATUT CANDIDATURE ===== */
-.statut-badge {
-  padding: 6px 16px;
+  gap: 5px;
+  padding: 5px 12px;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 700;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.statut-en-attente {
-  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+.cl-badge mat-icon {
+  font-size: 0.85rem !important;
+  width: 0.85rem !important;
+  height: 0.85rem !important;
 }
 
-.statut-entretien {
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+.cl-badge-en_attente {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1.5px solid #fed7aa;
 }
 
-.statut-acceptee {
-  background: linear-gradient(135deg, #006b1e 0%, #008124 100%); /* Vert PNVB */
+.cl-badge-actif {
+  background: var(--green-100);
+  color: var(--green-800);
+  border: 1.5px solid rgba(0,129,36,.25);
 }
 
-.statut-refusee {
-  background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
+.cl-badge-cloture {
+  background: var(--slate-100);
+  color: var(--slate-500);
+  border: 1.5px solid var(--slate-300);
 }
 
-/* ===== COMPÉTENCES DANS LES LISTES ===== */
-.competences {
-  font-size: 0.85rem;
-  margin-top: 6px;
-  padding: 8px 12px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border-left: 3px solid #008124;
+.cl-badge-entretien {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1.5px solid #bfdbfe;
 }
 
-.competences-label {
-  color: #64748b;
-  font-weight: 600;
-  margin-right: 4px;
+/* ===== LOADING ===== */
+.cl-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 20px;
+  background: white;
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-lg);
 }
 
-.competences-text {
-  color: #334155;
+.cl-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--green-100);
+  border-top-color: var(--green-600);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.cl-loading p {
+  margin: 14px 0 0;
+  color: var(--slate-700);
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
-/* ===== STATISTIQUES VOLONTAIRES ===== */
-.volontaires-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.stat {
+/* ===== ÉTAT VIDE ===== */
+.cl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 20px;
   text-align: center;
-  padding: 24px 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-radius: 12px;
-  border: 2px solid #e0e0e0;
-  transition: all 0.3s ease;
-  position: relative;
+  background: white;
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-lg);
+}
+
+.cl-empty-icon {
+  font-size: 2.5rem !important;
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  color: var(--slate-300);
+  margin-bottom: 14px;
+}
+
+.cl-empty h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--slate-700);
+}
+
+.cl-empty p {
+  margin: 0;
+  font-size: 0.825rem;
+  color: var(--slate-500);
+}
+
+/* ===== LISTE ===== */
+.cl-list {
+  background: white;
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #006b1e, #008124, #009629);
-    transform: scaleX(0);
-    transition: transform 0.3s ease;
-  }
-  
-  &:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 8px 20px rgba(0, 129, 36, 0.2);
-    border-color: #008124;
-    
-    &::before {
-      transform: scaleX(1);
-    }
-  }
 }
 
-.stat-number {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #008124; /* Vert PNVB */
-  margin-bottom: 8px;
-  line-height: 1;
+.cl-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--slate-100);
+  transition: background .15s;
 }
 
-.stat-number.warning {
-  color: #D32F2F;
+.cl-list-item:last-child {
+  border-bottom: none;
 }
 
-.stat-label {
+.cl-list-item:hover {
+  background: var(--green-50);
+}
+
+.cl-list-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--green-600), var(--green-800));
+  color: white;
   font-size: 0.8rem;
-  color: #64748b;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* ===== SECTION D'AFFECTATION ===== */
-.affectation-section {
-  margin-bottom: 24px;
-  padding: 24px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 2px solid #e0e0e0;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    border-color: #008124;
-    box-shadow: 0 6px 16px rgba(0, 129, 36, 0.15);
-  }
-}
-
-.affectation-section h3 {
-  margin: 0 0 20px 0;
-  color: #1e293b;
-  font-size: 1.15rem;
-  font-weight: 700;
-  padding-bottom: 10px;
-  border-bottom: 3px solid #008124; /* Vert PNVB */
-}
-
-.affectation-controls {
-  display: flex;
-  gap: 16px;
-  align-items: flex-end;
-}
-
-.volontaire-select {
+.cl-list-info {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
-::ng-deep .volontaire-select .mat-form-field-wrapper {
+.cl-list-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--slate-900);
+}
+
+.cl-list-email,
+.cl-list-competences,
+.cl-list-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.775rem;
+  color: var(--slate-500);
+}
+
+.cl-list-email mat-icon,
+.cl-list-competences mat-icon,
+.cl-list-date mat-icon {
+  font-size: 0.8rem !important;
+  width: 0.8rem !important;
+  height: 0.8rem !important;
+  color: var(--green-600);
+}
+
+/* ===== STATS VOLONTAIRES ===== */
+.cl-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.cl-stat {
   background: white;
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  text-align: center;
+  border-top: 3px solid var(--slate-300);
+  transition: border-color .2s, box-shadow .2s;
 }
 
-::ng-deep .volontaire-select .mat-select-arrow {
-  color: #008124; /* Vert PNVB */
+.cl-stat:hover {
+  border-top-color: var(--green-600);
+  box-shadow: var(--shadow-md);
 }
 
-::ng-deep .affectation-controls button {
-  background: linear-gradient(135deg, #006b1e 0%, #008124 100%);
-  color: white;
+.cl-stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--slate-700);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.cl-stat-green { color: var(--green-600); }
+.cl-stat-red   { color: var(--red); }
+
+.cl-stat-label {
+  font-size: 0.75rem;
   font-weight: 700;
-  padding: 10px 28px;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 129, 36, 0.3);
-  transition: all 0.3s ease;
-  border: none;
-  
-  &:hover:not([disabled]) {
-    background: linear-gradient(135deg, #005518 0%, #006b1e 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 129, 36, 0.4);
-  }
-  
-  &:active:not([disabled]) {
-    transform: translateY(0);
-  }
-  
-  &[disabled] {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--slate-500);
 }
 
-/* ===== DATE D'AFFECTATION ===== */
-.date-affectation {
-  font-size: 0.8rem;
-  color: #64748b;
-  margin-top: 6px;
-  font-style: italic;
-  padding: 4px 8px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  display: inline-block;
+/* ===== BOUTON RETIRER ===== */
+.cl-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  background: transparent;
+  transition: all .18s ease;
+  flex-shrink: 0;
 }
 
-/* ===== ACTIONS DU DIALOGUE ===== */
-::ng-deep .mat-dialog-actions {
-  padding: 20px 24px;
-  border-top: 2px solid #e0e0e0;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+.cl-action-btn mat-icon {
+  font-size: 1.05rem !important;
+  width: 1.05rem !important;
+  height: 1.05rem !important;
+}
+
+.cl-action-delete {
+  color: #be123c;
+  border-color: #fecdd3;
+  background: #fff1f2;
+}
+
+.cl-action-delete:hover {
+  background: #be123c;
+  color: white;
+  border-color: #be123c;
+  box-shadow: 0 3px 8px rgba(190,18,60,.3);
+}
+
+/* ===== ACTIONS DU DIALOG ===== */
+.cl-dialog-actions {
+  padding: 16px 24px;
+  border-top: 1px solid var(--slate-300);
+  background: white;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
 }
 
-::ng-deep .mat-dialog-actions button {
-  min-width: 140px;
+.cl-btn-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--slate-100);
+  color: var(--slate-700);
   font-weight: 600;
-  border-radius: 8px;
-  padding: 10px 28px;
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
+  padding: 0 20px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--slate-300);
+  cursor: pointer;
+  transition: all .2s ease;
 }
 
-::ng-deep .mat-dialog-actions button:first-child {
-  background: linear-gradient(135deg, #006b1e 0%, #008124 100%);
-  color: white;
-  box-shadow: 0 4px 10px rgba(0, 129, 36, 0.3);
-  border: none;
-  
-  &:hover {
-    background: linear-gradient(135deg, #005518 0%, #006b1e 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 129, 36, 0.4);
-  }
+.cl-btn-close mat-icon {
+  font-size: 1rem !important;
+  width: 1rem !important;
+  height: 1rem !important;
 }
 
-::ng-deep .mat-dialog-actions button:last-child {
-  color: #64748b;
-  border: 2px solid #cbd5e1;
-  background: white;
-  
-  &:hover {
-    background: #f1f5f9;
-    border-color: #94a3b8;
-    color: #334155;
-  }
+.cl-btn-close:hover {
+  background: var(--slate-200);
+  border-color: var(--slate-400);
 }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .project-detail-dialog {
+  .cl-dialog {
+    min-width: unset;
     width: 95vw;
-    max-height: 95vh;
   }
-  
-  .dialog-title {
-    padding: 16px 20px;
-  }
-  
-  .dialog-title h2 {
-    font-size: 1.25rem;
-  }
-  
-  .info-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  
-  .volontaires-stats {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  
-  .affectation-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .dialog-content {
-    max-height: 75vh;
-  }
-  
-  .tab-content {
-    padding: 16px;
-  }
-  
-  .stat {
-    padding: 20px 16px;
-  }
-  
-  .stat-number {
-    font-size: 2rem;
-  }
-  
-  ::ng-deep .mat-dialog-actions {
-    flex-direction: column-reverse;
-    padding: 16px 20px;
-  }
-  
-  ::ng-deep .mat-dialog-actions button {
-    width: 100%;
-  }
+  .cl-dialog-header { padding: 16px 18px; }
+  .cl-dialog-subtitle { max-width: 180px; }
+  .cl-tab-content { padding: 16px; }
+  .cl-info-grid { grid-template-columns: 1fr; }
+  .cl-stats-grid { grid-template-columns: 1fr; }
+  .cl-project-hero { flex-direction: column; align-items: flex-start; }
 }
 
-@media (max-width: 480px) {
-  .dialog-title h2 {
-    font-size: 1.1rem;
-  }
-  
-  .tab-content {
-    padding: 12px;
-  }
-  
-  .description-section,
-  .competences-section,
-  .avantages-section,
-  .conditions-section,
-  .affectation-section {
-    padding: 16px;
-  }
+/* Stat orange (candidats acceptés à affecter) */
+.cl-stat-orange {
+  color: #c2410c;
 }
 
-/* ===== MODE SOMBRE ===== */
-@media (prefers-color-scheme: dark) {
-  .dialog-title {
-    background: linear-gradient(135deg, #005518 0%, #006b1e 100%);
-  }
-  
-  .dialog-content {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  }
-  
-  .info-card,
-  .mat-card,
-  .description-section,
-  .competences-section,
-  .avantages-section,
-  .conditions-section,
-  .affectation-section {
-    background: #1e293b;
-    border-color: #334155;
-  }
-  
-  ::ng-deep .mat-card-header {
-    background: linear-gradient(135deg, #334155 0%, #475569 100%);
-    border-color: #475569;
-  }
-  
-  ::ng-deep .mat-card-title {
-    color: #f1f5f9;
-  }
-  
-  ::ng-deep .mat-card-subtitle {
-    color: #94a3b8;
-  }
-  
-  .info-item {
-    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-    border-color: #475569;
-    
-    &:hover {
-      background: linear-gradient(135deg, #475569 0%, #334155 100%);
-      border-color: #009629;
-    }
-  }
-  
-  .info-item mat-icon {
-    color: #009629;
-  }
-  
-  .info-label {
-    color: #94a3b8;
-  }
-  
-  .info-value {
-    color: #f1f5f9;
-  }
-  
-  .loading-section,
-  .no-data,
-  .no-volontaires,
-  ::ng-deep .mat-list {
-    background: #1e293b;
-    border-color: #334155;
-  }
-  
-  .stat {
-    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-    border-color: #475569;
-  }
-  
-  .stat-number {
-    color: #009629;
-  }
-  
-  .stat-label {
-    color: #94a3b8;
-  }
-  
-  ::ng-deep .mat-dialog-actions {
-    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-    border-color: #475569;
-  }
-  
-  .dialog-content::-webkit-scrollbar-track {
-    background: #334155;
-  }
-  
-  .dialog-content::-webkit-scrollbar-thumb {
-    background: #006b1e;
-  }
-  
-  .dialog-content::-webkit-scrollbar-thumb:hover {
-    background: #008124;
-  }
-  
-  .description-section h3,
-  .competences-section h3,
-  .avantages-section h3,
-  .conditions-section h3,
-  .affectation-section h3 {
-    color: #f1f5f9;
-    border-bottom-color: #009629;
-  }
-  
-  .description-section p,
-  .avantages-section p,
-  .conditions-section p {
-    color: #cbd5e1;
-  }
-  
-  .competences-section {
-    background: linear-gradient(135deg, #1e3a1e 0%, #2d4d2d 100%);
-    border-color: #009629;
-  }
+/* Section affectation depuis candidats acceptés */
+.cl-affectation-section {
+  margin-bottom: 20px;
 }
 
-/* ===== OPTIMISATIONS GPU ===== */
-.info-card,
-.mat-card,
-.stat,
-.info-item,
-button {
-  will-change: transform;
-  backface-visibility: hidden;
+.cl-affectation-form {
+  margin-top: 12px;
 }
 
-/* ===== NOTES ===== */
-/*
-✅ Couleurs PNVB officielles (#006b1e, #008124, #009629)
-✅ Gradients harmonisés
-✅ Animations fluides optimisées GPU
-✅ Responsive complet (mobile + tablette)
-✅ Mode sombre élégant
-✅ Scrollbar personnalisée
-✅ Effets hover sophistiqués
-✅ Accessibilité améliorée
-✅ Performance optimisée
-*/
+.cl-select-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.cl-select-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0 14px;
+  height: 44px;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.cl-select-wrap:focus-within {
+  border-color: #008124;
+  box-shadow: 0 0 0 3px rgba(0,129,36,.1);
+  background: white;
+}
+
+.cl-select-icon {
+  color: #64748b;
+  font-size: 1.1rem !important;
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+  flex-shrink: 0;
+}
+
+.cl-select {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: #0f172a;
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Bouton Affecter dans le dialog */
+.cl-btn-affecter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #008124;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0 20px;
+  height: 44px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cl-btn-affecter mat-icon {
+  font-size: 1.1rem !important;
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+}
+
+.cl-btn-affecter:hover:not([disabled]) {
+  background: #005518;
+  box-shadow: 0 4px 12px rgba(0,129,36,.35);
+  transform: translateY(-1px);
+}
+
+.cl-btn-affecter[disabled] {
+  opacity: .4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Liste candidats déjà affectés */
+.cl-already-list {
+  margin-top: 10px;
+}
+
+.cl-already-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #008124;
+  font-weight: 600;
+  background: #e8f5e9;
+  border: 1px solid rgba(0,129,36,.2);
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+.cl-already-label mat-icon {
+  font-size: 0.9rem !important;
+  width: 0.9rem !important;
+  height: 0.9rem !important;
+}
+
+/* Loading inline */
+.cl-loading-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.cl-spinner-sm {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #cbd5e1;
+  border-top-color: #008124;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty inline */
+.cl-empty-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: #92400e;
+  margin-top: 8px;
+}
+
+.cl-empty-inline mat-icon {
+  font-size: 1.1rem !important;
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+  color: #c2410c;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+
+/* ============================================================
+   CSS À AJOUTER dans project-detail-dialog.component.css
+   ============================================================ */
+
+/* ===== BANNIÈRE ALERTE EXPIRATION ===== */
+.cl-alert-expiration {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  background: #fff7ed;
+  border: 1.5px solid #fdba74;
+  border-left: 4px solid #f97316;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.cl-alert-expiration-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cl-alert-expiration-left > mat-icon {
+  color: #f97316;
+  font-size: 1.4rem !important;
+  width: 1.4rem !important;
+  height: 1.4rem !important;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cl-alert-expiration-left strong {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #c2410c;
+  margin-bottom: 4px;
+}
+
+.cl-alert-expiration-left p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+/* ===== BOUTON TERMINER TOUTES LES MISSIONS ===== */
+.cl-btn-terminer-tout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f97316;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0 18px;
+  height: 40px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all .2s ease;
+}
+
+.cl-btn-terminer-tout mat-icon {
+  font-size: 1rem !important;
+  width: 1rem !important;
+  height: 1rem !important;
+}
+
+.cl-btn-terminer-tout:hover {
+  background: #ea580c;
+  box-shadow: 0 4px 12px rgba(249,115,22,.35);
+  transform: translateY(-1px);
+}
+
+/* ===== ROW NOM + BADGE FIN MISSION ===== */
+.cl-list-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ===== BADGE "EN FIN DE MISSION" ===== */
+.cl-badge-fin-mission {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1.5px solid #fdba74;
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  animation: pulse-orange 2s ease-in-out infinite;
+}
+
+.cl-badge-fin-mission mat-icon {
+  font-size: 0.82rem !important;
+  width: 0.82rem !important;
+  height: 0.82rem !important;
+}
+
+@keyframes pulse-orange {
+  0%, 100% { border-color: #fdba74; }
+  50%       { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,.12); }
+}
+
+/* ===== ITEM LISTE EXPIRÉ (fond légèrement orangé) ===== */
+.cl-list-item-expired {
+  background: #fff8f5 !important;
+  border-left: 3px solid #f97316;
+}
+
+.cl-list-item-expired:hover {
+  background: #fff3eb !important;
+}
+
+/* ===== BOUTON ACTIONS (conteneur) ===== */
+.cl-list-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ===== BOUTON TERMINER MISSION (individuel) ===== */
+.cl-action-terminer {
+  color: #f97316;
+  border-color: #fdba74;
+  background: #fff7ed;
+}
+
+.cl-action-terminer:hover {
+  background: #f97316;
+  color: white;
+  border-color: #f97316;
+  box-shadow: 0 3px 8px rgba(249,115,22,.3);
+}

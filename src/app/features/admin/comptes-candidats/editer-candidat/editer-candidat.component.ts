@@ -1,4 +1,5 @@
 // src/app/features/admin/components/editer-candidat/editer-candidat.component.ts
+
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -12,12 +13,15 @@ import { ProfilVolontaire } from '../../../models/volontaire.model';
 })
 export class EditerCandidatComponent implements OnInit {
   profilForm: FormGroup;
-  candidatId: string | null = null;
-  isLoading = false;
-  isChargement = true;
+  candidatId:   string | null = null;
+  isLoading     = false;
+  isChargement  = true;
   messageSucces = '';
   messageErreur = '';
-  nomCandidat = '';
+  nomCandidat   = '';
+
+  typePieceActuel:   'CNIB' | 'PASSEPORT' = 'CNIB';
+  numeroPieceActuel: string = '';
 
   constructor(
     private fb: FormBuilder,
@@ -30,164 +34,165 @@ export class EditerCandidatComponent implements OnInit {
 
   ngOnInit(): void {
     this.candidatId = this.route.snapshot.paramMap.get('id');
+    console.log('🔍 [EditerCandidat] ID reçu:', this.candidatId);
+    
     if (this.candidatId) {
       this.chargerCandidat();
     } else {
       this.messageErreur = 'ID candidat non spécifié';
-      this.isChargement = false;
+      this.isChargement  = false;
     }
   }
 
   chargerCandidat(): void {
+    console.log(`📥 [EditerCandidat] Chargement du candidat avec ID: ${this.candidatId}`);
+    
     this.adminCandidatService.getCandidatById(this.candidatId!).subscribe({
       next: (candidat) => {
-        if (candidat) {
-          this.nomCandidat = `${candidat.user.prenom} ${candidat.user.nom}`;
-          this.profilForm.patchValue({
-            adresseResidence: candidat.volontaire.adresseResidence || '',
-            regionGeographique: candidat.volontaire.regionGeographique || '',
-            niveauEtudes: candidat.volontaire.niveauEtudes || '',
-            domaineEtudes: candidat.volontaire.domaineEtudes || '',
-            competences: candidat.volontaire.competences || [],
-            motivation: candidat.volontaire.motivation || '',
-            disponibilite: candidat.volontaire.disponibilite || 'Temps plein',
-            urlCV: candidat.volontaire.urlCV || '',
-            typePiece: candidat.volontaire.typePiece || 'CNIB',
-            numeroPiece: candidat.volontaire.numeroPiece || '',
-            urlPieceIdentite: candidat.volontaire.urlPieceIdentite || ''
+        console.log('✅ [EditerCandidat] Candidat chargé:', candidat);
+        
+        if (candidat && candidat.user && candidat.volontaire) {
+          this.nomCandidat = `${candidat.user.prenom || ''} ${candidat.user.nom || ''}`.trim() || 
+                            `${candidat.volontaire.prenom} ${candidat.volontaire.nom}`;
+
+          this.typePieceActuel   = candidat.volontaire.typePiece;
+          this.numeroPieceActuel = candidat.volontaire.numeroPiece;
+
+          console.log('📝 [EditerCandidat] Pré-remplissage du formulaire avec:', {
+            adresseResidence: candidat.volontaire.adresseResidence,
+            regionGeographique: candidat.volontaire.regionGeographique,
+            niveauEtudes: candidat.volontaire.niveauEtudes,
+            domaineEtudes: candidat.volontaire.domaineEtudes,
+            competences: candidat.volontaire.competences,
+            motivation: candidat.volontaire.motivation,
+            disponibilite: candidat.volontaire.disponibilite,
+            urlCV: candidat.volontaire.urlCV,
+            urlPieceIdentite: candidat.volontaire.urlPieceIdentite
           });
+
+          this.profilForm.patchValue({
+            adresseResidence:   candidat.volontaire.adresseResidence   || '',
+            regionGeographique: candidat.volontaire.regionGeographique || '',
+            niveauEtudes:       candidat.volontaire.niveauEtudes       || '',
+            domaineEtudes:      candidat.volontaire.domaineEtudes      || '',
+            competences:        candidat.volontaire.competences        || [],
+            motivation:         candidat.volontaire.motivation         || '',
+            disponibilite:      candidat.volontaire.disponibilite      || 'Temps plein',
+            urlCV:              candidat.volontaire.urlCV              || '',
+            urlPieceIdentite:   candidat.volontaire.urlPieceIdentite   || ''
+          });
+          
+          console.log('📝 [EditerCandidat] Formulaire après patch:', this.profilForm.value);
         } else {
-          this.messageErreur = 'Candidat non trouvé';
+          this.messageErreur = 'Candidat non trouvé ou données incomplètes';
         }
         this.isChargement = false;
       },
       error: (error) => {
+        console.error('❌ [EditerCandidat] Erreur:', error);
         this.messageErreur = 'Erreur lors du chargement du candidat: ' + error.message;
-        this.isChargement = false;
+        this.isChargement  = false;
       }
     });
   }
 
   creerProfilForm(): FormGroup {
     return this.fb.group({
-      adresseResidence: [''],
+      adresseResidence:   [''],
       regionGeographique: [''],
-      niveauEtudes: [''],
-      domaineEtudes: [''],
-      competences: [[]],
-      motivation: [''],
-      disponibilite: ['Temps plein'],
-      urlCV: [''],
-      typePiece: ['CNIB'],
-      numeroPiece: [''],
-      urlPieceIdentite: ['']
+      niveauEtudes:       [''],
+      domaineEtudes:      [''],
+      competences:        [[]],
+      motivation:         [''],
+      disponibilite:      ['Temps plein'],
+      urlCV:              [''],
+      urlPieceIdentite:   ['']
     });
   }
 
+  private getProfilData(): ProfilVolontaire {
+    return {
+      adresseResidence:   this.profilForm.get('adresseResidence')?.value   || '',
+      regionGeographique: this.profilForm.get('regionGeographique')?.value || '',
+      niveauEtudes:       this.profilForm.get('niveauEtudes')?.value       || '',
+      domaineEtudes:      this.profilForm.get('domaineEtudes')?.value      || '',
+      competences:        this.profilForm.get('competences')?.value        || [],
+      motivation:         this.profilForm.get('motivation')?.value         || '',
+      disponibilite:      this.profilForm.get('disponibilite')?.value      || 'Temps plein',
+      urlCV:              this.profilForm.get('urlCV')?.value              || '',
+      urlPieceIdentite:   this.profilForm.get('urlPieceIdentite')?.value   || ''
+    };
+  }
+
   mettreAJourProfil(): void {
-    this.isLoading = true;
+    this.isLoading     = true;
     this.messageErreur = '';
     this.messageSucces = '';
 
-    // Créer un objet ProfilVolontaire avec les valeurs du formulaire
-    const profilData: ProfilVolontaire = {
-      adresseResidence: this.profilForm.get('adresseResidence')?.value || '',
-      regionGeographique: this.profilForm.get('regionGeographique')?.value || '',
-      niveauEtudes: this.profilForm.get('niveauEtudes')?.value || '',
-      domaineEtudes: this.profilForm.get('domaineEtudes')?.value || '',
-      competences: this.profilForm.get('competences')?.value || [],
-      motivation: this.profilForm.get('motivation')?.value || '',
-      disponibilite: this.profilForm.get('disponibilite')?.value || 'Temps plein',
-      urlCV: this.profilForm.get('urlCV')?.value || '',
-      typePiece: this.profilForm.get('typePiece')?.value || 'CNIB',
-      numeroPiece: this.profilForm.get('numeroPiece')?.value || '',
-      urlPieceIdentite: this.profilForm.get('urlPieceIdentite')?.value || ''
-    };
-
-    this.adminCandidatService.mettreAJourProfilCandidat(this.candidatId!, profilData)
+    this.adminCandidatService.mettreAJourProfilCandidat(this.candidatId!, this.getProfilData())
       .subscribe({
         next: () => {
-          this.isLoading = false;
+          this.isLoading     = false;
           this.messageSucces = 'Profil mis à jour avec succès !';
         },
         error: (error) => {
-          this.isLoading = false;
+          this.isLoading     = false;
           this.messageErreur = 'Erreur lors de la mise à jour: ' + error.message;
         }
       });
   }
 
   completerProfil(): void {
-    this.isLoading = true;
+    this.isLoading     = true;
     this.messageErreur = '';
     this.messageSucces = '';
 
-    // Créer un objet ProfilVolontaire avec les valeurs du formulaire
-    const profilData: ProfilVolontaire = {
-      adresseResidence: this.profilForm.get('adresseResidence')?.value || '',
-      regionGeographique: this.profilForm.get('regionGeographique')?.value || '',
-      niveauEtudes: this.profilForm.get('niveauEtudes')?.value || '',
-      domaineEtudes: this.profilForm.get('domaineEtudes')?.value || '',
-      competences: this.profilForm.get('competences')?.value || [],
-      motivation: this.profilForm.get('motivation')?.value || '',
-      disponibilite: this.profilForm.get('disponibilite')?.value || 'Temps plein',
-      urlCV: this.profilForm.get('urlCV')?.value || '',
-      typePiece: this.profilForm.get('typePiece')?.value || 'CNIB',
-      numeroPiece: this.profilForm.get('numeroPiece')?.value || '',
-      urlPieceIdentite: this.profilForm.get('urlPieceIdentite')?.value || ''
-    };
-
-    this.adminCandidatService.completerProfilCandidat(this.candidatId!, profilData)
-      .subscribe({
-        next: () => {
+    this.adminCandidatService.getCandidatById(this.candidatId!).subscribe({
+      next: (candidat) => {
+        if (candidat.volontaire.id) {
+          this.adminCandidatService.completerProfilCandidat(candidat.volontaire.id, this.getProfilData())
+            .subscribe({
+              next: () => {
+                this.isLoading     = false;
+                this.messageSucces = 'Profil complété avec succès ! Statut changé à "En attente"';
+              },
+              error: (error) => {
+                this.isLoading     = false;
+                this.messageErreur = 'Erreur lors de la complétion du profil: ' + error.message;
+              }
+            });
+        } else {
           this.isLoading = false;
-          this.messageSucces = 'Profil complété avec succès ! Statut changé à "En attente"';
-        },
-        error: (error) => {
-          this.isLoading = false;
-          this.messageErreur = 'Erreur lors de la complétion du profil: ' + error.message;
+          this.messageErreur = 'ID volontaire non trouvé';
         }
-      });
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.messageErreur = 'Erreur: ' + error.message;
+      }
+    });
   }
 
   annuler(): void {
-  console.log('🔄 Retour depuis édition candidat...');
-  
-  // 🔥 CHEMIN ABSOLU CORRECT
-  this.router.navigate(['/features/admin/comptes/gestion-candidats']).then(success => {
-    if (success) {
-      console.log('✅ Retour réussi vers gestion candidats');
-    } else {
-      console.error('❌ Échec retour, fallback...');
-      // Fallback garanti
-      window.location.href = '/features/admin/comptes/gestion-candidats';
-    }
-  }).catch(error => {
-    console.error('💥 Erreur retour:', error);
-    window.location.href = '/features/admin/comptes/gestion-candidats';
-  });
-}
+    this.router.navigate(['/features/admin/comptes/gestion-candidats']);
+  }
 
   ajouterCompetence(event: any): void {
-    const input = event.target as HTMLInputElement;
+    const input  = event.target as HTMLInputElement;
     const valeur = input.value.trim();
-    
     if (valeur) {
-      const competencesActuelles = this.profilForm.get('competences')?.value || [];
-      if (!competencesActuelles.includes(valeur)) {
-        this.profilForm.patchValue({
-          competences: [...competencesActuelles, valeur]
-        });
+      const actuelles = this.profilForm.get('competences')?.value || [];
+      if (!actuelles.includes(valeur)) {
+        this.profilForm.patchValue({ competences: [...actuelles, valeur] });
       }
       input.value = '';
     }
   }
 
   supprimerCompetence(competence: string): void {
-    const competencesActuelles = this.profilForm.get('competences')?.value || [];
-    const nouvellesCompetences = competencesActuelles.filter((c: string) => c !== competence);
+    const actuelles = this.profilForm.get('competences')?.value || [];
     this.profilForm.patchValue({
-      competences: nouvellesCompetences
+      competences: actuelles.filter((c: string) => c !== competence)
     });
   }
 }

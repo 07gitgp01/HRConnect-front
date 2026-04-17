@@ -7,6 +7,7 @@ import { DetailProjetCandidatComponent } from './detail-projet-candidat/detail-p
 import { CandidatDashboardComponent } from './candidat-dashboard/dashboard.component';
 import { CandidatureFormCandidatComponent } from './candidature-candi-form/candidature-candi-form.component';
 import { ProfilCandidatComponent } from './profil/profil.component';
+import { DetailCandidatureComponent } from './detail-candidature/detail-candidature.component';
 
 const routes: Routes = [
   { 
@@ -39,6 +40,14 @@ const routes: Routes = [
   canActivate: [AuthGuard],
   data: { roles: ['candidat', 'volontaire', 'user'] }
 },
+
+ // ✅ NOUVEAU: Route pour les détails d'une candidature
+  { 
+    path: 'candidature/:id', 
+    component: DetailCandidatureComponent,
+    canActivate: [AuthGuard],
+    data: { roles: ['candidat', 'volontaire', 'user'] }
+  },
 {
   path:'profil',
   component:ProfilCandidatComponent,

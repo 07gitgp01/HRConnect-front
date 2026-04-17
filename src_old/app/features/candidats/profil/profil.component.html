@@ -1,0 +1,430 @@
+<!-- src/app/features/candidats/profil/profil.component.html -->
+<div class="profil-container">
+  <!-- En-tête -->
+  <div class="profil-header">
+    <div class="header-info">
+      <h1>Mon Profil Volontaire</h1>
+      <div class="completion-badge" [class.complete]="getProfilCompletion() === 100">
+        Profil complété à {{ getProfilCompletion() }}%
+      </div>
+    </div>
+    <div class="header-actions">
+      <button 
+        *ngIf="!isEditing"
+        (click)="toggleEdit()" 
+        class="btn btn-primary"
+        [disabled]="getProfilCompletion() === 100 && !isEditing">
+        ✏️ {{ getProfilCompletion() === 100 ? 'Modifier' : 'Compléter' }} le profil
+      </button>
+      <button 
+        *ngIf="isEditing"
+        (click)="toggleEdit()" 
+        class="btn btn-secondary">
+        ❌ Annuler
+      </button>
+    </div>
+  </div>
+
+  <!-- Message de statut -->
+  <div *ngIf="message" 
+       class="alert" 
+       [class.alert-success]="messageType === 'success'"
+       [class.alert-danger]="messageType === 'error'">
+    {{ message }}
+  </div>
+
+  <div class="profil-content">
+    <!-- Colonne gauche : Formulaire profil -->
+    <div class="profil-form-section">
+      <form [formGroup]="profilForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Informations personnelles (lecture seule) -->
+        <div class="form-section">
+          <h3>📋 Informations Personnelles</h3>
+          <p class="section-description">
+            Ces informations sont issues de votre inscription et ne peuvent pas être modifiées.
+          </p>
+          <div class="info-grid" formGroupName="informationsPersonnelles">
+            <div class="info-item">
+              <label>Nom</label>
+              <input type="text" formControlName="nom" class="form-control" readonly>
+            </div>
+            <div class="info-item">
+              <label>Prénom</label>
+              <input type="text" formControlName="prenom" class="form-control" readonly>
+            </div>
+            <div class="info-item">
+              <label>Email</label>
+              <input type="email" formControlName="email" class="form-control" readonly>
+            </div>
+            <div class="info-item">
+              <label>Téléphone</label>
+              <input type="text" formControlName="telephone" class="form-control" readonly>
+            </div>
+            <div class="info-item">
+              <label>Date de naissance</label>
+              <input type="text" formControlName="dateNaissance" class="form-control" readonly>
+            </div>
+            <div class="info-item">
+              <label>Nationalité</label>
+              <input type="text" formControlName="nationalite" class="form-control" readonly>
+            </div>
+            <div class="info-item">
+              <label>Sexe</label>
+              <input type="text" formControlName="sexe" class="form-control" readonly>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profil à compléter -->
+        <div class="form-section" formGroupName="profil">
+          <h3>🎯 Profil Volontaire</h3>
+          <p class="section-description">
+            Complétez ces informations pour finaliser votre profil et pouvoir postuler aux missions.
+          </p>
+          
+          <!-- Adresse et région -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Adresse de résidence *</label>
+              <input type="text" formControlName="adresseResidence" 
+                    [class.is-invalid]="adresseResidence?.invalid && adresseResidence?.touched"
+                    class="form-control" placeholder="Votre adresse complète">
+              <div *ngIf="adresseResidence?.invalid && adresseResidence?.touched" class="invalid-feedback">
+                L'adresse est requise
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Région géographique *</label>
+              <select formControlName="regionGeographique"
+                      [class.is-invalid]="regionGeographique?.invalid && regionGeographique?.touched"
+                      class="form-control">
+                <option value="">Sélectionnez votre région</option>
+                <option *ngFor="let region of regions" [value]="region">
+                  {{ region }}
+                </option>
+              </select>
+              <div *ngIf="regionGeographique?.invalid && regionGeographique?.touched" class="invalid-feedback">
+                La région est requise
+              </div>
+            </div>
+          </div>
+
+          <!-- Études -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Niveau d'études *</label>
+              <select formControlName="niveauEtudes"
+                      [class.is-invalid]="niveauEtudes?.invalid && niveauEtudes?.touched"
+                      class="form-control">
+                <option value="">Sélectionnez...</option>
+                <option *ngFor="let niveau of niveauxEtudes" [value]="niveau">
+                  {{ niveau }}
+                </option>
+              </select>
+              <div *ngIf="niveauEtudes?.invalid && niveauEtudes?.touched" class="invalid-feedback">
+                Le niveau d'études est requis
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Domaine d'études *</label>
+              <select formControlName="domaineEtudes"
+                      [class.is-invalid]="domaineEtudes?.invalid && domaineEtudes?.touched"
+                      class="form-control">
+                <option value="">Sélectionnez...</option>
+                <option *ngFor="let domaine of domainesEtudes" [value]="domaine">
+                  {{ domaine }}
+                </option>
+              </select>
+              <div *ngIf="domaineEtudes?.invalid && domaineEtudes?.touched" class="invalid-feedback">
+                Le domaine d'études est requis
+              </div>
+            </div>
+          </div>
+
+          <!-- Pièce d'identité avec upload -->
+          <div class="form-section document-section">
+            <h4>🆔 Pièce d'Identité</h4>
+            
+            <!-- Type de pièce -->
+            <div class="form-row">
+              <div class="form-group">
+                <label>Type de pièce d'identité *</label>
+                <select formControlName="typePiece"
+                        [class.is-invalid]="typePiece?.invalid && typePiece?.touched"
+                        class="form-control"
+                        (change)="onTypePieceChange()">
+                  <option value="">Sélectionnez...</option>
+                  <option value="CNIB">CNIB</option>
+                  <option value="PASSEPORT">Passeport</option>
+                </select>
+                <div *ngIf="typePiece?.invalid && typePiece?.touched" class="invalid-feedback">
+                  Le type de pièce est requis
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>{{ getLabelNumeroPiece() }}</label>
+                <input type="text" formControlName="numeroPiece" 
+                      [class.is-invalid]="numeroPiece?.invalid && numeroPiece?.touched"
+                      [placeholder]="getPlaceholderNumeroPiece()"
+                      [attr.maxlength]="typePieceSelectionne === 'CNIB' ? '17' : '9'"
+                      class="form-control numero-piece-input"
+                      [class.type-cnib]="typePieceSelectionne === 'CNIB'"
+                      [class.type-passeport]="typePieceSelectionne === 'PASSEPORT'">
+                <div *ngIf="numeroPiece?.invalid && numeroPiece?.touched" class="invalid-feedback">
+                  {{ getNumeroPieceErrorMessage() }}
+                </div>
+                <small class="text-muted">
+                  {{ typePieceSelectionne === 'CNIB' ? '17 chiffres exactement' : '6 à 9 caractères (lettres majuscules et chiffres)' }}
+                </small>
+              </div>
+            </div>
+
+            <!-- Upload du document -->
+            <div class="form-group">
+              <label>Document scanné *</label>
+              <div class="file-upload-section">
+                <div class="file-input-container">
+                  <input type="file" 
+                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                         class="form-control" 
+                         (change)="onDocumentIdentitySelected($event)"
+                         #documentIdentityInput>
+                  <button type="button" 
+                          class="btn btn-outline-secondary browse-btn"
+                          (click)="documentIdentityInput.click()">
+                    <mat-icon>attach_file</mat-icon>
+                    Parcourir
+                  </button>
+                </div>
+                
+                <!-- Aperçu du document -->
+                <div *ngIf="documentIdentityPreview" class="file-preview">
+                  <div class="preview-content">
+                    <mat-icon>description</mat-icon>
+                    <div class="file-info">
+                      <span class="file-name">{{ documentIdentityPreview.name }}</span>
+                      <span class="file-size">({{ getFileSize(documentIdentityPreview.size) }})</span>
+                    </div>
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-danger"
+                            (click)="removeDocumentIdentity()">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Document existant -->
+                <div *ngIf="!selectedDocumentIdentity && volontaire?.urlPieceIdentite" 
+                     class="existing-document">
+                  <div class="existing-file">
+                    <mat-icon>description</mat-icon>
+                    <span>Document déjà uploadé</span>
+                    <a [href]="volontaire?.urlPieceIdentite || '#'" 
+                       target="_blank" 
+                       class="btn btn-sm btn-outline-primary">
+                      <mat-icon>visibility</mat-icon>
+                      Voir
+                    </a>
+                  </div>
+                </div>
+
+                <small class="text-muted">
+                  Formats acceptés : PDF, JPG, PNG, DOC (Max 5MB)
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dans la section compétences, remplacer par : -->
+<div class="form-group">
+  <label>Compétences *</label>
+  
+  <!-- Vérifier que le FormArray est prêt avant d'afficher -->
+  <div *ngIf="isCompetencesFormArrayReady()" class="competences-grid" formArrayName="competences">
+    <div *ngFor="let competence of competencesList; let i = index" class="competence-item">
+      <label>
+        <input type="checkbox" [formControlName]="i">
+        {{ competence }}
+      </label>
+    </div>
+  </div>
+  
+  <!-- Message de chargement si le FormArray n'est pas encore prêt -->
+  <div *ngIf="!isCompetencesFormArrayReady()" class="loading-competences">
+    <p>Chargement des compétences...</p>
+  </div>
+  
+  <!-- Affichage des compétences sélectionnées -->
+  <div *ngIf="selectedCompetences && selectedCompetences.length > 0" class="selected-competences">
+    <p><strong>Compétences sélectionnées :</strong> {{ selectedCompetences.join(', ') }}</p>
+  </div>
+  
+  <div *ngIf="selectedCompetences && selectedCompetences.length === 0 && profil.get('competences')?.touched" 
+       class="invalid-feedback">
+    Sélectionnez au moins une compétence
+  </div>
+</div>
+
+          <!-- Motivation -->
+          <div class="form-group">
+            <label>Lettre de motivation *</label>
+            <textarea formControlName="motivation" 
+                      [class.is-invalid]="motivation?.invalid && motivation?.touched"
+                      class="form-control" 
+                      rows="4"
+                      placeholder="Expliquez vos motivations pour le volontariat (minimum 50 caractères)..."></textarea>
+            <div *ngIf="motivation?.invalid && motivation?.touched" class="invalid-feedback">
+              <span *ngIf="motivation?.hasError('required')">La motivation est requise</span>
+              <span *ngIf="motivation?.hasError('minlength')">Minimum 50 caractères</span>
+            </div>
+            <small class="text-muted">{{ motivation?.value?.length || 0 }}/50 caractères</small>
+          </div>
+
+          <!-- Disponibilité -->
+          <div class="form-group">
+            <label>Disponibilité *</label>
+            <select formControlName="disponibilite"
+                    [class.is-invalid]="disponibilite?.invalid && disponibilite?.touched"
+                    class="form-control">
+              <option value="">Sélectionnez...</option>
+              <option value="Temps plein">Temps plein</option>
+              <option value="Temps partiel">Temps partiel</option>
+            </select>
+            <div *ngIf="disponibilite?.invalid && disponibilite?.touched" class="invalid-feedback">
+              La disponibilité est requise
+            </div>
+          </div>
+
+          <!-- CV avec upload -->
+          <div class="form-group">
+            <label>Curriculum Vitae (CV) *</label>
+            <div class="file-upload-section">
+              <div class="file-input-container">
+                <input type="file" 
+                       accept=".pdf,.doc,.docx"
+                       class="form-control" 
+                       (change)="onCVSelected($event)"
+                       #cvInput>
+                <button type="button" 
+                        class="btn btn-outline-secondary browse-btn"
+                        (click)="cvInput.click()">
+                  <mat-icon>attach_file</mat-icon>
+                  Parcourir
+                </button>
+              </div>
+              
+              <!-- Aperçu du CV -->
+              <div *ngIf="cvPreview" class="file-preview">
+                <div class="preview-content">
+                  <mat-icon>description</mat-icon>
+                  <div class="file-info">
+                    <span class="file-name">{{ cvPreview.name }}</span>
+                    <span class="file-size">({{ getFileSize(cvPreview.size) }})</span>
+                  </div>
+                  <button type="button" 
+                          class="btn btn-sm btn-outline-danger"
+                          (click)="removeCV()">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- CV existant -->
+              <div *ngIf="!selectedCV && volontaire?.urlCV" 
+                   class="existing-document">
+                <div class="existing-file">
+                  <mat-icon>description</mat-icon>
+                  <span>CV déjà uploadé</span>
+                  <a [href]="volontaire?.urlCV || '#'" 
+                     target="_blank" 
+                     class="btn btn-sm btn-outline-primary">
+                    <mat-icon>visibility</mat-icon>
+                    Voir
+                  </a>
+                </div>
+              </div>
+
+              <small class="text-muted">
+                Formats acceptés : PDF, DOC, DOCX (Max 5MB)
+              </small>
+            </div>
+            <div *ngIf="urlCV?.invalid && urlCV?.touched" class="invalid-feedback">
+              Le CV est requis
+            </div>
+          </div>
+
+          <!-- Bouton de soumission -->
+          <div *ngIf="isEditing" class="form-actions">
+            <button type="submit" 
+                    [disabled]="isLoading || profil.invalid"
+                    class="btn btn-success btn-lg">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm"></span>
+              {{ isLoading ? 'Mise à jour...' : '💾 Sauvegarder le profil' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Colonne droite : Statistiques et actions -->
+    <div class="profil-stats-section">
+      <!-- Carte de statut -->
+      <div class="stat-card">
+        <h4>📊 Mes Candidatures</h4>
+        <div class="stats-grid">
+          <div class="stat-item total">
+            <span class="stat-number">{{ stats.total }}</span>
+            <span class="stat-label">Total</span>
+          </div>
+          <div class="stat-item en-attente">
+            <span class="stat-number">{{ stats.en_attente }}</span>
+            <span class="stat-label">En attente</span>
+          </div>
+          <div class="stat-item entretien">
+            <span class="stat-number">{{ stats.entretien }}</span>
+            <span class="stat-label">Entretien</span>
+          </div>
+          <div class="stat-item acceptee">
+            <span class="stat-number">{{ stats.acceptee }}</span>
+            <span class="stat-label">Acceptées</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions rapides -->
+      <div class="actions-card">
+        <h4>🚀 Actions Rapides</h4>
+        <button (click)="navigateToNouvelleCandidature()" 
+                class="btn btn-primary btn-block"
+                [disabled]="getProfilCompletion() < 100">
+          📨 Nouvelle candidature
+        </button>
+        <button (click)="navigateToCandidatures()" 
+                class="btn btn-outline-primary btn-block">
+          📋 Voir mes candidatures
+        </button>
+        <div *ngIf="getProfilCompletion() < 100" class="alert alert-warning mt-2">
+          <small>Complétez votre profil à 100% pour postuler aux missions</small>
+        </div>
+      </div>
+
+      <!-- Dernières candidatures -->
+      <div class="candidatures-card" *ngIf="dernieresCandidatures.length > 0">
+        <h4>📝 Dernières candidatures</h4>
+        <div class="candidatures-list">
+          <div *ngFor="let candidature of dernieresCandidatures" 
+               class="candidature-item"
+               [class]="'statut-' + candidature.statut">
+            <div class="candidature-info">
+              <strong>{{ candidature.poste_vise }}</strong>
+              <span class="statut-badge">{{ getCandidatureStatutLabel(candidature.statut) }}</span>
+            </div>
+            <small class="text-muted">{{ candidature.cree_le | date:'dd/MM/yyyy' }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

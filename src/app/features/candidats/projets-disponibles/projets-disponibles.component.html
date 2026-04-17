@@ -1,10 +1,36 @@
+<!-- src/app/features/candidats/projets-disponibles/projets-disponibles.component.html -->
+
 <div class="projets-disponibles-container">
-  <!-- En-tête -->
-<!--   <div class="header-section">
- -->    <!-- <h1>Projets Disponibles</h1> -->
-  <!--   <p>Découvrez les missions de bénévolat qui correspondent à vos compétences</p>
+  <!-- En-tête avec statistiques -->
+  <div class="header-section">
+    <h1>Missions disponibles</h1>
+    <p>Découvrez les missions de volontariat et trouvez celle qui vous correspond</p>
+    
+    <!-- ✅ STATISTIQUES DÉPLACÉES EN HAUT -->
+    <div class="stats-section">
+      <mat-card class="stats-card">
+        <div class="stats-content">
+          <div class="stat-item">
+            <div class="stat-number">{{ projetsFiltres.length }}</div>
+            <div class="stat-label">Missions actives</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ getTotalVolontairesManquants() }}</div>
+            <div class="stat-label">Volontaires recherchés</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ regions.length }}</div>
+            <div class="stat-label">Régions</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ typeMissions.length }}</div>
+            <div class="stat-label">Types de mission</div>
+          </div>
+        </div>
+      </mat-card>
+    </div>
   </div>
- -->
+
   <!-- Filtres -->
   <div class="filters-section">
     <mat-card class="filters-card">
@@ -87,10 +113,10 @@
       <mat-icon>search_off</mat-icon>
       <h3>Aucune mission trouvée</h3>
       <p>Aucune mission ne correspond à vos critères de recherche.</p>
-      <!-- <button mat-raised-button color="primary" (click)="reinitialiserFiltres()">
-        <mat-icon>clear_all</mat-icon>
-        Voir tous les projets
-      </button> -->
+      <button mat-raised-button color="primary" (click)="reinitialiserFiltres()">
+        <mat-icon>refresh</mat-icon>
+        Réinitialiser les filtres
+      </button>
     </div>
 
     <!-- Grille des projets -->
@@ -102,7 +128,6 @@
           <div class="urgence-badge" *ngIf="getUrgenceCandidature(projet)">
             {{ getUrgenceText(projet) }}
           </div>
-          <!-- ✅ CORRECTION : Ajout du badge de statut -->
           <span class="status-badge" [class]="projet.statutProjet">
             {{ getStatusLabel(projet.statutProjet) }}
           </span>
@@ -140,16 +165,8 @@
             <div class="volunteers-info">
               <mat-icon>people</mat-icon>
               <span>
-                {{ projet.nombreVolontairesActuels || 0 }}/{{ projet.nombreVolontairesRequis }} volontaires
-                <span class="manquants" *ngIf="getVolontairesManquants(projet) > 0">
-                  ({{ getVolontairesManquants(projet) }} manquants)
-                </span>
+                {{ projet.nombreVolontairesRequis }} volontaires
               </span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" 
-                   [style.width.%]="((projet.nombreVolontairesActuels || 0) / projet.nombreVolontairesRequis) * 100">
-              </div>
             </div>
           </div>
 
@@ -178,7 +195,6 @@
               </mat-chip-set>
             </div>
           </div>
-          
 
           <!-- Avantages -->
           <div class="avantages-section" *ngIf="projet.avantagesVolontaire">
@@ -188,7 +204,19 @@
         </mat-card-content>
 
         <mat-card-actions align="end">
-          <button mat-button 
+          <!-- ✅ SI DÉJÀ POSTULÉ -->
+          <button *ngIf="estDejaPostule(projet.id)" 
+                  mat-button 
+                  color="accent"
+                  [routerLink]="['/features/candidats/mes-candidatures']"
+                  class="deja-postule-button">
+            <mat-icon>check_circle</mat-icon>
+            Déjà postulé
+          </button>
+          
+          <!-- ✅ SI NON POSTULÉ -->
+          <button *ngIf="!estDejaPostule(projet.id)" 
+                  mat-button 
                   color="primary" 
                   (click)="postuler(projet)"
                   [disabled]="getUrgenceCandidature(projet) === 'expiree' || projet.statutProjet !== 'actif'">
@@ -196,37 +224,14 @@
             {{ projet.statutProjet !== 'actif' ? 'Non disponible' : (getUrgenceCandidature(projet) === 'expiree' ? 'Date dépassée' : 'Postuler') }}
           </button>
           
+          <!-- Détails -->
           <button mat-button 
                   color="accent"
-                  [routerLink]="['/candidat/projets', projet.id]">
+                  [routerLink]="['/features/candidats/details/', projet.id]">
             <mat-icon>visibility</mat-icon>
             Détails
           </button>
         </mat-card-actions>
-      </mat-card>
-    </div>
-
-    <!-- Statistiques -->
-    <div *ngIf="!isLoading && projetsFiltres.length > 0" class="stats-section">
-      <mat-card class="stats-card">
-        <div class="stats-content">
-          <div class="stat-item">
-            <div class="stat-number">{{ projetsFiltres.length }}</div>
-            <div class="stat-label">Projets actifs</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">{{ getTotalVolontairesManquants() }}</div>
-            <div class="stat-label">Volontaires recherchés</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">{{ regions.length }}</div>
-            <div class="stat-label">Régions</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">{{ typeMissions.length }}</div>
-            <div class="stat-label">Types de mission</div>
-          </div>
-        </div>
       </mat-card>
     </div>
   </div>

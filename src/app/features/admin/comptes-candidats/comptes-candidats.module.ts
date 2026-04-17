@@ -5,7 +5,8 @@ import { ComptesCandidatsRoutingModule } from './comptes-candidats-routing.modul
 import { GestionCandidatsComponent } from './gestion-candidats/gestion-candidats.component';
 import { CreerCandidatComponent } from './creer-candidat/creer-candidat.component';
 import { EditerCandidatComponent } from './editer-candidat/editer-candidat.component';
-import { ReactiveFormsModule, FormsModule } from '@angular/forms'; // AJOUTER FormsModule
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { MatPaginator } from "@angular/material/paginator"; // AJOUTER FormsModule
 
 @NgModule({
   declarations: [
@@ -18,6 +19,8 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms'; // AJOUTER Fo
     ComptesCandidatsRoutingModule,
     ReactiveFormsModule,
     FormsModule // ✅ AJOUTER ICI - C'EST CE QUI MANQUE
-  ]
+    ,
+    MatPaginator
+]
 })
 export class ComptesCandidatsModule { }

@@ -1,290 +1,303 @@
-<div class="container-fluid py-4">
-  <!-- Header avec statistiques -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center">
-        <h1 class="h3 mb-0">
-<!--           <i class="bi bi-file-text me-2"></i>Rapports d'Évaluation
- -->        </h1>
-        <button class="btn btn-primary" (click)="createRapport()">
-          <i class="bi bi-plus-circle me-2"></i>Nouveau Rapport
-        </button>
+<div class="rl-container">
+
+  <!-- ─── Header ─── -->
+  <div class="rl-header">
+    <div class="rl-header-left">
+      <div class="rl-header-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+        </svg>
       </div>
-<!--       <p class="text-muted mb-0">Soumettez et gérez les évaluations de vos volontaires</p>
- -->    </div>
+      <div>
+        <h1 class="rl-title">Rapports d'Évaluation</h1>
+        <p class="rl-subtitle">Soumettez et gérez les rapports d'évaluation de vos missions</p>
+      </div>
+    </div>
+    <button class="rl-btn-primary" (click)="createRapport()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Nouveau Rapport
+    </button>
   </div>
 
-  <!-- Statistiques rapides -->
-  <div class="row mb-4" *ngIf="stats">
-    <div class="col-md-3">
-      <div class="card border-primary">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <h6 class="text-uppercase text-muted">Total</h6>
-              <h2 class="mb-0">{{stats.total}}</h2>
-            </div>
-            <div class="icon-shape bg-primary text-white rounded-circle">
-              <i class="bi bi-files"></i>
-            </div>
-          </div>
-        </div>
+  <!-- ─── Stats ─── -->
+  <div class="rl-stats" *ngIf="stats">
+    <div class="rl-stat-card rl-stat-total">
+      <div class="rl-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/>
+        </svg>
+      </div>
+      <div>
+        <div class="rl-stat-number">{{ stats.total }}</div>
+        <div class="rl-stat-label">Total</div>
       </div>
     </div>
-    
-    <div class="col-md-3">
-      <div class="card border-success">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <h6 class="text-uppercase text-muted">Validés</h6>
-              <h2 class="mb-0">{{stats.valide}}</h2>
-            </div>
-            <div class="icon-shape bg-success text-white rounded-circle">
-              <i class="bi bi-check-circle"></i>
-            </div>
-          </div>
-        </div>
+    <div class="rl-stat-card rl-stat-valide">
+      <div class="rl-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <div>
+        <div class="rl-stat-number">{{ stats.valide }}</div>
+        <div class="rl-stat-label">Validés</div>
       </div>
     </div>
-    
-    <div class="col-md-3">
-      <div class="card border-warning">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <h6 class="text-uppercase text-muted">Soumis</h6>
-              <h2 class="mb-0">{{stats.soumis}}</h2>
-            </div>
-            <div class="icon-shape bg-warning text-white rounded-circle">
-              <i class="bi bi-send"></i>
-            </div>
-          </div>
-        </div>
+    <div class="rl-stat-card rl-stat-soumis">
+      <div class="rl-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="rl-stat-number">{{ stats.soumis }}</div>
+        <div class="rl-stat-label">Soumis</div>
       </div>
     </div>
-    
-    <div class="col-md-3">
-      <div class="card border-secondary">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <h6 class="text-uppercase text-muted">Brouillons</h6>
-              <h2 class="mb-0">{{stats.brouillon}}</h2>
-            </div>
-            <div class="icon-shape bg-secondary text-white rounded-circle">
-              <i class="bi bi-pencil"></i>
-            </div>
-          </div>
-        </div>
+    <div class="rl-stat-card rl-stat-brouillon">
+      <div class="rl-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="rl-stat-number">{{ stats.brouillon }}</div>
+        <div class="rl-stat-label">Brouillons</div>
       </div>
     </div>
   </div>
 
-  <!-- Filtres -->
-  <div class="card mb-4">
-    <div class="card-header bg-light">
-      <h5 class="mb-0">Filtres</h5>
+  <!-- ─── Filtres ─── -->
+  <div class="rl-filters">
+    <div class="rl-search-wrap">
+      <svg class="rl-search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="rl-search-input" type="text" placeholder="Mission..."
+             [(ngModel)]="searchTerm" (keyup.enter)="applyFilters()">
     </div>
-    <div class="card-body">
-      <div class="row g-3">
-        <div class="col-md-4">
-          <label class="form-label">Statut</label>
-          <select class="form-select" [(ngModel)]="statutFilter" (change)="applyFilters()">
-            <option value="">Tous les statuts</option>
-            <option *ngFor="let statut of statuts" [value]="statut">{{statut}}</option>
-          </select>
-        </div>
-        
-        <div class="col-md-4">
-          <label class="form-label">Période</label>
-          <select class="form-select" [(ngModel)]="periodeFilter" (change)="applyFilters()">
-            <option value="">Toutes les périodes</option>
-            <option *ngFor="let periode of periodes" [value]="periode">{{periode}}</option>
-          </select>
-        </div>
-        
-        <div class="col-md-4">
-          <label class="form-label">Recherche</label>
-          <div class="input-group">
-            <input type="text" class="form-control" placeholder="Nom du volontaire ou commentaire..."
-                   [(ngModel)]="searchTerm" (keyup.enter)="applyFilters()">
-            <button class="btn btn-outline-secondary" type="button" (click)="applyFilters()">
-              <i class="bi bi-search"></i>
-            </button>
-          </div>
-        </div>
-        
-        <div class="col-12">
-          <div class="d-flex justify-content-between">
-            <button class="btn btn-outline-secondary" (click)="clearFilters()">
-              <i class="bi bi-x-circle me-2"></i>Réinitialiser les filtres
-            </button>
-            <button class="btn btn-outline-primary" (click)="exportToExcel()">
-              <i class="bi bi-download me-2"></i>Exporter
-            </button>
-          </div>
-        </div>
-      </div>
+
+    <div class="rl-select-wrap">
+      <svg class="rl-select-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+      </svg>
+      <select class="rl-select" [(ngModel)]="statutFilter" (change)="applyFilters()">
+        <option value="">Tous les statuts</option>
+        <option *ngFor="let s of statuts" [value]="s">{{ s }}</option>
+      </select>
     </div>
+
+    <div class="rl-select-wrap">
+      <svg class="rl-select-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <select class="rl-select" [(ngModel)]="periodeFilter" (change)="applyFilters()">
+        <option value="">Toutes les périodes</option>
+        <option *ngFor="let p of periodes" [value]="p">{{ p }}</option>
+      </select>
+    </div>
+
+    <button class="rl-btn-ghost" (click)="clearFilters()"
+            *ngIf="statutFilter || periodeFilter || searchTerm">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+      Réinitialiser
+    </button>
+
+    <button class="rl-btn-export" (click)="exportToExcel()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Exporter
+    </button>
   </div>
 
-  <!-- Liste des rapports -->
-  <div class="card">
-    <div class="card-header bg-white">
-      <div class="d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Rapports ({{filteredRapports.length}})</h5>
-        <div class="text-muted" *ngIf="stats">
-          Moyenne des évaluations : 
-          <span [class]="getEvaluationColor(stats.moyenneEvaluation)">
-            {{stats.moyenneEvaluation}}/10
-          </span>
-        </div>
-      </div>
+  <!-- ─── Compteur ─── -->
+  <div class="rl-meta">
+    <span class="rl-count">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+      {{ filteredRapports.length }} rapport{{ filteredRapports.length > 1 ? 's' : '' }}
+    </span>
+    <span class="rl-moyenne" *ngIf="stats && stats.moyenneEvaluation > 0">
+      Moyenne :
+      <strong [class]="getEvaluationColor(stats.moyenneEvaluation)">
+        {{ stats.moyenneEvaluation }}/10
+      </strong>
+    </span>
+  </div>
+
+  <!-- ─── Tableau ─── -->
+  <div class="rl-table-wrap">
+
+    <div *ngIf="isLoading" class="rl-loading">
+      <div class="rl-spinner"></div>
+      <p>Chargement des rapports...</p>
     </div>
-    
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead class="table-light">
-            <tr>
-              <th width="200">Volontaire</th>
-              <th width="100">Période</th>
-              <th width="100">Évaluation</th>
-              <th>Commentaires</th>
-              <th width="120">Statut</th>
-              <th width="150">Date</th>
-              <th width="150" class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Loading state -->
-            <tr *ngIf="isLoading">
-              <td colspan="7" class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Chargement...</span>
-                </div>
-              </td>
-            </tr>
-            
-            <!-- Empty state -->
-            <tr *ngIf="!isLoading && paginatedRapports.length === 0">
-              <td colspan="7" class="text-center py-5">
-                <div class="text-muted">
-                  <i class="bi bi-file-text display-6 d-block mb-3"></i>
-                  <h5>Aucun rapport trouvé</h5>
-                  <p class="mb-0">Utilisez les filtres ou créez un nouveau rapport</p>
-                </div>
-              </td>
-            </tr>
-            
-            <!-- Rapports -->
-            <tr *ngFor="let rapport of paginatedRapports">
-              <td>
-                <div class="d-flex align-items-center">
-                  <div class="avatar-sm bg-light rounded-circle d-flex align-items-center justify-content-center me-3">
-                    <i class="bi bi-person text-primary"></i>
-                  </div>
-                  <div>
-                    <h6 class="mb-0">{{rapport.volontaireNomComplet}}</h6>
-                    <small class="text-muted">{{rapport.missionVolontaire}}</small>
-                  </div>
-                </div>
-              </td>
-              
-              <td>
-                <span class="badge bg-info">{{rapport.periode}}</span>
-              </td>
-              
-              <td>
-                <div class="d-flex align-items-center">
-                  <span [class]="getEvaluationColor(rapport.evaluationGlobale)" class="fw-bold me-2">
-                    {{rapport.evaluationGlobale}}/10
-                  </span>
-                  <i class="bi" [class]="getEvaluationIcon(rapport.evaluationGlobale)"></i>
-                </div>
-              </td>
-              
-              <td>
-                <p class="mb-0 text-truncate" style="max-width: 300px;" 
-                   [title]="rapport.commentaires">
-                  {{rapport.commentaires}}
-                </p>
-              </td>
-              
-              <td>
-                <span class="badge" [class]="getStatutBadgeClass(rapport.statut)">
-                  <i class="bi me-1" [class]="'bi-' + getStatutIcon(rapport.statut)"></i>
-                  {{rapport.statut}}
+
+    <div *ngIf="!isLoading && paginatedRapports.length === 0" class="rl-empty">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+      </svg>
+      <h3>Aucun rapport trouvé</h3>
+      <p>Utilisez les filtres ou créez un nouveau rapport</p>
+    </div>
+
+    <table *ngIf="!isLoading && paginatedRapports.length > 0" class="rl-table">
+      <thead>
+        <tr>
+          <th>Mission / Projet</th>
+          <th>Période</th>
+          <th>Évaluation</th>
+          <th>Statut</th>
+          <th>Date</th>
+          <th class="th-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let rapport of paginatedRapports" class="rl-row">
+
+          <!-- Mission -->
+          <td>
+            <div class="rl-person">
+              <div class="rl-avatar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                </svg>
+              </div>
+              <div class="rl-person-info">
+                <span class="rl-person-name">{{ getMissionNom(rapport) }}</span>
+                <span class="rl-person-sub"
+                      *ngIf="rapport.missionVolontaire && rapport.missionVolontaire !== getMissionNom(rapport)">
+                  {{ rapport.missionVolontaire }}
                 </span>
-              </td>
-              
-              <td>
-                <small class="text-muted">
-                  {{rapport.dateSoumission | date:'dd/MM/yyyy'}}
-                </small>
-              </td>
-              
-              <td class="text-end">
-                <div class="btn-group" role="group">
-                  <button class="btn btn-sm btn-outline-primary" 
-                          [title]="rapport.statut === 'Brouillon' ? 'Modifier' : 'Voir'"
-                          (click)="rapport.statut === 'Brouillon' ? editRapport(rapport.id!) : viewRapport(rapport.id!)">
-                    <i class="bi" [class]="rapport.statut === 'Brouillon' ? 'bi-pencil' : 'bi-eye'"></i>
-                  </button>
-                  
-                  <button *ngIf="rapport.statut === 'Brouillon'" 
-                          class="btn btn-sm btn-outline-success"
-                          title="Soumettre"
-                          (click)="soumettreRapport(rapport.id!)">
-                    <i class="bi bi-send"></i>
-                  </button>
-                  
-                  <button *ngIf="rapport.statut === 'Brouillon'" 
-                          class="btn btn-sm btn-outline-danger"
-                          title="Supprimer"
-                          (click)="deleteRapport(rapport.id!)">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    
-    <!-- Pagination -->
-    <div class="card-footer bg-white" *ngIf="totalPages > 1">
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="text-muted">
-          Affichage {{(currentPage - 1) * itemsPerPage + 1}} à 
-{{math.min(currentPage * itemsPerPage, filteredRapports.length)}}          sur {{filteredRapports.length}} rapports
+              </div>
+            </div>
+          </td>
+
+          <!-- Période -->
+          <td>
+            <span class="rl-badge-periode">{{ rapport.periode }}</span>
+          </td>
+
+          <!-- Évaluation -->
+          <td>
+            <div class="rl-eval">
+              <span class="rl-eval-score" [class]="getEvaluationColor(rapport.evaluationGlobale)">
+                {{ rapport.evaluationGlobale }}/10
+              </span>
+            </div>
+          </td>
+
+          <!-- Statut -->
+          <td>
+            <span class="rl-statut-badge"
+                  [ngClass]="'rl-statut-' + rapport.statut.replace(' ', '_').toLowerCase()">
+              {{ rapport.statut }}
+            </span>
+          </td>
+
+          <!-- Date -->
+          <td>
+            <span class="rl-date">{{ rapport.dateSoumission | date:'dd/MM/yyyy' }}</span>
+          </td>
+
+          <!-- Actions -->
+          <td class="td-actions">
+            <div class="rl-actions">
+
+              <!-- Voir / Modifier -->
+              <button class="rl-action-btn rl-action-view"
+                      [title]="rapport.statut === 'Brouillon' ? 'Modifier' : 'Voir'"
+                      (click)="rapport.statut === 'Brouillon' ? editRapport(rapport.id!) : viewRapport(rapport.id!)">
+                <svg *ngIf="rapport.statut !== 'Brouillon'" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg *ngIf="rapport.statut === 'Brouillon'" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+
+              <!-- Soumettre -->
+              <button *ngIf="rapport.statut === 'Brouillon'"
+                      class="rl-action-btn rl-action-submit"
+                      title="Soumettre"
+                      (click)="soumettreRapport(rapport.id!)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+
+              <!-- Supprimer -->
+              <button *ngIf="rapport.statut === 'Brouillon'"
+                      class="rl-action-btn rl-action-delete"
+                      title="Supprimer"
+                      (click)="deleteRapport(rapport.id!)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+              </button>
+
+            </div>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ─── Pagination style Material ─── -->
+    <div *ngIf="!isLoading && filteredRapports.length > 0" class="rl-paginator-wrap">
+      <div class="rl-pagination">
+
+        <span class="rl-page-size-label">Items per page:</span>
+        <select class="rl-page-size-select"
+                [(ngModel)]="itemsPerPage"
+                (change)="currentPage = 1">
+          <option [value]="5">5</option>
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+        </select>
+
+        <span class="rl-page-info">
+          {{ (currentPage - 1) * itemsPerPage + 1 }} –
+          {{ math.min(currentPage * itemsPerPage, filteredRapports.length) }}
+          of {{ filteredRapports.length }}
+        </span>
+
+        <div class="rl-page-btns">
+          <button class="rl-page-btn" [disabled]="currentPage === 1"
+                  (click)="goToPage(1)" title="Première page">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/>
+            </svg>
+          </button>
+          <button class="rl-page-btn" [disabled]="currentPage === 1"
+                  (click)="goToPage(currentPage - 1)" title="Précédent">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <button class="rl-page-btn" [disabled]="currentPage === totalPages"
+                  (click)="goToPage(currentPage + 1)" title="Suivant">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+          <button class="rl-page-btn" [disabled]="currentPage === totalPages"
+                  (click)="goToPage(totalPages)" title="Dernière page">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>
+            </svg>
+          </button>
         </div>
-        
-        <nav>
-          <ul class="pagination mb-0">
-            <li class="page-item" [class.disabled]="currentPage === 1">
-              <button class="page-link" (click)="goToPage(currentPage - 1)">
-                <i class="bi bi-chevron-left"></i>
-              </button>
-            </li>
-            
-            <li *ngFor="let page of [].constructor(totalPages); let i = index" 
-                class="page-item" [class.active]="currentPage === i + 1">
-              <button class="page-link" (click)="goToPage(i + 1)">
-                {{i + 1}}
-              </button>
-            </li>
-            
-            <li class="page-item" [class.disabled]="currentPage === totalPages">
-              <button class="page-link" (click)="goToPage(currentPage + 1)">
-                <i class="bi bi-chevron-right"></i>
-              </button>
-            </li>
-          </ul>
-        </nav>
+
       </div>
     </div>
+
   </div>
 </div>

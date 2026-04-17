@@ -1,266 +1,303 @@
-<!-- volontaires-list.component.html -->
-<mat-sidenav-container class="sidenav-container">
-  
-  <!-- CONTENU PRINCIPAL -->
+<!-- src/app/features/admin/gestion-volontaires/volontaires-list/volontaires-list.component.html -->
+
+<mat-sidenav-container class="cl-sidenav-container">
+
+  <!-- ===== CONTENU PRINCIPAL ===== -->
   <mat-sidenav-content>
-    <div class="main-content">
-      <mat-card class="vol-card mat-elevation-z6">
-        <mat-card-header class="card-header">
-          <div class="header-left">
-            <mat-card-title>Gestion des volontaires</mat-card-title>
-            <mat-card-subtitle>Suivi RH • export, filtres, actions</mat-card-subtitle>
+    <div class="cl-container">
+
+      <!-- ===== EN-TÊTE ===== -->
+      <div class="cl-header">
+        <div class="cl-header-left">
+          <div class="cl-header-icon">
+            <mat-icon>people</mat-icon>
           </div>
-
-          <div class="header-right">
-            <!-- Export CSV -->
-            <button mat-icon-button aria-label="Exporter CSV" (click)="exportCSV()" matTooltip="Exporter CSV">
-              <mat-icon>file_download</mat-icon>
-            </button>
-
-            <!-- Filtre global -->
-            <button mat-icon-button [matMenuTriggerFor]="filterMenu" aria-label="Filtrer">
-              <mat-icon>filter_list</mat-icon>
-            </button>
-
-            <mat-menu #filterMenu="matMenu" class="filter-menu">
-              <div class="menu-section">
-                <label class="menu-label">Statut</label>
-                <button mat-menu-item (click)="filterStatus=''; applyFilters()">Tous</button>
-                <button mat-menu-item (click)="filterByStatus('Candidat')">Candidat</button>
-                <button mat-menu-item (click)="filterByStatus('En attente')">En attente</button>
-                <button mat-menu-item (click)="filterByStatus('Actif')">Actif</button>
-                <button mat-menu-item (click)="filterByStatus('Inactif')">Inactif</button>
-                <button mat-menu-item (click)="filterByStatus('Refusé')">Refusé</button>
-              </div>
-
-              <mat-divider></mat-divider>
-
-              <div class="menu-section">
-                <label class="menu-label">Région</label>
-                <button mat-menu-item (click)="filterRegion=''; applyFilters()">Toutes</button>
-                @for (r of regions; track r) {
-                  <button mat-menu-item (click)="filterRegion=r; applyFilters()">
-                    {{ r }}
-                  </button>
-                }
-              </div>
-
-              <mat-divider></mat-divider>
-
-              <div class="menu-section">
-                <label class="menu-label">Domaine d'études</label>
-                <button mat-menu-item (click)="filterDomaine=''; applyFilters()">Tous</button>
-                @for (d of domainesEtudes; track d) {
-                  <button mat-menu-item (click)="filterDomaine=d; applyFilters()">
-                    {{ d }}
-                  </button>
-                }
-              </div>
-            </mat-menu>
-
-            <!-- Ajouter -->
-            <button mat-flat-button color="primary" class="add-btn" (click)="openDrawerForAdd()">
-              <mat-icon>add</mat-icon>
-              Ajouter
-            </button>
+          <div>
+            <h1 class="cl-title">Gestion des Volontaires</h1>
+            <p class="cl-subtitle">Suivi RH — filtres, export, actions</p>
           </div>
-        </mat-card-header>
+        </div>
+        <div class="cl-header-actions">
+          <button class="cl-btn-icon" (click)="exportCSV()" matTooltip="Exporter CSV" matTooltipPosition="below">
+            <mat-icon>file_download</mat-icon>
+          </button>
+          <button class="cl-btn-icon" [matMenuTriggerFor]="filterMenu" matTooltip="Filtres avancés" matTooltipPosition="below">
+            <mat-icon>tune</mat-icon>
+          </button>
+        </div>
+      </div>
 
-        <mat-card-content>
-          <!-- Filtres rapides -->
-          <div class="controls-row">
-            <mat-form-field appearance="outline" class="search-field">
-              <mat-label>Rechercher...</mat-label>
-              <input matInput [(ngModel)]="searchTerm" (input)="applyFilters()" placeholder="Nom, email, NIP, compétence..." />
-              @if (searchTerm) {
-                <button mat-icon-button matSuffix (click)="searchTerm=''; applyFilters()">
-                  <mat-icon>close</mat-icon>
-                </button>
-              }
-            </mat-form-field>
+      <!-- Menu filtres avancés -->
+      <mat-menu #filterMenu="matMenu">
+        <div class="cl-menu-section" (click)="$event.stopPropagation()">
+          <span class="cl-menu-label">Statut</span>
+          <button mat-menu-item (click)="filterStatus=''; applyFilters()">Tous</button>
+          <button mat-menu-item (click)="filterByStatus('Candidat')">Candidat</button>
+          <button mat-menu-item (click)="filterByStatus('En attente')">En attente</button>
+          <button mat-menu-item (click)="filterByStatus('Actif')">Actif</button>
+          <button mat-menu-item (click)="filterByStatus('Inactif')">Inactif</button>
+          <button mat-menu-item (click)="filterByStatus('Refusé')">Refusé</button>
+        </div>
+        <mat-divider></mat-divider>
+        <div class="cl-menu-section" (click)="$event.stopPropagation()">
+          <span class="cl-menu-label">Région</span>
+          <button mat-menu-item (click)="filterRegion=''; applyFilters()">Toutes</button>
+          @for (r of regions; track r) {
+            <button mat-menu-item (click)="filterRegion=r; applyFilters()">{{ r }}</button>
+          }
+        </div>
+        <mat-divider></mat-divider>
+        <div class="cl-menu-section" (click)="$event.stopPropagation()">
+          <span class="cl-menu-label">Domaine d'études</span>
+          <button mat-menu-item (click)="filterDomaine=''; applyFilters()">Tous</button>
+          @for (d of domainesEtudes; track d) {
+            <button mat-menu-item (click)="filterDomaine=d; applyFilters()">{{ d }}</button>
+          }
+        </div>
+      </mat-menu>
 
-            <mat-form-field appearance="outline" class="mini-filter">
-              <mat-label>Statut</mat-label>
-              <mat-select [(value)]="filterStatus" (selectionChange)="applyFilters()">
-                <mat-option value="">Tous</mat-option>
-                <mat-option value="Candidat">Candidat</mat-option>
-                <mat-option value="En attente">En attente</mat-option>
-                <mat-option value="Actif">Actif</mat-option>
-                <mat-option value="Inactif">Inactif</mat-option>
-                <mat-option value="Refusé">Refusé</mat-option>
-              </mat-select>
-            </mat-form-field>
+      <!-- ===== FILTRES ===== -->
+      <div class="cl-filters">
+        <div class="cl-search-wrap">
+          <mat-icon class="cl-search-icon">search</mat-icon>
+          <input
+            class="cl-search-input"
+            [(ngModel)]="searchTerm"
+            (input)="applyFilters()"
+            placeholder="Rechercher par nom, email, compétence…"
+          />
+          <button class="cl-search-clear" *ngIf="searchTerm" (click)="searchTerm=''; applyFilters()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
 
-            <mat-form-field appearance="outline" class="mini-filter">
-              <mat-label>Région</mat-label>
-              <mat-select [(value)]="filterRegion" (selectionChange)="applyFilters()">
-                <mat-option value="">Toutes</mat-option>
-                @for (r of regions; track r) {
-                  <mat-option [value]="r">{{ r }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+        <div class="cl-select-wrap">
+          <mat-icon class="cl-select-icon">person</mat-icon>
+          <select class="cl-select" [(ngModel)]="filterStatus" (change)="applyFilters()">
+            <option value="">Tous les statuts</option>
+            <option value="Candidat">Candidat</option>
+            <option value="En attente">En attente</option>
+            <option value="Actif">Actif</option>
+            <option value="Inactif">Inactif</option>
+            <option value="Refusé">Refusé</option>
+          </select>
+        </div>
 
-            <mat-form-field appearance="outline" class="mini-filter">
-              <mat-label>Domaine</mat-label>
-              <mat-select [(value)]="filterDomaine" (selectionChange)="applyFilters()">
-                <mat-option value="">Tous</mat-option>
-                @for (d of domainesEtudes; track d) {
-                  <mat-option [value]="d">{{ d }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+        <div class="cl-select-wrap">
+          <mat-icon class="cl-select-icon">place</mat-icon>
+          <select class="cl-select" [(ngModel)]="filterRegion" (change)="applyFilters()">
+            <option value="">Toutes les régions</option>
+            @for (r of regions; track r) {
+              <option [value]="r">{{ r }}</option>
+            }
+          </select>
+        </div>
 
-            <mat-form-field appearance="outline" class="mini-filter">
-              <mat-label>Compétence</mat-label>
-              <input matInput [(ngModel)]="filterCompetence" (input)="applyFilters()" placeholder="Filtrer par compétence..." />
-            </mat-form-field>
-          </div>
+        <div class="cl-select-wrap">
+          <mat-icon class="cl-select-icon">school</mat-icon>
+          <select class="cl-select" [(ngModel)]="filterDomaine" (change)="applyFilters()">
+            <option value="">Tous les domaines</option>
+            @for (d of domainesEtudes; track d) {
+              <option [value]="d">{{ d }}</option>
+            }
+          </select>
+        </div>
 
-          <!-- TABLEAU -->
-          <div class="table-wrapper">
-            <table mat-table [dataSource]="dataSource" matSort>
+        <button class="cl-btn-ghost" (click)="reinitialiserFiltres()">
+          <mat-icon>close</mat-icon>
+          Réinitialiser
+        </button>
+      </div>
 
-              <!-- Colonnes -->
-              <ng-container matColumnDef="nom">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>Nom</th>
-                <td mat-cell *matCellDef="let v">{{ v.nom }}</td>
-              </ng-container>
+      <!-- ===== META ===== -->
+      <div class="cl-meta">
+        <span class="cl-count">
+          <mat-icon>format_list_bulleted</mat-icon>
+          {{ dataSource.filteredData.length }} volontaire(s)
+        </span>
+        <span class="cl-count" *ngIf="missionsVolontaires.size > 0">
+          <mat-icon>assignment_turned_in</mat-icon>
+          {{ missionsVolontaires.size }} volontaire(s) affecté(s)
+        </span>
+      </div>
 
-              <ng-container matColumnDef="prenom">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>Prénom</th>
-                <td mat-cell *matCellDef="let v">{{ v.prenom }}</td>
-              </ng-container>
+      <!-- ===== TABLEAU ===== -->
+      <div class="cl-table-wrap">
+        <table class="cl-table" mat-table [dataSource]="dataSource" matSort>
 
-              <ng-container matColumnDef="email">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
-                <td mat-cell *matCellDef="let v">{{ v.email }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="telephone">
-                <th mat-header-cell *matHeaderCellDef>Téléphone</th>
-                <td mat-cell *matCellDef="let v">{{ v.telephone }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="regionGeographique">
-                <th mat-header-cell *matHeaderCellDef>Région</th>
-                <td mat-cell *matCellDef="let v">{{ v.regionGeographique || 'Non renseigné' }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="niveauEtudes">
-                <th mat-header-cell *matHeaderCellDef>Niveau études</th>
-                <td mat-cell *matCellDef="let v">{{ v.niveauEtudes || 'Non renseigné' }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="statut">
-                <th mat-header-cell *matHeaderCellDef>Statut</th>
-                <td mat-cell *matCellDef="let v">
-                  <span class="status-badge"
-                    [ngClass]="{
-                      's-candidat': v.statut === 'Candidat',
-                      's-attente': v.statut === 'En attente',
-                      's-actif': v.statut === 'Actif',
-                      's-inactif': v.statut === 'Inactif',
-                      's-refuse': v.statut === 'Refusé'
-                    }">
-                    {{ v.statut }}
+          <!-- Colonne Volontaire -->
+          <ng-container matColumnDef="nom">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Volontaire</th>
+            <td mat-cell *matCellDef="let v">
+              <div class="cl-person">
+                <div class="cl-avatar">{{ getInitiales(v) }}</div>
+                <div class="cl-person-info">
+                  <span class="cl-person-name">{{ getNomComplet(v) }}</span>
+                  <span class="cl-person-email">{{ v.email }}</span>
+                  <span class="cl-person-phone" *ngIf="v.telephone">
+                    <mat-icon>phone</mat-icon>{{ v.telephone }}
                   </span>
-                </td>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Formation -->
+          <ng-container matColumnDef="niveauEtudes">
+            <th mat-header-cell *matHeaderCellDef>Formation</th>
+            <td mat-cell *matCellDef="let v">
+              <div class="cl-formation" *ngIf="v.niveauEtudes || v.domaineEtudes">
+                <span class="cl-niveau">{{ v.niveauEtudes || 'Non spécifié' }}</span>
+                <span class="cl-domaine" *ngIf="v.domaineEtudes">{{ v.domaineEtudes }}</span>
+              </div>
+              <span class="cl-contact-none" *ngIf="!v.niveauEtudes && !v.domaineEtudes">—</span>
+            </td>
+          </ng-container>
+
+          <!-- Statut -->
+          <ng-container matColumnDef="statut">
+            <th mat-header-cell *matHeaderCellDef>Statut</th>
+            <td mat-cell *matCellDef="let v">
+              <span [ngClass]="{
+                'cl-badge': true,
+                'cl-badge-candidat':   v.statut === 'Candidat',
+                'cl-badge-en_attente': v.statut === 'En attente',
+                'cl-badge-actif':      v.statut === 'Actif',
+                'cl-badge-inactif':    v.statut === 'Inactif',
+                'cl-badge-refuse':     v.statut === 'Refusé'
+              }">{{ v.statut }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Mission clôturée -->
+          <ng-container matColumnDef="mission">
+            <th mat-header-cell *matHeaderCellDef>Mission</th>
+            <td mat-cell *matCellDef="let v">
+              <ng-container *ngIf="getMissionVolontaire(v) as mission; else pasDeMission">
+                <div class="cl-mission">
+                  <span class="cl-mission-titre">
+                    <mat-icon class="cl-mission-icon">assignment_turned_in</mat-icon>
+                    {{ mission.projetTitre }}
+                  </span>
+                </div>
               </ng-container>
+              <ng-template #pasDeMission>
+                <span class="cl-contact-none">Aucune</span>
+              </ng-template>
+            </td>
+          </ng-container>
 
-              <ng-container matColumnDef="competences">
-                <th mat-header-cell *matHeaderCellDef>Compétences</th>
-                <td mat-cell *matCellDef="let v">
-                  @if (v.competences && v.competences.length > 0) {
-                    @for (c of v.competences.slice(0, 2); track c; let i = $index) {
-                      <span class="chip">{{ c }}</span>
-                    }
-                    @if (v.competences.length > 2) {
-                      <span class="chip-more">+{{ v.competences.length - 2 }}</span>
-                    }
-                  } @else {
-                    <span class="no-competences">Aucune</span>
-                  }
-                </td>
-              </ng-container>
+          <!-- Compétences -->
+          <ng-container matColumnDef="competences">
+            <th mat-header-cell *matHeaderCellDef>Compétences</th>
+            <td mat-cell *matCellDef="let v">
+              <div class="cl-chips" *ngIf="v.competences && v.competences.length > 0">
+                <span class="cl-chip">{{ v.competences[0] }}</span>
+                <span
+                  class="cl-chip cl-chip-more"
+                  *ngIf="v.competences.length > 1"
+                  [matTooltip]="v.competences.slice(1).join(', ')"
+                  matTooltipPosition="above">
+                  +{{ v.competences.length - 1 }}
+                </span>
+              </div>
+              <span class="cl-contact-none" *ngIf="!v.competences || v.competences.length === 0">Aucune</span>
+            </td>
+          </ng-container>
 
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Actions</th>
-                <td mat-cell *matCellDef="let v">
-                  <div class="action-buttons">
-                    <button mat-icon-button color="primary" (click)="openDrawerForEdit(v.id!)" matTooltip="Modifier">
-                      <mat-icon>edit</mat-icon>
-                    </button>
+          <!-- Actions - ✅ CORRIGÉ avec vérification du statut -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="th-actions">Actions</th>
+            <td mat-cell *matCellDef="let v" class="td-actions">
+              <div class="cl-actions">
 
-                    <!-- Menu des statuts -->
-                    <button mat-icon-button [matMenuTriggerFor]="statusMenu" color="accent" matTooltip="Changer statut">
-                      <mat-icon>swap_vert</mat-icon>
-                    </button>
+                <!-- Voir le profil -->
+                <button
+                  class="cl-action-btn cl-action-view"
+                  [routerLink]="['voir-candidat', v.id]"
+                  matTooltip="Voir le profil"
+                  matTooltipPosition="above">
+                  <mat-icon>visibility</mat-icon>
+                </button>
 
-                    <mat-menu #statusMenu="matMenu" class="status-menu">
-                      <button mat-menu-item (click)="changerStatutVolontaire(v, 'Candidat')" 
-                              [class.selected]="v.statut === 'Candidat'">
-                        <mat-icon>person</mat-icon>
-                        <span>Candidat</span>
-                      </button>
-                      <button mat-menu-item (click)="changerStatutVolontaire(v, 'En attente')"
-                              [class.selected]="v.statut === 'En attente'">
-                        <mat-icon>schedule</mat-icon>
-                        <span>En attente</span>
-                      </button>
-                      <button mat-menu-item (click)="changerStatutVolontaire(v, 'Actif')"
-                              [class.selected]="v.statut === 'Actif'">
-                        <mat-icon>check_circle</mat-icon>
-                        <span>Actif</span>
-                      </button>
-                      <button mat-menu-item (click)="changerStatutVolontaire(v, 'Inactif')"
-                              [class.selected]="v.statut === 'Inactif'">
-                        <mat-icon>pause_circle</mat-icon>
-                        <span>Inactif</span>
-                      </button>
-                      <button mat-menu-item (click)="changerStatutVolontaire(v, 'Refusé')"
-                              [class.selected]="v.statut === 'Refusé'">
-                        <mat-icon>cancel</mat-icon>
-                        <span>Refusé</span>
-                      </button>
-                    </mat-menu>
+                <!-- ✅ Affecter - DÉSACTIVÉ si statut = Candidat -->
+                <button
+                  class="cl-action-btn"
+                  [class.cl-action-assign]="v.statut !== 'Candidat'"
+                  [class.cl-action-assign-disabled]="v.statut === 'Candidat'"
+                  [disabled]="v.statut === 'Candidat'"
+                  (click)="v.statut !== 'Candidat' && ouvrirDialogAffecter(v)"
+                  [matTooltip]="getAffectationTooltip(v)"
+                  matTooltipPosition="above">
+                  <mat-icon>assignment_turned_in</mat-icon>
+                </button>
 
-                    <button mat-icon-button color="warn" (click)="deleteVolontaire(v.id)" matTooltip="Supprimer">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </div>
-                </td>
-              </ng-container>
+                <!-- Modifier -->
+                <button
+                  class="cl-action-btn cl-action-edit"
+                  (click)="openDrawerForEdit(v.id)"
+                  matTooltip="Modifier"
+                  matTooltipPosition="above">
+                  <mat-icon>edit</mat-icon>
+                </button>
 
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                <!-- Supprimer -->
+                <button
+                  class="cl-action-btn cl-action-delete"
+                  (click)="deleteVolontaire(v.id)"
+                  matTooltip="Supprimer"
+                  matTooltipPosition="above">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
 
-            </table>
-          </div>
+              </div>
+            </td>
+          </ng-container>
 
-          <mat-paginator #paginator [pageSize]="10" [pageSizeOptions]="[5,10,25]" showFirstLastButtons></mat-paginator>
-        </mat-card-content>
-      </mat-card>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="cl-row"></tr>
+          
+          <!-- Ligne quand aucune donnée -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+              <div class="cl-no-data">
+                <mat-icon>info_outline</mat-icon>
+                <p>Aucun volontaire trouvé</p>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <div class="cl-paginator-wrap">
+         <mat-paginator
+  #paginator
+  [length]="dataSource.data.length"
+  [pageSize]="10"
+  [pageSizeOptions]="[5, 10, 25]"
+  showFirstLastButtons>
+</mat-paginator>
+        </div>
+      </div>
+
     </div>
   </mat-sidenav-content>
 
-  <!-- SIDENAV (DRAWER) -->
+  <!-- ===== SIDENAV DRAWER ===== -->
   <mat-sidenav
     #drawer
     mode="over"
     position="end"
-    class="right-drawer"
-    [fixedInViewport]="false"
+    class="cl-drawer"
     (closed)="onDrawerClosed()">
-    
-    <div class="drawer-toolbar">
-      <h3>{{ editingVolontaireId ? 'Modifier volontaire' : 'Nouveau volontaire' }}</h3>
-      <button mat-icon-button (click)="drawer.close()">
+
+    <div class="cl-drawer-header">
+      <h3>{{ editingVolontaireId ? 'Modifier le volontaire' : 'Nouveau volontaire' }}</h3>
+      <button class="cl-drawer-close" (click)="drawer.close()">
         <mat-icon>close</mat-icon>
       </button>
     </div>
 
-    <div class="drawer-body">
+    <div class="cl-drawer-body">
       <app-profil-form
         [userId]="editingVolontaireId"
         (saved)="onVolontaireSaved()"
@@ -269,4 +306,5 @@
     </div>
 
   </mat-sidenav>
+
 </mat-sidenav-container>

@@ -1,0 +1,320 @@
+<!-- src/app/features/admin/components/creer-candidat/creer-candidat.component.html -->
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <i class="fas fa-user-plus me-2"></i>
+            Créer un nouveau candidat
+          </h3>
+        </div>
+        <div class="card-body">
+          <!-- Messages -->
+          <div *ngIf="messageSucces" class="alert alert-success">
+            <i class="fas fa-check-circle me-2"></i>
+            {{ messageSucces }}
+          </div>
+
+          <div *ngIf="messageErreur" class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {{ messageErreur }}
+          </div>
+
+          <!-- Indicateur d'étape -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="steps">
+                <div class="step" [class.active]="etapeActuelle === 'identite'" [class.completed]="etapeActuelle === 'profil'">
+                  <span class="step-number">1</span>
+                  <span class="step-label">Identité</span>
+                </div>
+                <div class="step" [class.active]="etapeActuelle === 'profil'">
+                  <span class="step-number">2</span>
+                  <span class="step-label">Profil</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formulaire principal -->
+          <form [formGroup]="creationForm" (ngSubmit)="creerCandidat()">
+            <!-- Étape 1: Identité -->
+            <div *ngIf="etapeActuelle === 'identite'" class="identite-step">
+              <h4 class="mb-4">Informations d'identité</h4>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Nom *</label>
+                    <input type="text" class="form-control" formControlName="nom"
+                           [class.is-invalid]="creationForm.get('nom')?.invalid && (creationForm.get('nom')?.touched || creationForm.get('nom')?.dirty)">
+                    <div class="invalid-feedback" *ngIf="creationForm.get('nom')?.errors?.['required']">
+                      Le nom est obligatoire
+                    </div>
+                    <div class="invalid-feedback" *ngIf="creationForm.get('nom')?.errors?.['minlength']">
+                      Le nom doit contenir au moins 2 caractères
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Prénom *</label>
+                    <input type="text" class="form-control" formControlName="prenom"
+                           [class.is-invalid]="creationForm.get('prenom')?.invalid && (creationForm.get('prenom')?.touched || creationForm.get('prenom')?.dirty)">
+                    <div class="invalid-feedback" *ngIf="creationForm.get('prenom')?.errors?.['required']">
+                      Le prénom est obligatoire
+                    </div>
+                    <div class="invalid-feedback" *ngIf="creationForm.get('prenom')?.errors?.['minlength']">
+                      Le prénom doit contenir au moins 2 caractères
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Email *</label>
+                    <input type="email" class="form-control" formControlName="email"
+                           [class.is-invalid]="creationForm.get('email')?.invalid && (creationForm.get('email')?.touched || creationForm.get('email')?.dirty)">
+                    <div class="invalid-feedback" *ngIf="creationForm.get('email')?.errors?.['required']">
+                      L'email est obligatoire
+                    </div>
+                    <div class="invalid-feedback" *ngIf="creationForm.get('email')?.errors?.['email']">
+                      Format d'email invalide
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Téléphone *</label>
+                    <input type="tel" class="form-control" formControlName="telephone"
+                           [class.is-invalid]="creationForm.get('telephone')?.invalid && (creationForm.get('telephone')?.touched || creationForm.get('telephone')?.dirty)">
+                    <div class="invalid-feedback" *ngIf="creationForm.get('telephone')?.errors?.['required']">
+                      Le téléphone est obligatoire
+                    </div>
+                    <div class="invalid-feedback" *ngIf="creationForm.get('telephone')?.errors?.['pattern']">
+                      Format de téléphone invalide
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label">Date de naissance *</label>
+                    <input type="date" class="form-control" formControlName="dateNaissance"
+                           [class.is-invalid]="creationForm.get('dateNaissance')?.invalid && (creationForm.get('dateNaissance')?.touched || creationForm.get('dateNaissance')?.dirty)">
+                    <div class="invalid-feedback" *ngIf="creationForm.get('dateNaissance')?.errors?.['required']">
+                      La date de naissance est obligatoire
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label">Nationalité *</label>
+                    <input type="text" class="form-control" formControlName="nationalite"
+                           [class.is-invalid]="creationForm.get('nationalite')?.invalid && (creationForm.get('nationalite')?.touched || creationForm.get('nationalite')?.dirty)">
+                    <div class="invalid-feedback" *ngIf="creationForm.get('nationalite')?.errors?.['required']">
+                      La nationalité est obligatoire
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label">Sexe *</label>
+                    <select class="form-control" formControlName="sexe"
+                            [class.is-invalid]="creationForm.get('sexe')?.invalid && (creationForm.get('sexe')?.touched || creationForm.get('sexe')?.dirty)">
+                      <option value="">Sélectionner</option>
+                      <option value="M">Masculin</option>
+                      <option value="F">Féminin</option>
+                    </select>
+                    <div class="invalid-feedback" *ngIf="creationForm.get('sexe')?.errors?.['required']">
+                      Le sexe est obligatoire
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Mot de passe *</label>
+                    <input type="password" class="form-control" formControlName="motDePasse"
+                           [class.is-invalid]="creationForm.get('motDePasse')?.invalid && (creationForm.get('motDePasse')?.touched || creationForm.get('motDePasse')?.dirty)">
+                    <div class="invalid-feedback" *ngIf="creationForm.get('motDePasse')?.errors?.['required']">
+                      Le mot de passe est obligatoire
+                    </div>
+                    <div class="invalid-feedback" *ngIf="creationForm.get('motDePasse')?.errors?.['minlength']">
+                      Minimum 6 caractères
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Confirmer le mot de passe *</label>
+                    <input type="password" class="form-control" formControlName="confirmerMotDePasse"
+                           [class.is-invalid]="(creationForm.get('confirmerMotDePasse')?.invalid || creationForm.errors?.['motsDePasseDifferents']) && (creationForm.get('confirmerMotDePasse')?.touched || creationForm.get('confirmerMotDePasse')?.dirty)">
+                    <div class="invalid-feedback" *ngIf="creationForm.get('confirmerMotDePasse')?.errors?.['required']">
+                      La confirmation du mot de passe est obligatoire
+                    </div>
+                    <div class="invalid-feedback" *ngIf="creationForm.errors?.['motsDePasseDifferents'] && (creationForm.get('confirmerMotDePasse')?.touched || creationForm.get('confirmerMotDePasse')?.dirty)">
+                      Les mots de passe ne correspondent pas
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-secondary" (click)="annuler()">
+                  <i class="fas fa-arrow-left me-2"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-primary" (click)="passerAuProfil()" 
+                        [disabled]="creationForm.invalid || creationForm.errors?.['motsDePasseDifferents']">
+                  Continuer vers le profil <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Étape 2: Profil -->
+            <div *ngIf="etapeActuelle === 'profil'" class="profil-step">
+              <h4 class="mb-4">Informations du profil (optionnel)</h4>
+              
+              <!-- Sous-formulaire pour les informations de profil -->
+              <div [formGroup]="profilForm">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Adresse de résidence</label>
+                      <input type="text" class="form-control" formControlName="adresseResidence"
+                             placeholder="Adresse complète">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Région géographique</label>
+                      <input type="text" class="form-control" formControlName="regionGeographique"
+                             placeholder="Région de résidence">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Niveau d'études</label>
+                      <input type="text" class="form-control" formControlName="niveauEtudes"
+                             placeholder="Ex: Bac+2, Licence, Master...">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Domaine d'études</label>
+                      <input type="text" class="form-control" formControlName="domaineEtudes"
+                             placeholder="Ex: Informatique, Commerce, Santé...">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Type de pièce</label>
+                      <select class="form-control" formControlName="typePiece">
+                        <option value="">Sélectionner</option>
+                        <option value="CNIB">CNIB</option>
+                        <option value="PASSEPORT">Passeport</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Numéro de pièce</label>
+                      <input type="text" class="form-control" formControlName="numeroPiece"
+                             placeholder="Numéro de la pièce">
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">URL Pièce d'identité</label>
+                      <input type="text" class="form-control" formControlName="urlPieceIdentite" 
+                             placeholder="https://...">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Disponibilité</label>
+                      <select class="form-control" formControlName="disponibilite">
+                        <option value="">Sélectionner</option>
+                        <option value="Temps plein">Temps plein</option>
+                        <option value="Temps partiel">Temps partiel</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">URL CV</label>
+                      <input type="text" class="form-control" formControlName="urlCV" 
+                             placeholder="https://...">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Compétences</label>
+                  <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Séparer par des virgules" 
+                           #competenceInput>
+                    <button type="button" class="btn btn-outline-primary" 
+                            (click)="ajouterCompetence(competenceInput.value); competenceInput.value = ''">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
+                  <small class="text-muted">Ajoutez une compétence et cliquez sur le bouton +</small>
+                  
+                  <!-- Affichage des compétences ajoutées -->
+                  <div class="mt-2" *ngIf="profilForm.get('competences')?.value?.length > 0">
+  <span *ngFor="let competence of profilForm.get('competences')?.value" 
+        class="badge bg-primary me-1 mb-1">
+    {{ competence }}
+    <button type="button" class="btn-close btn-close-white ms-1" 
+            (click)="supprimerCompetence(competence)" 
+            style="font-size: 0.7rem;"></button>
+  </span>
+</div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Motivation</label>
+                  <textarea class="form-control" rows="4" formControlName="motivation" 
+                            placeholder="Décrivez vos motivations pour rejoindre le programme..."></textarea>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-secondary" (click)="retourIdentite()">
+                  <i class="fas fa-arrow-left me-2"></i>Retour
+                </button>
+                <div>
+                  <button type="button" class="btn btn-outline-secondary me-2" (click)="annuler()">
+                    Annuler
+                  </button>
+<button type="button" class="btn btn-success" (click)="creerCandidat()" [disabled]="isLoading">
+                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+                    <i class="fas fa-save me-2" *ngIf="!isLoading"></i>
+                    Créer le candidat
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

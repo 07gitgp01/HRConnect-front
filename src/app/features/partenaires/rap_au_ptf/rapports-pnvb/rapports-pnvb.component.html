@@ -1,78 +1,16 @@
-<!-- src/app/features/partenaires/components/rapports-pnvb/rapports-pnvb.component.html -->
+<!-- src/app/features/partenaires/rap_au_ptf/rapports-pnvb/rapports-pnvb.component.html -->
 <div class="rapports-pnvb-container">
-  <!-- Header -->
-  <!-- <div class="header-section">
-    <div class="header-content">
-      <div>
-        <h1>
-          <mat-icon class="header-icon">description</mat-icon>
-          Rapports PNVB
-        </h1>
-        <p class="subtitle">Consultez les rapports officiels du Programme National de Volontariat</p>
-      </div>
-      
-      <div class="header-actions">
-        <button mat-raised-button color="primary" (click)="openInfoDialog()">
-          <mat-icon>info</mat-icon>
-          Informations
-        </button>
-      </div>
-    </div>
-  </div> -->
 
-  <!-- Statistiques -->
-  <div class="stats-section" *ngIf="statsConsultation">
-    <mat-card class="stat-card">
-      <mat-card-content>
-        <div class="stat-content">
-          <mat-icon class="stat-icon">library_books</mat-icon>
-          <div>
-            <div class="stat-number">{{ totalRapports }}</div>
-            <div class="stat-label">Rapports disponibles</div>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-    
-    <mat-card class="stat-card">
-      <mat-card-content>
-        <div class="stat-content">
-          <mat-icon class="stat-icon">visibility</mat-icon>
-          <div>
-            <div class="stat-number">{{ statsConsultation.rapportsConsultes || 0 }}</div>
-            <div class="stat-label">Consultés</div>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-    
-    <mat-card class="stat-card">
-      <mat-card-content>
-        <div class="stat-content">
-          <mat-icon class="stat-icon">update</mat-icon>
-          <div>
-            <div class="stat-date" *ngIf="statsConsultation.derniereConsultation">
-              {{ statsConsultation.derniereConsultation | date:'dd/MM/yyyy' }}
-            </div>
-            <div class="stat-date" *ngIf="!statsConsultation.derniereConsultation">
-              Jamais
-            </div>
-            <div class="stat-label">Dernière consultation</div>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-  <!-- Filtres -->
+  <!-- ─── Filtres ──────────────────────────────────────────────────────────── -->
   <mat-card class="filters-card">
     <mat-card-content>
       <div class="filters-grid">
+
         <mat-form-field appearance="outline" class="search-field">
           <mat-label>Rechercher un rapport</mat-label>
-          <input matInput [(ngModel)]="searchQuery" 
-                 (keyup.enter)="onSearch()" 
-                 placeholder="Titre, description, mots-clés...">
+          <input matInput [(ngModel)]="searchQuery"
+                 (keyup.enter)="onSearch()"
+                 placeholder="Titre, mots-clés...">
           <mat-icon matSuffix>search</mat-icon>
         </mat-form-field>
 
@@ -87,85 +25,72 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Catégorie</mat-label>
-          <mat-select [(ngModel)]="selectedCategorie" (selectionChange)="onSearch()">
-            <mat-option value="">Toutes les catégories</mat-option>
-            <mat-option *ngFor="let categorie of categories" [value]="categorie">
-              {{ categorie }}
-            </mat-option>
-          </mat-select>
+          <mat-label>Période</mat-label>
+          <input matInput [(ngModel)]="selectedPeriode"
+                 (keyup.enter)="onSearch()"
+                 placeholder="Ex: Q1 2024">
+          <mat-icon matSuffix>date_range</mat-icon>
         </mat-form-field>
 
-        <!-- <div class="filter-actions">
-          <button mat-button (click)="onSearch()" color="primary">
-            <mat-icon>filter_list</mat-icon>
-            Filtrer
-          </button>
-          
-          <button mat-button (click)="clearFilters()" *ngIf="searchQuery || selectedType || selectedCategorie">
-            <mat-icon>clear</mat-icon>
-            Effacer
-          </button>
-        </div> -->
+        <button mat-button color="warn"
+                (click)="clearFilters()"
+                *ngIf="hasActiveFilters()">
+          <mat-icon>clear</mat-icon> Effacer les filtres
+        </button>
+
       </div>
     </mat-card-content>
   </mat-card>
 
-  <!-- Liste des rapports -->
+  <!-- ─── Liste des rapports ───────────────────────────────────────────────── -->
   <mat-card class="rapports-card">
     <mat-card-header>
       <mat-card-title>
-        <mat-icon>list</mat-icon>
-        Rapports disponibles
+        <mat-icon>list</mat-icon> Mes rapports
       </mat-card-title>
       <mat-card-subtitle>
-        {{ totalRapports }} rapport{{ totalRapports > 1 ? 's' : '' }} trouvé{{ totalRapports > 1 ? 's' : '' }}
+        {{ totalRapports }} rapport{{ totalRapports > 1 ? 's' : '' }}
+        disponible{{ totalRapports > 1 ? 's' : '' }}
       </mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content>
-      <!-- Chargement -->
+
+      <!-- Spinner chargement liste -->
       <div *ngIf="isLoading" class="loading-section">
         <mat-spinner diameter="50"></mat-spinner>
         <p>Chargement des rapports...</p>
       </div>
 
-      <!-- Téléchargement -->
+      <!-- Barre prévisualisation en cours -->
+      <div *ngIf="isPreviewing" class="download-overlay">
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+        <small>Préparation de la prévisualisation...</small>
+      </div>
+
+      <!-- Barre téléchargement en cours -->
       <div *ngIf="isDownloading" class="download-overlay">
-        <mat-spinner diameter="40"></mat-spinner>
-        <p>Téléchargement en cours...</p>
+        <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+        <small>Téléchargement en cours...</small>
       </div>
 
       <!-- Tableau -->
       <div class="table-responsive" *ngIf="!isLoading && rapports.length > 0">
         <table mat-table [dataSource]="rapports" matSort class="mat-elevation-z1">
-          
+
           <!-- Titre -->
           <ng-container matColumnDef="titre">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> 
-              <mat-icon class="header-icon">title</mat-icon>
-              Titre 
-            </th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Titre</th>
             <td mat-cell *matCellDef="let rapport">
               <div class="rapport-title">
-                <mat-icon class="file-icon" [style.color]="getFileIconColor(rapport.type)">
+                <mat-icon [style.color]="getFileIconColor(rapport.type)">
                   {{ getFileIcon(rapport.type) }}
                 </mat-icon>
                 <div class="title-content">
-                  <strong class="rapport-titre">{{ rapport.titre }}</strong>
-                  <div *ngIf="rapport.description" class="rapport-description">
+                  <strong>{{ rapport.titre }}</strong>
+                  <small *ngIf="rapport.description" class="rapport-description">
                     {{ rapport.description }}
-                  </div>
-                  <div class="rapport-meta" *ngIf="rapport.metadata">
-                    <span *ngIf="rapport.metadata.themes?.length" class="meta-tag">
-                      <mat-icon class="meta-icon">tag</mat-icon>
-                      {{ rapport.metadata.themes.join(', ') }}
-                    </span>
-                    <span *ngIf="rapport.metadata.zoneGeographique?.length" class="meta-tag">
-                      <mat-icon class="meta-icon">location_on</mat-icon>
-                      {{ rapport.metadata.zoneGeographique.join(', ') }}
-                    </span>
-                  </div>
+                  </small>
                 </div>
               </div>
             </td>
@@ -173,91 +98,54 @@
 
           <!-- Type -->
           <ng-container matColumnDef="type">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">category</mat-icon>
-              Type 
-            </th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
             <td mat-cell *matCellDef="let rapport">
-              <div class="type-cell">
-                <span class="type-badge" [class]="rapport.type">
-                  {{ getTypeLabel(rapport.type) }}
-                </span>
-                <div class="type-period" *ngIf="rapport.metadata?.periode">
-                  {{ rapport.metadata.periode }}
-                </div>
-              </div>
+              <span class="type-badge" [class]="rapport.type">
+                {{ getTypeLabel(rapport.type) }}
+              </span>
             </td>
           </ng-container>
 
           <!-- Date -->
           <ng-container matColumnDef="date">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">event</mat-icon>
-              Date 
-            </th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
             <td mat-cell *matCellDef="let rapport">
-              <div class="date-cell">
-                <div class="date-value">{{ rapport.date | date:'dd/MM/yyyy' }}</div>
-                <div class="date-period">{{ getPeriodeLabel(rapport) }}</div>
-              </div>
+              {{ rapport.date | date:'dd/MM/yyyy' }}
             </td>
           </ng-container>
 
-          <!-- Catégories -->
-          <ng-container matColumnDef="categories">
-            <th mat-header-cell *matHeaderCellDef>
-              <mat-icon class="header-icon">label</mat-icon>
-              Catégories 
-            </th>
+          <!-- Période -->
+          <ng-container matColumnDef="periode">
+            <th mat-header-cell *matHeaderCellDef>Période</th>
             <td mat-cell *matCellDef="let rapport">
-              <mat-chip-set>
-                <mat-chip *ngFor="let cat of (rapport.categories || [])" 
-                         [style.background]="getCategoryColor(cat)">
-                  {{ cat }}
-                </mat-chip>
-                <span *ngIf="!rapport.categories || rapport.categories.length === 0" class="no-categories">
-                  -
-                </span>
-              </mat-chip-set>
+              {{ getPeriodeLabel(rapport) }}
             </td>
           </ng-container>
 
           <!-- Taille -->
           <ng-container matColumnDef="taille">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">storage</mat-icon>
-              Taille 
-            </th>
+            <th mat-header-cell *matHeaderCellDef>Taille</th>
             <td mat-cell *matCellDef="let rapport">
-              <div class="size-cell">
-                <mat-icon class="size-icon">insert_drive_file</mat-icon>
-                <span>{{ rapport.taille | fileSize }}</span>
-              </div>
+              <span *ngIf="rapport.taille">{{ rapport.taille | fileSize }}</span>
+              <span *ngIf="!rapport.taille" class="no-data">—</span>
             </td>
           </ng-container>
 
           <!-- Actions -->
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>
-              <mat-icon class="header-icon">settings</mat-icon>
-              Actions 
-            </th>
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
             <td mat-cell *matCellDef="let rapport">
               <div class="action-buttons">
-                <button 
-                  mat-icon-button 
-                  color="primary"
-                  matTooltip="Prévisualiser"
-                  (click)="previewRapport(rapport)"
-                  *ngIf="rapport.url">
-                  <mat-icon>visibility</mat-icon>
+                <button mat-icon-button color="primary"
+                        [matTooltip]="'Prévisualiser (' + getPreviewIcon(rapport) + ')'"
+                        [disabled]="isPreviewing || isDownloading"
+                        (click)="previewRapport(rapport)">
+                  <mat-icon>{{ getPreviewIcon(rapport) }}</mat-icon>
                 </button>
-                
-                <button 
-                  mat-icon-button 
-                  color="accent"
-                  matTooltip="Télécharger"
-                  (click)="telechargerRapport(rapport)">
+                <button mat-icon-button color="accent"
+                        matTooltip="Télécharger"
+                        [disabled]="isDownloading || isPreviewing"
+                        (click)="telechargerRapport(rapport)">
                   <mat-icon>download</mat-icon>
                 </button>
               </div>
@@ -269,61 +157,75 @@
         </table>
       </div>
 
-      <!-- Message si aucun rapport -->
+      <!-- Aucun rapport -->
       <div *ngIf="!isLoading && rapports.length === 0" class="no-data-section">
         <mat-icon class="no-data-icon">folder_open</mat-icon>
         <h3>Aucun rapport disponible</h3>
-        <p>Aucun rapport n'est actuellement disponible pour votre compte.</p>
-        <p class="hint">Les rapports sont publiés régulièrement par l'administration PNVB.</p>
+        <p *ngIf="hasActiveFilters()">Essayez d'effacer vos filtres.</p>
+        <p *ngIf="!hasActiveFilters()">Les rapports vous seront envoyés par l'équipe PNVB.</p>
       </div>
 
       <!-- Pagination -->
       <mat-paginator *ngIf="!isLoading && rapports.length > 0"
-        [length]="totalRapports"
-        [pageSize]="pageSize"
-        [pageSizeOptions]="[5, 10, 25, 50]"
-        (page)="onPageChange($event)"
-        showFirstLastButtons
-        class="rapports-paginator">
+                     [length]="totalRapports"
+                     [pageSize]="pageSize"
+                     [pageSizeOptions]="[5, 10, 25, 50]"
+                     (page)="onPageChange($event)"
+                     showFirstLastButtons>
       </mat-paginator>
+
     </mat-card-content>
   </mat-card>
 
-  <!-- Guide -->
-  <mat-card class="guide-card">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>help</mat-icon>
-        Comment consulter les rapports ?
-      </mat-card-title>
-    </mat-card-header>
-    
-    <mat-card-content>
-      <div class="guide-steps">
-        <div class="guide-step">
-          <div class="step-number">1</div>
-          <div class="step-content">
-            <h4>Rechercher</h4>
-            <p>Utilisez les filtres pour trouver rapidement les rapports qui vous intéressent.</p>
-          </div>
-        </div>
-        
-        <div class="guide-step">
-          <div class="step-number">2</div>
-          <div class="step-content">
-            <h4>Prévisualiser</h4>
-            <p>Cliquez sur l'icône "œil" pour ouvrir le rapport dans un nouvel onglet.</p>
-          </div>
-        </div>
-        
-        <div class="guide-step">
-          <div class="step-number">3</div>
-          <div class="step-content">
-            <h4>Télécharger</h4>
-            <p>Téléchargez les rapports pour les consulter hors ligne.</p>
-          </div>
-        </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODALE DE PRÉVISUALISATION
+     Affichée seulement pour PDF et images (nativement supportés par le navigateur)
+     Les fichiers Office et autres passent directement en téléchargement.
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="preview-overlay" *ngIf="showPreviewModal" (click)="closePreview()">
+  <div class="preview-modal" (click)="$event.stopPropagation()">
+
+    <!-- En-tête modale -->
+    <div class="preview-header">
+      <div class="preview-header-left">
+        <mat-icon *ngIf="previewCategory === 'pdf'">picture_as_pdf</mat-icon>
+        <mat-icon *ngIf="previewCategory === 'image'">image</mat-icon>
+        <span class="preview-title">{{ previewTitle }}</span>
       </div>
-    </mat-card-content>
-  </mat-card>
+      <div class="preview-header-actions">
+        <button mat-icon-button
+                color="accent"
+                matTooltip="Télécharger"
+                (click)="downloadFromPreview()">
+          <mat-icon>download</mat-icon>
+        </button>
+        <button mat-icon-button
+                matTooltip="Fermer"
+                (click)="closePreview()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Corps modale : PDF -->
+    <div class="preview-body" *ngIf="previewCategory === 'pdf'">
+      <iframe *ngIf="previewSafeUrl"
+              [src]="previewSafeUrl"
+              class="preview-iframe"
+              type="application/pdf"
+              frameborder="0">
+      </iframe>
+    </div>
+
+    <!-- Corps modale : Image -->
+    <div class="preview-body preview-body--image" *ngIf="previewCategory === 'image'">
+      <img *ngIf="previewSafeUrl"
+           [src]="previewSafeUrl"
+           class="preview-image"
+           alt="{{ previewTitle }}">
+    </div>
+
+  </div>
 </div>

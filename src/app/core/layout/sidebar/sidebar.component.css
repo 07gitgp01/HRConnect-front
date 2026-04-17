@@ -11,14 +11,12 @@
   overflow-x: hidden;
   width: 280px;
   
-  /* ⚡ OPTIMISATION GPU */
   will-change: scroll-position;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   
-  /* ✅ SCROLLBAR CACHÉE PAR DÉFAUT */
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
   
@@ -36,7 +34,6 @@
     border-radius: 3px;
   }
   
-  /* ✅ SCROLLBAR VISIBLE AU SURVOL */
   &:hover {
     scrollbar-color: rgba(0, 129, 36, 0.4) transparent;
     
@@ -80,7 +77,6 @@
   min-height: 64px;
   height: 64px;
   
-  /* ⚡ OPTIMISATION */
   contain: layout style paint;
   
   &::before {
@@ -96,7 +92,6 @@
   }
 }
 
-/* ===== CONTENEUR DU HEADER DE RÔLE ===== */
 .role-header-container {
   width: 100%;
   display: flex;
@@ -110,7 +105,6 @@
   padding: 8px 0;
 }
 
-/* ===== ICÔNE DU HEADER ===== */
 .role-header-icon {
   font-size: 28px !important;
   width: 28px !important;
@@ -126,7 +120,6 @@
   50% { transform: scale(1.05); }
 }
 
-/* ===== TITRE DU HEADER ===== */
 .role-header-title {
   font-size: 1.1rem !important;
   font-weight: 800 !important;
@@ -152,85 +145,6 @@
   }
 }
 
-/* ===== SOUS-TITRE (POUR PARTENAIRES) ===== */
-.role-subtitle {
-  margin-top: 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
-  
-  .user-type-label {
-    font-size: 0.75rem !important;
-    opacity: 0.95;
-    background: rgba(255, 255, 255, 0.25) !important;
-    padding: 3px 10px !important;
-    border-radius: 10px !important;
-    display: inline-block;
-    backdrop-filter: blur(10px);
-    font-weight: 600 !important;
-    color: white !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-}
-
-/* ===== INDICATEURS DE RÔLES (POUR PARTENAIRES) ===== */
-.role-indicators {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
-  justify-content: center;
-  width: 100%;
-}
-
-.role-indicator {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 0.65rem !important;
-  padding: 2px 8px !important;
-  border-radius: 8px !important;
-  background: rgba(255, 255, 255, 0.2) !important;
-  backdrop-filter: blur(10px);
-  font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  
-  mat-icon,
-  .mat-icon {
-    font-size: 12px !important;
-    width: 12px !important;
-    height: 12px !important;
-  }
-  
-  &.ptf-indicator {
-    background: rgba(255, 215, 0, 0.25) !important;
-    color: #FFD700 !important;
-    border-color: rgba(255, 215, 0, 0.4);
-  }
-  
-  &.structure-indicator {
-    background: rgba(255, 255, 255, 0.25) !important;
-    color: #FFFFFF !important;
-    border-color: rgba(255, 255, 255, 0.4);
-  }
-}
-
-.multi-type-badge {
-  font-size: 0.65rem !important;
-  height: 20px !important;
-  background: rgba(255, 215, 0, 0.9) !important;
-  color: #006b1e !important;
-  font-weight: 700 !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* ===== DIVIDER ===== */
 .profile-divider {
   margin: 0 !important;
@@ -249,12 +163,97 @@
   }
 }
 
-/* Suppression des anciens titres de section */
 .menu-section-title {
   display: none !important;
 }
 
-/* ===== ÉLÉMENTS DE LISTE - OPTIMISÉS ===== */
+/* ===== GROUPE ACCORDÉON ===== */
+.menu-group {
+  margin: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 129, 36, 0.12);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &.open {
+    border-color: rgba(0, 129, 36, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 129, 36, 0.1);
+
+    .menu-group-label {
+      background: linear-gradient(135deg, #008124 0%, #006b1e 100%);
+      border-bottom: 1px solid rgba(0, 85, 24, 0.3);
+
+      span {
+        color: white !important;
+      }
+
+      .menu-group-icon,
+      .menu-group-chevron {
+        color: white !important;
+      }
+    }
+  }
+}
+
+/* ===== EN-TÊTE CLIQUABLE DU GROUPE ===== */
+.menu-group-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba(0, 129, 36, 0.06) 0%, rgba(0, 107, 30, 0.1) 100%);
+  transition: background 0.25s ease;
+  user-select: none;
+
+  &:hover {
+    background: linear-gradient(135deg, rgba(0, 129, 36, 0.12) 0%, rgba(0, 107, 30, 0.16) 100%);
+  }
+
+  span {
+    flex: 1;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    color: #006b1e !important;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    transition: color 0.2s ease;
+  }
+}
+
+.menu-group-icon {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: #008124 !important;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.menu-group-chevron {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: #008124 !important;
+  transition: color 0.2s ease, transform 0.25s ease;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* ===== CONTENU DU GROUPE (géré par l'animation Angular) ===== */
+.menu-group-items {
+  overflow: hidden;
+  background: rgba(248, 250, 252, 0.8);
+  padding: 4px 0;
+
+  .mat-mdc-list-item,
+  a.mat-mdc-list-item {
+    margin: 2px 8px !important;
+    border-radius: 10px !important;
+  }
+}
+
+/* ===== ÉLÉMENTS DE LISTE ===== */
 .app-sidebar {
   .mat-mdc-list-item,
   a.mat-mdc-list-item {
@@ -264,7 +263,6 @@
     border: 1px solid transparent !important;
     min-height: 48px !important;
     
-    /* ⚡ OPTIMISATION GPU */
     will-change: transform, background-color;
     transform: translateZ(0);
     backface-visibility: hidden;
@@ -292,7 +290,6 @@
       transition: all 0.2s ease !important;
     }
     
-    /* HOVER STATE */
     &:hover {
       background: linear-gradient(135deg, #e6f4e6 0%, #d4edd4 100%) !important;
       transform: translateX(6px) translateZ(0) !important;
@@ -315,7 +312,6 @@
       }
     }
     
-    /* ACTIVE STATE */
     &.active,
     &.mdc-list-item--activated,
     &[aria-current="page"] {
@@ -538,8 +534,6 @@
 @media (max-width: 768px) {
   .app-sidebar {
     width: 100% !important;
-    
-    /* ✅ Sur mobile, afficher la scrollbar système */
     scrollbar-width: auto;
     scrollbar-color: #008124 #f1f5f9;
     
@@ -581,15 +575,9 @@
     font-size: 0.95rem !important;
     letter-spacing: 1.2px;
   }
-  
-  .role-subtitle .user-type-label {
-    padding: 2px 8px !important;
-    font-size: 0.7rem !important;
-  }
-  
-  .role-indicator {
-    padding: 2px 6px !important;
-    font-size: 0.6rem !important;
+
+  .menu-group {
+    margin: 4px 8px;
   }
   
   .app-sidebar {
@@ -617,21 +605,6 @@
     letter-spacing: 1px;
   }
   
-  .role-header-container {
-    gap: 6px;
-  }
-  
-  .role-indicators {
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-  }
-  
-  .role-indicator {
-    min-width: 100px;
-    justify-content: center;
-  }
-  
   .app-sidebar {
     .mat-mdc-list-item,
     a.mat-mdc-list-item {
@@ -652,7 +625,7 @@
   box-sizing: border-box;
 }
 
-.app-sidebar mat-icon:not(.logout-item mat-icon):not(.role-header-icon) {
+.app-sidebar mat-icon:not(.logout-item mat-icon):not(.role-header-icon):not(.menu-group-icon):not(.menu-group-chevron) {
   color: #008124 !important;
 }
 
@@ -671,7 +644,6 @@
     background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%);
     border-right-color: #333;
     
-    /* Scrollbar en mode sombre */
     &:hover {
       scrollbar-color: rgba(0, 200, 60, 0.5) transparent;
       
@@ -691,6 +663,43 @@
   
   .user-profile-section {
     background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%) !important;
+  }
+
+  .menu-group {
+    border-color: rgba(0, 129, 36, 0.2);
+
+    .menu-group-label {
+      background: rgba(0, 129, 36, 0.1);
+
+      &:hover {
+        background: rgba(0, 129, 36, 0.18);
+      }
+
+      span {
+        color: #4ade80 !important;
+      }
+    }
+
+    .menu-group-icon,
+    .menu-group-chevron {
+      color: #4ade80 !important;
+    }
+
+    .menu-group-items {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    &.open {
+      .menu-group-label {
+        background: linear-gradient(135deg, #008124 0%, #006b1e 100%);
+
+        span,
+        .menu-group-icon,
+        .menu-group-chevron {
+          color: white !important;
+        }
+      }
+    }
   }
   
   .app-sidebar {
@@ -712,14 +721,3 @@
     border-top-color: #374151 !important;
   }
 }
-
-/* ===== NOTES DE VERSION ===== */
-/*
-✅ Scrollbar cachée par défaut sur desktop
-✅ Scrollbar visible au survol avec animation fluide
-✅ Scrollbar système visible sur mobile/tablette
-✅ Mode sombre supporté
-✅ Optimisations GPU maintenues
-✅ Transitions douces (0.3s)
-✅ Compatible tous navigateurs (Firefox, Chrome, Safari, Edge)
-*/

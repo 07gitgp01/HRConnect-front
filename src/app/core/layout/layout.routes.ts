@@ -2,6 +2,7 @@
 import { Routes } from '@angular/router';
 import { LayoutComponent } from './layout.component';
 import { RecrutementsComponent } from './recrutements/recrutements.component';
+import { DetailProjetComponent } from './detail-projet/detail-projet.component';
 
 export const layoutRoutes: Routes = [
   {
@@ -25,7 +26,7 @@ export const layoutRoutes: Routes = [
         loadChildren: () => import('../../features/features-routing.module').then(m=>m.FeaturesRoutingModule)
       },
 
-       {
+        {
           path: 'recrutements',
            component: RecrutementsComponent,
            data: { 
@@ -33,6 +34,12 @@ export const layoutRoutes: Routes = [
            description: 'Découvrez les projets qui recrutent des volontaires'
          }
         },
+
+            {
+                path: 'detail/:id',
+                component:DetailProjetComponent
+                
+              },
 
       { path: '**', redirectTo: 'home' }
     ]

@@ -1,4 +1,5 @@
 // src/app/core/layout/home/home.component.ts
+
 import { Component, OnInit, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -7,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatChipsModule } from '@angular/material/chips';
 import { AuthService } from '../../../features/services/service_auth/auth.service';
 import { ProjectService } from '../../../features/services/service_projects/projects.service';
 
@@ -40,7 +42,8 @@ interface CarouselSlide {
     MatButtonModule,
     MatIconModule,
     MatDividerModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatChipsModule
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
@@ -51,15 +54,18 @@ export class HomeComponent implements OnInit, OnDestroy {
   isLoadingProjects = signal<boolean>(true);
   loadError = signal<boolean>(false);
   stats = signal<any>({});
+  
+  // COMPTEUR DES MISSIONS ACTIVES ET OUVERTES
+  activeProjectsCount = signal<number>(0);
   totalProjectsCount = signal<number>(0);
 
   // Domaines d'intervention
   domains: Domain[] = [];
   
-  // Carousel properties
-  currentSlide = 0;
+  // Hero Carousel properties
+  currentHeroSlide = 0;
   carouselSlides: CarouselSlide[] = [];
-  private autoSlideInterval: any;
+  private heroSlideInterval: any;
   private loadTimeout: any;
 
   // Computed signals pour l'authentification
@@ -83,21 +89,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     
     this.loadDomainsData();
     this.loadStats();
-    this.initializeCarousel();
-    this.startAutoSlide();
+    this.initializeHeroCarousel();
+    this.startHeroAutoSlide();
   }
 
   ngOnDestroy(): void {
-    if (this.autoSlideInterval) {
-      clearInterval(this.autoSlideInterval);
+    if (this.heroSlideInterval) {
+      clearInterval(this.heroSlideInterval);
     }
     if (this.loadTimeout) {
       clearTimeout(this.loadTimeout);
     }
   }
 
-  // ==================== CAROUSEL METHODS ====================
-  private initializeCarousel(): void {
+  // ==================== HERO CAROUSEL METHODS ====================
+  private initializeHeroCarousel(): void {
     this.carouselSlides = [
       {
         image: 'assets/1.webp',
@@ -123,32 +129,32 @@ export class HomeComponent implements OnInit, OnDestroy {
     ];
   }
 
-  private startAutoSlide(): void {
-    this.autoSlideInterval = setInterval(() => {
-      this.nextSlide();
+  private startHeroAutoSlide(): void {
+    this.heroSlideInterval = setInterval(() => {
+      this.nextHeroSlide();
     }, 4000);
   }
 
-  nextSlide(): void {
-    this.currentSlide = (this.currentSlide + 1) % this.carouselSlides.length;
-    this.restartAutoSlide();
+  nextHeroSlide(): void {
+    this.currentHeroSlide = (this.currentHeroSlide + 1) % this.carouselSlides.length;
+    this.restartHeroAutoSlide();
   }
 
-  prevSlide(): void {
-    this.currentSlide = (this.currentSlide - 1 + this.carouselSlides.length) % this.carouselSlides.length;
-    this.restartAutoSlide();
+  prevHeroSlide(): void {
+    this.currentHeroSlide = (this.currentHeroSlide - 1 + this.carouselSlides.length) % this.carouselSlides.length;
+    this.restartHeroAutoSlide();
   }
 
-  goToSlide(index: number): void {
-    this.currentSlide = index;
-    this.restartAutoSlide();
+  goToHeroSlide(index: number): void {
+    this.currentHeroSlide = index;
+    this.restartHeroAutoSlide();
   }
 
-  private restartAutoSlide(): void {
-    if (this.autoSlideInterval) {
-      clearInterval(this.autoSlideInterval);
+  private restartHeroAutoSlide(): void {
+    if (this.heroSlideInterval) {
+      clearInterval(this.heroSlideInterval);
     }
-    this.startAutoSlide();
+    this.startHeroAutoSlide();
   }
 
   // ==================== DOMAINES D'INTERVENTION ====================
@@ -157,9 +163,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       {
         id: 1,
         name: 'Éducation & Formation',
-        description: 'Programmes éducatifs et formations professionnelles pour la jeunesse burkinabè',
+        description: 'Programmes éducatifs et formations professionnelles',
         icon: '🎓',
-        color: '#4CAF50',
+        color: '#008124',
         projectsCount: 15,
         volunteers: 120,
         category: 'education',
@@ -168,9 +174,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       {
         id: 2,
         name: 'Environnement & Développement Durable',
-        description: 'Protection de l\'environnement et projets de développement durable',
+        description: 'Protection de l\'environnement et développement durable',
         icon: '🌱',
-        color: '#2196F3',
+        color: '#2E7D32',
         projectsCount: 12,
         volunteers: 85,
         category: 'environment',
@@ -179,9 +185,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       {
         id: 3,
         name: 'Santé & Bien-être',
-        description: 'Campagnes de santé publique et accès aux soins médicaux',
+        description: 'Campagnes de santé publique et accès aux soins',
         icon: '⚕️',
-        color: '#F44336',
+        color: '#1976D2',
         projectsCount: 8,
         volunteers: 65,
         category: 'health',
@@ -190,9 +196,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       {
         id: 4,
         name: 'Agriculture & Sécurité Alimentaire',
-        description: 'Soutien aux agriculteurs et programmes de sécurité alimentaire',
+        description: 'Soutien aux agriculteurs et sécurité alimentaire',
         icon: '🌾',
-        color: '#FF9800',
+        color: '#F57C00',
         projectsCount: 10,
         volunteers: 95,
         category: 'agriculture',
@@ -201,9 +207,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       {
         id: 5,
         name: 'Technologie & Innovation',
-        description: 'Formation numérique et projets innovants pour le développement',
+        description: 'Formation numérique et projets innovants',
         icon: '💻',
-        color: '#9C27B0',
+        color: '#7B1FA2',
         projectsCount: 7,
         volunteers: 45,
         category: 'technology',
@@ -212,9 +218,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       {
         id: 6,
         name: 'Développement Communautaire',
-        description: 'Projets de développement local et renforcement des communautés',
+        description: 'Projets de développement local',
         icon: '🏘️',
-        color: '#795548',
+        color: '#5D4037',
         projectsCount: 18,
         volunteers: 150,
         category: 'community',
@@ -223,13 +229,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     ];
   }
 
-  // ==================== CHARGEMENT DES PROJETS - VERSION CORRIGÉE ====================
+  // ==================== CHARGEMENT DES PROJETS ====================
   loadFeaturedProjects(): void {
-    console.log('🔄 Début chargement des projets actifs...');
+    console.log('🔄 Début chargement des projets en recrutement...');
     this.isLoadingProjects.set(true);
     this.loadError.set(false);
 
-    // Timeout de sécurité
     this.loadTimeout = setTimeout(() => {
       console.log('⏱️ Timeout: Arrêt forcé du chargement après 8 secondes');
       this.featuredProjects.set([]);
@@ -239,139 +244,68 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     this.projectService.getAllProjectsWithStats().subscribe({
       next: (projectsWithStats: any[]) => {
-        // Clear le timeout
         if (this.loadTimeout) {
           clearTimeout(this.loadTimeout);
         }
 
-        console.log('📊 PROJETS REÇUS DU JSON:', projectsWithStats?.length || 0);
-        console.log('📋 Premier projet exemple:', projectsWithStats?.[0]);
+        console.log('📊 PROJETS REÇUS:', projectsWithStats?.length || 0);
         
-        let filteredProjects: any[] = [];
+        let openProjects: any[] = [];
         
         if (projectsWithStats && projectsWithStats.length > 0) {
-          // ✅ FILTRAGE CORRIGÉ POUR DONNÉES JSON
-          filteredProjects = projectsWithStats
-            .filter(project => {
-              // 1️⃣ Extraire le statut (peut être dans status OU statutProjet)
-              const status = project.status || project.statutProjet || '';
-              const statusNormalized = status.toString().toLowerCase().trim();
-              
-              // ✅ Vérifier que le statut est 'actif' UNIQUEMENT
-              const isActive = statusNormalized === 'actif';
-              
-              if (!isActive) {
-                console.log(`❌ Projet "${project.title || project.titre}" ignoré - Statut: "${status}" (attendu: "actif")`);
-                return false;
-              }
-              
-              // 2️⃣ Vérifier les volontaires (gestion multi-noms de champs)
-              const needed = project.neededVolunteers || 
-                           project.nombreVolontairesRequis || 
-                           0;
-              
-              const current = this.getCurrentVolunteersCount(project);
-              const missingVolunteers = needed - current;
-              const hasMissingVolunteers = missingVolunteers > 0 && needed > 0;
-              
-              if (!hasMissingVolunteers) {
-                console.log(`❌ Projet "${project.title || project.titre}" ignoré - Complet ou aucun besoin (${current}/${needed})`);
-                return false;
-              }
-              
-              console.log(`✅ Projet "${project.title || project.titre}" RETENU - Actif avec ${missingVolunteers} places disponibles (${current}/${needed})`);
+          const aujourdhui = new Date();
+          aujourdhui.setHours(0, 0, 0, 0);
+          
+          // ✅ Filtrer les projets actifs ET avec date limite de candidature non dépassée
+          openProjects = projectsWithStats.filter(project => {
+            const status = project.status || project.statutProjet || '';
+            const statusNormalized = status.toString().toLowerCase().trim();
+            
+            // Vérifier que le projet est actif
+            if (statusNormalized !== 'actif') return false;
+            
+            // Vérifier la date limite de candidature
+            const dateLimite = project.dateLimiteCandidature || project.applicationDeadline;
+            if (!dateLimite) return true; // Si pas de date limite, on considère comme ouvert
+            
+            try {
+              const dateLimiteObj = new Date(dateLimite);
+              dateLimiteObj.setHours(0, 0, 0, 0);
+              // ✅ La date limite doit être aujourd'hui ou dans le futur
+              return dateLimiteObj >= aujourdhui;
+            } catch {
               return true;
-            })
-            .slice(0, 6); // Limiter à 6 projets max
+            }
+          });
+          
+          this.activeProjectsCount.set(openProjects.length);
+          this.totalProjectsCount.set(projectsWithStats.length);
+          
+          console.log(`✅ ${openProjects.length} projets actifs et ouverts aux candidatures trouvés`);
+          console.log(`❌ ${projectsWithStats.filter((p: any) => {
+            const status = p.status || p.statutProjet || '';
+            return status.toString().toLowerCase().trim() === 'actif';
+          }).length - openProjects.length} projets actifs mais avec date limite dépassée`);
+          
+          // ✅ Filtrer pour la grille : max 6 missions
+          this.featuredProjects.set(openProjects.slice(0, 6));
         }
         
-        console.log('🎯 PROJETS ACTIFS AFFICHÉS:', filteredProjects.length);
+        console.log('🎯 PROJETS AFFICHÉS DANS LA GRILLE:', this.featuredProjects().length);
         
-        if (filteredProjects.length > 0) {
-          console.log('📋 Détails des projets retenus:', filteredProjects.map(p => ({
-            id: p.id,
-            titre: p.title || p.titre,
-            statut: p.status || p.statutProjet,
-            volontaires: `${this.getCurrentVolunteersCount(p)}/${p.neededVolunteers || p.nombreVolontairesRequis}`,
-            manquants: this.calculerVolontairesManquants(p)
-          })));
-        } else {
-          console.warn('⚠️ AUCUN PROJET ACTIF TROUVÉ !');
-          console.log('💡 Vérifications à faire:');
-          console.log('   1. Vérifier que db.json contient des projets avec statutProjet="actif"');
-          console.log('   2. Vérifier que nombreVolontairesRequis > nombreVolontairesActuels');
-          console.log('   3. Exemple de projet valide:');
-          console.log('      {');
-          console.log('        "id": 1,');
-          console.log('        "titre": "Mon projet",');
-          console.log('        "statutProjet": "actif",  ← DOIT ÊTRE "actif"');
-          console.log('        "nombreVolontairesRequis": 10,');
-          console.log('        "nombreVolontairesActuels": 3  ← Doit être < requis');
-          console.log('      }');
-        }
-        
-        this.featuredProjects.set(filteredProjects);
-        this.totalProjectsCount.set(projectsWithStats?.length || 0);
         this.isLoadingProjects.set(false);
       },
       error: (error: any) => {
-        // Clear le timeout
         if (this.loadTimeout) {
           clearTimeout(this.loadTimeout);
         }
         
-        console.error('❌ ERREUR chargement projets depuis JSON:', error);
+        console.error('❌ ERREUR chargement projets:', error);
         this.featuredProjects.set([]);
         this.loadError.set(true);
         this.isLoadingProjects.set(false);
-      },
-      complete: () => {
-        this.isLoadingProjects.set(false);
       }
     });
-  }
-
-  // ✅ MÉTHODE CORRIGÉE : Obtenir le nombre de volontaires actuels
-  private getCurrentVolunteersCount(project: any): number {
-    // Gérer tous les noms de champs possibles dans le JSON
-    if (project.volunteersStats?.accepted) {
-      return project.volunteersStats.accepted;
-    }
-    
-    if (Array.isArray(project.volunteers)) {
-      return project.volunteers.length;
-    }
-    
-    if (Array.isArray(project.volontaires)) {
-      return project.volontaires.length;
-    }
-    
-    if (typeof project.currentVolunteers === 'number') {
-      return project.currentVolunteers;
-    }
-    
-    if (typeof project.nombreVolontairesActuels === 'number') {
-      return project.nombreVolontairesActuels;
-    }
-    
-    if (typeof project.volontairesAffectes === 'number') {
-      return project.volontairesAffectes;
-    }
-    
-    if (typeof project.assignedVolunteers === 'number') {
-      return project.assignedVolunteers;
-    }
-    
-    return 0;
-  }
-
-  // ✅ MÉTHODE CORRIGÉE : Calculer les volontaires manquants
-  private calculerVolontairesManquants(project: any): number {
-    const volontairesAffectes = this.getCurrentVolunteersCount(project);
-    const volontairesNecessaires = project.neededVolunteers || 
-                                   project.nombreVolontairesRequis || 
-                                   0;
-    return Math.max(0, volontairesNecessaires - volontairesAffectes);
   }
 
   loadStats(): void {
@@ -384,18 +318,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   // ==================== MÉTHODES UTILITAIRES ====================
-  getMissionImage(project: any, index: number): string {
-    const missionImages = [
-      'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=250&fit=crop',
-      'https://images.unsplash.com/photo-1584467735871-8db9ac8e5e3a?w=400&h=250&fit=crop',
-      'https://images.unsplash.com/photo-1559027615-cfa46a63d32f?w=400&h=250&fit=crop',
-      'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=400&h=250&fit=crop',
-      'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&h=250&fit=crop',
-      'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=400&h=250&fit=crop'
-    ];
-    return missionImages[index % missionImages.length];
-  }
-
   getDefaultImage(): string {
     return 'https://images.unsplash.com/photo-1572177812156-58036aae439c?w=600&h=400&fit=crop';
   }
@@ -404,17 +326,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     event.target.src = this.getDefaultImage();
   }
 
-  // ✅ MÉTHODE CORRIGÉE : Icônes de statut (seulement 3 statuts)
   getStatusIcon(status: string): string {
     const statusIcons: { [key: string]: string } = {
-      'en_attente': 'schedule',      // ⏳ En attente
-      'actif': 'play_circle',        // ▶️ Actif
-      'cloture': 'check_circle'      // ✅ Clôturé
+      'en_attente': 'schedule',
+      'actif': 'check_circle',
+      'cloture': 'cancel'
     };
     return statusIcons[status] || 'help';
   }
 
-  // ✅ MÉTHODE CORRIGÉE : Labels de statut (seulement 3 statuts)
   getStatusLabel(status: string): string {
     const statusLabels: { [key: string]: string } = {
       'en_attente': 'En attente',
@@ -424,135 +344,92 @@ export class HomeComponent implements OnInit, OnDestroy {
     return statusLabels[status] || status;
   }
 
-  getVolontairesManquants(project: any): number {
-    return this.calculerVolontairesManquants(project);
-  }
-
-  getPourcentageCompletion(project: any): number {
-    if (project.volunteersStats?.completionRate) {
-      return project.volunteersStats.completionRate;
-    }
-    
-    const volontairesAffectes = this.getCurrentVolunteersCount(project);
-    const volontairesNecessaires = project.neededVolunteers || 
-                                   project.nombreVolontairesRequis || 
-                                   1;
-    return Math.min(100, Math.round((volontairesAffectes / volontairesNecessaires) * 100));
-  }
-
-  getCurrentVolunteersDisplay(project: any): number {
-    return this.getCurrentVolunteersCount(project);
-  }
-
   getRequiredVolunteersDisplay(project: any): number {
-    return project.neededVolunteers || project.nombreVolontairesRequis || 0;
+    return project.nombreVolontairesRequis || project.neededVolunteers || 0;
   }
 
-  // ✅ MÉTHODE CORRIGÉE : Vérifier si on peut postuler (seulement 'actif')
   canApplyToProject(project: any): boolean {
     const status = (project.status || project.statutProjet || '').toString().toLowerCase().trim();
-    return status === 'actif';
-  }
-
-  // ==================== MÉTHODES POUR LA BARRE DE PROGRESSION ====================
-  getProgressBarClass(project: any): string {
-    const percentage = this.getPourcentageCompletion(project);
+    if (status !== 'actif') return false;
     
-    if (percentage === 0) return 'progress-bar';
-    if (percentage < 25) return 'progress-bar low';
-    if (percentage < 50) return 'progress-bar medium';
-    if (percentage < 75) return 'progress-bar high';
-    if (percentage < 100) return 'progress-bar high';
-    return 'progress-bar complete';
-  }
-
-  getTransitionDuration(project: any): string {
-    const percentage = this.getPourcentageCompletion(project);
+    // ✅ Vérifier aussi que la date limite n'est pas dépassée
+    const dateLimite = project.dateLimiteCandidature || project.applicationDeadline;
+    if (!dateLimite) return true;
     
-    if (percentage > 50) return '1.5s';
-    if (percentage > 25) return '1.2s';
-    return '0.8s';
-  }
-
-  getProgressStatusText(project: any): string {
-    const percentage = this.getPourcentageCompletion(project);
-    
-    if (percentage === 0) return 'Aucun volontaire engagé';
-    if (percentage < 25) return 'Début de recrutement';
-    if (percentage < 50) return 'Recrutement en cours';
-    if (percentage < 75) return 'Recrutement avancé';
-    if (percentage < 100) return 'Presque complet';
-    return 'Mission complète !';
-  }
-
-  getProgressColor(project: any): string {
-    const percentage = this.getPourcentageCompletion(project);
-    
-    if (percentage === 0) return '#9e9e9e';
-    if (percentage < 25) return '#ff9800';
-    if (percentage < 50) return '#ffc107';
-    if (percentage < 75) return '#4CAF50';
-    if (percentage < 100) return '#2196F3';
-    return '#673ab7';
-  }
-
-  getProgressGradient(project: any): string {
-    const percentage = this.getPourcentageCompletion(project);
-    const color = this.getProgressColor(project);
-    
-    if (percentage < 25) {
-      return `linear-gradient(90deg, ${color}, ${this.lightenColor(color, 20)})`;
+    try {
+      const aujourdhui = new Date();
+      aujourdhui.setHours(0, 0, 0, 0);
+      const dateLimiteObj = new Date(dateLimite);
+      dateLimiteObj.setHours(0, 0, 0, 0);
+      return dateLimiteObj >= aujourdhui;
+    } catch {
+      return true;
     }
-    if (percentage < 75) {
-      return `linear-gradient(90deg, ${this.lightenColor(color, 10)}, ${color})`;
+  }
+
+  getDomainIcon(domain: string): string {
+    const icons: { [key: string]: string } = {
+      'Education': 'school',
+      'Santé': 'local_hospital',
+      'Environnement': 'nature',
+      'Développement': 'trending_up',
+      'Urgence': 'emergency',
+      'Autre': 'work'
+    };
+    return icons[domain] || 'work';
+  }
+
+  formatDate(dateString: string | undefined): string {
+    if (!dateString) return 'Non définie';
+    try {
+      return new Date(dateString).toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      });
+    } catch {
+      return 'Date invalide';
     }
-    return `linear-gradient(90deg, ${color}, ${this.darkenColor(color, 10)})`;
   }
 
-  getProgressTextColor(project: any): string {
-    const percentage = this.getPourcentageCompletion(project);
-    return percentage > 50 ? 'white' : 'black';
+  getDaysRemaining(dateString: string | undefined): number | null {
+    if (!dateString) return null;
+    try {
+      const deadline = new Date(dateString);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      deadline.setHours(0, 0, 0, 0);
+      
+      const diffTime = deadline.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // ✅ Ne retourner que les jours restants positifs
+      return diffDays > 0 ? diffDays : 0;
+    } catch {
+      return null;
+    }
   }
 
-  private lightenColor(color: string, percent: number): string {
-    const num = parseInt(color.replace("#", ""), 16);
-    const amt = Math.round(2.55 * percent);
-    const R = (num >> 16) + amt;
-    const G = (num >> 8 & 0x00FF) + amt;
-    const B = (num & 0x0000FF) + amt;
-    
-    return "#" + (
-      0x1000000 +
-      (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
-      (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-      (B < 255 ? B < 1 ? 0 : B : 255)
-    ).toString(16).slice(1);
-  }
-
-  private darkenColor(color: string, percent: number): string {
-    const num = parseInt(color.replace("#", ""), 16);
-    const amt = Math.round(2.55 * percent);
-    const R = (num >> 16) - amt;
-    const G = (num >> 8 & 0x00FF) - amt;
-    const B = (num & 0x0000FF) - amt;
-    
-    return "#" + (
-      0x1000000 +
-      (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
-      (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-      (B < 255 ? B < 1 ? 0 : B : 255)
-    ).toString(16).slice(1);
+  getUrgencyClass(days: number | null): string {
+    if (days === null) return '';
+    if (days <= 3) return 'mission-urgent';
+    if (days <= 7) return 'mission-moderate';
+    return '';
   }
 
   // ==================== NAVIGATION ====================
   viewProjectDetails(projectId: number): void {
-    this.router.navigate(['/features/admin/projets/detail', projectId]);
+    if (!projectId) {
+      console.error('❌ ID du projet manquant');
+      return;
+    }
+    this.router.navigate(['/detail', projectId]);
   }
 
   applyToProject(project: any): void {
     if (!this.isLoggedIn()) {
       this.router.navigate(['/login'], { 
-        queryParams: { returnUrl: `/features/admin/projets/${project.id}` }
+        queryParams: { returnUrl: `/detail/${project.id}` }
       });
       return;
     }
@@ -567,5 +444,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   navigateTo(path: string): void {
     this.router.navigate([path]);
+  }
+
+  voirToutesLesMissions(): void {
+    this.router.navigate(['/recrutements']);
   }
 }

@@ -1,0 +1,461 @@
+<!-- src/app/features/admin/gestion-volontaires/voir-profil-volontaire/voir-profil-volontaire.component.html -->
+
+<div class="profil-container">
+
+  <!-- Chargement -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <mat-spinner diameter="48"></mat-spinner>
+    <p>Chargement du profil...</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading && candidat">
+
+    <!-- ===== BARRE D'ACTIONS ===== -->
+    <div class="topbar">
+      <button class="btn-retour" (click)="retour()">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Retour à la liste</span>
+      </button>
+      <div class="topbar-actions">
+        <button class="btn-action btn-edit" (click)="editer()" matTooltip="Modifier le profil">
+          <mat-icon>edit</mat-icon>
+          Modifier
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== HERO — IDENTITÉ ===== -->
+    <div class="hero-card">
+
+      <!-- Avatar initiales -->
+      <div class="avatar-zone">
+        <div class="avatar-ring">
+          <div class="avatar-initiales">
+            {{ (candidat.user.prenom || '')[0] }}{{ (candidat.user.nom || '')[0] }}
+          </div>
+        </div>
+        <!-- Badge statut -->
+        <div class="statut-pill" [ngClass]="getStatutConfig(candidat.volontaire.statut).classe">
+          <mat-icon>{{ getStatutConfig(candidat.volontaire.statut).icon }}</mat-icon>
+          {{ getStatutConfig(candidat.volontaire.statut).label }}
+        </div>
+      </div>
+
+      <!-- Identité principale -->
+      <div class="hero-info">
+        <h1 class="hero-nom">
+          {{ candidat.user.prenom }} {{ candidat.user.nom | uppercase }}
+        </h1>
+        <div class="hero-meta">
+          <span class="meta-item">
+            <mat-icon>email</mat-icon>
+            {{ candidat.user.email }}
+          </span>
+          <span class="meta-item">
+            <mat-icon>phone</mat-icon>
+            {{ candidat.user.telephone || '—' }}
+          </span>
+          <span class="meta-item">
+            <mat-icon>badge</mat-icon>
+            {{ candidat.volontaire.typePiece }} — {{ candidat.volontaire.numeroPiece }}
+          </span>
+          <span class="meta-item">
+            <mat-icon>calendar_today</mat-icon>
+            Inscrit le {{ formatDate(candidat.user.date_inscription) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Jauge de complétion du profil -->
+      <div class="completion-zone">
+        <div class="completion-cercle">
+          <svg viewBox="0 0 120 120">
+            <circle class="cercle-bg"  cx="60" cy="60" r="54"/>
+            <circle class="cercle-fill" cx="60" cy="60" r="54"
+                    [style.stroke-dashoffset]="getProfilCircleOffset()"/>
+          </svg>
+          <div class="completion-chiffre">
+            <span class="pct">{{ profilCompletion }}</span>
+            <span class="pct-sign">%</span>
+          </div>
+        </div>
+        <p class="completion-label">Profil complété</p>
+      </div>
+
+    </div>
+
+    <!-- ===== SECTION MISSION ACTIVE (si existante) ===== -->
+    <div *ngIf="missionActive" class="mission-active-section">
+      <div class="section-header">
+        <mat-icon>play_circle</mat-icon>
+        <h2>Mission en cours</h2>
+      </div>
+      
+      <div class="mission-active-card">
+        <div class="mission-active-content">
+          <div class="mission-active-icon">
+            <mat-icon>assignment</mat-icon>
+          </div>
+          <div class="mission-active-info">
+            <h3>{{ missionActive.projetTitre }}</h3>
+            <div class="mission-active-details">
+              <span *ngIf="missionActive.projetRegion">
+                <mat-icon>place</mat-icon> {{ missionActive.projetRegion }}
+              </span>
+              <span>
+                <mat-icon>event</mat-icon> Depuis le {{ formatDateCourt(missionActive.dateAffectation) }}
+              </span>
+              <span>
+                <mat-icon>badge</mat-icon> Rôle: {{ missionActive.role }}
+              </span>
+            </div>
+          </div>
+          <button class="mission-active-btn" (click)="voirMission(missionActive.projetId)" matTooltip="Voir les détails de la mission">
+            <mat-icon>visibility</mat-icon>
+            Voir les détails
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== GRILLE DE SECTIONS ===== -->
+    <div class="sections-grid">
+
+      <!-- Section 1 : Informations personnelles -->
+      <div class="section-card">
+        <div class="section-header">
+          <mat-icon>person_outline</mat-icon>
+          <h2>Informations personnelles</h2>
+        </div>
+        <div class="champs-grid">
+          <div class="champ">
+            <span class="champ-label">Sexe</span>
+            <span class="champ-valeur">{{ getSexeLabel(candidat.volontaire.sexe) }}</span>
+          </div>
+          <div class="champ">
+            <span class="champ-label">Date de naissance</span>
+            <span class="champ-valeur">{{ formatDate(candidat.volontaire.dateNaissance) }}</span>
+          </div>
+          <div class="champ">
+            <span class="champ-label">Nationalité</span>
+            <span class="champ-valeur">{{ candidat.volontaire.nationalite }}</span>
+          </div>
+          <div class="champ">
+            <span class="champ-label">Type de pièce</span>
+            <span class="champ-valeur">{{ candidat.volontaire.typePiece }}</span>
+          </div>
+          <div class="champ">
+            <span class="champ-label">Numéro de pièce</span>
+            <span class="champ-valeur mono">{{ candidat.volontaire.numeroPiece }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2 : Localisation -->
+      <div class="section-card">
+        <div class="section-header">
+          <mat-icon>place</mat-icon>
+          <h2>Localisation</h2>
+        </div>
+        <div class="champs-grid">
+          <div class="champ full">
+            <span class="champ-label">Adresse de résidence</span>
+            <span class="champ-valeur">{{ candidat.volontaire.adresseResidence || '—' }}</span>
+          </div>
+          <div class="champ full">
+            <span class="champ-label">Région géographique</span>
+            <span class="champ-valeur">{{ candidat.volontaire.regionGeographique || '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3 : Formation -->
+      <div class="section-card">
+        <div class="section-header">
+          <mat-icon>school</mat-icon>
+          <h2>Formation</h2>
+        </div>
+        <div class="champs-grid">
+          <div class="champ">
+            <span class="champ-label">Niveau d'études</span>
+            <span class="champ-valeur">{{ candidat.volontaire.niveauEtudes || '—' }}</span>
+          </div>
+          <div class="champ">
+            <span class="champ-label">Domaine d'études</span>
+            <span class="champ-valeur">{{ candidat.volontaire.domaineEtudes || '—' }}</span>
+          </div>
+          <div class="champ">
+            <span class="champ-label">Disponibilité</span>
+            <span class="champ-valeur">{{ candidat.volontaire.disponibilite || '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4 : Compétences -->
+      <div class="section-card">
+        <div class="section-header">
+          <mat-icon>psychology</mat-icon>
+          <h2>Compétences</h2>
+        </div>
+        <div *ngIf="getCompetencesArray(candidat.volontaire.competences).length > 0; else noCompetences"
+             class="competences-liste">
+          <span *ngFor="let c of getCompetencesArray(candidat.volontaire.competences)"
+                class="competence-tag">
+            {{ c }}
+          </span>
+        </div>
+        <ng-template #noCompetences>
+          <p class="champ-vide">Aucune compétence renseignée</p>
+        </ng-template>
+      </div>
+
+      <!-- Section 5 : Motivation (pleine largeur) -->
+      <div class="section-card full-width">
+        <div class="section-header">
+          <mat-icon>favorite_border</mat-icon>
+          <h2>Lettre de motivation</h2>
+        </div>
+        <p *ngIf="candidat.volontaire.motivation; else noMotivation"
+           class="motivation-texte">
+          {{ candidat.volontaire.motivation }}
+        </p>
+        <ng-template #noMotivation>
+          <p class="champ-vide">Aucune motivation renseignée</p>
+        </ng-template>
+      </div>
+
+      <!-- ===== SECTION 6 : DOCUMENTS (CORRIGÉE) ===== -->
+      <div class="section-card full-width">
+        <div class="section-header">
+          <mat-icon>folder_open</mat-icon>
+          <h2>Documents</h2>
+        </div>
+        <div class="documents-liste">
+
+          <!-- CV -->
+          <div class="document-item" [class.disponible]="!!candidat.volontaire.urlCV">
+            <div class="doc-icon">
+              <mat-icon>description</mat-icon>
+            </div>
+            <div class="doc-info">
+              <span class="doc-nom">Curriculum Vitae (CV)</span>
+              <span class="doc-statut">
+                {{ candidat.volontaire.urlCV ? 'Disponible' : 'Non renseigné' }}
+              </span>
+              <span *ngIf="candidat.volontaire.urlCV" class="doc-chemin">
+                {{ candidat.volontaire.urlCV }}
+              </span>
+            </div>
+            <div class="doc-actions" *ngIf="candidat.volontaire.urlCV">
+              <button class="btn-doc btn-view" 
+                      (click)="ouvrirDocument(candidat.volontaire.urlCV, 'cv')"
+                      matTooltip="Ouvrir le CV">
+                <mat-icon>visibility</mat-icon>
+                <span>Ouvrir</span>
+              </button>
+              <button class="btn-doc btn-check" 
+                      (click)="verifierDocument(candidat.volontaire.urlCV, 'cv')"
+                      matTooltip="Vérifier si le document est accessible">
+                <mat-icon>check_circle</mat-icon>
+                <span>Vérifier</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Pièce d'identité -->
+          <div class="document-item" [class.disponible]="!!candidat.volontaire.urlPieceIdentite">
+            <div class="doc-icon">
+              <mat-icon>badge</mat-icon>
+            </div>
+            <div class="doc-info">
+              <span class="doc-nom">Pièce d'identité scannée</span>
+              <span class="doc-statut">
+                {{ candidat.volontaire.urlPieceIdentite ? 'Disponible' : 'Non fournie' }}
+              </span>
+              <span *ngIf="candidat.volontaire.urlPieceIdentite" class="doc-chemin">
+                {{ candidat.volontaire.urlPieceIdentite }}
+              </span>
+            </div>
+            <div class="doc-actions" *ngIf="candidat.volontaire.urlPieceIdentite">
+              <button class="btn-doc btn-view" 
+                      (click)="ouvrirDocument(candidat.volontaire.urlPieceIdentite, 'identity')"
+                      matTooltip="Ouvrir la pièce d'identité">
+                <mat-icon>visibility</mat-icon>
+                <span>Ouvrir</span>
+              </button>
+              <button class="btn-doc btn-check" 
+                      (click)="verifierDocument(candidat.volontaire.urlPieceIdentite, 'identity')"
+                      matTooltip="Vérifier si le document est accessible">
+                <mat-icon>check_circle</mat-icon>
+                <span>Vérifier</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Section 7 : Métadonnées admin (commentée) -->
+      <!-- <div class="section-card full-width meta-card">
+        <div class="section-header">
+          <mat-icon>info_outline</mat-icon>
+          <h2>Informations système</h2>
+        </div>
+        <div class="champs-grid">
+          <div class="champ">
+            <span class="champ-label">ID Volontaire</span>
+            <span class="champ-valeur mono">#{{ candidat.volontaire.id }}</span>
+          </div>
+          <div class="champ">
+            <span class="champ-label">ID Utilisateur</span>
+            <span class="champ-valeur mono">#{{ candidat.user.id }}</span>
+          </div>
+          <div class="champ">
+            <span class="champ-label">Date d'inscription</span>
+            <span class="champ-valeur">{{ formatDate(candidat.volontaire.dateInscription) }}</span>
+          </div>
+          <div class="champ">
+            <span class="champ-label">Date de validation</span>
+            <span class="champ-valeur">{{ formatDate(candidat.volontaire.dateValidation) }}</span>
+          </div>
+          <div class="champ">
+            <span class="champ-label">Profil complet</span>
+            <span class="champ-valeur">
+              <mat-icon [style.color]="candidat.user.profilComplete ? '#2e7d32' : '#dc2626'">
+                {{ candidat.user.profilComplete ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+            </span>
+          </div>
+          <div class="champ" *ngIf="candidat.volontaire.notesInterne">
+            <span class="champ-label">Notes internes</span>
+            <span class="champ-valeur note-interne">{{ candidat.volontaire.notesInterne }}</span>
+          </div>
+        </div>
+      </div> -->
+
+    </div>
+
+    <!-- ===== TABLEAU DES MISSIONS TERMINÉES ===== -->
+    <div class="missions-terminees-section">
+      <div class="section-header">
+        <mat-icon>history</mat-icon>
+        <h2>Historique des missions</h2>
+        <span class="missions-count" *ngIf="missionsTerminees.length > 0">
+          {{ missionsTerminees.length }} mission(s)
+        </span>
+      </div>
+
+      <div *ngIf="isLoadingMissions" class="loading-container">
+        <mat-spinner diameter="32"></mat-spinner>
+        <span>Chargement de l'historique...</span>
+      </div>
+
+      <div *ngIf="!isLoadingMissions && missionsTerminees.length === 0" class="empty-state">
+        <mat-icon>info_outline</mat-icon>
+        <p>Aucune mission terminée pour ce volontaire</p>
+      </div>
+
+      <div *ngIf="!isLoadingMissions && missionsTerminees.length > 0" class="table-container">
+        
+        <!-- Filtre -->
+        <div class="filter-field">
+          <mat-icon>search</mat-icon>
+          <input 
+            type="text" 
+            placeholder="Rechercher dans l'historique..." 
+            (keyup)="applyFilter($event)"
+          >
+        </div>
+
+        <!-- Tableau Material -->
+        <table mat-table [dataSource]="dataSource" matSort class="missions-table">
+
+          <!-- Colonne Titre du projet -->
+          <ng-container matColumnDef="projetTitre">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Mission</th>
+            <td mat-cell *matCellDef="let mission">
+              <div class="mission-title">{{ mission.projetTitre }}</div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Région -->
+          <ng-container matColumnDef="projetRegion">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Région</th>
+            <td mat-cell *matCellDef="let mission">
+              <span *ngIf="mission.projetRegion" class="region-cell">
+                <mat-icon>place</mat-icon> {{ mission.projetRegion }}
+              </span>
+              <span *ngIf="!mission.projetRegion">—</span>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Date d'affectation -->
+          <ng-container matColumnDef="dateAffectation">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Affectation</th>
+            <td mat-cell *matCellDef="let mission">
+              {{ formatDateCourt(mission.dateAffectation) }}
+            </td>
+          </ng-container>
+
+          <!-- Colonne Date de fin -->
+          <ng-container matColumnDef="dateFin">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Fin de mission</th>
+            <td mat-cell *matCellDef="let mission">
+              <span *ngIf="mission.dateFin; else nonTerminee">
+                {{ formatDateCourt(mission.dateFin) }}
+              </span>
+              <ng-template #nonTerminee>
+                <span class="badge-encours">En cours</span>
+              </ng-template>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Rôle -->
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Rôle</th>
+            <td mat-cell *matCellDef="let mission">
+              <span class="role-cell">{{ mission.role }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let mission">
+              <button 
+                class="action-btn" 
+                (click)="voirMission(mission.projetId)" 
+                matTooltip="Voir les détails de la mission"
+                matTooltipPosition="above">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+          <!-- Ligne quand aucune donnée -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+              <div class="no-data-message">
+                <mat-icon>info_outline</mat-icon>
+                <p>Aucune mission trouvée</p>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Pagination -->
+        <mat-paginator 
+          [pageSize]="5" 
+          [pageSizeOptions]="[5, 10, 25, 50]" 
+          showFirstLastButtons>
+        </mat-paginator>
+
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>

@@ -17,7 +17,7 @@
     <mat-card-header class="form-header">
       <mat-card-title>
         <mat-icon>how_to_reg</mat-icon>
-        Postuler au projet
+        Postuler au mission
       </mat-card-title>
       <mat-card-subtitle *ngIf="projet">
         {{ projet.titre }}
@@ -48,6 +48,8 @@
         <!-- Champs cachés pour les données obligatoires -->
         <input type="hidden" [(ngModel)]="candidature.volontaireId" name="volontaireId">
         <input type="hidden" [(ngModel)]="candidature.projectId" name="projectId">
+        <input type="hidden" [(ngModel)]="candidature.typePiece" name="typePiece">
+        <input type="hidden" [(ngModel)]="candidature.numeroPiece" name="numeroPiece">
         
         <div class="form-section">
           <h3 class="section-title">
@@ -59,8 +61,7 @@
             <!-- Prénom -->
             <mat-form-field appearance="outline">
               <mat-label>Prénom *</mat-label>
-              <input matInput type="text" [(ngModel)]="candidature.prenom" name="prenom" required
-                     [readonly]="!!user?.prenom" />
+              <input matInput type="text" [(ngModel)]="candidature.prenom" name="prenom" required readonly />
               <mat-icon matSuffix>person</mat-icon>
               <mat-error>Le prénom est requis</mat-error>
             </mat-form-field>
@@ -68,8 +69,7 @@
             <!-- Nom -->
             <mat-form-field appearance="outline">
               <mat-label>Nom *</mat-label>
-              <input matInput type="text" [(ngModel)]="candidature.nom" name="nom" required
-                     [readonly]="!!user?.nom" />
+              <input matInput type="text" [(ngModel)]="candidature.nom" name="nom" required readonly />
               <mat-icon matSuffix>person_outline</mat-icon>
               <mat-error>Le nom est requis</mat-error>
             </mat-form-field>
@@ -79,8 +79,7 @@
             <!-- Email -->
             <mat-form-field appearance="outline">
               <mat-label>Email *</mat-label>
-              <input matInput type="email" [(ngModel)]="candidature.email" name="email" required
-                     [readonly]="!!user?.email" />
+              <input matInput type="email" [(ngModel)]="candidature.email" name="email" required readonly />
               <mat-icon matSuffix>email</mat-icon>
               <mat-error>Un email valide est requis</mat-error>
             </mat-form-field>
@@ -88,8 +87,7 @@
             <!-- Téléphone -->
             <mat-form-field appearance="outline">
               <mat-label>Téléphone</mat-label>
-              <input matInput type="text" [(ngModel)]="candidature.telephone" name="telephone"
-                     [readonly]="!!user?.telephone" />
+              <input matInput type="text" [(ngModel)]="candidature.telephone" name="telephone" readonly />
               <mat-icon matSuffix>phone</mat-icon>
             </mat-form-field>
           </div>
@@ -101,7 +99,7 @@
           </div>
         </div>
 
-        <!-- Section Pièce d'identité -->
+        <!-- ✅ Section Pièce d'identité (PRÉ-REMPLIE, LECTURE SEULE) -->
         <div class="form-section">
           <h3 class="section-title">
             <mat-icon>badge</mat-icon>
@@ -109,46 +107,32 @@
           </h3>
           
           <div class="two-cols">
-            <!-- Type de pièce -->
+            <!-- Type de pièce (LECTURE SEULE) -->
             <mat-form-field appearance="outline">
-              <mat-label>Type de pièce d'identité *</mat-label>
-              <mat-select [(ngModel)]="candidature.typePiece" 
-                         (selectionChange)="onTypePieceChange()"
-                         name="typePiece" required>
-                <mat-option value="CNIB">CNIB</mat-option>
-                <mat-option value="PASSEPORT">Passeport</mat-option>
-              </mat-select>
+              <mat-label>Type de pièce d'identité</mat-label>
+              <input matInput 
+                     [value]="getTypePieceLabel()"
+                     readonly
+                     class="readonly-field">
               <mat-icon matSuffix>badge</mat-icon>
-              <mat-error>Le type de pièce est requis</mat-error>
             </mat-form-field>
 
-            <!-- Numéro de pièce -->
+            <!-- Numéro de pièce (LECTURE SEULE) -->
             <mat-form-field appearance="outline">
-              <mat-label>{{ getLabelNumeroPiece() }}</mat-label>
-              <input matInput type="text" 
+              <mat-label>Numéro de pièce</mat-label>
+              <input matInput 
                      [(ngModel)]="candidature.numeroPiece" 
-                     name="numeroPiece"
-                     [placeholder]="getPlaceholderNumeroPiece()"
-                     [attr.maxlength]="candidature.typePiece === 'CNIB' ? '17' : '9'"
-                     required
-                     class="numero-piece-input"
-                     [class.type-cnib]="candidature.typePiece === 'CNIB'"
-                     [class.type-passeport]="candidature.typePiece === 'PASSEPORT'">
+                     name="numeroPieceDisplay"
+                     readonly
+                     class="readonly-field numero-piece-readonly">
               <mat-icon matSuffix>numbers</mat-icon>
-              <mat-error>{{ getNumeroPieceErrorMessage() }}</mat-error>
             </mat-form-field>
           </div>
-
-          <!-- Conseils pour la pièce d'identité -->
-          <div class="form-hints">
-            <div class="form-hint" *ngIf="candidature.typePiece === 'CNIB'">
-              <mat-icon>info</mat-icon>
-              <span>Le NIP CNIB doit contenir exactement 12 chiffres</span>
-            </div>
-            <div class="form-hint" *ngIf="candidature.typePiece === 'PASSEPORT'">
-              <mat-icon>info</mat-icon>
-              <span>Le numéro de passeport doit contenir 6 à 9 caractères (lettres majuscules et chiffres)</span>
-            </div>
+          
+          <!-- Note d'information -->
+          <div class="user-info-note">
+            <mat-icon>info</mat-icon>
+            <span>Ces informations proviennent de votre inscription et ne peuvent être modifiées</span>
           </div>
         </div>
 
@@ -281,9 +265,9 @@
           </button>
 
           <button mat-raised-button color="primary" type="submit" 
-                  [disabled]="!isFormValid() || loading || !profilComplet" 
+                  [disabled]="loading || !profilComplet || !candidature.lettre_motivation" 
                   class="submit-button"
-                  matTooltip="{{ !profilComplet ? 'Complétez votre profil pour postuler' : '' }}">
+                  matTooltip="{{ !profilComplet ? 'Complétez votre profil pour postuler' : (!candidature.lettre_motivation ? 'Veuillez remplir la lettre de motivation' : '') }}">
             <mat-icon *ngIf="!loading">send</mat-icon>
             <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
             {{ loading ? 'Envoi en cours...' : (!profilComplet ? 'Profil incomplet' : 'Soumettre ma candidature') }}

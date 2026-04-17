@@ -1,0 +1,400 @@
+<!-- src/app/features/admin/rap-pnvb-struct/rapport-detail-admin/rapport-detail-admin.component.html -->
+<div class="rda-container">
+
+  <!-- ─── Header ──────────────────────────────────────────────────────────── -->
+  <div class="rda-header">
+    <div class="rda-header-left">
+      <button class="rda-btn-back" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i> Retour
+      </button>
+      <div class="rda-header-title-wrap">
+        <div class="rda-header-icon"><i class="bi bi-clipboard-check"></i></div>
+        <div>
+          <h1 class="rda-title">Détail du Rapport</h1>
+          <p class="rda-subtitle" *ngIf="rapport">
+            Soumis le {{ rapport.dateSoumission | date:'dd/MM/yyyy' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions PNVB -->
+    <div class="rda-header-actions" *ngIf="rapport && !isLoading">
+      <button class="rda-btn-action rda-btn-read"
+              *ngIf="rapport.statut === 'Soumis'"
+              [disabled]="isProcessing"
+              (click)="marquerLu()">
+        <i class="bi bi-eye-fill"></i>
+        <span>Marquer comme lu</span>
+      </button>
+
+      <button class="rda-btn-action rda-btn-validate"
+              *ngIf="canValider()"
+              [disabled]="isProcessing"
+              (click)="ouvrirModalValider()">
+        <i class="bi bi-check-circle"></i>
+        <span>Valider</span>
+      </button>
+
+      <button class="rda-btn-action rda-btn-reject"
+              *ngIf="canRejeter()"
+              [disabled]="isProcessing"
+              (click)="ouvrirModalRejeter()">
+        <i class="bi bi-x-circle"></i>
+        <span>Rejeter</span>
+      </button>
+
+      <div class="rda-processing" *ngIf="isProcessing">
+        <div class="rda-spinner-sm"></div>
+        <span>En cours...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Loading ───────────────────────────────────────────────────────────── -->
+  <div *ngIf="isLoading" class="rda-loading">
+    <div class="rda-spinner"></div>
+    <p>Chargement du rapport...</p>
+  </div>
+
+  <!-- ─── Erreur ────────────────────────────────────────────────────────────── -->
+  <div *ngIf="error && !isLoading" class="rda-error">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>Erreur</strong>
+    <p>{{ error }}</p>
+    <button class="rda-btn-retry" (click)="loadRapport()">
+      <i class="bi bi-arrow-clockwise"></i> Réessayer
+    </button>
+  </div>
+
+  <!-- ─── Contenu ───────────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="!isLoading && !error && rapport as r">
+
+    <!-- Status bar -->
+    <div class="rda-status-bar">
+      <span class="rda-statut-badge" [class]="getStatutClass(r.statut)">
+        <i class="bi bi-{{ getStatutIcon(r.statut) }}"></i>
+        {{ r.statut }}
+      </span>
+      <span class="rda-info-chip" *ngIf="r.validePar">
+        <i class="bi bi-person-badge"></i> Traité par {{ r.validePar }}
+      </span>
+      <span class="rda-info-chip" *ngIf="r.dateValidation">
+        <i class="bi bi-calendar-check"></i>
+        Le {{ r.dateValidation | date:'dd/MM/yyyy' }}
+      </span>
+    </div>
+
+    <div class="rda-grid">
+
+      <!-- ═══ COLONNE PRINCIPALE ══════════════════════════════════════════════ -->
+      <div class="rda-main">
+
+        <!-- Parties concernées -->
+        <div class="rda-card">
+          <div class="rda-card-header">
+            <i class="bi bi-people"></i> Parties concernées
+          </div>
+          <div class="rda-card-body">
+            <div class="rda-parties-grid">
+
+              <!-- Partenaire -->
+              <div class="rda-partie-block">
+                <div class="rda-partie-label">
+                  <i class="bi bi-building"></i> Structure d'accueil
+                </div>
+                <ng-container *ngIf="partenaire as p; else noPartenaire">
+                  <div class="rda-partie-content">
+                    <div class="rda-avatar rda-avatar-partner">
+                      {{ p.nomStructure.charAt(0) }}
+                    </div>
+                    <strong class="rda-partie-name">{{ p.nomStructure }}</strong>
+                  </div>
+                </ng-container>
+                <ng-template #noPartenaire>
+                  <div class="rda-empty-info">
+                    <i class="bi bi-building-x"></i> Non disponible
+                    <small>(ID: {{ r.partenaireId }})</small>
+                  </div>
+                </ng-template>
+              </div>
+
+              <!-- Mission -->
+              <div class="rda-partie-block">
+                <div class="rda-partie-label">
+                  <i class="bi bi-briefcase"></i> Mission évaluée
+                </div>
+                <div class="rda-partie-content" *ngIf="missionNom; else noMission">
+                  <div class="rda-avatar rda-avatar-mission">
+                    <i class="bi bi-briefcase"></i>
+                  </div>
+                  <strong class="rda-partie-name">{{ missionNom }}</strong>
+                </div>
+                <ng-template #noMission>
+                  <div class="rda-empty-info">
+                    <i class="bi bi-briefcase-x"></i> Mission non spécifiée
+                  </div>
+                </ng-template>
+              </div>
+
+            </div>
+
+            <!-- Infos complémentaires -->
+            <div class="rda-info-row">
+              <div class="rda-info-chip-data">
+                <span class="rda-chip-key">Période</span>
+                <span class="rda-badge-periode">{{ r.periode }}</span>
+              </div>
+              <div class="rda-info-chip-data">
+                <span class="rda-chip-key">Date soumission</span>
+                <span class="rda-chip-val">{{ r.dateSoumission | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Évaluation globale -->
+        <div class="rda-card">
+          <div class="rda-card-header">
+            <i class="bi bi-star-half"></i> Évaluation globale
+          </div>
+          <div class="rda-card-body rda-eval-center">
+            <div class="rda-eval-score" [class]="getEvaluationColor(r.evaluationGlobale)">
+              {{ r.evaluationGlobale }}/10
+            </div>
+            <div class="rda-eval-label">{{ evaluationLabel }}</div>
+            <div class="rda-stars">
+              <i class="bi" *ngFor="let star of getStarIcons(r.evaluationGlobale / 2)"
+                 [class]="star"></i>
+            </div>
+            <span class="rda-eval-badge" [class]="getEvaluationBadgeClass(r.evaluationGlobale)">
+              {{ r.evaluationGlobale >= 8 ? 'Excellent' :
+                 r.evaluationGlobale >= 6 ? 'Satisfaisant' : 'À améliorer' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Critères détaillés -->
+        <div class="rda-card" *ngIf="r.criteres">
+          <div class="rda-card-header">
+            <i class="bi bi-list-check"></i> Critères d'évaluation
+          </div>
+          <div class="rda-card-body">
+            <div class="rda-criteres-grid">
+              <div *ngFor="let c of getCriteresList()" class="rda-critere-item">
+                <div class="rda-critere-top">
+                  <div>
+                    <div class="rda-critere-label">{{ c.label }}</div>
+                    <div class="rda-critere-desc">{{ c.description }}</div>
+                  </div>
+                  <div class="rda-critere-score">
+                    <span class="rda-score-num">{{ c.score }}</span>
+                    <span class="rda-score-max">/5</span>
+                  </div>
+                </div>
+                <div class="rda-critere-stars">
+                  <i class="bi" *ngFor="let star of c.stars" [class]="star"></i>
+                </div>
+                <div class="rda-critere-bar-wrap">
+                  <div class="rda-critere-bar"
+                       [class]="getProgressClass(c.score)"
+                       [style.width.%]="c.score * 20">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Commentaires -->
+        <div class="rda-card">
+          <div class="rda-card-header">
+            <i class="bi bi-chat-text"></i> Commentaires de la structure d'accueil
+          </div>
+          <div class="rda-card-body">
+            <div class="rda-commentaires" *ngIf="r.commentaires; else noComment">
+              {{ r.commentaires }}
+            </div>
+            <ng-template #noComment>
+              <div class="rda-empty-info">Aucun commentaire fourni</div>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Feedback PNVB existant -->
+        <div class="rda-card rda-card-feedback" *ngIf="r.feedbackPNVB">
+          <div class="rda-card-header rda-header-feedback">
+            <i class="bi bi-chat-quote"></i> Feedback PNVB enregistré
+          </div>
+          <div class="rda-card-body">
+            <div class="rda-feedback-meta">
+              <div class="rda-avatar rda-avatar-admin">
+                <i class="bi bi-person-badge"></i>
+              </div>
+              <div>
+                <strong>{{ r.validePar || 'Administrateur PNVB' }}</strong>
+                <div class="rda-partie-sub" *ngIf="r.dateValidation">
+                  Le {{ r.dateValidation | date:'dd/MM/yyyy à HH:mm' }}
+                </div>
+              </div>
+            </div>
+            <div class="rda-feedback-text">{{ r.feedbackPNVB }}</div>
+          </div>
+        </div>
+
+      </div><!-- /rda-main -->
+
+      <!-- ═══ SIDEBAR ═══════════════════════════════════════════════════════ -->
+      <div class="rda-sidebar">
+
+        <!-- Résumé critères -->
+        <div class="rda-card" *ngIf="r.criteres">
+          <div class="rda-card-header">
+            <i class="bi bi-bar-chart"></i> Résumé des critères
+          </div>
+          <div class="rda-card-body">
+            <div *ngFor="let c of getCriteresList()" class="rda-progress-item">
+              <div class="rda-progress-header">
+                <span class="rda-progress-label">{{ c.label }}</span>
+                <span class="rda-progress-score">{{ c.score }}/5</span>
+              </div>
+              <div class="rda-progress-bar-wrap">
+                <div class="rda-progress-bar"
+                     [class]="getProgressClass(c.score)"
+                     [style.width.%]="c.score * 20">
+                </div>
+              </div>
+            </div>
+            <div class="rda-moyenne-ligne">
+              <span>Moyenne globale</span>
+              <strong>{{ moyenneCriteres.toFixed(1) }}/5</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⭐ SECTION DOCUMENT CORRIGÉE ⭐ -->
+        <div class="rda-card" *ngIf="r.urlDocumentAnnexe">
+          <div class="rda-card-header">
+            <i class="bi bi-paperclip"></i> Document annexe
+          </div>
+          <div class="rda-card-body">
+            
+            <!-- Nom du fichier - CORRIGÉ: utilisation des méthodes -->
+            <div class="d-flex align-items-center mb-3 p-3 bg-light rounded">
+              <i class="bi bi-file-earmark-text fs-2 text-primary me-3"></i>
+              <div class="overflow-hidden">
+                <div class="fw-bold text-truncate">
+                  {{ getDocumentNom() }}
+                </div>
+                <small class="text-muted text-truncate d-block">
+                  {{ getDocumentUrl() }}
+                </small>
+              </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="d-grid gap-2">
+              <!-- Option 1: Voir dans un nouvel onglet -->
+              <a [href]="getDocumentUrl()" 
+                 target="_blank"
+                 class="btn btn-outline-primary">
+                <i class="bi bi-eye me-2"></i>
+                Voir le document
+              </a>
+              
+              <!-- Option 2: Télécharger -->
+              <button (click)="downloadDocument()"
+                      class="btn btn-primary"
+                      [disabled]="isDownloading">
+                <span *ngIf="isDownloading" class="spinner-border spinner-border-sm me-2"></span>
+                <i *ngIf="!isDownloading" class="bi bi-download me-2"></i>
+                {{ isDownloading ? 'Téléchargement...' : 'Télécharger' }}
+              </button>
+            </div>
+
+            <!-- Indicateur de correction -->
+            <div *ngIf="r.urlDocumentAnnexe && r.urlDocumentAnnexe.includes('/upload/')" 
+                 class="alert alert-warning mt-3 small">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <strong>Note:</strong> Ancienne URL (upload sans 's') automatiquement redirigée
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /rda-sidebar -->
+    </div><!-- /rda-grid -->
+
+  </ng-container>
+
+</div><!-- /rda-container -->
+
+<!-- ─── Modal Feedback ─────────────────────────────────────────────────────── -->
+<div class="rda-modal-overlay" *ngIf="showFeedbackModal" (click)="fermerModal()">
+  <div class="rda-modal" (click)="$event.stopPropagation()">
+
+    <div class="rda-modal-header"
+         [class.rda-modal-header-validate]="feedbackAction === 'valider'"
+         [class.rda-modal-header-reject]="feedbackAction === 'rejeter'">
+      <div class="rda-modal-title">
+        <i class="bi"
+           [class.bi-check-circle]="feedbackAction === 'valider'"
+           [class.bi-x-circle]="feedbackAction === 'rejeter'"></i>
+        {{ feedbackAction === 'valider' ? 'Valider le rapport' : 'Rejeter le rapport' }}
+      </div>
+      <button class="rda-modal-close" (click)="fermerModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="rda-modal-body">
+      <p class="rda-modal-desc">
+        <ng-container *ngIf="feedbackAction === 'valider'">
+          Vous êtes sur le point de <strong>valider</strong> ce rapport.
+          Un feedback optionnel peut être ajouté pour la structure d'accueil.
+        </ng-container>
+        <ng-container *ngIf="feedbackAction === 'rejeter'">
+          Vous êtes sur le point de <strong>rejeter</strong> ce rapport.
+          Veuillez préciser la raison du rejet.
+          <span class="rda-required-note">* Obligatoire</span>
+        </ng-container>
+      </p>
+
+      <label class="rda-modal-label">
+        {{ feedbackAction === 'valider' ? 'Feedback (optionnel)' : 'Raison du rejet *' }}
+      </label>
+      <textarea class="rda-modal-textarea"
+                [(ngModel)]="feedbackText"
+                [placeholder]="feedbackAction === 'valider'
+                  ? 'Ex : Rapport complet et bien documenté...'
+                  : 'Ex : Commentaires insuffisants, évaluation non justifiée...'"
+                rows="5">
+      </textarea>
+
+      <div class="rda-modal-warn"
+           *ngIf="feedbackAction === 'rejeter' && !feedbackText.trim()">
+        <i class="bi bi-exclamation-triangle"></i>
+        La raison du rejet est obligatoire.
+      </div>
+    </div>
+
+    <div class="rda-modal-footer">
+      <button class="rda-modal-btn-cancel" (click)="fermerModal()">
+        <i class="bi bi-x-circle"></i> Annuler
+      </button>
+      <button class="rda-modal-btn-confirm"
+              [class.rda-confirm-validate]="feedbackAction === 'valider'"
+              [class.rda-confirm-reject]="feedbackAction === 'rejeter'"
+              [disabled]="isProcessing || (feedbackAction === 'rejeter' && !feedbackText.trim())"
+              (click)="confirmerAction()">
+        <div class="rda-spinner-sm" *ngIf="isProcessing"></div>
+        <i class="bi" *ngIf="!isProcessing"
+           [class.bi-check-circle]="feedbackAction === 'valider'"
+           [class.bi-x-circle]="feedbackAction === 'rejeter'"></i>
+        {{ isProcessing ? 'En cours...' :
+           feedbackAction === 'valider' ? 'Confirmer la validation' : 'Confirmer le rejet' }}
+      </button>
+    </div>
+
+  </div>
+</div>

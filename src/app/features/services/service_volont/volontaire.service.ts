@@ -1,345 +1,284 @@
+// src/app/features/services/service_volontaires/volontaire.service.ts
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, catchError, of, throwError, switchMap } from 'rxjs';
-import { 
-  Volontaire, 
-  InscriptionVolontaire, 
-  ProfilVolontaire, 
-  VolontaireStats 
+import {
+  Volontaire,
+  InscriptionVolontaire,
+  ProfilVolontaire,
+  VolontaireStatut
 } from '../../models/volontaire.model';
 
-// ============================================================
-// ✅ SOURCE DE VÉRITÉ UNIQUE — liste des 11 champs du profil.
-// Exportée pour être réutilisée dans le dashboard et le profil
-// component. Toute modification ici se répercute partout.
-// ============================================================
-export const CHAMPS_PROFIL: (keyof Volontaire)[] = [
+// ✅ Constantes et fonctions utilitaires EXPORTÉES pour réutilisation
+export const CHAMPS_PROFIL: (keyof ProfilVolontaire)[] = [
   'adresseResidence',
   'regionGeographique',
   'niveauEtudes',
   'domaineEtudes',
-  'competences',          // cas spécial : vérifié avec length > 0
+  'competences',
   'motivation',
   'disponibilite',
   'urlCV',
-  'typePiece',
-  'numeroPiece',
-  'urlPieceIdentite'      // ✅ était manquant dans le service et le dashboard
+  'urlPieceIdentite'
 ];
 
-/**
- * Fonction utilitaire exportée : calcule le pourcentage (0-100)
- * de complétion du profil selon CHAMPS_PROFIL.
- * Utilisable dans un service ET dans un component sans doublon.
- */
 export function calculerCompletionProfil(volontaire: Volontaire | null): number {
   if (!volontaire) return 0;
-
+  
   const remplis = CHAMPS_PROFIL.filter(champ => {
-    const valeur = volontaire[champ];
-    if (champ === 'competences') {
-      return Array.isArray(valeur) && valeur.length > 0;
-    }
-    return valeur != null && valeur.toString().trim() !== '';
+    const val = volontaire[champ as keyof Volontaire];
+    if (champ === 'competences') return Array.isArray(val) && (val as string[]).length > 0;
+    return val != null && val.toString().trim() !== '';
   }).length;
-
+  
   return Math.round((remplis / CHAMPS_PROFIL.length) * 100);
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+export function estProfilComplet(volontaire: Volontaire): boolean {
+  return calculerCompletionProfil(volontaire) >= 100;
+}
+
+@Injectable({ providedIn: 'root' })
 export class VolontaireService {
   private apiUrl = 'http://localhost:3000/volontaires';
 
   constructor(private http: HttpClient) {}
 
-  // ==================== CRUD ====================
+  // ==================== CRUD DE BASE ====================
 
   getVolontaires(): Observable<Volontaire[]> {
     return this.http.get<Volontaire[]>(this.apiUrl).pipe(
-      catchError(err => {
-        console.error('❌ getVolontaires:', err);
-        return of([]);
-      })
+      catchError(err => { console.error('❌ getVolontaires:', err); return of([]); })
     );
   }
 
   getVolontaire(id: number | string): Observable<Volontaire> {
     return this.http.get<Volontaire>(`${this.apiUrl}/${id}`).pipe(
-      catchError(err => {
-        console.error(`❌ getVolontaire(${id}):`, err);
-        return throwError(() => new Error('Volontaire non trouvé'));
-      })
+      catchError(() => throwError(() => new Error(`Volontaire #${id} non trouvé`)))
     );
   }
 
-  createVolontaire(volontaire: Volontaire): Observable<Volontaire> {
-    return this.http.post<Volontaire>(this.apiUrl, {
+  createVolontaire(volontaire: Omit<Volontaire, 'id'>): Observable<Volontaire> {
+    const nouveauVolontaire = {
       ...volontaire,
-      dateInscription: new Date().toISOString(),
-      created_at:      new Date().toISOString(),
-      updated_at:      new Date().toISOString(),
-      statut: volontaire.statut || 'Candidat'
-    }).pipe(
-      catchError(err => {
-        console.error('❌ createVolontaire:', err);
-        return throwError(() => new Error('Erreur création volontaire'));
-      })
+      statut: 'Candidat' as VolontaireStatut,
+      actif: true,
+      dateInscription: volontaire.dateInscription || new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    return this.http.post<Volontaire>(this.apiUrl, nouveauVolontaire).pipe(
+      catchError(() => throwError(() => new Error('Erreur création volontaire')))
     );
   }
 
-  updateVolontaire(id: number | string, volontaire: Volontaire): Observable<Volontaire> {
-    return this.http.put<Volontaire>(`${this.apiUrl}/${id}`, {
+  updateVolontaire(id: number | string, volontaire: Partial<Volontaire>): Observable<Volontaire> {
+    return this.http.patch<Volontaire>(`${this.apiUrl}/${id}`, {
       ...volontaire,
       updated_at: new Date().toISOString()
     }).pipe(
-      catchError(err => {
-        console.error(`❌ updateVolontaire(${id}):`, err);
-        return throwError(() => new Error('Erreur mise à jour volontaire'));
-      })
+      catchError(() => throwError(() => new Error('Erreur mise à jour volontaire')))
     );
   }
 
   deleteVolontaire(id: number | string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(err => {
-        console.error(`❌ deleteVolontaire(${id}):`, err);
-        return throwError(() => new Error('Erreur suppression volontaire'));
-      })
+      catchError(() => throwError(() => new Error('Erreur suppression volontaire')))
     );
   }
 
-  // ==================== INSCRIPTION / PROFIL ====================
+  // ==================== INSCRIPTION ====================
 
   inscrireVolontaire(inscription: InscriptionVolontaire): Observable<Volontaire> {
-    const volontaire: Volontaire = {
-      nom:             inscription.nom,
-      prenom:          inscription.prenom,
-      email:           inscription.email,
-      telephone:       inscription.telephone,
-      dateNaissance:   inscription.dateNaissance,
-      sexe:            inscription.sexe,
-      nationalite:     inscription.nationalite,
-      statut:          'Candidat',
+    const volontaire: Omit<Volontaire, 'id'> = {
+      nom: inscription.nom,
+      prenom: inscription.prenom,
+      email: inscription.email,
+      telephone: inscription.telephone,
+      dateNaissance: inscription.dateNaissance,
+      sexe: inscription.sexe,
+      nationalite: inscription.nationalite,
+      typePiece: inscription.typePiece,
+      numeroPiece: inscription.numeroPiece,
+      statut: 'Candidat',
+      actif: true,
       dateInscription: new Date().toISOString(),
-      created_at:      new Date().toISOString(),
-      updated_at:      new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     return this.createVolontaire(volontaire);
   }
 
-  completerProfil(id: number | string, profil: ProfilVolontaire): Observable<Volontaire> {
-    return this.http.patch<Volontaire>(`${this.apiUrl}/${id}`, {
-      ...profil,
-      updated_at: new Date().toISOString(),
-      statut: 'En attente'
-    }).pipe(
-      catchError(err => {
-        console.error(`❌ completerProfil(${id}):`, err);
-        return throwError(() => new Error('Erreur complétion profil'));
-      })
+  // ==================== MISE À JOUR DU PROFIL ====================
+
+  mettreAJourProfil(id: number | string, donneesMAJ: Partial<ProfilVolontaire>): Observable<Volontaire> {
+    return this.getVolontaire(id).pipe(
+      switchMap(volontaire => {
+        const volontaireMisAJour: Volontaire = {
+          ...volontaire,
+          ...donneesMAJ,
+          updated_at: new Date().toISOString()
+        };
+
+        const completion = calculerCompletionProfil(volontaireMisAJour);
+        const complet = completion >= 100;
+        
+        let nouveauStatut: VolontaireStatut = volontaire.statut;
+
+        if (complet && volontaire.statut === 'Candidat') {
+          nouveauStatut = 'En attente';
+        } else if (!complet && volontaire.statut === 'En attente') {
+          nouveauStatut = 'Candidat';
+        }
+
+        const donneesFinales: any = {
+          ...donneesMAJ,
+          statut: nouveauStatut,
+          updated_at: new Date().toISOString()
+        };
+
+        return this.http.patch<Volontaire>(`${this.apiUrl}/${id}`, donneesFinales);
+      }),
+      catchError(() => throwError(() => new Error('Erreur mise à jour profil')))
     );
   }
 
-  changerStatut(id: number | string, statut: Volontaire['statut']): Observable<Volontaire> {
-    return this.http.patch<Volontaire>(`${this.apiUrl}/${id}`, {
-      statut,
-      updated_at: new Date().toISOString(),
-      ...(statut === 'Actif' && { dateValidation: new Date().toISOString() })
-    }).pipe(
-      catchError(err => {
-        console.error(`❌ changerStatut(${id}):`, err);
-        return throwError(() => new Error('Erreur changement statut'));
-      })
+  // ==================== GESTION DES STATUTS ====================
+
+  desactiverVolontaire(id: number | string): Observable<Volontaire> {
+    return this.getVolontaire(id).pipe(
+      switchMap(volontaire => {
+        if (volontaire.statut === 'Inactif') {
+          return of(volontaire);
+        }
+        
+        return this.http.patch<Volontaire>(`${this.apiUrl}/${id}`, {
+          statut: 'Inactif',
+          actif: false,
+          statutAvantInactif: volontaire.statut,
+          updated_at: new Date().toISOString()
+        });
+      }),
+      catchError(() => throwError(() => new Error('Erreur désactivation volontaire')))
     );
   }
 
-  validerVolontaire(id: number | string): Observable<Volontaire> {
-    return this.changerStatut(id, 'Actif');
+  reactiverVolontaire(id: number | string): Observable<Volontaire> {
+    return this.getVolontaire(id).pipe(
+      switchMap(volontaire => {
+        if (volontaire.actif === true && volontaire.statut !== 'Inactif') {
+          return of(volontaire);
+        }
+        
+        const statutARestaurer = volontaire.statutAvantInactif || 'En attente';
+        
+        return this.http.patch<Volontaire>(`${this.apiUrl}/${id}`, {
+          statut: statutARestaurer,
+          actif: true,
+          statutAvantInactif: undefined,
+          updated_at: new Date().toISOString()
+        });
+      }),
+      catchError(() => throwError(() => new Error('Erreur réactivation volontaire')))
+    );
+  }
+
+  activerVolontaire(id: number | string): Observable<Volontaire> {
+    return this.getVolontaire(id).pipe(
+      switchMap(volontaire => {
+        if (volontaire.statut === 'Actif') {
+          return of(volontaire);
+        }
+        if (volontaire.statut !== 'En attente') {
+          return throwError(() => new Error(`Le volontaire doit être en 'En attente' pour être activé`));
+        }
+        if (!estProfilComplet(volontaire)) {
+          return throwError(() => new Error('Le profil doit être complet à 100% pour être activé'));
+        }
+        
+        return this.http.patch<Volontaire>(`${this.apiUrl}/${id}`, {
+          statut: 'Actif',
+          actif: true,
+          dateValidation: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      }),
+      catchError(() => throwError(() => new Error('Erreur activation volontaire')))
+    );
   }
 
   refuserVolontaire(id: number | string, raison?: string): Observable<Volontaire> {
     return this.http.patch<Volontaire>(`${this.apiUrl}/${id}`, {
       statut: 'Refusé',
-      notesInterne: raison ? `Refusé: ${raison}` : 'Volontaire refusé',
+      actif: false,
+      notesInterne: raison ? `Refusé : ${raison}` : 'Volontaire refusé',
       updated_at: new Date().toISOString()
     }).pipe(
-      catchError(err => {
-        console.error(`❌ refuserVolontaire(${id}):`, err);
-        return throwError(() => new Error('Erreur refus volontaire'));
-      })
+      catchError(() => throwError(() => new Error('Erreur refus volontaire')))
     );
   }
 
-  // ==================== RECHERCHE / FILTRES ====================
-
-  rechercherVolontaires(term: string): Observable<Volontaire[]> {
-    if (!term.trim()) return this.getVolontaires();
-
-    return this.getVolontaires().pipe(
-      map(list => {
-        const t = term.toLowerCase();
-        return list.filter(v =>
-          v.nom.toLowerCase().includes(t)        ||
-          v.prenom.toLowerCase().includes(t)     ||
-          v.email.toLowerCase().includes(t)      ||
-          (v.numeroPiece?.toLowerCase().includes(t) ?? false) ||
-          v.telephone.includes(t)
-        );
-      })
-    );
-  }
-
-  getVolontairesParStatut(statut: Volontaire['statut']): Observable<Volontaire[]> {
-    return this.getVolontaires().pipe(
-      map(list => list.filter(v => v.statut === statut))
-    );
-  }
-
-  getVolontairesParRegion(region: string): Observable<Volontaire[]> {
-    return this.getVolontaires().pipe(
-      map(list => list.filter(v => v.regionGeographique?.toLowerCase() === region.toLowerCase()))
-    );
-  }
-
-  getVolontairesParCompetence(competence: string): Observable<Volontaire[]> {
-    return this.getVolontaires().pipe(
-      map(list => list.filter(v =>
-        v.competences?.some(c => c.toLowerCase().includes(competence.toLowerCase()))
-      ))
-    );
-  }
-
-  getVolontairesParTypePiece(typePiece: 'CNIB' | 'PASSEPORT'): Observable<Volontaire[]> {
-    return this.getVolontaires().pipe(
-      map(list => list.filter(v => v.typePiece === typePiece))
-    );
-  }
-
-  getVolontairesActifs(): Observable<Volontaire[]> {
-    return this.getVolontairesParStatut('Actif');
-  }
-
-  getVolontairesEnAttente(): Observable<Volontaire[]> {
-    return this.getVolontairesParStatut('En attente');
-  }
-
-  // ✅ utilise calculerCompletionProfil exportée
-  getVolontairesAvecProfilComplet(): Observable<Volontaire[]> {
-    return this.getVolontaires().pipe(
-      map(list => list.filter(v => calculerCompletionProfil(v) >= 100))
-    );
-  }
-
-  // ==================== STATISTIQUES ====================
-
-  getStats(): Observable<VolontaireStats> {
-    return this.getVolontaires().pipe(map(list => this.calculerStats(list)));
-  }
-
-  private calculerStats(volontaires: Volontaire[]): VolontaireStats {
-    const stats: VolontaireStats = {
-      total:     volontaires.length,
-      candidats: volontaires.filter(v => v.statut === 'Candidat').length,
-      enAttente: volontaires.filter(v => v.statut === 'En attente').length,
-      actifs:    volontaires.filter(v => v.statut === 'Actif').length,
-      inactifs:  volontaires.filter(v => v.statut === 'Inactif').length,
-      refuses:   volontaires.filter(v => v.statut === 'Refusé').length,
-      parRegion: {},
-      parDomaine: {},
-      parSexe: {},
-      parTypePiece: {
-        'CNIB':          volontaires.filter(v => v.typePiece === 'CNIB').length,
-        'PASSEPORT':     volontaires.filter(v => v.typePiece === 'PASSEPORT').length,
-        'Non renseigné': volontaires.filter(v => !v.typePiece).length
-      }
-    };
-
-    volontaires.forEach(v => {
-      const region  = v.regionGeographique || 'Non spécifiée';
-      const domaine = v.domaineEtudes      || 'Non spécifié';
-      stats.parRegion[region]   = (stats.parRegion[region]   || 0) + 1;
-      stats.parDomaine[domaine] = (stats.parDomaine[domaine] || 0) + 1;
-      stats.parSexe[v.sexe]     = (stats.parSexe[v.sexe]     || 0) + 1;
-    });
-
-    return stats;
-  }
-
-  // ✅ profilsComplets utilise calculerCompletionProfil
-  getStatsDashboard(): Observable<{
-    total: number;
-    actifs: number;
-    enAttente: number;
-    nouveauxCeMois: number;
-    profilsComplets: number;
-    parTypePiece: { CNIB: number; PASSEPORT: number; Non_renseigne: number };
-  }> {
-    return this.getVolontaires().pipe(
-      map(volontaires => {
-        const debutMois = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-        return {
-          total:     volontaires.length,
-          actifs:    volontaires.filter(v => v.statut === 'Actif').length,
-          enAttente: volontaires.filter(v => v.statut === 'En attente').length,
-          nouveauxCeMois: volontaires.filter(v =>
-            v.dateInscription && new Date(v.dateInscription) >= debutMois
-          ).length,
-          profilsComplets: volontaires.filter(v => calculerCompletionProfil(v) >= 100).length,
-          parTypePiece: {
-            CNIB:          volontaires.filter(v => v.typePiece === 'CNIB').length,
-            PASSEPORT:     volontaires.filter(v => v.typePiece === 'PASSEPORT').length,
-            Non_renseigne: volontaires.filter(v => !v.typePiece).length
-          }
-        };
-      })
-    );
-  }
-
-  // ✅ utilise calculerCompletionProfil
-  getStatsCompletions(): Observable<{
-    total: number;
-    profilsComplets: number;
-    profilsIncomplets: number;
-    tauxCompletion: number;
-  }> {
-    return this.getVolontaires().pipe(
-      map(volontaires => {
-        const complets = volontaires.filter(v => calculerCompletionProfil(v) >= 100).length;
-        return {
-          total:             volontaires.length,
-          profilsComplets:   complets,
-          profilsIncomplets: volontaires.length - complets,
-          tauxCompletion:    volontaires.length > 0
-            ? Math.round((complets / volontaires.length) * 100)
-            : 0
-        };
-      })
-    );
-  }
-
-  // ==================== COMPÉTENCES ====================
-
-  ajouterCompetence(id: number | string, competence: string): Observable<Volontaire> {
+  changerStatut(id: number | string, statut: VolontaireStatut): Observable<Volontaire> {
     return this.getVolontaire(id).pipe(
-      map(v => {
-        const competences = [...(v.competences || [])];
-        if (!competences.includes(competence)) competences.push(competence);
-        return { ...v, competences };
+      switchMap(volontaire => {
+        if (statut === volontaire.statut) {
+          return of(volontaire);
+        }
+
+        const updateData: any = {
+          statut,
+          updated_at: new Date().toISOString()
+        };
+
+        switch(statut) {
+          case 'Actif':
+            if (volontaire.statut !== 'En attente') {
+              return throwError(() => new Error(`Impossible de passer de ${volontaire.statut} à Actif`));
+            }
+            if (!estProfilComplet(volontaire)) {
+              return throwError(() => new Error('Le profil doit être complet à 100%'));
+            }
+            updateData.dateValidation = new Date().toISOString();
+            updateData.actif = true;
+            break;
+            
+          case 'Inactif':
+            updateData.actif = false;
+            updateData.statutAvantInactif = volontaire.statut;
+            break;
+            
+          case 'Refusé':
+            updateData.actif = false;
+            break;
+            
+          default:
+            updateData.actif = true;
+            break;
+        }
+
+        return this.http.patch<Volontaire>(`${this.apiUrl}/${id}`, updateData);
       }),
-      switchMap(v => this.updateVolontaire(id, v))
-    );
-  }
-
-  supprimerCompetence(id: number | string, competence: string): Observable<Volontaire> {
-    return this.getVolontaire(id).pipe(
-      map(v => ({ ...v, competences: (v.competences || []).filter(c => c !== competence) })),
-      switchMap(v => this.updateVolontaire(id, v))
+      catchError(err => throwError(() => err))
     );
   }
 
   // ==================== VÉRIFICATIONS ====================
+
+  estProfilComplet(id: number | string): Observable<boolean> {
+    return this.getVolontaire(id).pipe(
+      map(v => calculerCompletionProfil(v) >= 100),
+      catchError(() => of(false))
+    );
+  }
+
+  getPourcentageCompletion(id: number | string): Observable<number> {
+    return this.getVolontaire(id).pipe(
+      map(v => calculerCompletionProfil(v)),
+      catchError(() => of(0))
+    );
+  }
 
   verifierEmailExiste(email: string): Observable<boolean> {
     return this.getVolontaires().pipe(
@@ -359,52 +298,66 @@ export class VolontaireService {
     );
   }
 
-  // ==================== MISES À JOUR PONCTUELLES ====================
+  // ==================== RECHERCHE ====================
 
-  mettreAJourDerniereConnexion(id: number | string): Observable<Volontaire> {
-    return this.http.patch<Volontaire>(`${this.apiUrl}/${id}`, {
-      dateDerniereConnexion: new Date().toISOString(),
-      updated_at:            new Date().toISOString()
-    }).pipe(
-      catchError(err => {
-        console.error(`❌ mettreAJourDerniereConnexion(${id}):`, err);
-        return throwError(() => new Error('Erreur mise à jour connexion'));
+  rechercherVolontaires(term: string): Observable<Volontaire[]> {
+    if (!term.trim()) return this.getVolontaires();
+    return this.getVolontaires().pipe(
+      map(list => {
+        const t = term.toLowerCase();
+        return list.filter(v =>
+          v.nom.toLowerCase().includes(t) ||
+          v.prenom.toLowerCase().includes(t) ||
+          v.email.toLowerCase().includes(t) ||
+          (v.numeroPiece || '').toLowerCase().includes(t) ||
+          (v.telephone || '').includes(t)
+        );
       })
     );
   }
 
-  ajouterProjetAffecte(id: number | string, projetId: number): Observable<Volontaire> {
-    return this.getVolontaire(id).pipe(
-      map(v => {
-        const projets = [...(v.projetsAffectes || [])];
-        if (!projets.includes(projetId)) projets.push(projetId);
-        return { ...v, projetsAffectes: projets };
-      }),
-      switchMap(v => this.updateVolontaire(id, v))
-    );
+  getVolontairesParStatut(statut: VolontaireStatut): Observable<Volontaire[]> {
+    return this.getVolontaires().pipe(map(list => list.filter(v => v.statut === statut)));
   }
 
-  supprimerProjetAffecte(id: number | string, projetId: number): Observable<Volontaire> {
-    return this.getVolontaire(id).pipe(
-      map(v => ({ ...v, projetsAffectes: (v.projetsAffectes || []).filter(p => p !== projetId) })),
-      switchMap(v => this.updateVolontaire(id, v))
-    );
+  getVolontairesActifs(): Observable<Volontaire[]> { 
+    return this.getVolontaires().pipe(map(list => list.filter(v => v.actif === true))); 
+  }
+  
+  getVolontairesEnAttente(): Observable<Volontaire[]> { 
+    return this.getVolontairesParStatut('En attente'); 
+  }
+  
+  getVolontairesCandidats(): Observable<Volontaire[]> { 
+    return this.getVolontairesParStatut('Candidat'); 
   }
 
-  // ==================== COMPLÉTION DU PROFIL ====================
-  // ✅ Les deux méthodes delèguent à calculerCompletionProfil()
-
-  estProfilComplet(volontaireId: number | string): Observable<boolean> {
-    return this.getVolontaire(volontaireId).pipe(
-      map(v  => calculerCompletionProfil(v) >= 100),
-      catchError(() => of(false))
-    );
+  getVolontairesAvecProfilComplet(): Observable<Volontaire[]> {
+    return this.getVolontaires().pipe(map(list => list.filter(v => estProfilComplet(v))));
   }
 
-  getPourcentageCompletion(volontaireId: number | string): Observable<number> {
-    return this.getVolontaire(volontaireId).pipe(
-      map(v  => calculerCompletionProfil(v)),
-      catchError(() => of(0))
+  getVolontairesAvecProfilIncomplet(): Observable<Volontaire[]> {
+    return this.getVolontaires().pipe(map(list => list.filter(v => !estProfilComplet(v))));
+  }
+
+  // ==================== STATISTIQUES ====================
+
+  getStats(): Observable<any> {
+    return this.getVolontaires().pipe(
+      map(list => ({
+        total: list.length,
+        candidats: list.filter(v => v.statut === 'Candidat').length,
+        enAttente: list.filter(v => v.statut === 'En attente').length,
+        actifs: list.filter(v => v.statut === 'Actif').length,
+        inactifs: list.filter(v => v.statut === 'Inactif').length,
+        refuses: list.filter(v => v.statut === 'Refusé').length,
+        profilsComplets: list.filter(v => estProfilComplet(v)).length,
+        profilsIncomplets: list.filter(v => !estProfilComplet(v)).length,
+        actifsVsInactifs: {
+          actifs: list.filter(v => v.actif === true).length,
+          inactifs: list.filter(v => v.actif === false).length
+        }
+      }))
     );
   }
 }

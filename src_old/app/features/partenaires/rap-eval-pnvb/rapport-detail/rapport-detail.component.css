@@ -1,0 +1,52 @@
+.white-space-pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.star-rating {
+  color: #ffc107;
+  font-size: 1.25rem;
+}
+
+.star-rating.small {
+  font-size: 0.875rem;
+}
+
+.star-rating .bi-star {
+  color: #dee2e6;
+}
+
+.progress-bar.excellent {
+  background-color: #28a745;
+}
+
+.progress-bar.good {
+  background-color: #20c997;
+}
+
+.progress-bar.average {
+  background-color: #ffc107;
+}
+
+.progress-bar.poor {
+  background-color: #fd7e14;
+}
+
+.progress-bar.weak {
+  background-color: #dc3545;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .display-1 {
+    font-size: 3.5rem;
+  }
+  
+  .btn-group {
+    flex-wrap: wrap;
+  }
+  
+  .btn-group .btn {
+    margin-bottom: 0.5rem;
+  }
+}

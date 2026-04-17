@@ -1,0 +1,437 @@
+/* ===== FOOTER MODERNE - DESIGN VERT PNVB ===== */
+.app-footer {
+  background: linear-gradient(135deg, #00332a 0%, #004d40 50%, #00695c 100%);
+  color: #e0f2f1;
+  padding: 30px 0 0;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  border-top: 3px solid #1b5e20;
+}
+
+/* Effet de vague décorative */
+.app-footer::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.1) 20%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    rgba(255, 255, 255, 0.1) 80%, 
+    transparent 100%);
+}
+
+.footer-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px 30px;
+  position: relative;
+}
+
+/* Section générale */
+.footer-section {
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  h4 {
+    color: #a7ffeb;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    padding-bottom: 8px;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 40px;
+      height: 2px;
+      background: linear-gradient(90deg, #a7ffeb, #64ffda);
+      border-radius: 2px;
+    }
+  }
+
+  p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 10px;
+    opacity: 0.9;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    margin-bottom: 8px;
+    position: relative;
+    padding-left: 20px;
+    
+    &::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: #64ffda;
+      font-size: 0.8rem;
+    }
+  }
+
+  a {
+    color: #e0f2f1;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    
+    &:hover {
+      color: #ffffff;
+      transform: translateX(5px);
+      
+      &::after {
+        content: '→';
+        font-size: 0.9rem;
+        opacity: 1;
+      }
+    }
+  }
+}
+
+/* Logo PNVB dans le footer */
+.footer-logo {
+  height: 60px;
+  margin-bottom: 15px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.footer-mission {
+  font-style: italic;
+  color: #b2dfdb;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border-left: 3px solid #64ffda;
+}
+
+/* Section Partenaires */
+.ptf-section {
+  grid-column: span 2;
+  
+  .ptf-logos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+  }
+  
+  .ptf-logo-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 70px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+  }
+  
+  .ptf-logo {
+    max-width: 100%;
+    max-height: 40px;
+    width: auto;
+    height: auto;
+    filter: grayscale(20%) brightness(1.2);
+    opacity: 0.9;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      filter: grayscale(0%) brightness(1.5);
+      opacity: 1;
+    }
+  }
+  
+  .ptf-description {
+    font-size: 0.8rem;
+    color: #b2dfdb;
+    text-align: center;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    margin-top: 15px;
+    line-height: 1.5;
+  }
+}
+
+/* Section Contact améliorée */
+.footer-section:last-child {
+  a[href^="mailto"]::before {
+    content: '✉️';
+    margin-right: 8px;
+    font-size: 0.9rem;
+  }
+  
+  a[href^="tel"]::before {
+    content: '📱';
+    margin-right: 8px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Footer bottom */
+.footer-bottom {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  text-align: center;
+  position: relative;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #64ffda, transparent);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #b2dfdb;
+    opacity: 0.9;
+    
+    span {
+      color: #a7ffeb;
+      font-weight: 600;
+    }
+  }
+}
+
+/* Réseaux sociaux optionnels (à ajouter si besoin) */
+.social-links {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  
+  a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    i {
+      color: #e0f2f1;
+      font-size: 1rem;
+    }
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .ptf-section {
+    grid-column: span 1;
+  }
+  
+  .ptf-logos {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .app-footer {
+    padding: 20px 0 0;
+  }
+  
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 0 15px 20px;
+  }
+  
+  .footer-section {
+    padding: 15px;
+    
+    &:hover {
+      transform: translateY(-3px);
+    }
+  }
+  
+  .ptf-logos {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  
+  .ptf-logo-item {
+    min-height: 60px;
+    padding: 8px;
+  }
+  
+  .footer-bottom {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-footer {
+    padding: 15px 0 0;
+  }
+  
+  .footer-container {
+    padding: 0 10px 15px;
+  }
+  
+  .ptf-logos {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .footer-logo {
+    height: 50px;
+  }
+  
+  .footer-bottom p {
+    font-size: 0.75rem;
+  }
+}
+
+/* Animation pour l'apparition */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.app-footer {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Style pour les liens de contact spécifiques */
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  
+  a {
+    align-items: flex-start;
+    
+    &:hover {
+      transform: translateX(0);
+      
+      &::before {
+        transform: scale(1.2);
+      }
+    }
+  }
+}
+
+/* Ajouter une newsletter */
+.newsletter-section {
+  .newsletter-form {
+    display: flex;
+    gap: 10px;
+    
+    input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border-radius: 6px;
+      
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+    }
+    
+    button {
+      background: #FF9800;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background: #F57C00;
+      }
+    }
+  }
+}
+
+/* Ajouter un bouton retour en haut */
+.back-to-top {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #4CAF50;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: #388E3C;
+    transform: translateY(-3px);
+  }
+}

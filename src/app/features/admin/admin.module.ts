@@ -24,7 +24,6 @@ import { SharedModule } from '../../shared/shared.module';
 import { GestionAdminsComponent } from './gestion-admins/gestion-admins.component';
 import { MatProgressSpinner } from "@angular/material/progress-spinner";
 import { RapportAdminListComponent } from './rap-pnvb-struct/rapport-admin-list/rapport-admin-list.component';
-import { RapportAdminDetailComponent } from './rap-pnvb-struct/rapport-admin-detail/rapport-admin-detail.component';
 
 
 @NgModule({
@@ -32,7 +31,6 @@ import { RapportAdminDetailComponent } from './rap-pnvb-struct/rapport-admin-det
    
     GestionAdminsComponent,
          RapportAdminListComponent,
-         RapportAdminDetailComponent
   ],
   imports: [
     CommonModule,

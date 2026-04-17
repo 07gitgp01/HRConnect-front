@@ -1,157 +1,178 @@
-<div class="container-fluid py-4">
-  <!-- En-tête avec navigation -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="d-flex align-items-center mb-3">
-        <button class="btn btn-outline-secondary me-3" (click)="goBack()">
-          <i class="bi bi-arrow-left"></i> Retour
-        </button>
-        <h1 class="h3 mb-0">
-          <i class="bi bi-file-text me-2"></i>Détail du Rapport
-        </h1>
-      </div>
-      
-      <!-- Statut du rapport -->
-      <div class="d-flex justify-content-between align-items-center" *ngIf="rapport">
+<!-- src/app/features/partenaires/rap-eval-pnvb/rapport-detail/rapport-detail.component.html -->
+
+<div class="rd-container">
+
+  <!-- ─── En-tête ───────────────────────────────────────────────────────────── -->
+  <div class="rd-header">
+    <div class="rd-header-left">
+      <button class="rd-btn-back" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i> Retour
+      </button>
+      <div class="rd-header-title-wrap">
+        <div class="rd-header-icon"><i class="bi bi-file-text"></i></div>
         <div>
-          <span class="badge" [class]="getStatutClass(rapport.statut)">
-            <i class="bi me-1" [class]="'bi-' + getStatutIcon(rapport.statut)"></i>
-            {{rapport.statut}}
-          </span>
-          <span class="ms-3 text-muted">
-            <i class="bi bi-calendar me-1"></i>
-            Soumis le {{rapport.dateSoumission | date:'dd/MM/yyyy à HH:mm'}}
-          </span>
-        </div>
-        
-        <div class="btn-group" *ngIf="rapport.statut === 'Brouillon'">
-          <button class="btn btn-primary" (click)="editRapport()">
-            <i class="bi bi-pencil me-2"></i>Modifier
-          </button>
-          <button class="btn btn-success" (click)="soumettreRapport()">
-            <i class="bi bi-send me-2"></i>Soumettre
-          </button>
-          <button class="btn btn-outline-danger" (click)="deleteRapport()">
-            <i class="bi bi-trash"></i>
-          </button>
+          <h1 class="rd-title">Détail du Rapport</h1>
+          <p class="rd-subtitle" *ngIf="rapport">
+            Soumis le {{ rapport.dateSoumission | date:'dd/MM/yyyy à HH:mm' }}
+          </p>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Loading state -->
-  <div *ngIf="isLoading" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Chargement...</span>
+    <div class="rd-header-actions" *ngIf="rapport?.statut === 'Brouillon'">
+      <button class="rd-btn-edit"   (click)="editRapport()">
+        <i class="bi bi-pencil"></i> Modifier
+      </button>
+      <button class="rd-btn-submit" (click)="soumettreRapport()">
+        <i class="bi bi-send"></i> Soumettre
+      </button>
+      <button class="rd-btn-delete" (click)="deleteRapport()">
+        <i class="bi bi-trash"></i>
+      </button>
     </div>
   </div>
 
-  <!-- Error state -->
-  <div *ngIf="error && !isLoading" class="alert alert-danger">
-    <i class="bi bi-exclamation-triangle me-2"></i>
-    {{error}}
+  <!-- ─── Loading ───────────────────────────────────────────────────────────── -->
+  <div *ngIf="isLoading" class="rd-loading">
+    <div class="rd-spinner"></div>
+    <p>Chargement du rapport...</p>
   </div>
 
-  <!-- Contenu du rapport -->
-  <div *ngIf="!isLoading && !error && rapport">
-    <div class="row">
-      <!-- Informations générales -->
-      <div class="col-lg-8">
-        <div class="card mb-4">
-          <div class="card-header bg-light">
-            <h5 class="mb-0">Informations générales</h5>
+  <!-- ─── Erreur ────────────────────────────────────────────────────────────── -->
+  <div *ngIf="error && !isLoading" class="rd-error">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>Erreur</strong>
+    <p>{{ error }}</p>
+    <button class="rd-btn-retry" (click)="loadRapport()">
+      <i class="bi bi-arrow-clockwise"></i> Réessayer
+    </button>
+  </div>
+
+  <!-- ─── Contenu ───────────────────────────────────────────────────────────── -->
+  <div *ngIf="!isLoading && !error && rapport" class="rd-content">
+
+    <div class="rd-status-bar">
+      <span class="rd-statut-badge" [class]="getStatutClass(rapport.statut)">
+        <i class="bi bi-{{ getStatutIcon(rapport.statut) }}"></i>
+        {{ rapport.statut }}
+      </span>
+      <span *ngIf="rapport.feedbackPNVB" class="rd-has-feedback">
+        <i class="bi bi-chat-dots"></i> Feedback PNVB disponible
+      </span>
+    </div>
+
+    <div class="rd-grid">
+
+      <!-- ═══ COLONNE PRINCIPALE ═════════════════════════════════════════════ -->
+      <div class="rd-main">
+
+        <!-- Informations générales -->
+        <div class="rd-card">
+          <div class="rd-card-header">
+            <i class="bi bi-info-circle"></i> Informations générales
           </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6">
-                <dl>
-                  <dt>Volontaire</dt>
-                  <dd class="fs-5">
-                    <i class="bi bi-person-circle me-2"></i>
-                    <ng-container *ngIf="volontaire">
-                      <strong>{{volontaire.prenom}} {{volontaire.nom}}</strong>
-                    </ng-container>
-                    <ng-container *ngIf="!volontaire">
-                      Non disponible
-                    </ng-container>
-                  </dd>
-                  
-                  <dt>Mission</dt>
-                  <dd>
-                    <ng-container *ngIf="volontaire && volontaire.domaineEtudes">
-                      {{volontaire.domaineEtudes}}
-                    </ng-container>
-                    <ng-container *ngIf="!volontaire || !volontaire.domaineEtudes">
-                      Non spécifié
-                    </ng-container>
-                  </dd>
-                </dl>
+          <div class="rd-card-body">
+            <div class="rd-info-grid">
+
+              <!-- Structure d'accueil -->
+              <div class="rd-info-block">
+                <div class="rd-info-label">Structure d'accueil</div>
+                <div class="rd-info-value" *ngIf="partenaire; else noPartenaire">
+                  <div class="rd-person">
+                    <div class="rd-avatar rd-avatar-partner">
+                      {{ partenaire.nomStructure.charAt(0) }}
+                    </div>
+                    <strong>{{ partenaire.nomStructure }}</strong>
+                  </div>
+                </div>
+                <ng-template #noPartenaire>
+                  <div class="rd-info-empty">
+                    <i class="bi bi-building-x"></i> Non disponible
+                    <small>(ID: {{ rapport.partenaireId }})</small>
+                  </div>
+                </ng-template>
               </div>
-              
-              <div class="col-md-6">
-                <dl>
-                  <dt>Période d'évaluation</dt>
-                  <dd class="fs-5">
-                    <span class="badge bg-info">{{rapport.periode}}</span>
-                  </dd>
-                  
-                  <dt>Structure d'accueil</dt>
-                  <dd>
-                    <ng-container *ngIf="partenaire">
-                      {{partenaire.nomStructure}}
-                    </ng-container>
-                    <ng-container *ngIf="!partenaire">
-                      Non disponible
-                    </ng-container>
-                  </dd>
-                </dl>
+
+              <!-- Mission / Projet -->
+              <div class="rd-info-block">
+                <div class="rd-info-label">Mission évaluée</div>
+                <div class="rd-info-value" *ngIf="missionNom; else noMission">
+                  <div class="rd-person">
+                    <div class="rd-avatar rd-avatar-mission">
+                      <i class="bi bi-briefcase"></i>
+                    </div>
+                    <strong>{{ missionNom }}</strong>
+                  </div>
+                </div>
+                <ng-template #noMission>
+                  <div class="rd-info-empty">
+                    <i class="bi bi-briefcase"></i> Mission non spécifiée
+                  </div>
+                </ng-template>
               </div>
+
+              <!-- Période -->
+              <div class="rd-info-block">
+                <div class="rd-info-label">Période d'évaluation</div>
+                <div class="rd-info-value">
+                  <span class="rd-badge-periode">{{ rapport.periode }}</span>
+                </div>
+              </div>
+
+              <!-- Date soumission -->
+              <div class="rd-info-block">
+                <div class="rd-info-label">Date de soumission</div>
+                <div class="rd-info-value rd-date-value">
+                  <i class="bi bi-calendar3"></i>
+                  {{ rapport.dateSoumission | date:'dd/MM/yyyy' }}
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
 
         <!-- Évaluation globale -->
-        <div class="card mb-4">
-          <div class="card-header bg-light">
-            <h5 class="mb-0">Évaluation globale</h5>
+        <div class="rd-card">
+          <div class="rd-card-header">
+            <i class="bi bi-star-half"></i> Évaluation globale
           </div>
-          <div class="card-body">
-            <div class="text-center py-4">
-              <div class="display-1 fw-bold" [class]="getEvaluationColor(rapport.evaluationGlobale)">
-                {{rapport.evaluationGlobale}}/10
-              </div>
-              <div class="h3 text-muted mb-4">{{evaluationLabel}}</div>
-              
-              <!-- Étoiles -->
-              <div class="mb-3">
-                <span *ngFor="let star of getStarIcons(rapport.evaluationGlobale / 2, 5)" 
-                      class="star-rating mx-1">
-                  <i class="bi" [class]="star"></i>
-                </span>
-              </div>
+          <div class="rd-card-body rd-eval-center">
+            <div class="rd-eval-score" [class]="getEvaluationColor(rapport.evaluationGlobale)">
+              {{ rapport.evaluationGlobale }}/10
+            </div>
+            <div class="rd-eval-label">{{ evaluationLabel }}</div>
+            <div class="rd-stars">
+              <i class="bi" *ngFor="let star of getStarIcons(rapport.evaluationGlobale / 2, 5)"
+                 [class]="star"></i>
+            </div>
+            <div class="rd-eval-badge" [class]="getEvaluationBadgeClass(rapport.evaluationGlobale)">
+              {{ rapport.evaluationGlobale >= 8 ? 'Excellent' :
+                 rapport.evaluationGlobale >= 6 ? 'Satisfaisant' : 'À améliorer' }}
             </div>
           </div>
         </div>
 
         <!-- Critères détaillés -->
-        <div class="card mb-4" *ngIf="rapport.criteres">
-          <div class="card-header bg-light">
-            <h5 class="mb-0">Critères d'évaluation détaillés</h5>
+        <div class="rd-card" *ngIf="rapport.criteres">
+          <div class="rd-card-header">
+            <i class="bi bi-list-check"></i> Critères d'évaluation détaillés
           </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6" *ngFor="let critere of getCriteresList()">
-                <div class="d-flex justify-content-between align-items-center mb-3 p-3 border rounded">
+          <div class="rd-card-body">
+            <div class="rd-criteres-grid">
+              <div *ngFor="let critere of getCriteresList()" class="rd-critere-item">
+                <div class="rd-critere-header">
                   <div>
-                    <h6 class="mb-1">{{critere.label}}</h6>
-                    <small class="text-muted">{{critere.description}}</small>
+                    <div class="rd-critere-label">{{ critere.label }}</div>
+                    <div class="rd-critere-desc">{{ critere.description }}</div>
                   </div>
-                  <div class="text-end">
-                    <div class="h4 mb-0">{{critere.score}}/5</div>
-                    <div class="star-rating small">
-                      <i class="bi" *ngFor="let star of critere.stars" [class]="star"></i>
-                    </div>
+                  <div class="rd-critere-score">
+                    <span class="rd-critere-num">{{ critere.score }}</span>
+                    <span class="rd-critere-max">/5</span>
                   </div>
+                </div>
+                <div class="rd-critere-stars">
+                  <i class="bi" *ngFor="let star of critere.stars" [class]="star"></i>
                 </div>
               </div>
             </div>
@@ -159,119 +180,170 @@
         </div>
 
         <!-- Commentaires -->
-        <div class="card mb-4">
-          <div class="card-header bg-light">
-            <h5 class="mb-0">Commentaires détaillés</h5>
+        <div class="rd-card">
+          <div class="rd-card-header">
+            <i class="bi bi-chat-text"></i> Commentaires détaillés
           </div>
-          <div class="card-body">
-            <div class="white-space-pre">{{rapport.commentaires}}</div>
+          <div class="rd-card-body">
+            <div class="rd-commentaires" *ngIf="rapport.commentaires; else noComment">
+              {{ rapport.commentaires }}
+            </div>
+            <ng-template #noComment>
+              <div class="rd-info-empty">Aucun commentaire fourni</div>
+            </ng-template>
           </div>
         </div>
 
         <!-- Feedback PNVB -->
-        <div class="card" *ngIf="rapport.feedbackPNVB">
-          <div class="card-header bg-info text-white">
-            <h5 class="mb-0">
-              <i class="bi bi-chat-dots me-2"></i>Feedback du PNVB
-            </h5>
+        <div class="rd-card rd-card-feedback" *ngIf="rapport.feedbackPNVB">
+          <div class="rd-card-header rd-card-header-feedback">
+            <i class="bi bi-chat-dots"></i> Feedback du PNVB
           </div>
-          <div class="card-body">
-            <div class="d-flex mb-3">
-              <div class="flex-shrink-0">
-                <i class="bi bi-person-circle fs-3 text-info"></i>
+          <div class="rd-card-body">
+            <div class="rd-feedback-meta">
+              <div class="rd-avatar rd-avatar-admin">
+                <i class="bi bi-person-badge"></i>
               </div>
-              <div class="ms-3">
-                <h6 class="mb-1">Validé par {{rapport.validePar || 'Administrateur PNVB'}}</h6>
+              <div>
+                <strong>{{ rapport.validePar || 'Administrateur PNVB' }}</strong>
+                <div class="rd-info-sub" *ngIf="rapport.dateValidation">
+                  Le {{ rapport.dateValidation | date:'dd/MM/yyyy à HH:mm' }}
+                </div>
+              </div>
+            </div>
+            <div class="rd-feedback-text">{{ rapport.feedbackPNVB }}</div>
+          </div>
+        </div>
+
+      </div><!-- /rd-main -->
+
+      <!-- ═══ SIDEBAR ════════════════════════════════════════════════════════ -->
+      <div class="rd-sidebar">
+
+        <!-- ⭐ SECTION DOCUMENT CORRIGÉE ⭐ -->
+        <div class="rd-card" *ngIf="rapport?.urlDocumentAnnexe">
+          <div class="rd-card-header">
+            <i class="bi bi-paperclip"></i> Document joint
+          </div>
+          <div class="rd-card-body">
+            
+            <!-- Affichage du nom du fichier -->
+            <div class="d-flex align-items-center mb-3 p-3 bg-light rounded">
+              <i class="bi bi-file-earmark-text fs-2 text-primary me-3"></i>
+              <div class="overflow-hidden">
+                <div class="fw-bold text-truncate">
+                  {{ getDocumentNom() }}
+                </div>
                 <small class="text-muted">
-                  Le {{rapport.dateValidation | date:'dd/MM/yyyy à HH:mm'}}
+                  <i class="bi bi-link me-1"></i>
+                  {{ rapport.urlDocumentAnnexe }}
                 </small>
               </div>
             </div>
-            <div class="alert alert-info">
-              {{rapport.feedbackPNVB}}
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Sidebar avec métadonnées -->
-      <div class="col-lg-4">
-        <!-- Document annexe -->
-        <div class="card mb-4" *ngIf="rapport.urlDocumentAnnexe">
-          <div class="card-header bg-light">
-            <h5 class="mb-0">
-              <i class="bi bi-paperclip me-2"></i>Document annexe
-            </h5>
-          </div>
-          <div class="card-body">
-            <div class="d-grid">
-              <button class="btn btn-outline-primary" (click)="downloadDocument()">
-                <i class="bi bi-download me-2"></i>
-                Télécharger {{rapport.nomDocumentAnnexe || 'le document'}}
+            <!-- Boutons d'action -->
+            <div class="row g-2">
+              <div class="col-6">
+                <button (click)="ouvrirDocument()"
+                        class="btn btn-outline-primary w-100"
+                        [disabled]="getDocumentUrl() === '#'">
+                  <i class="bi bi-eye me-2"></i>
+                  Voir
+                </button>
+              </div>
+              <div class="col-6">
+                <button (click)="downloadDocument()"
+                        class="btn btn-primary w-100"
+                        [disabled]="isDownloading || getDocumentUrl() === '#'">
+                  <span *ngIf="isDownloading" class="spinner-border spinner-border-sm me-2"></span>
+                  <i *ngIf="!isDownloading" class="bi bi-download me-2"></i>
+                  {{ isDownloading ? 'Téléchargement...' : 'Télécharger' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Bouton de vérification -->
+            <div class="mt-2">
+              <button (click)="verifierDocument()" 
+                      class="btn btn-sm btn-outline-info w-100">
+                <i class="bi bi-check-circle me-2"></i>
+                Vérifier l'accessibilité
               </button>
             </div>
+
+            <!-- Message si c'est une ancienne URL (upload sans s) -->
+            <div *ngIf="rapport.urlDocumentAnnexe && rapport.urlDocumentAnnexe.includes('/upload/')" 
+                 class="alert alert-info mt-3 small">
+              <i class="bi bi-info-circle me-2"></i>
+              Ancien format d'URL automatiquement corrigé
+            </div>
+
           </div>
         </div>
 
-        <!-- Métadonnées -->
-        <div class="card mb-4">
-          <div class="card-header bg-light">
-            <h5 class="mb-0">Métadonnées</h5>
+        <!-- Message si aucun document -->
+        <div class="rd-card" *ngIf="!rapport?.urlDocumentAnnexe">
+          <div class="rd-card-header">
+            <i class="bi bi-paperclip"></i> Document joint
           </div>
-          <div class="card-body">
-            <dl class="mb-0">
-              <dt>ID du rapport</dt>
-              <dd><code>{{rapport.id}}</code></dd>
-              
-              <dt>Date de création</dt>
-              <dd>{{rapport.created_at | date:'dd/MM/yyyy HH:mm'}}</dd>
-              
-              <dt>Dernière modification</dt>
-              <dd>{{(rapport.updated_at || rapport.dateModification) | date:'dd/MM/yyyy HH:mm'}}</dd>
-              
-              <dt>Volontaire ID</dt>
-              <dd>{{rapport.volontaireId}}</dd>
-              
-              <dt>Partenaire ID</dt>
-              <dd>{{rapport.partenaireId}}</dd>
-            </dl>
+          <div class="rd-card-body text-center py-4">
+            <i class="bi bi-file-earmark-x fs-1 text-muted d-block mb-3"></i>
+            <p class="text-muted mb-0">Aucun document joint à ce rapport</p>
           </div>
         </div>
 
-        <!-- Statistiques du rapport -->
-        <div class="card">
-          <div class="card-header bg-light">
-            <h5 class="mb-0">Résumé des critères</h5>
+        <!-- Résumé critères avec barres -->
+        <div class="rd-card" *ngIf="rapport.criteres">
+          <div class="rd-card-header">
+            <i class="bi bi-bar-chart"></i> Résumé des critères
           </div>
-          <div class="card-body">
-            <div *ngIf="rapport.criteres">
-              <div class="mb-3" *ngFor="let critere of getCriteresList()">
-                <div class="d-flex justify-content-between mb-1">
-                  <span>{{critere.label}}</span>
-                  <span>{{critere.score}}/5</span>
-                </div>
-                <div class="progress" style="height: 8px;">
-                  <div class="progress-bar" [ngClass]="getProgressBarClass(critere.score)" 
-                       [style.width.%]="critere.score * 20">
-                  </div>
+          <div class="rd-card-body">
+            <div *ngFor="let critere of getCriteresList()" class="rd-progress-item">
+              <div class="rd-progress-header">
+                <span class="rd-progress-label">{{ critere.label }}</span>
+                <span class="rd-progress-score">{{ critere.score }}/5</span>
+              </div>
+              <div class="rd-progress-bar-wrap">
+                <div class="rd-progress-bar"
+                     [class]="getProgressBarClass(critere.score)"
+                     [style.width.%]="critere.score * 20">
                 </div>
               </div>
-              
-              <hr>
-              
-              <div class="d-flex justify-content-between">
-                <strong>Moyenne des critères</strong>
-                <strong>{{moyenneCriteres.toFixed(1)}}/5</strong>
-              </div>
             </div>
-            
-            <div *ngIf="!rapport.criteres" class="text-center text-muted">
-              <i class="bi bi-info-circle d-block fs-1 mb-2"></i>
-              Aucun critère détaillé disponible
+            <div class="rd-moyenne-ligne">
+              <span>Moyenne des critères</span>
+              <strong>{{ moyenneCriteres.toFixed(1) }}/5</strong>
             </div>
           </div>
+        </div>
+
+      </div><!-- /rd-sidebar -->
+    </div><!-- /rd-grid -->
+  </div><!-- /rd-content -->
+
+  <!-- Modal de prévisualisation PDF -->
+  <div *ngIf="showDocumentPreview" class="modal fade show d-block" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-file-pdf me-2 text-danger"></i>
+            {{ getDocumentNom() }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closePreview()"></button>
+        </div>
+        <div class="modal-body p-0" style="height: 80vh;">
+          <iframe *ngIf="documentUrl" [src]="documentUrl" width="100%" height="100%" frameborder="0"></iframe>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" (click)="downloadDocument()">
+            <i class="bi bi-download me-2"></i>Télécharger
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="closePreview()">Fermer</button>
         </div>
       </div>
     </div>
   </div>
+  <div *ngIf="showDocumentPreview" class="modal-backdrop fade show"></div>
+
 </div>

@@ -10,11 +10,11 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* ===== EN-TÊTE (commenté dans le HTML mais prêt si besoin) ===== */
+/* ===== EN-TÊTE AVEC STATISTIQUES ===== */
 .header-section {
   text-align: center;
   margin-bottom: 40px;
-  padding: 32px 40px;
+  padding: 32px 40px 24px;
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 
@@ -35,9 +35,55 @@
   color: #64748b;
   font-size: 1.1rem;
   max-width: 600px;
-  margin: 0 auto;
+  margin: 0 auto 32px;
   line-height: 1.6;
   font-weight: 400;
+}
+
+/* ===== STATISTIQUES DANS L'EN-TÊTE ===== */
+.header-section .stats-section {
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+.header-section .stats-card {
+  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
+  color: white;
+  border-radius: 16px;
+  box-shadow: 
+    0 4px 20px rgba(0, 129, 36, 0.15),
+    0 2px 12px rgba(0, 129, 36, 0.08);
+}
+
+.header-section .stats-content {
+  display: flex;
+  justify-content: space-around;
+  padding: 32px 24px;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.header-section .stat-item {
+  text-align: center;
+  flex: 1 1 150px;
+  min-width: 150px;
+}
+
+.header-section .stat-number {
+  font-size: 2.8rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 8px;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.header-section .stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
 }
 
 /* ===== SECTION FILTRES ===== */
@@ -59,14 +105,13 @@
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr auto;
   gap: 20px;
-  align-items: end; /* ✅ Alignement au bas pour harmoniser les hauteurs */
+  align-items: end;
 }
 
 .search-field {
   min-width: 300px;
 }
 
-/* ✅ Harmonisation des mat-form-field */
 ::ng-deep .filters-grid mat-form-field {
   width: 100%;
 }
@@ -75,7 +120,6 @@
   height: 56px;
 }
 
-/* Boutons */
 .reset-button {
   height: 56px;
   white-space: nowrap;
@@ -185,7 +229,6 @@
   border-color: #008124;
 }
 
-/* En-tête carte */
 .card-header {
   padding: 24px 24px 0;
   display: flex;
@@ -210,11 +253,10 @@
   font-weight: 800;
   line-height: 1.3;
   flex: 1 1 auto;
-  min-width: 0; /* ✅ Permet au titre de se rétrécir si besoin */
+  min-width: 0;
   word-wrap: break-word;
 }
 
-/* Badges */
 .urgence-badge,
 .status-badge {
   padding: 6px 12px;
@@ -248,7 +290,6 @@
   color: white;
 }
 
-/* Contenu */
 ::ng-deep mat-card-content {
   padding: 20px 24px;
   flex: 1;
@@ -269,7 +310,6 @@
   font-weight: 400;
 }
 
-/* Grille d'information */
 .project-info-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -295,7 +335,6 @@
   flex-shrink: 0;
 }
 
-/* Section volontaires */
 .volunteers-section {
   margin-bottom: 24px;
   padding: 20px;
@@ -335,7 +374,6 @@
   transition: width 0.3s ease;
 }
 
-/* Dates */
 .dates-section {
   margin-bottom: 24px;
   padding: 20px;
@@ -360,7 +398,6 @@
   color: #006b1e;
 }
 
-/* Compétences */
 .competences-section {
   margin-bottom: 24px;
   flex-shrink: 0;
@@ -415,7 +452,6 @@
   border-radius: 20px !important;
 }
 
-/* Avantages */
 .avantages-section {
   margin-bottom: 20px;
   padding: 20px;
@@ -440,7 +476,6 @@
   font-weight: 400;
 }
 
-/* Actions */
 ::ng-deep mat-card-actions {
   padding: 0 24px 24px !important;
   display: flex;
@@ -454,7 +489,6 @@
   min-width: 140px;
 }
 
-/* Boutons d'action */
 .postuler-button,
 ::ng-deep mat-card-actions button[color="primary"] {
   background: linear-gradient(135deg, #008124 0%, #006b1e 100%) !important;
@@ -494,51 +528,6 @@
   color: white !important;
 }
 
-/* ===== STATISTIQUES ===== */
-.stats-section {
-  margin-top: 40px;
-}
-
-.stats-card {
-  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
-  color: white;
-  border-radius: 16px;
-  box-shadow: 
-    0 4px 20px rgba(0, 129, 36, 0.15),
-    0 2px 12px rgba(0, 129, 36, 0.08);
-}
-
-.stats-content {
-  display: flex;
-  justify-content: space-around;
-  padding: 32px 24px;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.stat-item {
-  text-align: center;
-  flex: 1 1 150px;
-  min-width: 150px;
-}
-
-.stat-number {
-  font-size: 2.8rem;
-  font-weight: 900;
-  line-height: 1;
-  margin-bottom: 8px;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  opacity: 0.9;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 600;
-}
-
 /* ===== ANIMATION D'ENTRÉE ===== */
 @keyframes fadeInUp {
   from {
@@ -576,7 +565,7 @@ button:focus-visible {
 
 /* ===== RESPONSIVE DESIGN ===== */
 
-/* ✅ Grands écrans (1200px - 1440px) */
+/* Grands écrans (1200px - 1440px) */
 @media (max-width: 1440px) {
   .projects-grid {
     grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
@@ -584,7 +573,7 @@ button:focus-visible {
   }
 }
 
-/* ✅ Écrans moyens / Tablettes paysage (992px - 1200px) */
+/* Écrans moyens / Tablettes paysage (992px - 1200px) */
 @media (max-width: 1200px) {
   .projets-disponibles-container {
     padding: 20px;
@@ -621,7 +610,7 @@ button:focus-visible {
   }
 }
 
-/* ✅ Tablettes portrait (768px - 992px) */
+/* Tablettes portrait (768px - 992px) */
 @media (max-width: 992px) {
   .projets-disponibles-container {
     padding: 20px 16px;
@@ -641,20 +630,20 @@ button:focus-visible {
     gap: 12px;
   }
   
-  .stats-content {
+  .header-section .stats-content {
     gap: 20px;
   }
   
-  .stat-item {
+  .header-section .stat-item {
     flex: 1 1 calc(50% - 10px);
   }
   
-  .stat-number {
+  .header-section .stat-number {
     font-size: 2.4rem;
   }
 }
 
-/* ✅ Mobiles larges (576px - 768px) */
+/* Mobiles larges (576px - 768px) */
 @media (max-width: 768px) {
   .projets-disponibles-container {
     padding: 16px 12px;
@@ -673,7 +662,13 @@ button:focus-visible {
   
   .header-section p {
     font-size: 1rem;
+    margin-bottom: 24px;
     line-height: 1.5;
+  }
+  
+  .header-section .stats-content {
+    padding: 24px 16px;
+    gap: 16px;
   }
   
   .filters-card {
@@ -735,12 +730,7 @@ button:focus-visible {
     margin-bottom: 16px;
   }
   
-  .stats-content {
-    padding: 24px 16px;
-    gap: 16px;
-  }
-  
-  .stat-item {
+  .header-section .stat-item {
     flex: 1 1 calc(50% - 8px);
   }
   
@@ -755,7 +745,7 @@ button:focus-visible {
   }
 }
 
-/* ✅ Mobiles moyens (480px - 576px) */
+/* Mobiles moyens (480px - 576px) */
 @media (max-width: 576px) {
   .projets-disponibles-container {
     padding: 12px 8px;
@@ -773,6 +763,19 @@ button:focus-visible {
   
   .header-section p {
     font-size: 0.95rem;
+  }
+  
+  .header-section .stat-number {
+    font-size: 2rem;
+  }
+  
+  .header-section .stat-label {
+    font-size: 0.8rem;
+  }
+  
+  .header-section .stat-item {
+    flex: 1 1 100%;
+    padding: 12px 0;
   }
   
   .filters-card {
@@ -819,19 +822,6 @@ button:focus-visible {
     border-radius: 10px;
   }
   
-  .stat-number {
-    font-size: 2rem;
-  }
-  
-  .stat-label {
-    font-size: 0.8rem;
-  }
-  
-  .stat-item {
-    flex: 1 1 100%;
-    padding: 12px 0;
-  }
-  
   ::ng-deep mat-card-actions {
     flex-direction: column;
     gap: 8px;
@@ -844,7 +834,7 @@ button:focus-visible {
   }
 }
 
-/* ✅ Petits mobiles (320px - 480px) */
+/* Petits mobiles (320px - 480px) */
 @media (max-width: 480px) {
   .projets-disponibles-container {
     padding: 10px 6px;
@@ -856,6 +846,14 @@ button:focus-visible {
   
   .header-section p {
     font-size: 0.9rem;
+  }
+  
+  .header-section .stat-number {
+    font-size: 1.8rem;
+  }
+  
+  .header-section .stat-label {
+    font-size: 0.75rem;
   }
   
   .filters-card {
@@ -925,20 +923,12 @@ button:focus-visible {
     font-size: 0.9rem;
   }
   
-  .stats-content {
+  .header-section .stats-content {
     padding: 20px 12px;
-  }
-  
-  .stat-number {
-    font-size: 1.8rem;
-  }
-  
-  .stat-label {
-    font-size: 0.75rem;
   }
 }
 
-/* ✅ Très petits mobiles (<400px) */
+/* Très petits mobiles (<400px) */
 @media (max-width: 400px) {
   .project-title {
     font-size: 0.95rem;
@@ -974,7 +964,6 @@ button:focus-visible {
     transform: none;
   }
   
-  /* ✅ Zones tactiles minimum 44px */
   button, 
   .status-badge, 
   .urgence-badge,
@@ -1015,4 +1004,25 @@ mat-icon {
 .status-badge mat-icon,
 ::ng-deep mat-card-actions button mat-icon {
   color: currentColor !important;
+}
+
+/* ===== BOUTON DÉJÀ POSTULÉ ===== */
+.deja-postule-button {
+  background: linear-gradient(135deg, #e6f4e6 0%, #d1e7dd 100%) !important;
+  color: #008124 !important;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: 2px solid #008124 !important;
+  transition: all 0.3s ease;
+}
+
+.deja-postule-button mat-icon {
+  color: #008124 !important;
+}
+
+.deja-postule-button:hover {
+  background: linear-gradient(135deg, #d1e7dd 0%, #c0e0d0 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.2);
 }

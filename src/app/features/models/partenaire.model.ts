@@ -4,61 +4,66 @@ export interface Partenaire {
   // ============================================
   // IDENTIFICATION ET BASE
   // ============================================
-  id?: number;
+  id?: number | string;
   nomStructure: string;
   email: string;
   telephone: string;
   adresse: string;
-  
+
   // ============================================
   // PERSONNE CONTACT
   // ============================================
   personneContactNom: string;
-  personneContactEmail: string; // NOUVEAU CHAMP
+  personneContactEmail: string;
   personneContactTelephone: string;
   personneContactFonction: string;
-  
+
   // ============================================
   // CLASSIFICATION PNVB - TYPES MULTIPLES
   // ============================================
-  typeStructures: TypeStructurePNVB[];  // Tableau de types
+  typeStructures: TypeStructurePNVB[];
   domaineActivite: string;
-  
+
   // ============================================
   // DESCRIPTION ET VALIDATION
   // ============================================
   description: string;
   estActive: boolean;
   urlDocumentAccord?: string;
-  
+
   // ============================================
   // DATES IMPORTANTES
   // ============================================
   dateCreationCompte: string;
   dateActivation?: string;
   dateDerniereConnexion?: string;
-  
+
   // ============================================
   // SITE WEB ET LOGO
   // ============================================
   siteWeb?: string;
   logoUrl?: string;
-  
+
   // ============================================
   // GESTION DES COMPTES
   // ============================================
   role: 'partenaire';
   motDePasseTemporaire?: string;
-  
+
   // ============================================
   // PERMISSIONS MULTI-RÔLES
   // ============================================
   permissions: PartenairePermissions;
-  
+
   // ============================================
-  // STATISTIQUES
+  // STATISTIQUES — Structure d'accueil (projets/volontaires)
   // ============================================
   stats?: PartenaireStats;
+
+  // ============================================
+  // STATISTIQUES — PTF uniquement (consultation rapports)
+  // ============================================
+  statsPTF?: PartenairePTFStats;
 
   // ============================================
   // COMPATIBILITÉ
@@ -66,7 +71,7 @@ export interface Partenaire {
   cree_le?: string;
   mis_a_jour_le?: string;
   compteActive?: boolean;
-  typesPrincipaux?: string[]; // Pour la rétro-compatibilité
+  typesPrincipaux?: string[];
 }
 
 // ============================================
@@ -74,14 +79,11 @@ export interface Partenaire {
 // ============================================
 
 export interface PartenairePermissions {
-  // Permissions globales calculées depuis typeStructures
   peutCreerProjets: boolean;
   peutGererVolontaires: boolean;
   peutVoirStatistiques: boolean;
   peutVoirRapports: boolean;
   accesZonePTF: boolean;
-  
-  // Détail des permissions par type
   permissionsParType: {
     [type: string]: {
       peutCreerProjets: boolean;
@@ -93,6 +95,10 @@ export interface PartenairePermissions {
   };
 }
 
+// ============================================
+// STATS STRUCTURE D'ACCUEIL
+// ============================================
+
 export interface PartenaireStats {
   totalProjets: number;
   projetsActifs: number;
@@ -100,8 +106,6 @@ export interface PartenaireStats {
   projetsEnAttente: number;
   volontairesAffectes: number;
   dateDernierProjet?: string;
-  
-  // Statistiques par type de structure
   statsParType: {
     [type: string]: {
       projets: number;
@@ -109,6 +113,21 @@ export interface PartenaireStats {
       budgetTotal?: number;
     }
   };
+}
+
+// ============================================
+// ✅ STATS PTF (consultation de rapports PNVB)
+// Utilisé dans partenaires-list et partenaire-detail
+// pour les partenaires de type PTF uniquement.
+// Alimenté par RapportsPtfConsultationService.getStatsConsultation()
+// ============================================
+
+export interface PartenairePTFStats {
+  totalRapports:        number;   // Nombre de rapports accessibles à ce PTF
+  rapportsConsultes:    number;   // Rapports distincts consultés au moins une fois
+  rapportsNonConsultes: number;   // totalRapports - rapportsConsultes
+  tauxConsultation:     number;   // 0-100 (%)
+  derniereConsultation: string | null; // ISO date ou null si jamais consulté
 }
 
 // ============================================
@@ -128,7 +147,7 @@ export const TYPES_STRUCTURE_PNVB = [
   },
   {
     value: 'Public-Collectivite',
-    label: 'Collectivité Territoriale', 
+    label: 'Collectivité Territoriale',
     description: 'Communes, régions, mairies',
     peutCreerProjets: true,
     peutGererVolontaires: true,
@@ -185,102 +204,80 @@ export type TypeStructurePNVB = typeof TYPES_STRUCTURE_PNVB[number]['value'];
 // ============================================
 
 export class PartenairePermissionsService {
-  
-  // Calculer les permissions globales basées sur les types multiples
+
   static calculerPermissionsGlobales(typeStructures: TypeStructurePNVB[]): PartenairePermissions {
     const permissionsParType: PartenairePermissions['permissionsParType'] = {};
-    
-    // Récupérer les permissions pour chaque type
+
     typeStructures.forEach((type: TypeStructurePNVB) => {
       const configType = TYPES_STRUCTURE_PNVB.find(t => t.value === type);
       if (configType) {
         permissionsParType[type] = {
-          peutCreerProjets: configType.peutCreerProjets,
+          peutCreerProjets:     configType.peutCreerProjets,
           peutGererVolontaires: configType.peutGererVolontaires,
           peutVoirStatistiques: configType.peutVoirStatistiques,
-          peutVoirRapports: configType.peutVoirRapports,
-          accesZonePTF: configType.accesZonePTF
+          peutVoirRapports:     configType.peutVoirRapports,
+          accesZonePTF:         configType.accesZonePTF
         };
       }
     });
 
-    // Calculer les permissions globales (OR logique entre tous les types)
-    const permissionsGlobales = {
-      peutCreerProjets: typeStructures.some((type: TypeStructurePNVB) => 
-        TYPES_STRUCTURE_PNVB.find(t => t.value === type)?.peutCreerProjets || false
-      ),
-      peutGererVolontaires: typeStructures.some((type: TypeStructurePNVB) => 
-        TYPES_STRUCTURE_PNVB.find(t => t.value === type)?.peutGererVolontaires || false
-      ),
-      peutVoirStatistiques: typeStructures.some((type: TypeStructurePNVB) => 
-        TYPES_STRUCTURE_PNVB.find(t => t.value === type)?.peutVoirStatistiques || false
-      ),
-      peutVoirRapports: typeStructures.some((type: TypeStructurePNVB) => 
-        TYPES_STRUCTURE_PNVB.find(t => t.value === type)?.peutVoirRapports || false
-      ),
-      accesZonePTF: typeStructures.some((type: TypeStructurePNVB) => 
-        TYPES_STRUCTURE_PNVB.find(t => t.value === type)?.accesZonePTF || false
-      )
-    };
-
     return {
-      ...permissionsGlobales,
+      peutCreerProjets:     typeStructures.some(t => TYPES_STRUCTURE_PNVB.find(c => c.value === t)?.peutCreerProjets     || false),
+      peutGererVolontaires: typeStructures.some(t => TYPES_STRUCTURE_PNVB.find(c => c.value === t)?.peutGererVolontaires || false),
+      peutVoirStatistiques: typeStructures.some(t => TYPES_STRUCTURE_PNVB.find(c => c.value === t)?.peutVoirStatistiques || false),
+      peutVoirRapports:     typeStructures.some(t => TYPES_STRUCTURE_PNVB.find(c => c.value === t)?.peutVoirRapports     || false),
+      accesZonePTF:         typeStructures.some(t => TYPES_STRUCTURE_PNVB.find(c => c.value === t)?.accesZonePTF         || false),
       permissionsParType
     };
   }
 
-  // Créer un partenaire avec permissions multi-types
   static creerPartenaireAvecPermissions(data: InscriptionPartenaire): Partenaire {
     const permissions = this.calculerPermissionsGlobales(data.typeStructures);
-    
+    const estPTF      = this.estPTF({ typeStructures: data.typeStructures } as Partenaire);
+
     return {
       ...data,
       nomStructure: data.nomStructure,
-      estActive: false,
+      estActive:    false,
       compteActive: false,
-      role: 'partenaire',
+      role:         'partenaire',
       dateCreationCompte: new Date().toISOString(),
-      permissions: permissions,
-      stats: {
-        totalProjets: 0,
-        projetsActifs: 0,
-        projetsTermines: 0,
-        projetsEnAttente: 0,
-        volontairesAffectes: 0,
+      permissions,
+      // Stats projet uniquement pour les structures d'accueil
+      stats: !estPTF ? {
+        totalProjets: 0, projetsActifs: 0, projetsTermines: 0,
+        projetsEnAttente: 0, volontairesAffectes: 0,
         statsParType: this.initialiserStatsParType(data.typeStructures)
-      },
-      // Compatibilité
-      cree_le: new Date().toISOString(),
+      } : undefined,
+      // Stats PTF initialisées à zéro (alimentées dynamiquement depuis consultations-ptf)
+      statsPTF: estPTF ? {
+        totalRapports: 0, rapportsConsultes: 0, rapportsNonConsultes: 0,
+        tauxConsultation: 0, derniereConsultation: null
+      } : undefined,
+      cree_le:       new Date().toISOString(),
       mis_a_jour_le: new Date().toISOString(),
-      typesPrincipaux: data.typeStructures // Pour rétro-compatibilité
+      typesPrincipaux: data.typeStructures
     };
   }
 
   private static initialiserStatsParType(typeStructures: TypeStructurePNVB[]): PartenaireStats['statsParType'] {
     const stats: PartenaireStats['statsParType'] = {};
-    typeStructures.forEach((type: TypeStructurePNVB) => {
-      stats[type] = {
-        projets: 0,
-        volontaires: 0,
-        budgetTotal: 0
-      };
+    typeStructures.forEach(type => {
+      stats[type] = { projets: 0, volontaires: 0, budgetTotal: 0 };
     });
     return stats;
   }
 
-  // Vérifier si un partenaire a un type spécifique
   static aLeType(partenaire: Partenaire, type: TypeStructurePNVB): boolean {
     return partenaire.typeStructures.includes(type);
   }
 
-  // Vérifier si un partenaire est PTF
   static estPTF(partenaire: Partenaire): boolean {
     return this.aLeType(partenaire, 'PTF');
   }
 
-  // Vérifier si un partenaire est Structure d'Accueil
   static estStructureAccueil(partenaire: Partenaire): boolean {
-    return partenaire.typeStructures.some((type: TypeStructurePNVB) => 
+    return partenaire.typeStructures.some(type =>
       type !== 'PTF' && TYPES_STRUCTURE_PNVB.some(t => t.value === type && t.peutCreerProjets)
     );
   }
@@ -296,10 +293,10 @@ export interface InscriptionPartenaire {
   telephone: string;
   adresse: string;
   personneContactNom: string;
-  personneContactEmail: string; // NOUVEAU CHAMP
+  personneContactEmail: string;
   personneContactTelephone: string;
   personneContactFonction: string;
-  typeStructures: TypeStructurePNVB[];  // Maintenant un tableau
+  typeStructures: TypeStructurePNVB[];
   domaineActivite: string;
   description: string;
   siteWeb?: string;
@@ -414,3 +411,4 @@ export interface PartenaireGlobalStats {
     totalMixtes: number;
   };
 }
+

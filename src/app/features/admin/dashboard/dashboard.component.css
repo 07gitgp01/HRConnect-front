@@ -751,3 +751,51 @@ button:focus-visible {
     }
   }
 }
+
+/* À ajouter dans le fichier CSS */
+
+.badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.days-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+.days-left.urgent {
+  color: #d32f2f;
+  font-weight: 600;
+}
+
+.days-left mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.urgence-rouge {
+  color: #d32f2f;
+  font-weight: 700;
+}
+
+.urgence-orange {
+  color: #ed6c02;
+  font-weight: 600;
+}
+
+.urgence-jaune {
+  color: #9e6b0b;
+}

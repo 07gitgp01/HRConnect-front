@@ -1,3 +1,5 @@
+<!-- src/app/features/candidats/candidat-dashboard/dashboard.component.html -->
+
 <div class="candidat-dashboard" *ngIf="user">
   <!-- En-tête personnalisée -->
   <div class="header-section">
@@ -74,6 +76,7 @@
             <mat-icon class="notification-icon">
               {{ notif.type === 'info' ? 'info' : 
                  notif.type === 'success' ? 'check_circle' : 
+                 notif.type === 'error' ? 'error' :
                  'warning' }}
             </mat-icon>
             <div class="notification-content">
@@ -87,7 +90,7 @@
   </div>
 
   <div class="content-section">
-    <!-- Mes Candidatures Récentes -->
+    <!-- Mes Candidatures Récentes (LIMITÉ À 3) -->
     <div class="candidatures-column">
       <mat-card class="content-card">
         <mat-card-header>
@@ -108,13 +111,10 @@
             <mat-icon class="empty-icon">inbox</mat-icon>
             <h3>Aucune candidature pour le moment</h3>
             <p>Découvrez les missions disponibles et postulez !</p>
-            <!-- <button mat-raised-button color="primary" (click)="voirTousProjets()">
-              <mat-icon>search</mat-icon>
-              Découvrir les missions
-            </button> -->
           </div>
 
-          <div *ngFor="let candidature of mesCandidatures" class="candidature-item">
+          <!-- ✅ Affichage limité à 3 candidatures -->
+          <div *ngFor="let candidature of candidaturesAffichees" class="candidature-item">
             <div class="candidature-header">
               <h4 class="poste-title">{{ candidature.poste_vise }}</h4>
               <span [class]="'statut-badge ' + getStatutBadgeClass(candidature.statut)">
@@ -140,9 +140,9 @@
 
             <div class="candidature-actions">
               <button mat-stroked-button color="primary" 
-                      [routerLink]="['/features/candidats/details/', candidature.projectId]">
-                <mat-icon>visibility</mat-icon>
-                Voir le projet
+                      (click)="voirDetailsCandidature(candidature.id)">
+                <mat-icon>info</mat-icon>
+                Détails de ma candidature
               </button>
               
               <button *ngIf="candidature.statut === 'en_attente'" 
@@ -154,8 +154,9 @@
             </div>
           </div>
 
+          <!-- ✅ UN SEUL BOUTON : Voir toutes mes candidatures -->
           <div *ngIf="mesCandidatures.length > 0" class="view-all-section">
-            <button mat-button color="primary" (click)="voirToutesCandidatures()">
+            <button mat-raised-button color="primary" (click)="voirToutesCandidatures()">
               <mat-icon>list</mat-icon>
               Voir toutes mes candidatures
             </button>
@@ -164,7 +165,7 @@
       </mat-card>
     </div>
 
-    <!-- Missions Disponibles -->
+    <!-- Missions Disponibles (LIMITÉ À 3) -->
     <div class="projets-column">
       <mat-card class="content-card">
         <mat-card-header>
@@ -182,29 +183,25 @@
             <p>Revenez plus tard pour découvrir de nouvelles opportunités.</p>
           </div>
 
-          <div *ngFor="let projet of projetsDisponibles" class="projet-item">
+          <!-- ✅ Affichage limité à 3 projets -->
+          <div *ngFor="let projet of projetsAffiches" class="projet-item">
             <div class="projet-header">
-              <!-- CORRIGÉ : projet.title → projet.titre -->
               <h4 class="projet-title">{{ projet.titre }}</h4>
-              <!-- CORRIGÉ : projet.status → projet.statutProjet -->
               <span class="projet-statut" *ngIf="projet.statutProjet">
                 {{ getProjectStatusLabel(projet.statutProjet) }}
               </span>
             </div>
 
-            <!-- CORRIGÉ : projet.description → projet.descriptionCourte -->
             <p class="projet-description">
               {{ (projet.descriptionCourte || 'Aucune description disponible') | slice:0:120 }}...
             </p>
 
             <div class="projet-details">
-              <!-- CORRIGÉ : projet.region → projet.regionAffectation -->
               <div class="projet-region" *ngIf="projet.regionAffectation">
                 <mat-icon>location_on</mat-icon>
                 {{ projet.regionAffectation }}
               </div>
               
-              <!-- CORRIGÉ : projet.neededVolunteers → projet.nombreVolontairesRequis -->
               <div class="projet-volontaires" *ngIf="projet.nombreVolontairesRequis">
                 <mat-icon>people</mat-icon>
                 {{ projet.nombreVolontairesRequis }} places
@@ -212,7 +209,20 @@
             </div>
 
             <div class="projet-actions">
-              <button mat-raised-button color="primary"
+              <!-- ✅ SI DÉJÀ POSTULÉ -->
+              <button *ngIf="estDejaPostule(projet.id)" 
+                      mat-raised-button 
+                      color="accent"
+                      [routerLink]="['/features/candidats/mes-candidatures']"
+                      class="deja-postule-button">
+                <mat-icon>check_circle</mat-icon>
+                Déjà postulé
+              </button>
+              
+              <!-- ✅ SI NON POSTULÉ -->
+              <button *ngIf="!estDejaPostule(projet.id)" 
+                      mat-raised-button 
+                      color="primary"
                       (click)="postulerAuProjet(projet)">
                 <mat-icon>send</mat-icon>
                 Postuler
@@ -226,8 +236,9 @@
             </div>
           </div>
 
+          <!-- ✅ UN SEUL BOUTON : Explorer toutes les missions -->
           <div *ngIf="projetsDisponibles.length > 0" class="view-all-section">
-            <button mat-button color="primary" (click)="voirTousProjets()">
+            <button mat-raised-button color="primary" (click)="voirTousProjets()">
               <mat-icon>explore</mat-icon>
               Explorer toutes les missions
             </button>

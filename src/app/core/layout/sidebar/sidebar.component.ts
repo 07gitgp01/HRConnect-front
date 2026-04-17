@@ -15,6 +15,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatChipsModule } from '@angular/material/chips';
 
+// ✅ ANIMATIONS ANGULAR
+import { trigger, state, style, transition, animate } from '@angular/animations';
+
 @Component({
   selector: 'app-sidebar',
   standalone: true,
@@ -29,14 +32,36 @@ import { MatChipsModule } from '@angular/material/chips';
     AsyncPipe
   ],
   templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.scss']
+  styleUrls: ['./sidebar.component.scss'],
+
+  // ✅ ANIMATION ACCORDÉON
+  animations: [
+    trigger('expandCollapse', [
+      state('open', style({
+        height: '*',
+        opacity: 1,
+        overflow: 'hidden'
+      })),
+      state('closed', style({
+        height: '0px',
+        opacity: 0,
+        overflow: 'hidden'
+      })),
+      transition('open <=> closed', animate('250ms cubic-bezier(0.4, 0, 0.2, 1)')),
+    ]),
+  ],
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   currentUser$!: Observable<any>; 
   newMessagesCount$!: Observable<number>;
-  
-  private authService = inject(AuthService);
-  private contactService = inject(ContactService);
+  nouveauxRapportsCount$: Observable<number> = of(0);
+
+  // ✅ ÉTAT DES GROUPES ACCORDÉON
+  groupVolontairesOpen = false;
+  groupRapportsOpen = false;
+
+  private authService     = inject(AuthService);
+  private contactService  = inject(ContactService);
   private partenaireService = inject(PartenaireService);
   private permissionService = inject(PermissionService);
   private refreshSubscription?: Subscription;
@@ -50,22 +75,20 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Nettoyer les abonnements
     if (this.refreshSubscription) {
       this.refreshSubscription.unsubscribe();
     }
   }
 
-  /**
-   * Initialise les données utilisateur avec gestion des partenaires
-   */
+  // ============================================================================
+  // INITIALISATION
+  // ============================================================================
+
   private initializeUserData(): void {
     this.currentUser$ = this.authService.currentUser$.pipe(
       switchMap(user => {
-        if (!user) {
-          return of(null);
-        }
-        
+        if (!user) return of(null);
+
         if (user.role === 'partenaire' && user.id) {
           return this.loadPartenaireData(user.id).pipe(
             map(partenaireData => ({
@@ -74,20 +97,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
             }))
           );
         }
-        
+
         return of(user);
       })
     );
   }
 
-  /**
-   * Initialise la surveillance des messages pour l'admin
-   */
   private initializeMessageMonitoring(): void {
     this.newMessagesCount$ = this.currentUser$.pipe(
       switchMap(user => {
         if (user?.role === 'admin') {
-          // Rafraîchir toutes les 30 secondes + au chargement initial
           return timer(0, 30000).pipe(
             switchMap(() => this.getNewMessagesCount())
           );
@@ -97,30 +116,20 @@ export class SidebarComponent implements OnInit, OnDestroy {
     );
   }
 
-  /**
-   * Charge les données du partenaire avec gestion d'erreur
-   */
   private loadPartenaireData(partenaireId: string | number): Observable<any> {
     return this.partenaireService.getById(partenaireId).pipe(
       map(partenaire => {
         console.log('📋 Données partenaire chargées pour sidebar:', partenaire);
-        return partenaire;
-      }),
-      // En cas d'erreur, retourner un objet vide pour éviter de casser l'interface
-      map(partenaire => partenaire || {})
+        return partenaire || {};
+      })
     );
   }
 
-  /**
-   * Récupère le nombre de nouveaux messages non lus
-   */
   private getNewMessagesCount(): Observable<number> {
     return this.contactService.getMessagesStats().pipe(
       map(stats => stats.new || 0),
       map(count => {
-        if (count > 0) {
-          console.log(`📨 ${count} nouveau(x) message(s) non lu(s)`);
-        }
+        if (count > 0) console.log(`📨 ${count} nouveau(x) message(s) non lu(s)`);
         return count;
       })
     );
@@ -130,131 +139,142 @@ export class SidebarComponent implements OnInit, OnDestroy {
   // MÉTHODES UTILITAIRES POUR LE TEMPLATE
   // ============================================================================
 
-  /**
-   * Convertit le rôle technique en libellé lisible
-   */
   getRoleLabel(role: string): string {
     const roleLabels: { [key: string]: string } = {
-      'admin': 'Administrateur',
-      'candidat': 'Candidat',
+      'admin':      'Administrateur',
+      'candidat':   'Candidat',
       'partenaire': 'Partenaire'
     };
     return roleLabels[role] || role;
   }
 
-  /**
-   * Affiche les types de structures du partenaire
-   */
   getPartenaireTypesDisplay(partenaireData: any): string {
     if (!partenaireData?.typeStructures || !Array.isArray(partenaireData.typeStructures)) {
       return 'Partenaire';
     }
-    
+
     const typeLabels: { [key: string]: string } = {
       'Public-Administration': 'Admin. Publique',
-      'Public-Collectivite': 'Collectivité',
-      'SocieteCivile': 'Société Civile',
-      'SecteurPrive': 'Secteur Privé',
-      'PTF': 'PTF',
+      'Public-Collectivite':   'Collectivité',
+      'SocieteCivile':         'Société Civile',
+      'SecteurPrive':          'Secteur Privé',
+      'PTF':                   'PTF',
       'InstitutionAcademique': 'Institution Acad.'
     };
-    
+
     return partenaireData.typeStructures
       .map((type: string) => typeLabels[type] || type)
       .join(', ');
   }
 
+  // ============================================================================
+  // PERMISSIONS — dérivées du typeStructures si champ permissions absent en base
+  // ============================================================================
+
   /**
-   * Vérifie si l'utilisateur partenaire peut créer des projets
+   * ✅ CORRIGÉ : lit d'abord permissions en base, sinon dérive du typeStructures.
+   * Structure d'accueil (tout sauf PTF) → peut créer des projets.
    */
   peutCreerProjets(user: any): boolean {
-    if (user?.role !== 'partenaire' || !user.partenaireData) {
-      return false;
+    if (user?.role !== 'partenaire' || !user.partenaireData) return false;
+
+    const permissions = user.partenaireData.permissions;
+    if (permissions?.peutCreerProjets !== undefined) {
+      return permissions.peutCreerProjets === true;
     }
-    return this.permissionService.peutCreerProjets(user.partenaireData);
+
+    // Fallback : dériver du typeStructures
+    const types: string[] = user.partenaireData.typeStructures || [];
+    return types.length > 0 && types.some((t: string) => t !== 'PTF');
   }
 
   /**
-   * Vérifie si l'utilisateur partenaire peut gérer les volontaires
+   * ✅ CORRIGÉ : Structure d'accueil → peut gérer les volontaires.
    */
   peutGererVolontaires(user: any): boolean {
-    if (user?.role !== 'partenaire' || !user.partenaireData) {
-      return false;
+    if (user?.role !== 'partenaire' || !user.partenaireData) return false;
+
+    const permissions = user.partenaireData.permissions;
+    if (permissions?.peutGererVolontaires !== undefined) {
+      return permissions.peutGererVolontaires === true;
     }
-    return this.permissionService.peutGererVolontaires(user.partenaireData);
+
+    // Fallback : toutes les structures sauf PTF pur
+    const types: string[] = user.partenaireData.typeStructures || [];
+    return types.length > 0 && types.some((t: string) => t !== 'PTF');
   }
 
   /**
-   * Vérifie si l'utilisateur partenaire peut voir les rapports
+   * ✅ CORRIGÉ : PTF → peut voir les rapports.
    */
   peutVoirRapports(user: any): boolean {
-    if (user?.role !== 'partenaire' || !user.partenaireData) {
-      return false;
+    if (user?.role !== 'partenaire' || !user.partenaireData) return false;
+
+    const permissions = user.partenaireData.permissions;
+    if (permissions?.peutVoirRapports !== undefined) {
+      return permissions.peutVoirRapports === true;
     }
-    return this.permissionService.peutVoirRapports(user.partenaireData);
+
+    // Fallback : uniquement PTF
+    const types: string[] = user.partenaireData.typeStructures || [];
+    return types.includes('PTF');
   }
 
   /**
-   * Vérifie si l'utilisateur a accès à la zone PTF
+   * ✅ CORRIGÉ : PTF → accès zone PTF.
    */
   aAccesZonePTF(user: any): boolean {
-    if (user?.role !== 'partenaire' || !user.partenaireData) {
-      return false;
+    if (user?.role !== 'partenaire' || !user.partenaireData) return false;
+
+    const permissions = user.partenaireData.permissions;
+    if (permissions?.accesZonePTF !== undefined) {
+      return permissions.accesZonePTF === true;
     }
-    return this.permissionService.aAccesZonePTF(user.partenaireData);
+
+    // Fallback : uniquement PTF
+    const types: string[] = user.partenaireData.typeStructures || [];
+    return types.includes('PTF');
   }
 
   /**
-   * Vérifie si l'utilisateur est un PTF
+   * ✅ CORRIGÉ : vérifie si le partenaire est de type PTF.
    */
   estPTF(user: any): boolean {
-    if (user?.role !== 'partenaire' || !user.partenaireData) {
-      return false;
-    }
-    return this.permissionService.estPTF(user.partenaireData);
+    if (user?.role !== 'partenaire' || !user.partenaireData) return false;
+    const types: string[] = user.partenaireData.typeStructures || [];
+    return types.includes('PTF');
   }
 
   /**
-   * Vérifie si l'utilisateur est une Structure d'Accueil
+   * ✅ CORRIGÉ : structure d'accueil = partenaire avec au moins un type non-PTF.
    */
   estStructureAccueil(user: any): boolean {
-    if (user?.role !== 'partenaire' || !user.partenaireData) {
-      return false;
-    }
-    return this.permissionService.estStructureAccueil(user.partenaireData);
+    if (user?.role !== 'partenaire' || !user.partenaireData) return false;
+    const types: string[] = user.partenaireData.typeStructures || [];
+    return types.length > 0 && types.some((t: string) => t !== 'PTF');
   }
 
   /**
-   * Vérifie si l'utilisateur a plusieurs types
+   * Vérifie si le partenaire a plusieurs types de structure.
    */
   aPlusieursTypes(user: any): boolean {
-    if (user?.role !== 'partenaire' || !user.partenaireData?.typeStructures) {
-      return false;
-    }
+    if (user?.role !== 'partenaire' || !user.partenaireData?.typeStructures) return false;
     return user.partenaireData.typeStructures.length > 1;
   }
 
   /**
-   * Déconnecte l'utilisateur
+   * Vérifie s'il y a de nouveaux rapports depuis la dernière visite.
+   */
+  hasNewRapports(): boolean {
+    const lastVisit = localStorage.getItem('lastRapportsVisit');
+    if (!lastVisit) return true;
+    return false;
+  }
+
+  /**
+   * Déconnecte l'utilisateur.
    */
   logout(): void {
     this.authService.logout();
   }
-  // Pour le badge de nouveaux rapports (optionnel)
-nouveauxRapportsCount$: Observable<number> = of(0);
-
-// Ou pour un indicateur simple
-hasNewRapports(): boolean {
-  // Logique pour vérifier s'il y a de nouveaux rapports
-  // Par exemple, stocker dans localStorage la date de dernière consultation
-  const lastVisit = localStorage.getItem('lastRapportsVisit');
-  if (!lastVisit) return true;
-  
-  const lastVisitDate = new Date(lastVisit);
-  const today = new Date();
-  
-  // Vérifier s'il y a de nouveaux rapports depuis la dernière visite
-  // Cela dépend de votre logique métier
-  return false;
-}
 }

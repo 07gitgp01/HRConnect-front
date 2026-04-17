@@ -1,0 +1,138 @@
+<!-- src/app/features/admin/message-detail-dialog/message-detail-dialog.component.html -->
+<div class="message-detail-dialog">
+  <h2 mat-dialog-title>Détails du Message</h2>
+
+  <mat-dialog-content class="dialog-content">
+    <!-- Informations du message -->
+    <div class="message-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>email</mat-icon>
+            Message de {{ data.message.fullName }}
+          </mat-card-title>
+          <mat-card-subtitle>
+            Reçu le {{ formatDate(data.message.createdAt) }}
+          </mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div class="message-grid">
+            <!-- Informations expéditeur -->
+            <div class="info-group">
+              <h4>Expéditeur</h4>
+              <div class="info-item">
+                <mat-icon>person</mat-icon>
+                <span><strong>Nom:</strong> {{ data.message.fullName }}</span>
+              </div>
+              <div class="info-item">
+                <mat-icon>email</mat-icon>
+                <span><strong>Email:</strong> {{ data.message.email }}</span>
+              </div>
+            </div>
+
+            <!-- Métadonnées -->
+            <div class="info-group">
+              <h4>Informations</h4>
+              <div class="info-item">
+                <mat-icon>label</mat-icon>
+                <span><strong>Sujet:</strong> {{ getSubjectLabel(data.message.subject) }}</span>
+              </div>
+              <div class="info-item">
+                <mat-icon>flag</mat-icon>
+                <span><strong>Priorité:</strong> {{ getPriorityLabel(data.message.priority) }}</span>
+              </div>
+              <div class="info-item">
+                <mat-icon>info</mat-icon>
+                <span><strong>Statut:</strong> {{ getStatusLabel(data.message.status) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Message -->
+          <div class="message-content">
+            <h4>Message</h4>
+            <div class="message-text">
+              {{ data.message.message }}
+            </div>
+          </div>
+
+          <!-- Dates importantes -->
+          <mat-divider></mat-divider>
+          <div class="dates-section">
+            <div class="date-item" *ngIf="data.message.readAt">
+              <mat-icon>visibility</mat-icon>
+              <span>Lu le: {{ formatDate(data.message.readAt) }}</span>
+            </div>
+            <div class="date-item" *ngIf="data.message.respondedAt">
+              <mat-icon>reply</mat-icon>
+              <span>Répondu le: {{ formatDate(data.message.respondedAt) }}</span>
+            </div>
+            <div class="date-item">
+              <mat-icon>update</mat-icon>
+              <span>Dernière modification: {{ formatDate(data.message.updatedAt) }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Formulaire de gestion -->
+    <div class="management-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>settings</mat-icon>
+            Gestion du Message
+          </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <form [formGroup]="messageForm" class="management-form">
+            <!-- Statut -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Statut</mat-label>
+              <mat-select formControlName="status">
+                <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+                  {{ option.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matSuffix>info</mat-icon>
+            </mat-form-field>
+
+            <!-- Priorité -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Priorité</mat-label>
+              <mat-select formControlName="priority">
+                <mat-option *ngFor="let option of priorityOptions" [value]="option.value">
+                  {{ option.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matSuffix>flag</mat-icon>
+            </mat-form-field>
+
+            <!-- Notes admin -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Notes Administratives</mat-label>
+              <textarea matInput formControlName="adminNotes" rows="4"
+                        placeholder="Ajoutez des notes internes sur ce message..."></textarea>
+              <mat-icon matSuffix>note</mat-icon>
+            </mat-form-field>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()" [disabled]="isSubmitting">
+      <mat-icon>cancel</mat-icon>
+      Annuler
+    </button>
+    <button mat-raised-button color="primary" (click)="onSave()" [disabled]="isSubmitting">
+      <mat-icon *ngIf="!isSubmitting">save</mat-icon>
+      <mat-spinner *ngIf="isSubmitting" diameter="20"></mat-spinner>
+      {{ isSubmitting ? 'Sauvegarde...' : 'Sauvegarder' }}
+    </button>
+  </mat-dialog-actions>
+</div>

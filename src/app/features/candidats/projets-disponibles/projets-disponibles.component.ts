@@ -1,3 +1,4 @@
+// src/app/features/candidats/projets-disponibles/projets-disponibles.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,10 +13,15 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
+import { forkJoin } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { Project, ProjectWorkflow } from '../../models/projects.model';
 import { ProjectService } from '../../services/service_projects/projects.service';
 import { CandidatureService } from '../../services/service_candi/candidature.service';
 import { AuthService } from '../../services/service_auth/auth.service';
+import { VolontaireService, calculerCompletionProfil } from '../../services/service_volont/volontaire.service';
+import { Volontaire } from '../../models/volontaire.model';
 
 @Component({
   selector: 'app-projets-disponibles',
@@ -54,16 +60,84 @@ export class ProjetsDisponiblesComponent implements OnInit {
   isLoading = false;
   hasError = false;
 
+  // Profil du volontaire
+  volontaire: Volontaire | null = null;
+  profilCompletion = 0;
+
+  // ✅ Set pour stocker les IDs (string | number)
+  projetsDejaPostules: Set<string> = new Set();
+
   constructor(
     private projectService: ProjectService,
     private candidatureService: CandidatureService,
     private authService: AuthService,
+    private volontaireService: VolontaireService,
     private router: Router,
     private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     this.chargerProjets();
+    this.chargerProfilVolontaire();
+    this.chargerProjetsDejaPostules();
+  }
+
+  /**
+   * ✅ CORRIGÉ: Normalisation des IDs en string pour comparaison
+   */
+  chargerProjetsDejaPostules(): void {
+    const user = this.authService.getCurrentUser();
+    
+    if (!user?.email) {
+      console.log('⚠️ Utilisateur non connecté');
+      return;
+    }
+
+    this.projectService.getProjetsPublic().subscribe({
+      next: (projets) => {
+        if (!projets || projets.length === 0) {
+          this.projetsDejaPostules = new Set();
+          return;
+        }
+
+        const verifications$ = projets.map(projet =>
+          this.candidatureService.emailDejaPostule(user.email, projet.id!).pipe(
+            map((dejaPostule: boolean) => {
+              if (!dejaPostule || !projet.id) return null;
+              // ✅ Normaliser en string
+              return String(projet.id);
+            })
+          )
+        );
+
+        forkJoin(verifications$).subscribe({
+          next: (resultats) => {
+            this.projetsDejaPostules = new Set(
+              resultats.filter((id): id is string => id !== null)
+            );
+            console.log(`✅ ${this.projetsDejaPostules.size} projet(s) déjà postulé(s):`, 
+              Array.from(this.projetsDejaPostules));
+          },
+          error: (err) => {
+            console.error('❌ Erreur lors des vérifications:', err);
+            this.projetsDejaPostules = new Set();
+          }
+        });
+      },
+      error: (err) => {
+        console.error('❌ Erreur chargement projets:', err);
+        this.projetsDejaPostules = new Set();
+      }
+    });
+  }
+
+  /**
+   * ✅ CORRIGÉ: Comparaison normalisée en string
+   */
+  estDejaPostule(projetId: number | string | undefined): boolean {
+    if (projetId === undefined || projetId === null) return false;
+    const idString = String(projetId);
+    return this.projetsDejaPostules.has(idString);
   }
 
   chargerProjets(): void {
@@ -77,7 +151,8 @@ export class ProjetsDisponiblesComponent implements OnInit {
         this.extraireFiltres(projets);
         this.isLoading = false;
         
-        console.log(`✅ ${projets.length} projets publics chargés (statut: actif)`);
+        console.log(`✅ ${projets.length} projets publics chargés:`, 
+          projets.map(p => ({ id: p.id, titre: p.titre })));
       },
       error: (error: any) => {
         console.error('❌ Erreur chargement projets:', error);
@@ -90,22 +165,39 @@ export class ProjetsDisponiblesComponent implements OnInit {
     });
   }
 
+  chargerProfilVolontaire(): void {
+    const volontaireId = this.authService.getVolontaireId();
+    
+    if (!volontaireId) {
+      console.log('⚠️ Aucun volontaireId trouvé');
+      return;
+    }
+
+    this.volontaireService.getVolontaire(volontaireId).subscribe({
+      next: (volontaire) => {
+        this.volontaire = volontaire;
+        this.profilCompletion = calculerCompletionProfil(volontaire);
+        console.log(`✅ Profil chargé - Completion: ${this.profilCompletion}%`);
+      },
+      error: (err) => {
+        console.error('❌ Erreur chargement profil:', err);
+      }
+    });
+  }
+
   private extraireFiltres(projets: Project[]): void {
-    // Régions
     const regionsFiltrees = projets
       .map(p => p.regionAffectation)
       .filter((r: string | undefined): r is string => !!r && r.trim() !== '');
     
     this.regions = [...new Set(regionsFiltrees)].sort();
 
-    // Domaines d'activité
     const domainesFiltres = projets
       .map(p => p.domaineActivite)
       .filter((d: string | undefined): d is string => !!d && d.trim() !== '');
     
     this.domaineActivites = [...new Set(domainesFiltres)].sort();
 
-    // Types de mission
     const typesMission = projets
       .map(p => p.type_mission)
       .filter((t): t is NonNullable<Project['type_mission']> => 
@@ -114,18 +206,11 @@ export class ProjetsDisponiblesComponent implements OnInit {
       .map(t => String(t));
 
     this.typeMissions = [...new Set(typesMission)].sort();
-
-    console.log('🔍 Filtres extraits:', {
-      regions: this.regions,
-      domaines: this.domaineActivites,
-      typesMission: this.typeMissions
-    });
   }
 
   appliquerFiltres(): void {
     let projetsFiltres = [...this.projets];
 
-    // Filtre recherche
     if (this.recherche.trim()) {
       const rechercheLower = this.recherche.toLowerCase();
       projetsFiltres = projetsFiltres.filter(projet =>
@@ -138,21 +223,18 @@ export class ProjetsDisponiblesComponent implements OnInit {
       );
     }
 
-    // Filtre région
     if (this.regionSelectionnee) {
       projetsFiltres = projetsFiltres.filter(projet =>
         projet.regionAffectation === this.regionSelectionnee
       );
     }
 
-    // Filtre domaine
     if (this.domaineSelectionne) {
       projetsFiltres = projetsFiltres.filter(projet =>
         projet.domaineActivite === this.domaineSelectionne
       );
     }
 
-    // Filtre type de mission
     if (this.typeMissionSelectionne) {
       projetsFiltres = projetsFiltres.filter(projet =>
         projet.type_mission === this.typeMissionSelectionne
@@ -160,8 +242,6 @@ export class ProjetsDisponiblesComponent implements OnInit {
     }
 
     this.projetsFiltres = projetsFiltres;
-    
-    console.log(`🔍 Filtres appliqués: ${this.projetsFiltres.length} projets sur ${this.projets.length}`);
   }
 
   reinitialiserFiltres(): void {
@@ -178,9 +258,6 @@ export class ProjetsDisponiblesComponent implements OnInit {
 
   // ==================== MÉTHODES UTILITAIRES ====================
 
-  /**
-   * ✅ AMÉLIORÉ: Gestion simplifiée des compétences
-   */
   getCompetencesText(competences: string[] | string | undefined): string {
     if (!competences) return 'Aucune compétence spécifiée';
     
@@ -254,17 +331,26 @@ export class ProjetsDisponiblesComponent implements OnInit {
   }
 
   /**
-   * ✅ CORRIGÉ: Redirection vers le formulaire de candidature
+   * ✅ CORRIGÉ: Meilleure gestion de l'ID du projet
    */
   postuler(projet: Project): void {
-    if (!projet.id) {
-      this.snackBar.open('Impossible de postuler à ce projet', 'Fermer', {
+    // ✅ DIAGNOSTIC: Log détaillé
+    console.log('🎯 Tentative de postuler:', { 
+      id: projet.id, 
+      titre: projet.titre,
+      typeId: typeof projet.id,
+      idNormalized: String(projet.id)
+    });
+
+    // ✅ CORRECTION: Vérification robuste
+    if (projet.id === undefined || projet.id === null || String(projet.id).trim() === '') {
+      console.error('❌ Projet.id invalide:', projet.id);
+      this.snackBar.open('Erreur : Projet non valide (ID manquant)', 'Fermer', {
         duration: 3000
       });
       return;
     }
 
-    // Vérifier si l'utilisateur est connecté
     const user = this.authService.getCurrentUser();
     
     if (!user) {
@@ -274,6 +360,15 @@ export class ProjetsDisponiblesComponent implements OnInit {
       this.router.navigate(['/login'], {
         queryParams: { returnUrl: `/features/candidats/postuler/${projet.id}` }
       });
+      return;
+    }
+
+    if (this.profilCompletion < 100) {
+      const message = `Votre profil est complété à ${this.profilCompletion}%.\n\nPour postuler, votre profil doit être complet à 100%.\n\nVoulez-vous le compléter maintenant ?`;
+      
+      if (confirm(message)) {
+        this.router.navigate(['/features/candidats/profil']);
+      }
       return;
     }
 
@@ -297,7 +392,6 @@ export class ProjetsDisponiblesComponent implements OnInit {
       return;
     }
 
-    // ✅ Vérifier si l'utilisateur a déjà postulé
     this.isLoading = true;
     
     this.candidatureService.emailDejaPostule(user.email, projet.id).subscribe({
@@ -311,14 +405,13 @@ export class ProjetsDisponiblesComponent implements OnInit {
           return;
         }
 
-        // Rediriger vers le formulaire complet de candidature
+        console.log('✅ Navigation vers formulaire de candidature:', projet.id);
         this.router.navigate(['/features/candidats/postuler', projet.id]);
       },
       error: (error) => {
         this.isLoading = false;
-        console.error('Erreur vérification candidature:', error);
-        
-        // En cas d'erreur, on redirige quand même vers le formulaire
+        console.error('❌ Erreur vérification candidature:', error);
+        // En cas d'erreur de vérification, on laisse passer quand même
         this.router.navigate(['/features/candidats/postuler', projet.id]);
       }
     });

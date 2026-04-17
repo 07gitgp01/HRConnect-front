@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
-// Angular Material imports
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -41,6 +40,9 @@ import { VolontaireService } from '../../services/service_volont/volontaire.serv
   styleUrls: ['./candidature-candi-form.component.css']
 })
 export class CandidatureFormCandidatComponent implements OnInit {
+
+  // ✅ projectId: '' (string vide) — compatible avec number | string du modèle
+  // NE PAS mettre 0 ici : 0 est falsy et casse hasValidProjectId()
   candidature: Candidature = {
     prenom: '',
     nom: '',
@@ -49,7 +51,7 @@ export class CandidatureFormCandidatComponent implements OnInit {
     poste_vise: '',
     lettre_motivation: '',
     statut: 'en_attente',
-    projectId: 0,
+    projectId: '',   // ✅ string vide — sera remplacé par l'ID réel ("7f1a" ou 42)
     volontaireId: '',
     typePiece: 'CNIB',
     numeroPiece: ''
@@ -64,31 +66,35 @@ export class CandidatureFormCandidatComponent implements OnInit {
   volontaire: any;
   profilComplet = false;
 
-  // Variables pour le type de pièce
-  typePieceSelectionne: 'CNIB' | 'PASSEPORT' = 'CNIB';
-
   constructor(
     private candidatureService: CandidatureService,
     private projectService: ProjectService,
     private authService: AuthService,
     private volontaireService: VolontaireService,
     private route: ActivatedRoute,
-    public router: Router, // ✅ Changé en public pour le template
+    public router: Router,
     private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     this.user = this.authService.getCurrentUser();
     if (!this.user) {
-      this.router.navigate(['/login'], { 
-        queryParams: { returnUrl: this.router.url } 
-      });
+      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
       return;
     }
 
     this.loadProjet();
     this.preRemplirFormulaire();
     this.verifierProfilComplet();
+
+    setTimeout(() => {
+      console.log('📋 État formulaire:', {
+        projectId:    this.candidature.projectId,
+        volontaireId: this.candidature.volontaireId,
+        profilComplet: this.profilComplet,
+        isFormValid:  this.isFormValid()
+      });
+    }, 1500);
   }
 
   loadProjet(): void {
@@ -103,12 +109,17 @@ export class CandidatureFormCandidatComponent implements OnInit {
     this.projectService.getProject(projetId).subscribe({
       next: (projet) => {
         this.projet = projet;
-        // Conversion sécurisée de l'ID du projet
-        if (projet.id) {
-          this.candidature.projectId = typeof projet.id === 'string' ? parseInt(projet.id, 10) : projet.id;
-        }
+
+        // ✅ FIX PRINCIPAL : on garde l'ID tel quel — string hex "7f1a" ou number.
+        // Pas de parseInt() : le modèle accepte number | string, pas besoin de convertir.
+        // Fallback sur projetId (depuis l'URL) si projet.id est undefined.
+        this.candidature.projectId = projet.id ?? projetId;
+
         this.candidature.poste_vise = projet.titre || '';
         this.loadingProjet = false;
+
+        console.log('✅ Projet chargé — projectId:', this.candidature.projectId,
+                    '(type:', typeof this.candidature.projectId, ')');
       },
       error: (err) => {
         console.error('Erreur chargement projet', err);
@@ -121,67 +132,47 @@ export class CandidatureFormCandidatComponent implements OnInit {
 
   preRemplirFormulaire(): void {
     if (this.user) {
-      this.candidature.prenom = this.user.prenom || '';
-      this.candidature.nom = this.user.nom || '';
-      this.candidature.email = this.user.email || '';
-      this.candidature.telephone = this.user.telephone || '';
+      this.candidature.prenom       = this.user.prenom      || '';
+      this.candidature.nom          = this.user.nom         || '';
+      this.candidature.email        = this.user.email       || '';
+      this.candidature.telephone    = this.user.telephone   || '';
       this.candidature.volontaireId = this.user.id || this.user.userId || '';
+      this.candidature.typePiece    = this.user.typePiece   || 'CNIB';
+      this.candidature.numeroPiece  = this.user.numeroPiece || '';
 
-      // Charger les informations du volontaire pour pré-remplir le type de pièce
-      this.loadVolontaireData();
-    }
-  }
-
-  private loadVolontaireData(): void {
-    const volontaireId = this.authService.getVolontaireId();
-    if (volontaireId) {
-      this.volontaireService.getVolontaire(volontaireId).subscribe({
-        next: (volontaire) => {
-          this.volontaire = volontaire;
-          // Pré-remplir le type de pièce et numéro si disponibles
-          if (volontaire.typePiece) {
-            this.candidature.typePiece = volontaire.typePiece;
-            this.typePieceSelectionne = volontaire.typePiece;
-          }
-          if (volontaire.numeroPiece) {
-            this.candidature.numeroPiece = volontaire.numeroPiece;
-          }
-        },
-        error: (error) => {
-          console.error('Erreur chargement volontaire:', error);
-        }
+      console.log('✅ Pré-remplissage depuis User:', {
+        volontaireId: this.candidature.volontaireId,
+        typePiece:    this.candidature.typePiece,
+        numeroPiece:  this.candidature.numeroPiece
       });
     }
   }
 
-  // NOUVELLE MÉTHODE : Vérifier si le profil est complet
   private verifierProfilComplet(): void {
     const volontaireId = this.authService.getVolontaireId();
     if (volontaireId) {
       this.volontaireService.getVolontaire(volontaireId).subscribe({
         next: (volontaire) => {
+          this.volontaire = volontaire;
           this.profilComplet = this.isProfilComplet(volontaire);
+
           if (!this.profilComplet) {
             this.snackBar.open(
-              'Votre profil doit être complet à 100% pour pouvoir postuler. Veuillez compléter votre profil d\'abord.', 
-              'Compléter mon profil', 
+              'Votre profil doit être complet à 100% pour pouvoir postuler. Veuillez compléter votre profil d\'abord.',
+              'Compléter mon profil',
               { duration: 10000 }
             ).onAction().subscribe(() => {
               this.router.navigate(['/features/candidats/profil']);
             });
           }
         },
-        error: (error) => {
-          console.error('Erreur vérification profil:', error);
-        }
+        error: (err) => console.error('Erreur vérification profil:', err)
       });
     }
   }
 
-  // NOUVELLE MÉTHODE : Vérifier si le profil est complet
   private isProfilComplet(volontaire: any): boolean {
     if (!volontaire) return false;
-    
     const champsObligatoires = [
       volontaire.adresseResidence,
       volontaire.regionGeographique,
@@ -195,73 +186,35 @@ export class CandidatureFormCandidatComponent implements OnInit {
       volontaire.numeroPiece,
       volontaire.competences && volontaire.competences.length > 0
     ];
-
-    return champsObligatoires.every(champ => 
+    return champsObligatoires.every(champ =>
       champ && (typeof champ !== 'boolean' ? champ.toString().trim().length > 0 : champ)
     );
   }
 
-  // Méthodes pour le template
-  getLabelNumeroPiece(): string {
-    return this.candidature.typePiece === 'CNIB' ? 'NIP CNIB *' : 'Numéro de Passeport *';
-  }
-
-  getPlaceholderNumeroPiece(): string {
-    return this.candidature.typePiece === 'CNIB' ? 'Ex: 123456789012' : 'Ex: AB123456';
-  }
-
-  getNumeroPiecePattern(): string {
-    return this.candidature.typePiece === 'CNIB' ? '^[0-9]{12}$' : '^[A-Z0-9]{6,9}$';
-  }
-
-  getNumeroPieceErrorMessage(): string {
-    const numeroPiece = this.candidature.numeroPiece;
-    
-    if (!numeroPiece || numeroPiece.trim() === '') {
-      return this.candidature.typePiece === 'CNIB' ? 'Le NIP CNIB est requis' : 'Le numéro de passeport est requis';
-    }
-    
-    if (this.candidature.typePiece === 'CNIB') {
-      if (!/^[0-9]{12}$/.test(numeroPiece)) {
-        return 'Le NIP CNIB doit contenir exactement 12 chiffres';
-      }
-    } else {
-      if (!/^[A-Z0-9]{6,9}$/.test(numeroPiece)) {
-        return 'Le numéro de passeport doit contenir 6 à 9 caractères (lettres majuscules et chiffres)';
-      }
-    }
-    
-    return '';
-  }
-
   onFileSelected(event: any): void {
     const file = event.target.files[0];
-    if (file) {
-      if (file.type === 'application/pdf') {
-        if (file.size > 5 * 1024 * 1024) {
-          this.snackBar.open('Le fichier est trop volumineux (max 5MB)', 'Fermer', { duration: 3000 });
-          return;
-        }
-        this.selectedFile = file;
-        this.filePreview = file.name;
-      } else {
-        this.snackBar.open('Veuillez sélectionner un fichier PDF uniquement', 'Fermer', { duration: 3000 });
-        this.selectedFile = null;
-        this.filePreview = null;
-      }
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      this.snackBar.open('Veuillez sélectionner un fichier PDF uniquement', 'Fermer', { duration: 3000 });
+      this.selectedFile = null;
+      this.filePreview = null;
+      return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      this.snackBar.open('Le fichier est trop volumineux (max 5MB)', 'Fermer', { duration: 3000 });
+      return;
+    }
+    this.selectedFile = file;
+    this.filePreview = file.name;
   }
 
   onSubmit(): void {
-    // Vérification du profil complet
     if (!this.profilComplet) {
       this.snackBar.open(
-        'Votre profil doit être complet à 100% pour pouvoir postuler. Veuillez compléter votre profil d\'abord.', 
-        'Compléter mon profil', 
+        'Votre profil doit être complet à 100% pour pouvoir postuler.',
+        'Compléter mon profil',
         { duration: 10000 }
-      ).onAction().subscribe(() => {
-        this.router.navigate(['/features/candidats/profil']);
-      });
+      ).onAction().subscribe(() => this.router.navigate(['/features/candidats/profil']));
       return;
     }
 
@@ -270,55 +223,36 @@ export class CandidatureFormCandidatComponent implements OnInit {
       return;
     }
 
-    // Validation des champs obligatoires
-    if (!this.candidature.prenom || !this.candidature.nom || !this.candidature.email || !this.candidature.poste_vise) {
+    if (!this.candidature.prenom || !this.candidature.nom ||
+        !this.candidature.email  || !this.candidature.poste_vise) {
       this.snackBar.open('Veuillez remplir tous les champs obligatoires', 'Fermer', { duration: 3000 });
       return;
     }
 
-    // Validation du type de pièce et numéro
-    if (!this.candidature.typePiece || !this.candidature.numeroPiece || this.candidature.numeroPiece.trim() === '') {
-      this.snackBar.open('Veuillez renseigner votre pièce d\'identité', 'Fermer', { duration: 3000 });
-      return;
-    }
-
-    // Validation spécifique selon le type de pièce
-    if (this.candidature.typePiece === 'CNIB' && !/^[0-9]{12}$/.test(this.candidature.numeroPiece)) {
-      this.snackBar.open('Le NIP CNIB doit contenir exactement 12 chiffres', 'Fermer', { duration: 3000 });
-      return;
-    }
-
-    if (this.candidature.typePiece === 'PASSEPORT' && !/^[A-Z0-9]{6,9}$/.test(this.candidature.numeroPiece)) {
-      this.snackBar.open('Le numéro de passeport doit contenir 6 à 9 caractères alphanumériques', 'Fermer', { duration: 3000 });
-      return;
-    }
-
-    // Validation de l'ID du volontaire
-    if (!this.candidature.volontaireId || this.candidature.volontaireId.toString().trim() === '') {
+    if (!this.candidature.volontaireId ||
+        this.candidature.volontaireId.toString().trim() === '') {
       this.snackBar.open('Erreur: Identifiant volontaire manquant', 'Fermer', { duration: 3000 });
       return;
     }
 
-    // Validation de l'ID du projet
-    if (!this.candidature.projectId || this.candidature.projectId === 0) {
+    if (!this.hasValidProjectId()) {
       this.snackBar.open('Erreur: Projet non valide', 'Fermer', { duration: 3000 });
       return;
     }
 
     this.loading = true;
-
-    // Formater les compétences si nécessaire
     this.formatCompetences();
 
-    // Préparer la candidature pour l'envoi
     const candidatureASoumettre: Candidature = {
       ...this.candidature,
-      projectId: this.candidature.projectId,
-      volontaireId: this.candidature.volontaireId,
       statut: 'en_attente' as const
     };
 
-    // Gérer l'upload du fichier si présent
+    console.log('📤 Soumission candidature:', {
+      projectId:    candidatureASoumettre.projectId,
+      volontaireId: candidatureASoumettre.volontaireId
+    });
+
     if (this.selectedFile) {
       this.uploadCVEtSoumettre(candidatureASoumettre);
     } else {
@@ -327,45 +261,46 @@ export class CandidatureFormCandidatComponent implements OnInit {
   }
 
   /**
-   * Upload le CV puis soumet la candidature
+   * ✅ FIX : valide projectId qu'il soit string hex ("7f1a") ou number (42).
+   * - Exclut string vide '', '0', 'NaN', null, undefined
+   * - Exclut number 0 et NaN
    */
+  private hasValidProjectId(): boolean {
+    const id = this.candidature.projectId;
+    if (id === null || id === undefined) return false;
+    if (typeof id === 'number') return !isNaN(id) && id > 0;
+    // string
+    const s = id.toString().trim();
+    return s !== '' && s !== '0' && s !== 'NaN';
+  }
+
   private uploadCVEtSoumettre(candidature: Candidature): void {
-    // Créer d'abord la candidature sans le CV
     this.candidatureService.create(candidature).subscribe({
       next: (candidatureCreee) => {
-        // Puis uploader le CV
         if (this.selectedFile && candidatureCreee.id) {
           this.candidatureService.uploadCV(candidatureCreee.id, this.selectedFile).subscribe({
             next: (response) => {
-              // Mettre à jour la candidature avec l'URL du CV
-              const candidatureAvecCV = {
-                ...candidatureCreee,
-                cv_url: response.cv_url
-              };
-              
-              this.candidatureService.update(candidatureCreee.id!, candidatureAvecCV).subscribe({
+              const avecCV = { ...candidatureCreee, cv_url: response.cv_url };
+              this.candidatureService.update(candidatureCreee.id!, avecCV).subscribe({
                 next: () => {
                   this.snackBar.open('Votre candidature a été envoyée avec succès !', 'Fermer', { duration: 5000 });
                   this.router.navigate(['/features/candidats/mes-candidatures']);
                   this.loading = false;
                 },
-                error: (err) => {
-                  console.error('Erreur mise à jour candidature avec CV', err);
+                error: () => {
                   this.snackBar.open('Candidature envoyée mais erreur avec le CV', 'Fermer', { duration: 3000 });
                   this.router.navigate(['/features/candidats/mes-candidatures']);
                   this.loading = false;
                 }
               });
             },
-            error: (err) => {
-              console.error('Erreur upload CV', err);
+            error: () => {
               this.snackBar.open('Candidature envoyée mais erreur avec le CV', 'Fermer', { duration: 3000 });
               this.router.navigate(['/features/candidats/mes-candidatures']);
               this.loading = false;
             }
           });
         } else {
-          // Pas de fichier, candidature créée avec succès
           this.snackBar.open('Votre candidature a été envoyée avec succès !', 'Fermer', { duration: 5000 });
           this.router.navigate(['/features/candidats/mes-candidatures']);
           this.loading = false;
@@ -379,9 +314,6 @@ export class CandidatureFormCandidatComponent implements OnInit {
     });
   }
 
-  /**
-   * Soumet la candidature sans upload de CV
-   */
   private soumettreCandidature(candidature: Candidature): void {
     this.candidatureService.create(candidature).subscribe({
       next: () => {
@@ -401,8 +333,8 @@ export class CandidatureFormCandidatComponent implements OnInit {
     if (this.candidature.competences && typeof this.candidature.competences === 'string') {
       this.candidature.competences = (this.candidature.competences as string)
         .split(',')
-        .map(comp => comp.trim())
-        .filter(comp => comp.length > 0);
+        .map(c => c.trim())
+        .filter(c => c.length > 0);
     }
   }
 
@@ -410,63 +342,35 @@ export class CandidatureFormCandidatComponent implements OnInit {
     this.router.navigate(['/features/candidats/projets']);
   }
 
-  /**
-   * Vérifie si le formulaire est valide
-   */
   isFormValid(): boolean {
-    // Vérifier d'abord si le profil est complet
-    if (!this.profilComplet) {
-      return false;
-    }
-
-    const numeroPieceValide = this.candidature.typePiece === 'CNIB' 
-      ? /^[0-9]{12}$/.test(this.candidature.numeroPiece)
-      : /^[A-Z0-9]{6,9}$/.test(this.candidature.numeroPiece);
-
+    if (!this.profilComplet) return false;
     return !!(
       this.candidature.prenom &&
       this.candidature.nom &&
       this.candidature.email &&
       this.candidature.poste_vise &&
-      this.candidature.projectId &&
-      this.candidature.projectId > 0 &&
-      this.candidature.typePiece &&
-      this.candidature.numeroPiece &&
-      numeroPieceValide
+      this.candidature.lettre_motivation &&
+      this.hasValidProjectId()
     );
   }
 
-  /**
-   * Supprime le fichier sélectionné
-   */
   supprimerFichier(): void {
     this.selectedFile = null;
     this.filePreview = null;
-    // Réinitialiser l'input file
     const fileInput = document.getElementById('cvFile') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
-  }
-
-  /**
-   * Gère le changement du type de pièce
-   */
-  onTypePieceChange(): void {
-    this.typePieceSelectionne = this.candidature.typePiece;
-    // Réinitialiser le numéro de pièce quand le type change
-    this.candidature.numeroPiece = '';
+    if (fileInput) fileInput.value = '';
   }
 
   getStatusLabel(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'soumis': 'Soumis',
-      'en_attente_validation': 'En attente',
-      'ouvert_aux_candidatures': 'Ouvert',
-      'en_cours': 'En cours',
-      'a_cloturer': 'À clôturer',
-      'cloture': 'Clôturé'
+    const map: { [key: string]: string } = {
+      'en_attente': 'En attente',
+      'actif':      'Actif',
+      'cloture':    'Clôturé'
     };
-    return statusMap[status] || status;
+    return map[status] || status;
+  }
+
+  getTypePieceLabel(): string {
+    return this.candidature.typePiece === 'CNIB' ? 'CNIB' : 'Passeport';
   }
 }

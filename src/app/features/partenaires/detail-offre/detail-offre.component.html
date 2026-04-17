@@ -1,4 +1,5 @@
 <!-- src/app/features/partenaires/detail-offre/detail-offre.component.html -->
+
 <div class="detail-offre-container">
   <!-- Header avec navigation -->
   <div class="container-header">
@@ -265,15 +266,39 @@
         </p>
       </div>
 
-      <!-- Volontaires affectés -->
+      <!-- Section Volontaires affectés (modifiée) -->
       <div class="card mb-4">
         <div class="card-header">
           <h5 class="mb-0">
-            <i class="fas fa-users me-2"></i> Volontaires affectés
+            <i class="fas fa-users me-2"></i> Volontaires de la mission
             <span class="badge bg-primary ms-2">{{ volontairesAffectes.length }}</span>
           </h5>
         </div>
         <div class="card-body">
+          
+          <!-- Statistiques des volontaires -->
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <div class="stat-card bg-light p-3 rounded text-center">
+                <div class="stat-value h3 mb-0">{{ statsVolontaires.actifs }}</div>
+                <div class="stat-label text-muted">En mission</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card bg-light p-3 rounded text-center">
+                <div class="stat-value h3 mb-0">{{ statsVolontaires.termines }}</div>
+                <div class="stat-label text-muted">Missions terminées</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card bg-light p-3 rounded text-center">
+                <div class="stat-value h3 mb-0">{{ statsVolontaires.total }}</div>
+                <div class="stat-label text-muted">Total</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Message si aucun volontaire -->
           <div *ngIf="volontairesAffectes.length === 0" class="text-center py-4">
             <i class="fas fa-users-slash fa-2x text-muted mb-3"></i>
             <p class="text-muted mb-0" *ngIf="offre.statutProjet === 'en_attente'">
@@ -281,43 +306,75 @@
             </p>
             <p class="text-muted mb-0" *ngIf="offre.statutProjet === 'actif'">
               Aucun volontaire n'a encore été affecté à votre projet.
-              Les volontaires sont affectés par l'administration après traitement des candidatures.
             </p>
             <p class="text-muted mb-0" *ngIf="offre.statutProjet === 'cloture'">
               Aucun volontaire n'a été affecté à ce projet.
             </p>
           </div>
           
+          <!-- Liste des volontaires (actifs ET terminés) -->
           <div *ngIf="volontairesAffectes.length > 0" class="table-responsive">
             <table class="table table-hover">
               <thead>
                 <tr>
-                  <th>Nom</th>
+                  <th>Volontaire</th>
                   <th>Email</th>
+                  <th>Rôle</th>
                   <th>Date d'affectation</th>
                   <th>Statut</th>
+                  <th *ngIf="estAdmin">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let affectation of volontairesAffectes">
+                <tr *ngFor="let affectation of volontairesAffectes" 
+                    [class.table-success]="affectation.statut === 'active'"
+                    [class.table-secondary]="affectation.statut === 'terminee'">
                   <td>
-                    <strong>{{ affectation.volontaire.prenom }} {{ affectation.volontaire.nom }}</strong>
+                    <strong>{{ affectation.volontaire?.prenom }} {{ affectation.volontaire?.nom }}</strong>
                   </td>
-                  <td>{{ affectation.volontaire.email }}</td>
+                  <td>{{ affectation.volontaire?.email }}</td>
+                  <td>{{ affectation.role || 'Volontaire' }}</td>
                   <td>{{ formatDate(affectation.dateAffectation) }}</td>
                   <td>
                     <span class="badge" [ngClass]="{
                       'bg-success': affectation.statut === 'active',
-                      'bg-warning': affectation.statut === 'pending',
-                      'bg-danger': affectation.statut === 'inactive'
+                      'bg-secondary': affectation.statut === 'terminee'
                     }">
-                      {{ affectation.statut === 'active' ? 'Actif' : 
-                         affectation.statut === 'pending' ? 'En attente' : 'Inactif' }}
+                      {{ affectation.statut === 'active' ? 'En mission' : 'Mission terminée' }}
                     </span>
+                  </td>
+                  <td *ngIf="estAdmin">
+                    <div class="btn-group btn-group-sm">
+                      <!-- Terminer la mission (seulement si active) -->
+                      <button *ngIf="affectation.statut === 'active'"
+                              class="btn btn-outline-success"
+                              (click)="terminerMission(affectation.id, affectation.volontaire?.prenom + ' ' + affectation.volontaire?.nom)"
+                              title="Terminer la mission">
+                        <i class="fas fa-check"></i>
+                      </button>
+                      
+                      <!-- Retirer le volontaire (seulement si pas déjà retiré) -->
+                      <button *ngIf="affectation.statut !== 'annulee'"
+                              class="btn btn-outline-danger"
+                              (click)="retirerVolontaire(affectation.id, affectation.volontaire?.prenom + ' ' + affectation.volontaire?.nom)"
+                              title="Retirer le volontaire">
+                        <i class="fas fa-user-slash"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- Note pour l'admin -->
+          <div *ngIf="estAdmin && volontairesAffectes.length > 0" class="alert alert-info mt-3">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Gestion des volontaires :</strong>
+            <ul class="mb-0 mt-1">
+              <li><span class="badge bg-success">En mission</span> : Volontaires actuellement en mission</li>
+              <li><span class="badge bg-secondary">Mission terminée</span> : Missions terminées (restent visibles)</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -343,7 +400,7 @@
             <div *ngFor="let candidature of candidatures.slice(0, 3)" class="col-md-4 mb-3">
               <div class="candidature-card">
                 <div class="candidature-header">
-                  <h6>{{ candidature.volontaire.prenom }} {{ candidature.volontaire.nom }}</h6>
+                  <h6>{{ candidature.volontaire?.prenom }} {{ candidature.volontaire?.nom }}</h6>
                   <span class="badge" [ngClass]="{
                     'bg-warning': candidature.statut === 'en_attente',
                     'bg-success': candidature.statut === 'acceptee',
@@ -419,18 +476,13 @@
               <tbody>
                 <tr *ngFor="let candidature of candidatures">
                   <td>
-                    <strong>{{ candidature.volontaire.prenom }} {{ candidature.volontaire.nom }}</strong>
+                    <strong>{{ candidature.volontaire?.prenom }} {{ candidature.volontaire?.nom }}</strong>
                   </td>
-                  <td>{{ candidature.volontaire.email }}</td>
+                  <td>{{ candidature.volontaire?.email }}</td>
                   <td>{{ formatDateTime(candidature.dateCandidature) }}</td>
                   <td>
                     <div *ngIf="candidature.message">
-                      <button class="btn btn-link btn-sm" 
-                              data-bs-toggle="popover" 
-                              [title]="candidature.volontaire.prenom + ' ' + candidature.volontaire.nom"
-                              [attr.data-bs-content]="candidature.message">
-                        Voir le message
-                      </button>
+                      <span>{{ candidature.message | slice:0:50 }}...</span>
                     </div>
                     <span *ngIf="!candidature.message" class="text-muted">Aucun message</span>
                   </td>
@@ -443,9 +495,6 @@
                       {{ candidature.statut === 'en_attente' ? 'En attente' : 
                          candidature.statut === 'acceptee' ? 'Acceptée' : 'Refusée' }}
                     </span>
-                    <div *ngIf="candidature.statut === 'en_attente'" class="text-muted small mt-1">
-                      <i class="fas fa-clock"></i> En attente
-                    </div>
                   </td>
                 </tr>
               </tbody>

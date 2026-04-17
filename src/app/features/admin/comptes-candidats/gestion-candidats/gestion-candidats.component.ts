@@ -1,11 +1,16 @@
-// src/app/features/admin/components/gestion-candidats/gestion-candidats.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+// src/app/features/admin/comptes/gestion-candidats/gestion-candidats.component.ts
+
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AdminCandidatService } from '../../../services/service_candidats/admin-candidat.service';
+import { SyncService } from '../../../../features/services/sync.service';
 import { User } from '../../../models/user.model';
 import { Volontaire } from '../../../models/volontaire.model';
 import { AuthService } from '../../../services/service_auth/auth.service';
-import { Subscription } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
+import { skip, distinctUntilChanged } from 'rxjs/operators';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 
 interface CandidatComplet {
   user: User;
@@ -18,206 +23,196 @@ interface CandidatComplet {
   styleUrls: ['./gestion-candidats.component.scss']
 })
 export class GestionCandidatsComponent implements OnInit, OnDestroy {
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+
   candidats: CandidatComplet[] = [];
   isLoading = false;
-  private routeSubscription?: Subscription;
-  
-  filtres = {
-    statut: '',
-    recherche: ''
-  };
+
+  filtres = { statut: '', recherche: '' };
+
+  // Pagination
+  pageSize = 10;
+  pageSizeOptions = [5, 10, 25, 50];
+  currentPage = 0;
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private adminCandidatService: AdminCandidatService,
+    private syncService: SyncService,
     private router: Router,
     private route: ActivatedRoute,
-    private authService: AuthService
+    private authService: AuthService,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
-    console.log('=== 🏠 GESTION CANDIDATS COMPOSANT INITIALISÉ ===');
-    
-    // 🔥 S'abonner aux changements de route pour détecter les retours
-    this.routeSubscription = this.route.url.subscribe(url => {
-      console.log('🔄 Changement de route détecté:', url);
+    this.chargerCandidats();
+
+    this.syncService.volontaires$.pipe(
+      skip(1),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      console.log('🔄 [GestionCandidats] volontaires$ → rechargement');
       this.chargerCandidats();
     });
-
-    this.chargerCandidats();
   }
 
   ngOnDestroy(): void {
-    this.routeSubscription?.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   chargerCandidats(): void {
     this.isLoading = true;
     this.adminCandidatService.getCandidatsAvecProfils().subscribe({
-      next: (candidats) => {
+      next: candidats => {
+        console.log('✅ [GestionCandidats] Candidats chargés:', candidats.length);
         this.candidats = candidats;
         this.isLoading = false;
-        console.log(`✅ ${candidats.length} candidats chargés`);
-        
-        // 🔥 Forcer la détection de changement si nécessaire
-        setTimeout(() => {
-          this.detecterProblemesNavigation();
-        }, 100);
+        // Retour à la première page après chargement
+        this.currentPage = 0;
       },
-      error: (error) => {
-        console.error('Erreur chargement candidats:', error);
+      error: error => {
+        console.error('❌ [GestionCandidats] Erreur chargement candidats:', error);
         this.isLoading = false;
+        this.snackBar.open('Erreur lors du chargement des candidats', 'Fermer', { duration: 3000 });
       }
     });
   }
 
-  /**
-   * 🔥 Détecter les problèmes de navigation
-   */
-  private detecterProblemesNavigation(): void {
-    const currentUrl = this.router.url;
-    console.log('🔍 URL actuelle:', currentUrl);
-    
-    // Vérifier si nous sommes bien sur la bonne route
-    if (!currentUrl.includes('gestion-candidats')) {
-      console.warn('⚠️  Mauvais chemin détecté, correction...');
-      this.corrigerNavigation();
-    }
+  // ==================== PAGINATION ====================
+
+  onPageChange(event: PageEvent): void {
+    this.currentPage = event.pageIndex;
+    this.pageSize = event.pageSize;
   }
 
-  /**
-   * 🔥 Corriger la navigation si nécessaire
-   */
-  private corrigerNavigation(): void {
-    const targetUrl = '/features/admin/comptes/gestion-candidats';
-    if (this.router.url !== targetUrl) {
-      console.log('🔄 Correction navigation vers:', targetUrl);
-      this.router.navigate([targetUrl], { 
-        replaceUrl: true 
-      }).catch(err => {
-        console.error('❌ Échec correction navigation:', err);
-      });
-    }
+  get candidatsPaginees(): CandidatComplet[] {
+    const start = this.currentPage * this.pageSize;
+    return this.candidatsFiltres.slice(start, start + this.pageSize);
   }
 
-  /**
-   * 🔥 Navigation robuste vers création candidat
-   */
+  get totalCandidats(): number {
+    return this.candidatsFiltres.length;
+  }
+
+  // ==================== FILTRES ====================
+
+  appliquerFiltres(): void {
+    this.currentPage = 0;
+  }
+
+  reinitialiserFiltres(): void {
+    this.filtres.recherche = '';
+    this.filtres.statut = '';
+    this.currentPage = 0;
+  }
+
+  // ==================== ACTIONS ====================
+
   naviguerCreation(): void {
-    console.log('🔄 Navigation vers création candidat...');
-    
-    // Vérifier l'état d'authentification d'abord
     if (!this.authService.isLoggedIn() || !this.authService.isAdmin()) {
-      console.error('❌ Accès non autorisé pour création candidat');
       this.router.navigate(['/login']);
       return;
     }
+    this.router.navigate(['/features/admin/comptes/creer-candidat']);
+  }
 
-    // 🔥 Utiliser navigation absolue avec gestion d'erreur
-    const targetUrl = '/features/admin/comptes/creer-candidat';
+  desactiverCandidat(candidat: CandidatComplet): void {
+    const nom = `${candidat.user.prenom} ${candidat.user.nom}`;
     
-    this.router.navigate([targetUrl], {
-      skipLocationChange: false
-    }).then(success => {
-      if (success) {
-        console.log('✅ Navigation création réussie');
-      } else {
-        console.error('❌ Échec navigation création, tentative rechargement...');
-        this.fallbackNavigation(targetUrl);
+    if (!candidat.volontaire.id) {
+      this.snackBar.open('Erreur: Identifiant volontaire manquant', 'Fermer', { duration: 3000 });
+      return;
+    }
+
+    if (!confirm(`Êtes-vous sûr de vouloir désactiver le compte de ${nom} ?`)) return;
+
+    this.adminCandidatService.desactiverCandidat(
+      candidat.user.id!,
+      candidat.volontaire.id,
+      candidat.volontaire.statut
+    ).subscribe({
+      next: () => {
+        console.log(`✅ ${nom} désactivé`);
+        this.snackBar.open('Candidat désactivé avec succès', 'Fermer', { duration: 3000 });
+        this.chargerCandidats();
+      },
+      error: error => {
+        console.error('❌ Erreur désactivation:', error);
+        this.snackBar.open('Erreur lors de la désactivation', 'Fermer', { duration: 3000 });
       }
-    }).catch(error => {
-      console.error('💥 Erreur navigation création:', error);
-      this.fallbackNavigation(targetUrl);
     });
   }
 
-  /**
-   * 🔥 Fallback en cas d'échec de navigation
-   */
-  private fallbackNavigation(url: string): void {
-    console.log('🔄 Fallback navigation vers:', url);
-    
-    // Méthode 1: Navigation avec timeout
-    setTimeout(() => {
-      window.location.href = url;
-    }, 100);
-    
-    // Méthode 2: Forcer le rechargement
-    setTimeout(() => {
-      if (this.router.url !== url) {
-        window.location.reload();
-      }
-    }, 500);
-  }
-
-  // ... reste des méthodes existantes (desactiverCandidat, reactiverCandidat, etc.)
-
-  desactiverCandidat(candidat: CandidatComplet): void {
-    if (confirm(`Êtes-vous sûr de vouloir désactiver le compte de ${candidat.user.prenom} ${candidat.user.nom} ?`)) {
-      this.adminCandidatService.desactiverCandidat(
-        candidat.user.id!,
-        candidat.volontaire.id!
-      ).subscribe({
-        next: () => {
-          console.log(`✅ Candidat ${candidat.user.prenom} ${candidat.user.nom} désactivé`);
-          this.chargerCandidats();
-        },
-        error: (error) => {
-          console.error('Erreur désactivation:', error);
-          alert('Erreur lors de la désactivation du candidat');
-        }
-      });
-    }
-  }
-
   reactiverCandidat(candidat: CandidatComplet): void {
-    if (confirm(`Êtes-vous sûr de vouloir réactiver le compte de ${candidat.user.prenom} ${candidat.user.nom} ?`)) {
-      this.adminCandidatService.reactiverCandidat(candidat.volontaire.id!).subscribe({
-        next: () => {
-          console.log(`✅ Candidat ${candidat.user.prenom} ${candidat.user.nom} réactivé`);
-          this.chargerCandidats();
-        },
-        error: (error) => {
-          console.error('Erreur réactivation:', error);
-          alert('Erreur lors de la réactivation du candidat');
-        }
-      });
+    const nom = `${candidat.user.prenom} ${candidat.user.nom}`;
+    
+    if (!candidat.volontaire.id) {
+      this.snackBar.open('Erreur: Identifiant volontaire manquant', 'Fermer', { duration: 3000 });
+      return;
     }
+
+    if (!confirm(`Êtes-vous sûr de vouloir réactiver le compte de ${nom} ?`)) return;
+
+    this.adminCandidatService.reactiverCandidat(candidat.volontaire.id).subscribe({
+      next: v => {
+        console.log(`✅ ${nom} réactivé → statut restauré : ${v.statut}`);
+        this.snackBar.open(`Candidat réactivé avec succès (statut: ${v.statut})`, 'Fermer', { duration: 3000 });
+        this.chargerCandidats();
+      },
+      error: error => {
+        console.error('❌ Erreur réactivation:', error);
+        this.snackBar.open('Erreur lors de la réactivation', 'Fermer', { duration: 3000 });
+      }
+    });
   }
 
   supprimerCandidat(candidat: CandidatComplet): void {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer définitivement le compte de ${candidat.user.prenom} ${candidat.user.nom} ? Cette action est irréversible.`)) {
-      this.adminCandidatService.supprimerCandidat(
-        candidat.user.id!,
-        candidat.volontaire.id!
-      ).subscribe({
-        next: () => {
-          console.log(`✅ Candidat ${candidat.user.prenom} ${candidat.user.nom} supprimé`);
-          this.chargerCandidats();
-        },
-        error: (error) => {
-          console.error('Erreur suppression:', error);
-          alert('Erreur lors de la suppression du candidat');
-        }
-      });
+    const nom = `${candidat.user.prenom} ${candidat.user.nom}`;
+    
+    if (!candidat.user.id || !candidat.volontaire.id) {
+      this.snackBar.open('Erreur: Identifiants manquants', 'Fermer', { duration: 3000 });
+      return;
     }
+
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer définitivement ${nom} ? Cette action est irréversible.`)) return;
+
+    this.adminCandidatService.supprimerCandidat(
+      candidat.user.id,
+      candidat.volontaire.id
+    ).subscribe({
+      next: () => {
+        console.log(`✅ ${nom} supprimé`);
+        this.snackBar.open('Candidat supprimé avec succès', 'Fermer', { duration: 3000 });
+        this.chargerCandidats();
+      },
+      error: error => {
+        console.error('❌ Erreur suppression:', error);
+        this.snackBar.open('Erreur lors de la suppression', 'Fermer', { duration: 3000 });
+      }
+    });
   }
+
+  // ==================== GETTERS FILTRES ====================
 
   get candidatsFiltres(): CandidatComplet[] {
     return this.candidats.filter(candidat => {
-      const nom = candidat.user.nom || '';
-      const prenom = candidat.user.prenom || '';
-      
-      const correspondRecherche = !this.filtres.recherche || 
-        nom.toLowerCase().includes(this.filtres.recherche.toLowerCase()) ||
-        prenom.toLowerCase().includes(this.filtres.recherche.toLowerCase()) ||
+      const correspondRecherche = !this.filtres.recherche ||
+        (candidat.user.nom || '').toLowerCase().includes(this.filtres.recherche.toLowerCase()) ||
+        (candidat.user.prenom || '').toLowerCase().includes(this.filtres.recherche.toLowerCase()) ||
         candidat.user.email.toLowerCase().includes(this.filtres.recherche.toLowerCase());
 
-      const correspondStatut = !this.filtres.statut || 
+      const correspondStatut = !this.filtres.statut ||
         candidat.volontaire.statut === this.filtres.statut;
 
       return correspondRecherche && correspondStatut;
     });
   }
+
+  // ==================== HELPERS ====================
 
   getStatutBadgeClass(statut: string): string {
     switch (statut) {
@@ -230,29 +225,14 @@ export class GestionCandidatsComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * 🔥 Méthode de debug pour tester la navigation
-   */
-  debugNavigation(): void {
-    console.log('=== 🐛 DEBUG NAVIGATION ===');
-    console.log('📍 URL actuelle:', this.router.url);
-    console.log('🛡️ Auth state:', {
-      isLoggedIn: this.authService.isLoggedIn(),
-      isAdmin: this.authService.isAdmin(),
-      userRole: this.authService.getUserRole()
-    });
-    console.log('📋 Candidats chargés:', this.candidats.length);
-    
-    // Tester la navigation
-    this.testNavigation();
-  }
-
-  private testNavigation(): void {
-    const testUrl = '/features/admin/comptes/creer-candidat';
-    console.log('🧪 Test navigation vers:', testUrl);
-    
-    this.router.navigate([testUrl]).then(success => {
-      console.log('🧪 Résultat test:', success);
-    });
+  getStatutKey(statut: string): string {
+    const map: Record<string, string> = {
+      'Candidat': 'candidat',
+      'En attente': 'en_attente',
+      'Actif': 'actif',
+      'Inactif': 'inactif',
+      'Refusé': 'refuse'
+    };
+    return map[statut] || 'candidat';
   }
 }

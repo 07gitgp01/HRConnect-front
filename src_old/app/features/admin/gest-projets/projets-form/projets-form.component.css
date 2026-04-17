@@ -1,0 +1,704 @@
+/* ===== RESET ET CONFIGURATION DE BASE ===== */
+* {
+  box-sizing: border-box;
+}
+
+/* ===== CONTAINER PRINCIPAL ===== */
+.project-form-container {
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ===== CARD PRINCIPALE ===== */
+.form-card {
+  max-width: 1000px;
+  margin: 20px auto;
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  background: white;
+  height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ===== HEADER DE LA CARD ===== */
+.form-card mat-card-title {
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  /* Vert PNVB officiel */
+  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
+  color: white;
+  margin: 0 !important;
+  font-size: 24px;
+  font-weight: 600;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 2;
+}
+
+/* ===== CONTENU DE LA CARD ===== */
+mat-card-content {
+  padding: 32px 24px 120px 24px !important; /* Padding bottom pour les boutons */
+  background: #fafbfc;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 1;
+  /* Empêche le contenu de passer sous les boutons */
+  min-height: 0;
+}
+
+/* Barre de défilement personnalisée */
+mat-card-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+mat-card-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+mat-card-content::-webkit-scrollbar-thumb {
+  background: #008124; /* Vert PNVB */
+  border-radius: 4px;
+}
+
+mat-card-content::-webkit-scrollbar-thumb:hover {
+  background: #006b1e;
+}
+
+/* ===== GRILLE DE FORMULAIRE ===== */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* Classes utilitaires */
+.w-100 {
+  grid-column: 1 / -1;
+}
+
+.mt-2 {
+  margin-top: 16px;
+}
+
+/* ===== CHAMPS DE FORMULAIRE ANGULAR MATERIAL ===== */
+mat-form-field {
+  width: 100%;
+  margin-bottom: 16px;
+  display: block;
+  position: relative;
+}
+
+/* Suppression des styles Material par défaut qui causent des problèmes */
+::ng-deep .mat-form-field-wrapper {
+  padding-bottom: 1.25em !important;
+  margin: 0 !important;
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
+  background-color: white;
+  border-radius: 8px;
+  color: #cbd5e1;
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline-thick {
+  color: #cbd5e1;
+  opacity: 1;
+}
+
+/* Focus */
+::ng-deep .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
+  color: #008124 !important; /* Vert PNVB */
+  opacity: 1;
+}
+
+/* Hover */
+::ng-deep .mat-form-field-appearance-outline:not(.mat-form-field-disabled):hover .mat-form-field-outline {
+  opacity: 1;
+  color: #94a3b8;
+}
+
+/* ===== LABELS ===== */
+::ng-deep mat-label {
+  font-weight: 500;
+  color: #1e293b !important;
+  font-size: 0.9rem !important;
+}
+
+::ng-deep .mat-form-field-appearance-outline.mat-focused mat-label {
+  color: #008124 !important; /* Vert PNVB */
+}
+
+/* ===== INPUTS ET TEXTAREAS ===== */
+::ng-deep input.mat-input-element,
+::ng-deep textarea.mat-input-element {
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  color: #334155 !important;
+  background: transparent;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  line-height: 1.5 !important;
+  min-height: 24px;
+}
+
+::ng-deep input.mat-input-element:focus,
+::ng-deep textarea.mat-input-element:focus {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* ===== SELECTS ===== */
+::ng-deep mat-select {
+  font-size: 14px;
+  color: #334155;
+  padding: 12px 16px;
+}
+
+::ng-deep .mat-select-arrow {
+  color: #008124; /* Vert PNVB */
+}
+
+::ng-deep .mat-select-value {
+  padding: 0 !important;
+}
+
+/* ===== TEXTAREAS SPÉCIFIQUES ===== */
+::ng-deep textarea {
+  resize: vertical;
+  min-height: 80px !important;
+  padding: 12px 16px !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent;
+  line-height: 1.6 !important;
+  font-family: inherit !important;
+}
+
+::ng-deep textarea[formControlName="descriptionLongue"] {
+  min-height: 150px !important;
+}
+
+::ng-deep textarea[formControlName="descriptionCourte"] {
+  min-height: 100px !important;
+}
+
+::ng-deep textarea[formControlName="competences_requises"],
+::ng-deep textarea[formControlName="avantagesVolontaire"],
+::ng-deep textarea[formControlName="conditions_particulieres"] {
+  min-height: 100px !important;
+}
+
+/* ===== BOUTONS D'ACTION - STICKY FOOTER ===== */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 2px solid #e2e8f0;
+  background: white;
+  
+  /* ⭐ STICKY FOOTER - Reste toujours visible ⭐ */
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== STYLES DES BOUTONS ===== */
+button[mat-raised-button],
+button[mat-button] {
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Bouton primaire (Enregistrer) */
+button[mat-raised-button][color="primary"] {
+  background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.3);
+  border: none;
+}
+
+button[mat-raised-button][color="primary"]:hover:not([disabled]) {
+  background: linear-gradient(135deg, #005518 0%, #006b1e 50%, #008124 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 129, 36, 0.4);
+}
+
+button[mat-raised-button][color="primary"]:active:not([disabled]) {
+  transform: translateY(0);
+  box-shadow: 0 4px 8px rgba(0, 129, 36, 0.3);
+}
+
+button[mat-raised-button][color="primary"][disabled] {
+  background: #cbd5e0;
+  color: #718096;
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Bouton secondaire (Annuler) */
+button[mat-button][color="warn"] {
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+  padding: 10px 24px;
+  border-radius: 8px;
+  background: white;
+  font-weight: 500;
+}
+
+button[mat-button][color="warn"]:hover {
+  background: #f8f9fa;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+/* ===== ERREURS DE VALIDATION ===== */
+::ng-deep mat-error {
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 4px;
+  color: #e53e3e;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+/* ===== ÉTATS DE VALIDATION ===== */
+::ng-deep mat-form-field.ng-valid.ng-dirty .mat-form-field-outline-thick {
+  color: #008124 !important; /* Vert PNVB */
+}
+
+::ng-deep mat-form-field.ng-invalid.ng-touched .mat-form-field-outline-thick {
+  color: #e53e3e !important;
+}
+
+/* ===== PLACEHOLDER ===== */
+::ng-deep ::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+  font-size: 14px;
+}
+
+/* ===== OPTIONS DÉSACTIVÉES ===== */
+::ng-deep mat-option[disabled] {
+  color: #a0aec0;
+  font-style: italic;
+  opacity: 0.6;
+}
+
+/* ===== ANIMATIONS ===== */
+.form-card {
+  animation: slideInUp 0.4s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== BOUTON AVEC SPINNER ===== */
+.submit-button {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 140px;
+  transition: all 0.3s ease;
+}
+
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.submit-button.loading {
+  pointer-events: none;
+}
+
+::ng-deep .submit-button mat-spinner {
+  margin: 0;
+  display: inline-block;
+}
+
+::ng-deep .submit-button mat-spinner circle {
+  stroke: white;
+}
+
+/* ===== SECTIONS DE FORMULAIRE ===== */
+.form-section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.form-section:hover {
+  border-color: #008124; /* Vert PNVB */
+  box-shadow: 0 4px 8px rgba(0, 129, 36, 0.1);
+}
+
+.form-section h3 {
+  margin: 0 0 16px 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #008124; /* Vert PNVB */
+}
+
+/* ===== MESSAGES DE SUCCÈS/ERREUR ===== */
+.form-message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-message.success {
+  background-color: rgba(0, 129, 36, 0.1);
+  color: #006b1e;
+  border: 1px solid rgba(0, 129, 36, 0.3);
+}
+
+.form-message.error {
+  background-color: rgba(229, 62, 62, 0.1);
+  color: #c53030;
+  border: 1px solid rgba(229, 62, 62, 0.3);
+}
+
+/* ===== CHAMP REQUIS ===== */
+.required-field::after {
+  content: " *";
+  color: #e53e3e;
+  font-weight: bold;
+}
+
+/* ===== FOCUS VISIBLE ===== */
+button:focus-visible {
+  outline: 2px solid #008124; /* Vert PNVB */
+  outline-offset: 2px;
+}
+
+::ng-deep .mat-form-field-appearance-outline.mat-focused .mat-form-field-label {
+  color: #008124 !important; /* Vert PNVB */
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .project-form-container {
+    padding: 10px;
+    height: 100vh;
+  }
+  
+  .form-card {
+    margin: 10px;
+    max-width: none;
+    height: calc(100vh - 20px);
+  }
+  
+  .grid-2 {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .form-card mat-card-title {
+    padding: 20px 20px 12px;
+    font-size: 20px;
+  }
+  
+  mat-card-content {
+    padding: 24px 20px 140px 20px !important;
+  }
+  
+  .actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+    padding: 16px 20px;
+  }
+  
+  button[mat-raised-button],
+  button[mat-button] {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .project-form-container {
+    padding: 0;
+  }
+  
+  .form-card {
+    margin: 0;
+    border-radius: 0;
+    height: 100vh;
+    box-shadow: none;
+  }
+  
+  .form-card mat-card-title {
+    padding: 16px 16px 8px;
+    font-size: 18px;
+  }
+  
+  mat-card-content {
+    padding: 20px 16px 160px 16px !important;
+  }
+  
+  .grid-2 {
+    gap: 12px;
+  }
+  
+  .mt-2 {
+    margin-top: 12px;
+  }
+  
+  button[mat-raised-button] {
+    padding: 10px 24px;
+    min-width: 120px;
+  }
+  
+  .actions {
+    padding: 12px 16px;
+  }
+}
+
+/* ===== IMPRESSION ===== */
+@media print {
+  .project-form-container {
+    background: white;
+    padding: 0;
+    height: auto;
+    overflow: visible;
+  }
+  
+  .form-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+    height: auto;
+  }
+  
+  mat-card-content {
+    overflow: visible;
+    padding: 20px !important;
+  }
+  
+  .actions {
+    display: none;
+  }
+}
+
+/* ===== MODE RÉDUIT MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  .form-card,
+  button[mat-raised-button] {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* ===== MODE SOMBRE ===== */
+@media (prefers-color-scheme: dark) {
+  .project-form-container {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+  
+  .form-card {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-color: #334155;
+  }
+  
+  mat-card-content {
+    background: #1e293b;
+  }
+  
+  .form-card mat-card-title {
+    background: linear-gradient(135deg, #005518 0%, #006b1e 50%, #008124 100%);
+  }
+  
+  ::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
+    background-color: #334155;
+  }
+  
+  ::ng-deep mat-label {
+    color: #cbd5e1 !important;
+  }
+  
+  ::ng-deep input.mat-input-element,
+  ::ng-deep textarea.mat-input-element {
+    color: #f1f5f9 !important;
+  }
+  
+  ::ng-deep ::placeholder {
+    color: #64748b;
+  }
+  
+  .actions {
+    border-top-color: #475569;
+    background: #1e293b;
+  }
+  
+  button[mat-raised-button][color="primary"] {
+    background: linear-gradient(135deg, #006b1e 0%, #008124 50%, #009629 100%);
+  }
+  
+  button[mat-raised-button][color="primary"]:hover:not([disabled]) {
+    background: linear-gradient(135deg, #005518 0%, #006b1e 50%, #008124 100%);
+  }
+  
+  button[mat-button][color="warn"] {
+    background: #334155;
+    color: #cbd5e1;
+    border-color: #475569;
+  }
+  
+  button[mat-button][color="warn"]:hover {
+    background: #475569;
+    color: #f1f5f9;
+  }
+  
+  mat-card-content::-webkit-scrollbar-track {
+    background: #334155;
+  }
+  
+  mat-card-content::-webkit-scrollbar-thumb {
+    background: #006b1e;
+  }
+  
+  mat-card-content::-webkit-scrollbar-thumb:hover {
+    background: #005518;
+  }
+  
+  .form-section {
+    background: #334155;
+    border-color: #475569;
+  }
+  
+  .form-section:hover {
+    border-color: #008124;
+  }
+  
+  .form-section h3 {
+    color: #f1f5f9;
+    border-bottom-color: #008124;
+  }
+}
+
+/* ===== CORRECTIONS POUR ÉVITER LES CHEVAUCHEMENTS ===== */
+
+/* 1. Empêche les labels de chevaucher le contenu */
+::ng-deep .mat-form-field-appearance-outline.mat-form-field-can-float.mat-form-field-should-float .mat-form-field-label {
+  transform: translateY(-1.5em) scale(0.75) !important;
+  width: 133.33333%;
+  pointer-events: none;
+}
+
+/* 2. Empêche les éléments de déborder */
+::ng-deep .mat-form-field-infix {
+  padding: 0.75em 0 !important;
+  border-top: 0.75em solid transparent;
+  display: block;
+  position: relative;
+  flex: auto;
+  min-width: 0;
+  width: 180px;
+}
+
+/* 3. Assure un espacement correct entre les champs */
+::ng-deep .mat-form-field-subscript-wrapper {
+  position: relative;
+  margin-top: 0.5em;
+  min-height: 1.5em;
+  overflow: hidden;
+}
+
+/* 4. Empêche le texte de dépasser */
+::ng-deep .mat-select-value-text,
+::ng-deep .mat-input-element {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 5. Fix pour les mat-option qui dépassent */
+::ng-deep .mat-option {
+  white-space: normal;
+  line-height: 1.5;
+  padding: 12px 16px;
+  min-height: 48px;
+}
+
+/* 6. Empêche les boutons de se chevaucher */
+.actions button {
+  flex-shrink: 0;
+}
+
+/* 7. Assure que le contenu ne passe pas sous le footer sticky */
+.form-card::after {
+  content: '';
+  display: block;
+  height: 100px;
+  pointer-events: none;
+}
+
+/* ===== NOTES D'OPTIMISATION ===== */
+/*
+✅ Footer sticky avec position absolute - toujours visible
+✅ Padding-bottom sur mat-card-content pour éviter chevauchement
+✅ Z-index appropriés (content: 1, footer: 10)
+✅ Couleurs PNVB officielles (#008124, #006b1e, #009629)
+✅ Tous les inputs avec padding uniforme
+✅ Pas de bordures multiples ou superposées
+✅ Labels qui ne chevauchent pas le texte
+✅ Responsive optimisé pour mobile
+✅ Mode sombre inclus
+✅ Animations fluides
+*/

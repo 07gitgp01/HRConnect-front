@@ -1,81 +1,210 @@
 /* src/app/features/candidat/components/profil/profil.component.css */
+
+/* ================================================================
+   VARIABLES & RESET
+   ================================================================ */
+:host {
+  --vert:        #008124;
+  --vert-fonce:  #006b1e;
+  --vert-clair:  #e6f4e6;
+  --vert-pale:   #f0faf0;
+  --gris-texte:  #374151;
+  --gris-label:  #495057;
+  --gris-muted:  #6c757d;
+  --gris-border: #dee2e6;
+  --gris-bg:     #f8f9fa;
+  --blanc:       #ffffff;
+  --rouge:       #dc3545;
+  --jaune:       #ffc107;
+  --bleu:        #0d6efd;
+  --shadow-sm:   0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md:   0 4px 16px rgba(0, 0, 0, 0.10);
+  --radius:      10px;
+}
+
+/* ================================================================
+   CONTENEUR PRINCIPAL
+   ================================================================ */
 .profil-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px 20px;
+  background: #f4f6f8;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* ================================================================
+   EN-TÊTE
+   ================================================================ */
 .profil-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #e9ecef;
+  margin-bottom: 28px;
+  padding: 20px 24px;
+  background: var(--blanc);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--vert);
 }
 
 .header-info h1 {
-  margin: 0;
-  color: #2c3e50;
+  margin: 0 0 8px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--vert-fonce);
 }
 
 .completion-badge {
-  padding: 8px 16px;
+  display: inline-block;
+  padding: 5px 14px;
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  background: #e9ecef;
-  color: #6c757d;
-  margin-top: 8px;
+  background: #ffe0e0;
+  color: var(--rouge);
+  border: 1px solid rgba(220, 53, 69, 0.25);
 }
 
 .completion-badge.complete {
-  background: #d4edda;
-  color: #155724;
+  background: var(--vert-clair);
+  color: var(--vert-fonce);
+  border-color: rgba(0, 129, 36, 0.25);
 }
 
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ================================================================
+   LAYOUT PRINCIPAL (2 colonnes)
+   ================================================================ */
 .profil-content {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 30px;
+  gap: 24px;
+  align-items: start;
 }
 
+/* ================================================================
+   SECTIONS DE FORMULAIRE (base commune)
+   ================================================================ */
 .form-section {
-  background: white;
-  padding: 25px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin-bottom: 25px;
+  background: var(--blanc);
+  padding: 24px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .form-section h3 {
-  margin-bottom: 10px;
-  color: #2c3e50;
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--vert-fonce);
+}
+
+.form-section h4 {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--vert-fonce);
 }
 
 .section-description {
-  color: #6c757d;
-  margin-bottom: 20px;
-  font-size: 14px;
+  font-size: 13px;
+  color: var(--gris-muted);
+  margin: 0 0 18px;
+  line-height: 1.5;
 }
 
+/* ================================================================
+   SECTION LECTURE SEULE — style distinctif unifié
+   ================================================================
+   Toutes les données fixes (nom, email, pièce d'identité…) partagent
+   le même traitement visuel : fond vert très pâle + bordure gauche
+   verte, pour signaler clairement qu'elles ne sont pas éditables.
+   ================================================================ */
+.form-section:first-of-type {
+  background: var(--vert-pale);
+  border-left: 4px solid var(--vert);
+  border-color: rgba(0, 129, 36, 0.2);
+}
+
+/* Grille des infos fixes */
 .info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 14px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .info-item label {
+  font-size: 12px;
   font-weight: 600;
-  color: #495057;
-  margin-bottom: 5px;
-  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--vert-fonce);
+  opacity: 0.75;
 }
 
+/* Champs en lecture seule — même rendu dans toute la section */
+.info-item .form-control[readonly],
+.form-control[readonly] {
+  background-color: rgba(0, 0, 0, 0.035);
+  border-color: rgba(0, 129, 36, 0.2);
+  color: var(--gris-texte);
+  cursor: not-allowed;
+  font-weight: 500;
+}
+
+.info-item .form-control[readonly]:focus,
+.form-control[readonly]:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: rgba(0, 129, 36, 0.25);
+}
+
+/* Numéro de pièce : typo monospace pour la lisibilité */
+.numero-piece-readonly {
+  font-family: 'Courier New', monospace !important;
+  letter-spacing: 1px;
+  font-weight: 600 !important;
+}
+
+/* ================================================================
+   SECTION DOCUMENT SCANNÉ (imbriquée dans le profil)
+   ================================================================ */
+.document-section {
+  background: var(--gris-bg);
+  border: 1px dashed var(--gris-border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  box-shadow: none;
+}
+
+.document-section h4 {
+  color: var(--gris-label);
+  font-size: 0.95rem;
+}
+
+/* ================================================================
+   FORMULAIRE ÉDITABLE
+   ================================================================ */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .form-group {
@@ -83,450 +212,697 @@
 }
 
 .form-group label {
-  font-weight: 600;
-  color: #495057;
-  margin-bottom: 8px;
   display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gris-label);
+  margin-bottom: 6px;
 }
 
+.form-control {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 14px;
+  border: 1px solid var(--gris-border);
+  border-radius: 6px;
+  background: var(--blanc);
+  color: var(--gris-texte);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  border-color: var(--vert);
+  box-shadow: 0 0 0 3px rgba(0, 129, 36, 0.12);
+  outline: none;
+}
+
+.form-control.is-invalid {
+  border-color: var(--rouge);
+}
+
+.form-control.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.12);
+}
+
+.invalid-feedback {
+  display: block;
+  font-size: 12px;
+  color: var(--rouge);
+  margin-top: 4px;
+}
+
+/* ================================================================
+   COMPÉTENCES
+   ================================================================ */
 .competences-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
   margin-top: 10px;
 }
 
 .competence-item {
-  display: flex;
-  align-items: center;
+  padding: 9px 12px;
+  background: var(--gris-bg);
+  border-radius: 6px;
+  border: 1px solid var(--gris-border);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.competence-item:has(input:checked) {
+  background: var(--vert-clair);
+  border-color: rgba(0, 129, 36, 0.35);
 }
 
 .competence-item label {
   display: flex;
   align-items: center;
-  font-weight: normal;
+  margin: 0;
   cursor: pointer;
-  margin: 0;
+  font-weight: normal;
+  font-size: 13.5px;
+  color: var(--gris-texte);
 }
 
-.competence-item input {
-  margin-right: 8px;
+.competence-item input[type="checkbox"] {
+  margin-right: 9px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--vert);
+  cursor: pointer;
 }
 
-/* Cartes de statistiques */
-.profil-stats-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.stat-card, .actions-card, .candidatures-card {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-top: 15px;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 15px;
-  border-radius: 8px;
-  background: #f8f9fa;
-}
-
-.stat-item.total { border-left: 4px solid #007bff; }
-.stat-item.en-attente { border-left: 4px solid #ffc107; }
-.stat-item.entretien { border-left: 4px solid #17a2b8; }
-.stat-item.acceptee { border-left: 4px solid #28a745; }
-
-.stat-number {
-  display: block;
-  font-size: 24px;
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #6c757d;
-  text-transform: uppercase;
-}
-
-/* Candidatures */
-.candidatures-list {
-  margin-top: 15px;
-}
-
-.candidature-item {
+.loading-competences {
   padding: 12px;
-  border-left: 4px solid #e9ecef;
-  margin-bottom: 10px;
-  background: #f8f9fa;
+  background: var(--gris-bg);
   border-radius: 6px;
-}
-
-.candidature-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 5px;
-}
-
-.statut-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.statut-en_attente { border-left-color: #ffc107; }
-.statut-entretien { border-left-color: #17a2b8; }
-.statut-acceptee { border-left-color: #28a745; }
-.statut-refusee { border-left-color: #dc3545; }
-
-/* Responsive */
-@media (max-width: 768px) {
-  .profil-content {
-    grid-template-columns: 1fr;
-  }
-  
-  .info-grid,
-  .form-row,
-  .competences-grid,
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .profil-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-}
-/* Styles pour les champs type de pièce */
-.numero-piece-input {
-  font-family: monospace;
-  font-size: 16px;
-  letter-spacing: 1px;
   text-align: center;
-  transition: all 0.3s ease;
-}
-
-.type-cnib {
-  background: #e8f5e8;
-  border: 2px solid #4caf50;
-  color: #2e7d32;
-}
-
-.type-passeport {
-  background: #fff3e0;
-  border: 2px solid #ff9800;
-  color: #e65100;
-}
-
-.numero-piece-input:focus {
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
-}
-
-.type-passeport:focus {
-  box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
-}
-
-/* Indicateur visuel */
-.type-indicator {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-left: 8px;
-}
-
-.type-cnib-indicator {
-  background: #4caf50;
-  color: white;
-}
-
-.type-passeport-indicator {
-  background: #ff9800;
-  color: white;
-}
-
-.profil-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.profil-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.header-info h1 {
-  margin: 0;
-  color: #2c3e50;
-}
-
-.completion-badge {
-  display: inline-block;
-  padding: 5px 15px;
-  background-color: #e74c3c;
-  color: white;
-  border-radius: 20px;
-  font-size: 14px;
-  margin-top: 10px;
-}
-
-.completion-badge.complete {
-  background-color: #27ae60;
-}
-
-.profil-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 30px;
-}
-
-.form-section {
-  background: white;
-  padding: 25px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin-bottom: 25px;
-}
-
-.section-description {
-  color: #666;
-  margin-bottom: 20px;
-  font-size: 14px;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.competences-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.competence-item {
-  padding: 8px;
-  background: #f8f9fa;
-  border-radius: 4px;
+  color: var(--gris-muted);
+  font-style: italic;
+  font-size: 13px;
 }
 
 .selected-competences {
-  margin-top: 10px;
-  padding: 10px;
-  background: #e8f4fd;
-  border-radius: 4px;
-  border-left: 4px solid #007bff;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: var(--vert-clair);
+  border-radius: 6px;
+  border-left: 4px solid var(--vert);
+  font-size: 13.5px;
+  color: var(--vert-fonce);
 }
 
+/* ================================================================
+   UPLOAD DE FICHIERS
+   ================================================================ */
 .file-upload-section {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .file-input-container {
   display: flex;
   gap: 10px;
+  align-items: center;
   margin-bottom: 10px;
 }
 
-.file-preview, .existing-document {
-  margin-top: 10px;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 4px;
+.file-input-container .form-control {
+  flex: 1;
+  font-size: 13px;
 }
 
-.preview-content, .existing-file {
+.browse-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--gris-border);
+  border-radius: 6px;
+  background: var(--blanc);
+  color: var(--gris-label);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.browse-btn:hover {
+  background: var(--gris-bg);
+  border-color: var(--vert);
+  color: var(--vert);
+}
+
+.file-preview,
+.existing-document {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: var(--vert-clair);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 129, 36, 0.2);
+}
+
+.preview-content,
+.existing-file {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
+.preview-content mat-icon,
+.existing-file mat-icon {
+  color: var(--vert);
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
 .file-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
+.file-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vert-fonce);
+}
+
+.file-size {
+  font-size: 12px;
+  color: var(--gris-muted);
+}
+
+.text-muted {
+  font-size: 12px;
+  color: var(--gris-muted);
+  display: block;
+  margin-top: 6px;
+}
+
+/* ================================================================
+   ACTIONS DU FORMULAIRE
+   ================================================================ */
 .form-actions {
-  margin-top: 30px;
+  margin-top: 28px;
   padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--gris-border);
+  display: flex;
+  justify-content: flex-end;
 }
 
-/* Colonne droite */
+/* ================================================================
+   BOUTONS
+   ================================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--vert) 0%, var(--vert-fonce) 100%);
+  color: var(--blanc);
+  box-shadow: 0 3px 10px rgba(0, 129, 36, 0.25);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #009629 0%, var(--vert) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(0, 129, 36, 0.35);
+}
+
+.btn-secondary {
+  background: #e9ecef;
+  color: #495057;
+  box-shadow: none;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #dee2e6;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+  color: var(--blanc);
+  box-shadow: 0 3px 10px rgba(25, 135, 84, 0.25);
+}
+
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(25, 135, 84, 0.35);
+}
+
+.btn-lg {
+  padding: 12px 28px;
+  font-size: 15px;
+}
+
+.btn-block {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.btn-outline-primary {
+  background: transparent;
+  border: 1px solid var(--bleu);
+  color: var(--bleu);
+}
+
+.btn-outline-primary:hover:not(:disabled) {
+  background: rgba(13, 110, 253, 0.08);
+}
+
+.btn-outline-secondary {
+  background: transparent;
+  border: 1px solid var(--gris-border);
+  color: var(--gris-label);
+}
+
+.btn-outline-danger {
+  background: transparent;
+  border: 1px solid var(--rouge);
+  color: var(--rouge);
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 12px;
+}
+
+/* ================================================================
+   COLONNE DROITE — STATISTIQUES
+   ================================================================ */
 .profil-stats-section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
+  position: sticky;
+  top: 20px;
 }
 
-.stat-card, .actions-card, .candidatures-card {
-  background: white;
+.stat-card,
+.actions-card,
+.candidatures-card {
+  background: var(--blanc);
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.stat-card h4,
+.actions-card h4,
+.candidatures-card h4 {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--vert-fonce);
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--vert-clair);
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-  margin-top: 15px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .stat-item {
   text-align: center;
-  padding: 15px;
-  border-radius: 6px;
-  background: #f8f9fa;
+  padding: 14px 10px;
+  border-radius: 8px;
+  background: var(--gris-bg);
+  border-left: 4px solid var(--gris-border);
 }
+
+.stat-item.total     { border-left-color: var(--bleu); }
+.stat-item.en-attente { border-left-color: var(--jaune); }
+.stat-item.entretien  { border-left-color: #17a2b8; }
+.stat-item.acceptee   { border-left-color: var(--vert); }
 
 .stat-number {
   display: block;
-  font-size: 24px;
-  font-weight: bold;
+  font-size: 22px;
+  font-weight: 700;
   color: #2c3e50;
 }
 
 .stat-label {
-  font-size: 12px;
-  color: #666;
+  font-size: 11px;
+  color: var(--gris-muted);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+  display: block;
 }
 
-.actions-card .btn {
-  margin-bottom: 10px;
-}
-
+/* ================================================================
+   CANDIDATURES RÉCENTES
+   ================================================================ */
 .candidatures-list {
-  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .candidature-item {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--gris-bg);
+  border-left: 4px solid var(--gris-border);
 }
 
 .candidature-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  gap: 8px;
+}
+
+.candidature-info strong {
+  font-size: 13px;
+  color: var(--gris-texte);
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .statut-badge {
-  display: inline-block;
   padding: 2px 8px;
   border-radius: 12px;
-  font-size: 12px;
-  margin-left: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
 }
 
-.statut-en_attente .statut-badge {
-  background: #fff3cd;
-  color: #856404;
+.statut-en_attente  { border-left-color: var(--jaune); }
+.statut-entretien   { border-left-color: #17a2b8; }
+.statut-acceptee    { border-left-color: var(--vert); }
+.statut-refusee     { border-left-color: var(--rouge); }
+
+.statut-en_attente  .statut-badge { background: #fff3cd; color: #856404; }
+.statut-entretien   .statut-badge { background: #d1ecf1; color: #0c5460; }
+.statut-acceptee    .statut-badge { background: var(--vert-clair); color: var(--vert-fonce); }
+.statut-refusee     .statut-badge { background: #f8d7da; color: #721c24; }
+
+/* ================================================================
+   ALERTES
+   ================================================================ */
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  font-weight: 500;
 }
 
-.statut-entretien .statut-badge {
-  background: #d1ecf1;
-  color: #0c5460;
+.alert-success {
+  background: var(--vert-clair);
+  color: var(--vert-fonce);
+  border-left: 4px solid var(--vert);
 }
 
-.statut-acceptee .statut-badge {
-  background: #d4edda;
-  color: #155724;
-}
-
-.statut-refusee .statut-badge {
+.alert-danger {
   background: #f8d7da;
   color: #721c24;
+  border-left: 4px solid var(--rouge);
 }
 
-/* Responsive */
+.alert-warning {
+  background: #fff3cd;
+  color: #856404;
+  border-left: 4px solid var(--jaune);
+}
+
+.alert small {
+  font-size: 12px;
+}
+
+/* ================================================================
+   SPINNER
+   ================================================================ */
+.spinner-border {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
 @media (max-width: 992px) {
   .profil-content {
     grid-template-columns: 1fr;
   }
-  
-  .form-row {
-    grid-template-columns: 1fr;
+
+  .profil-stats-section {
+    position: static;
   }
-  
-  .info-grid {
-    grid-template-columns: 1fr;
+
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
-  
+}
+
+@media (max-width: 768px) {
+  .profil-container {
+    padding: 16px 12px;
+  }
+
+  .profil-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .info-grid,
+  .form-row,
   .competences-grid {
     grid-template-columns: 1fr;
   }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .file-input-container {
+    flex-direction: column;
+  }
+
+  .browse-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
-.loading-competences {
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  text-align: center;
+@media (max-width: 480px) {
+  .header-info h1 {
+    font-size: 1.3rem;
+  }
+
+  .form-section {
+    padding: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* src/app/features/candidats/profil/profil.component.css */
+
+.existing-document {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #28a745;
+}
+
+.existing-file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.existing-file .doc-icon {
+  color: #28a745;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.file-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.file-name {
+  font-weight: 600;
+  color: #495057;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.file-path {
+  font-size: 0.75rem;
   color: #6c757d;
-  font-style: italic;
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.file-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+}
+
+.file-actions button mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.btn-outline-primary {
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.btn-outline-primary:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-outline-info {
+  border-color: #17a2b8;
+  color: #17a2b8;
+}
+
+.btn-outline-info:hover {
+  background-color: #17a2b8;
+  color: white;
+}
+
+/* Style pour l'aperçu des nouveaux fichiers */
+.file-preview {
+  margin-top: 10px;
+  padding: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+}
+
+.preview-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.preview-content mat-icon {
+  color: #495057;
+}
+
+.file-name {
+  font-weight: 500;
+}
+
+.file-size {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+/* Style pour le conteneur d'upload */
+.file-input-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.file-input-container input[type="file"] {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.browse-btn {
+  white-space: nowrap;
+}
+
+/* Style pour la grille de compétences */
+.competences-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 10px 0;
 }
 
 .competence-item {
-  padding: 8px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  margin-bottom: 5px;
-  border: 1px solid #dee2e6;
+  display: flex;
+  align-items: center;
 }
 
 .competence-item label {
   display: flex;
   align-items: center;
-  margin: 0;
+  gap: 6px;
   cursor: pointer;
-}
-
-.competence-item input[type="checkbox"] {
-  margin-right: 10px;
-  width: 18px;
-  height: 18px;
+  font-weight: normal;
 }
 
 .selected-competences {
-  margin-top: 10px;
+  background-color: #e8f5e9;
   padding: 10px;
-  background: #e8f4fd;
   border-radius: 4px;
-  border-left: 4px solid #007bff;
+  margin: 10px 0;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 4px;
 }

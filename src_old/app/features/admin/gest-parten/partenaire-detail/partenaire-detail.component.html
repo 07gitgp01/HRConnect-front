@@ -1,0 +1,309 @@
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- En-tête -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <button class="btn btn-outline-secondary me-3" (click)="goBack()">
+            <i class="fas fa-arrow-left me-2"></i>Retour
+          </button>
+          <h2 class="h3 mb-1 d-inline-block">Détails du Partenaire</h2>
+        </div>
+        <button *ngIf="partenaire?.id" class="btn btn-primary" (click)="editPartenaire()">
+          <i class="fas fa-edit me-2"></i>Modifier
+        </button>
+      </div>
+
+      <!-- Chargement -->
+      <div *ngIf="isLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+        <p class="mt-3 text-muted">Chargement des détails du partenaire...</p>
+      </div>
+
+      <!-- Détails du partenaire -->
+      <div *ngIf="!isLoading && partenaire" class="row">
+        <!-- Informations principales -->
+        <div class="col-lg-8">
+          <!-- Cartes de statistiques -->
+          <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-3">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                  <h3 class="text-primary mb-1">{{ projets.length }}</h3>
+                  <p class="text-muted mb-0">Projets total</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                  <h3 class="text-success mb-1">{{ getTotalVolontairesAffectes() }}</h3>
+                  <p class="text-muted mb-0">Volontaires affectés</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                  <h3 class="text-info mb-1">{{ getTotalCandidatures() }}</h3>
+                  <p class="text-muted mb-0">Candidatures total</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                  <h3 class="text-warning mb-1">{{ getCandidaturesEnAttente() }}</h3>
+                  <p class="text-muted mb-0">Candidatures en attente</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                  <h4 class="card-title mb-1">{{ partenaire.nomStructure }}</h4>
+                  <span [class]="'badge ' + getTypeColor(partenaire)" class="fs-6">
+                    {{ getTypeDisplay(partenaire) }}
+                  </span>
+                </div>
+                <span [class]="getStatusBadgeClass(partenaire.estActive || partenaire.compteActive)" class="badge-lg">
+                  {{ getStatusText(partenaire.estActive || partenaire.compteActive) }}
+                </span>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <h6 class="text-muted mb-3">Informations de contact</h6>
+                  <div class="mb-2">
+                    <i class="fas fa-envelope text-muted me-2"></i>
+                    <strong>Email:</strong>
+                    <a [href]="'mailto:' + partenaire.email" class="ms-2 text-decoration-none">
+                      {{ partenaire.email }}
+                    </a>
+                  </div>
+                  <div class="mb-2">
+                    <i class="fas fa-phone text-muted me-2"></i>
+                    <strong>Téléphone:</strong>
+                    <span class="ms-2">{{ partenaire.telephone || 'Non renseigné' }}</span>
+                  </div>
+                  <div class="mb-2" *ngIf="partenaire.siteWeb">
+                    <i class="fas fa-globe text-muted me-2"></i>
+                    <strong>Site web:</strong>
+                    <a [href]="partenaire.siteWeb" target="_blank" class="ms-2 text-decoration-none">
+                      {{ partenaire.siteWeb }}
+                    </a>
+                  </div>
+                  <div class="mb-2" *ngIf="partenaire.adresse">
+                    <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                    <strong>Adresse:</strong>
+                    <span class="ms-2">{{ partenaire.adresse }}</span>
+                  </div>
+                  <div class="mb-2" *ngIf="partenaire.personneContactNom">
+                    <i class="fas fa-user text-muted me-2"></i>
+                    <strong>Personne contact:</strong>
+                    <span class="ms-2">{{ partenaire.personneContactNom }}</span>
+                  </div>
+                  <div class="mb-2" *ngIf="partenaire.personneContactFonction">
+                    <i class="fas fa-briefcase text-muted me-2"></i>
+                    <strong>Fonction:</strong>
+                    <span class="ms-2">{{ partenaire.personneContactFonction }}</span>
+                  </div>
+                  <div class="mb-2" *ngIf="partenaire.personneContactEmail">
+                    <i class="fas fa-envelope text-muted me-2"></i>
+                    <strong>Email contact:</strong>
+                    <a [href]="'mailto:' + partenaire.personneContactEmail" class="ms-2 text-decoration-none">
+                      {{ partenaire.personneContactEmail }}
+                    </a>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <h6 class="text-muted mb-3">Informations du compte</h6>
+                  <div class="mb-2">
+                    <i class="fas fa-calendar text-muted me-2"></i>
+                    <strong>Créé le:</strong>
+                    <span class="ms-2">{{ partenaire.dateCreationCompte | date:'dd/MM/yyyy à HH:mm' }}</span>
+                  </div>
+                  <div class="mb-2" *ngIf="partenaire.mis_a_jour_le">
+                    <i class="fas fa-sync text-muted me-2"></i>
+                    <strong>Mis à jour le:</strong>
+                    <span class="ms-2">{{ partenaire.mis_a_jour_le | date:'dd/MM/yyyy à HH:mm' }}</span>
+                  </div>
+                  <div class="mb-2" *ngIf="partenaire.dateActivation">
+                    <i class="fas fa-check-circle text-muted me-2"></i>
+                    <strong>Activé le:</strong>
+                    <span class="ms-2">{{ partenaire.dateActivation | date:'dd/MM/yyyy à HH:mm' }}</span>
+                  </div>
+                  <div class="mb-2">
+                    <i class="fas fa-user-tag text-muted me-2"></i>
+                    <strong>Rôle:</strong>
+                    <span class="ms-2">{{ partenaire.role }}</span>
+                  </div>
+                  <div class="mb-2" *ngIf="partenaire.domaineActivite">
+                    <i class="fas fa-tags text-muted me-2"></i>
+                    <strong>Domaine d'activité:</strong>
+                    <span class="ms-2">{{ partenaire.domaineActivite }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Description -->
+              <div class="mt-4" *ngIf="partenaire.description">
+                <h6 class="text-muted mb-3">Description</h6>
+                <p class="mb-0">{{ partenaire.description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Permissions et statistiques -->
+        <div class="col-lg-4">
+          <!-- Permissions -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light">
+              <h6 class="mb-0">Permissions</h6>
+            </div>
+            <div class="card-body">
+              <div *ngIf="partenaire.permissions" class="small">
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Créer des projets:</span>
+                  <span [class]="partenaire.permissions.peutCreerProjets ? 'text-success' : 'text-danger'">
+                    <i class="fas" [class.fa-check]="partenaire.permissions.peutCreerProjets" 
+                       [class.fa-times]="!partenaire.permissions.peutCreerProjets"></i>
+                  </span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Gérer les volontaires:</span>
+                  <span [class]="partenaire.permissions.peutGererVolontaires ? 'text-success' : 'text-danger'">
+                    <i class="fas" [class.fa-check]="partenaire.permissions.peutGererVolontaires" 
+                       [class.fa-times]="!partenaire.permissions.peutGererVolontaires"></i>
+                  </span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Voir les statistiques:</span>
+                  <span [class]="partenaire.permissions.peutVoirStatistiques ? 'text-success' : 'text-danger'">
+                    <i class="fas" [class.fa-check]="partenaire.permissions.peutVoirStatistiques" 
+                       [class.fa-times]="!partenaire.permissions.peutVoirStatistiques"></i>
+                  </span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Voir les rapports:</span>
+                  <span [class]="partenaire.permissions.peutVoirRapports ? 'text-success' : 'text-danger'">
+                    <i class="fas" [class.fa-check]="partenaire.permissions.peutVoirRapports" 
+                       [class.fa-times]="!partenaire.permissions.peutVoirRapports"></i>
+                  </span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Accès zone PTF:</span>
+                  <span [class]="partenaire.permissions.accesZonePTF ? 'text-success' : 'text-danger'">
+                    <i class="fas" [class.fa-check]="partenaire.permissions.accesZonePTF" 
+                       [class.fa-times]="!partenaire.permissions.accesZonePTF"></i>
+                  </span>
+                </div>
+              </div>
+              <div *ngIf="!partenaire.permissions" class="text-muted text-center">
+                Aucune permission spécifique
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions rapides -->
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+              <h6 class="mb-0">Actions</h6>
+            </div>
+            <div class="card-body">
+              <div class="d-grid gap-2">
+                <button class="btn btn-outline-primary" (click)="editPartenaire()">
+                  <i class="fas fa-edit me-2"></i>Modifier le partenaire
+                </button>
+                <button class="btn btn-outline-info" (click)="voirProjets()">
+                  <i class="fas fa-project-diagram me-2"></i>Voir les projets
+                </button>
+                <button class="btn btn-outline-success" (click)="creerProjet()" 
+                        *ngIf="peutCreerProjets()">
+                  <i class="fas fa-plus me-2"></i>Nouveau projet
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Projets du partenaire -->
+      <div *ngIf="!isLoading && partenaire" class="row mt-4">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">Projets associés ({{ projets.length }})</h6>
+              <button class="btn btn-sm btn-outline-primary" (click)="creerProjet()" 
+                      *ngIf="peutCreerProjets()">
+                <i class="fas fa-plus me-1"></i>Nouveau projet
+              </button>
+            </div>
+            <div class="card-body">
+              <div *ngIf="projets.length === 0" class="text-center py-4 text-muted">
+                <i class="fas fa-project-diagram fa-2x mb-3"></i>
+                <p>Aucun projet associé à ce partenaire</p>
+                <button *ngIf="peutCreerProjets()" class="btn btn-primary mt-2" (click)="creerProjet()">
+                  <i class="fas fa-plus me-2"></i>Créer le premier projet
+                </button>
+              </div>
+
+              <div *ngIf="projets.length > 0" class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>Titre</th>
+                      <th>Statut</th>
+                      <th>Date début</th>
+                      <th>Date fin</th>
+                      <th>Volontaires</th>
+                      <th>Candidatures</th>
+                      <th>Région</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let projet of projets">
+                      <td>
+                        <strong>{{ projet.title }}</strong>
+                        <br>
+                        <small class="text-muted">{{ projet.description | slice:0:50 }}{{ projet.description?.length > 50 ? '...' : '' }}</small>
+                      </td>
+                      <td>
+                        <span [class]="'badge ' + getStatusColor(projet.status)">
+                          {{ projet.status }}
+                        </span>
+                      </td>
+                      <td>{{ projet.startDate | date:'dd/MM/yyyy' }}</td>
+                      <td>{{ projet.endDate | date:'dd/MM/yyyy' }}</td>
+                      <td>
+                        <span class="badge bg-primary">
+                          {{ projet.volontairesAffectes || 0 }}/{{ projet.neededVolunteers || '?' }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge bg-info">
+                          {{ projet.total_candidatures || 0 }}
+                        </span>
+                        <small *ngIf="projet.candidatures_en_attente > 0" class="text-warning ms-1">
+                          (+{{ projet.candidatures_en_attente }})
+                        </small>
+                      </td>
+                      <td>{{ projet.region || 'Non spécifiée' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

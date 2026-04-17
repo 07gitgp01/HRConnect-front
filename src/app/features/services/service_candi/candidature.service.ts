@@ -1,725 +1,692 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin, map, catchError, of, switchMap, throwError } from 'rxjs';
-import { Candidature, CandidatureStats, CandidatureFiltres } from '../../models/candidature.model';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, forkJoin, map, catchError, of, switchMap, throwError, tap } from 'rxjs';
+import { Candidature, CandidatureStats } from '../../models/candidature.model';
 import { Volontaire } from '../../models/volontaire.model';
+import { User } from '../../models/user.model';
 import { AffectationService } from '../service-affecta/affectation.service';
 import { VolontaireService } from '../service_volont/volontaire.service';
 import { Project } from '../../models/projects.model';
+import { SyncService } from '../../../features/services/sync.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class CandidatureService {
-  private apiUrl = 'http://localhost:3000';
+  private apiUrl   = 'http://localhost:3000';
+  private usersUrl = 'http://localhost:3000/users';
+
+  private jsonHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
 
   constructor(
-    private http: HttpClient,
+    private http:               HttpClient,
     private affectationService: AffectationService,
-    private volontaireService: VolontaireService
-  ) { }
+    private volontaireService:  VolontaireService,
+    private syncService:        SyncService
+  ) {}
 
-  // ==================== MÉTHODES CRUD DE BASE ====================
+  // ==================== UTILITAIRE PROJET ====================
+
+  private incrementerVolontairesProjet(projectId: number | string): Observable<any> {
+    const id = this.resolveId(projectId);
+    return this.http.get<Project>(`${this.apiUrl}/projets/${id}`).pipe(
+      switchMap(projet => {
+        const actuel = typeof projet.nombreVolontairesActuels === 'number'
+          ? projet.nombreVolontairesActuels : 0;
+        return this.http.patch(`${this.apiUrl}/projets/${id}`, {
+          nombreVolontairesActuels: actuel + 1,
+          updated_at: new Date().toISOString()
+        }, { headers: this.jsonHeaders });
+      }),
+      catchError(err => {
+        console.warn(`⚠️ Incrémentation projet #${id} échouée:`, err);
+        return of(null);
+      })
+    );
+  }
+
+  private decrementerVolontairesProjet(projectId: number | string): Observable<any> {
+    const id = this.resolveId(projectId);
+    return this.http.get<Project>(`${this.apiUrl}/projets/${id}`).pipe(
+      switchMap(projet => {
+        const actuel = typeof projet.nombreVolontairesActuels === 'number'
+          ? projet.nombreVolontairesActuels : 0;
+        return this.http.patch(`${this.apiUrl}/projets/${id}`, {
+          nombreVolontairesActuels: Math.max(0, actuel - 1),
+          updated_at: new Date().toISOString()
+        }, { headers: this.jsonHeaders });
+      }),
+      catchError(err => {
+        console.warn(`⚠️ Décrémentation projet #${id} échouée:`, err);
+        return of(null);
+      })
+    );
+  }
+
+  // ==================== UTILITAIRE ID ====================
+
+  /**
+   * Résout un ID sans le convertir en décimal pour les IDs hex
+   */
+  private resolveId(id: any): number | string {
+    console.log('🔍 [resolveId] Entrée:', id, 'type:', typeof id);
+    
+    if (id === undefined || id === null) {
+      console.warn('⚠️ [resolveId] ID null ou undefined');
+      return id;
+    }
+    
+    const str = String(id).trim();
+    console.log('🔍 [resolveId] Chaîne:', str);
+    
+    if (str === '' || str === 'NaN') {
+      console.warn('⚠️ [resolveId] Chaîne vide ou NaN');
+      return id;
+    }
+
+    // IMPORTANT: Garder les IDs hex tels quels (ex: "f743", "a2eb")
+    if (/^[a-f0-9]+$/i.test(str) && str.length <= 8) {
+      console.log('🔍 [resolveId] ID hexadécimal détecté, conservation:', str);
+      return str;
+    }
+
+    // Si c'est un nombre décimal pur
+    if (/^\d+$/.test(str)) {
+      const num = parseInt(str, 10);
+      console.log('🔍 [resolveId] ID numérique pur:', num);
+      return num;
+    }
+
+    console.log('🔍 [resolveId] ID conservé tel quel:', id);
+    return id;
+  }
+
+  private idsEqual(a: any, b: any): boolean {
+    if (a == null || b == null) return false;
+    return String(a).trim() === String(b).trim();
+  }
+
+  // ==================== HELPER PATCH ========================
+
+  private patchCandidature(id: number | string, body: object): Observable<Candidature> {
+    const resolvedId = this.resolveId(id);
+    console.log(`📝 PATCH candidature ${resolvedId} avec:`, body);
+    
+    return this.http.patch<Candidature>(
+      `${this.apiUrl}/candidatures/${resolvedId}`,
+      body,
+      { headers: this.jsonHeaders }
+    ).pipe(
+      tap(result => console.log('✅ PATCH réussi:', result)),
+      map(c => this.normalizeCandidature(c)),
+      catchError(err => {
+        console.error(`❌ Erreur PATCH candidature ${resolvedId}:`, err);
+        return throwError(() => err);
+      })
+    );
+  }
+
+  // ==================== CRUD DE BASE ====================
 
   getAll(): Observable<Candidature[]> {
+    console.log('📋 Chargement de toutes les candidatures');
     return this.http.get<Candidature[]>(`${this.apiUrl}/candidatures`).pipe(
-      map(candidatures => this.normalizeCandidatures(candidatures)),
-      catchError(error => {
-        console.error('❌ Erreur récupération candidatures:', error);
+      tap(candidatures => console.log('📋 Candidatures reçues:', candidatures.map(c => ({ id: c.id, nom: c.nom, statut: c.statut })))),
+      map(list => this.normalizeCandidatures(list)),
+      catchError(err => {
+        console.error('❌ Erreur getAll:', err);
         return of([]);
       })
     );
   }
 
   getById(id: number | string): Observable<Candidature> {
-    return this.http.get<Candidature>(`${this.apiUrl}/candidatures/${id}`).pipe(
-      map(candidature => this.normalizeCandidature(candidature)),
-      catchError(error => {
-        console.error(`❌ Erreur récupération candidature ${id}:`, error);
-        return throwError(() => new Error('Candidature non trouvée'));
+    const resolvedId = this.resolveId(id);
+    console.log(`🔍 Recherche candidature par ID: ${resolvedId}`);
+    
+    return this.http.get<Candidature>(`${this.apiUrl}/candidatures/${resolvedId}`).pipe(
+      tap(c => console.log(`✅ Candidature trouvée:`, c)),
+      map(c => this.normalizeCandidature(c)),
+      catchError(err => {
+        console.error(`❌ Candidature ${resolvedId} non trouvée:`, err);
+        return throwError(() => new Error(`Candidature ${id} non trouvée`));
       })
     );
   }
 
-  /**
-   * ✅ CORRIGÉ: Normalisation AVANT envoi HTTP
-   */
   create(candidature: Candidature): Observable<Candidature> {
-    // ✅ VALIDATION: Vérifier que le volontaireId est présent
     if (!candidature.volontaireId) {
-      return throwError(() => new Error('Le volontaireId est requis pour créer une candidature'));
+      return throwError(() => new Error('Le volontaireId est requis'));
     }
-
-    // ✅ Normaliser AVANT d'envoyer à l'API
-    const candidatureNormalisee = this.normalizeCandidature({
+    const data = this.normalizeCandidature({
       ...candidature,
-      cree_le: new Date().toISOString(),
+      cree_le:       new Date().toISOString(),
       mis_a_jour_le: new Date().toISOString(),
-      statut: candidature.statut || 'en_attente'
+      statut:        candidature.statut || 'en_attente'
     });
-    
-    console.log('📤 Création candidature normalisée:', {
-      volontaireId: candidatureNormalisee.volontaireId,
-      projectId: candidatureNormalisee.projectId,
-      nom: candidatureNormalisee.nom
-    });
-    
-    return this.http.post<Candidature>(`${this.apiUrl}/candidatures`, candidatureNormalisee).pipe(
-      map(newCandidature => this.normalizeCandidature(newCandidature)),
-      catchError(error => {
-        console.error('❌ Erreur création candidature:', error);
-        return throwError(() => new Error('Erreur lors de la création de la candidature'));
-      })
+    return this.http.post<Candidature>(`${this.apiUrl}/candidatures`, data, {
+      headers: this.jsonHeaders
+    }).pipe(
+      map(c => {
+        this.syncService.notifierCandidatures();
+        return this.normalizeCandidature(c);
+      }),
+      catchError(() => throwError(() => new Error('Erreur création candidature')))
     );
   }
 
   update(id: number | string, candidature: Candidature): Observable<Candidature> {
-    const candidatureAvecDate = {
+    const resolvedId = this.resolveId(id);
+    return this.http.put<Candidature>(`${this.apiUrl}/candidatures/${resolvedId}`, {
       ...candidature,
       mis_a_jour_le: new Date().toISOString()
-    };
-    return this.http.put<Candidature>(`${this.apiUrl}/candidatures/${id}`, candidatureAvecDate).pipe(
-      map(updatedCandidature => this.normalizeCandidature(updatedCandidature)),
-      catchError(error => {
-        console.error(`❌ Erreur mise à jour candidature ${id}:`, error);
-        return throwError(() => new Error('Erreur lors de la mise à jour de la candidature'));
-      })
+    }, { headers: this.jsonHeaders }).pipe(
+      map(c => {
+        this.syncService.notifierCandidatures();
+        return this.normalizeCandidature(c);
+      }),
+      catchError(() => throwError(() => new Error('Erreur mise à jour candidature')))
     );
   }
 
   delete(id: number | string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/candidatures/${id}`).pipe(
-      catchError(error => {
-        console.error(`❌ Erreur suppression candidature ${id}:`, error);
-        return throwError(() => new Error('Erreur lors de la suppression de la candidature'));
-      })
+    const resolvedId = this.resolveId(id);
+    return this.http.delete<void>(`${this.apiUrl}/candidatures/${resolvedId}`).pipe(
+      map(() => { this.syncService.notifierCandidatures(); }),
+      catchError(() => throwError(() => new Error('Erreur suppression candidature')))
     );
   }
 
-  // ==================== NORMALISATION DES DONNÉES ====================
+  // ==================== NORMALISATION ====================
 
-  /**
-   * ✅ Normaliser une candidature pour s'assurer de la cohérence des données
-   */
-  private normalizeCandidature(candidature: Candidature): Candidature {
+  private normalizeCandidature(c: Candidature): Candidature {
     return {
-      ...candidature,
-      volontaireId: this.normalizeVolontaireId(candidature.volontaireId),
-      projectId: this.normalizeProjectId(candidature.projectId), // ✅ Ajouté
-      competences: this.normalizeCompetences(candidature.competences),
-      statut: candidature.statut || 'en_attente',
-      typePiece: candidature.typePiece || 'CNIB'
+      ...c,
+      id:           c.id ?? undefined,
+      projectId:    c.projectId ?? '',
+      volontaireId: c.volontaireId ?? '',
+      competences:  this.normalizeCompetences(c.competences),
+      statut:       c.statut || 'en_attente',
+      typePiece:    c.typePiece || 'CNIB'
     };
   }
 
-  /**
-   * ✅ Normaliser un tableau de candidatures
-   */
-  private normalizeCandidatures(candidatures: Candidature[]): Candidature[] {
-    return candidatures.map(candidature => this.normalizeCandidature(candidature));
+  private normalizeCandidatures(list: Candidature[]): Candidature[] {
+    return list.map(c => this.normalizeCandidature(c));
   }
 
-  /**
-   * ✅ Normaliser volontaireId (string | number → number)
-   */
-  private normalizeVolontaireId(id: string | number): number {
-    if (typeof id === 'number') {
-      return id;
-    }
-    
-    const idNumber = Number(id);
-    if (isNaN(idNumber)) {
-      throw new Error(`ID volontaire invalide: ${id}`);
-    }
-    
-    return idNumber;
-  }
-
-  /**
-   * ✅ NOUVEAU: Normaliser projectId (assurer que c'est un number)
-   */
-  private normalizeProjectId(id: number): number {
-    if (typeof id === 'number') {
-      return id;
-    }
-    
-    const idNumber = Number(id);
-    if (isNaN(idNumber)) {
-      throw new Error(`ID projet invalide: ${id}`);
-    }
-    
-    return idNumber;
-  }
-
-  /**
-   * ✅ Normaliser les compétences (assurer que c'est un tableau)
-   */
   private normalizeCompetences(competences: any): string[] {
-    if (Array.isArray(competences)) {
-      return competences;
-    }
-    if (typeof competences === 'string') {
-      return competences.split(',').map(c => c.trim()).filter(c => c.length > 0);
-    }
+    if (Array.isArray(competences)) return competences;
+    if (typeof competences === 'string')
+      return competences.split(',').map(c => c.trim()).filter(Boolean);
     return [];
   }
 
-  // ==================== MÉTHODES POUR LES STATUTS ====================
+  // ==================== GESTION DES STATUTS ====================
 
   changerStatut(id: number | string, statut: Candidature['statut']): Observable<Candidature> {
-    return this.http.patch<Candidature>(`${this.apiUrl}/candidatures/${id}`, {
+    console.log(`🔄 Changement de statut: candidature ${id} → ${statut}`);
+    const resolvedId = this.resolveId(id);
+
+    if (statut === 'refusee') {
+      return this.http.get<Candidature>(`${this.apiUrl}/candidatures/${resolvedId}`).pipe(
+        switchMap(candidatureActuelle => {
+          console.log('📋 Candidature actuelle:', candidatureActuelle);
+
+          const patchCandidature$ = this.patchCandidature(resolvedId, {
+            statut: 'refusee',
+            mis_a_jour_le: new Date().toISOString()
+          });
+
+          if (candidatureActuelle.statut === 'acceptee' && candidatureActuelle.volontaireId) {
+            const volontaireId = candidatureActuelle.volontaireId;
+            const projectId    = candidatureActuelle.projectId;
+
+            console.log(`🔴 Candidature #${resolvedId} était acceptée → annulation`);
+
+            const annulerAffectation$ = this.affectationService
+              .getAffectationsByVolontaire(volontaireId).pipe(
+                switchMap(affectations => {
+                  const affActive = affectations.find(
+                    a => a.statut === 'active' && this.idsEqual(a.projectId, projectId)
+                  );
+                  if (affActive?.id) {
+                    return this.affectationService.annulerAffectation(affActive.id);
+                  }
+                  return of(null);
+                }),
+                catchError(() => of(null))
+              );
+
+            const retrograderVolontaire$ = this.http
+              .get<Candidature[]>(`${this.apiUrl}/candidatures?volontaireId=${volontaireId}`).pipe(
+                switchMap(toutesLesCandidatures => {
+                  const autresAcceptees = toutesLesCandidatures.filter(
+                    c => !this.idsEqual(c.id, resolvedId) && c.statut === 'acceptee'
+                  );
+                  if (autresAcceptees.length > 0) return of(null);
+                  const volId = this.resolveId(volontaireId);
+                  return this.http.patch<Volontaire>(
+                    `${this.apiUrl}/volontaires/${volId}`,
+                    { statut: 'En attente', updated_at: new Date().toISOString() },
+                    { headers: this.jsonHeaders }
+                  ).pipe(catchError(() => of(null)));
+                }),
+                catchError(() => of(null))
+              );
+
+            const decrementerProjet$ = projectId
+              ? this.decrementerVolontairesProjet(projectId) : of(null);
+
+            return forkJoin([
+              patchCandidature$,
+              annulerAffectation$,
+              retrograderVolontaire$,
+              decrementerProjet$
+            ]).pipe(
+              map(([candidature]) => {
+                this.syncService.notifierTout();
+                return candidature;
+              })
+            );
+          }
+
+          return patchCandidature$;
+        }),
+        catchError(err => {
+          console.error(`❌ Erreur changerStatut → refusee:`, err);
+          return throwError(() => new Error('Erreur refus candidature'));
+        })
+      );
+    }
+
+    // Cas général
+    return this.patchCandidature(resolvedId, {
       statut,
       mis_a_jour_le: new Date().toISOString()
     }).pipe(
-      map(candidature => this.normalizeCandidature(candidature)),
-      catchError(error => {
-        console.error(`❌ Erreur changement statut ${id}:`, error);
-        return throwError(() => new Error('Erreur lors du changement de statut'));
+      map(c => {
+        this.syncService.notifierCandidatures();
+        return c;
+      }),
+      catchError(err => {
+        console.error(`❌ Erreur changement statut → ${statut}:`, err);
+        return throwError(() => new Error(`Erreur passage statut candidature → ${statut}`));
       })
     );
   }
 
-  accepterCandidature(id: number | string): Observable<Candidature> {
-    return this.changerStatut(id, 'acceptee');
+  refuserCandidature(id: number | string): Observable<Candidature> { 
+    return this.changerStatut(id, 'refusee'); 
+  }
+  
+  mettreEnEntretien(id: number | string): Observable<Candidature> { 
+    return this.changerStatut(id, 'entretien'); 
   }
 
-  refuserCandidature(id: number | string): Observable<Candidature> {
-    return this.changerStatut(id, 'refusee');
-  }
+  // ==================== ACCEPTATION ====================
 
-  mettreEnEntretien(id: number | string): Observable<Candidature> {
-    return this.changerStatut(id, 'entretien');
-  }
+  accepterEtAffecterCandidature(candidatureId: number | string): Observable<{
+    candidature: Candidature;
+    message: string;
+  }> {
+    console.log(`✅ Tentative d'acceptation candidature:`, candidatureId);
+    const resolvedCandidatureId = this.resolveId(candidatureId);
 
-  // ==================== MÉTHODE ACCEPTER ET AFFECTER (AMÉLIORÉE) ====================
-
-  accepterEtAffecterCandidature(candidatureId: number | string): Observable<any> {
-    return this.getById(candidatureId).pipe(
+    return this.getById(resolvedCandidatureId).pipe(
       switchMap(candidature => {
-        // ✅ VALIDATION: Vérifications renforcées
+        console.log('📋 Candidature trouvée:', candidature);
+        
         if (!candidature.projectId) {
-          throw new Error('Candidature non liée à un projet');
+          return throwError(() => new Error('Candidature non liée à un projet'));
         }
         if (!candidature.volontaireId) {
-          throw new Error('Candidature non liée à un volontaire');
+          return throwError(() => new Error('Candidature non liée à un volontaire'));
         }
 
-        console.log('🚀 Début acceptation candidature:', {
-          candidatureId,
-          projet: candidature.projectId,
-          volontaire: candidature.volontaireId,
-          candidat: `${candidature.prenom} ${candidature.nom}`
-        });
+        console.log(`✅ Acceptation de la candidature #${resolvedCandidatureId}`);
 
-        // 1. Mettre à jour le statut de la candidature
-        const updateCandidature$ = this.changerStatut(candidatureId, 'acceptee');
-        
-        // 2. Récupérer le volontaire existant
-        const volontaireAction$ = this.volontaireService.getVolontaire(candidature.volontaireId).pipe(
-          catchError(error => {
-            console.error('❌ Volontaire non trouvé, tentative de création...');
-            return this.creerVolontaireDepuisCandidature(candidature);
-          })
-        );
-        
-        return forkJoin([updateCandidature$, volontaireAction$]);
-      }),
-      switchMap(([candidatureUpdate, volontaire]) => {
-        console.log('✅ Candidature mise à jour, volontaire prêt:', volontaire);
-
-        if (!volontaire.id || !candidatureUpdate.projectId) {
-          throw new Error('ID du volontaire ou du projet non défini');
-        }
-
-        const volontaireId = volontaire.id;
-        const projectId = candidatureUpdate.projectId;
-
-        return this.affectationService.estVolontaireAffecte(volontaireId, projectId).pipe(
-          switchMap(estDejaAffecte => {
-            if (estDejaAffecte) {
-              console.log('⚠️ Volontaire déjà affecté à ce projet');
-              return of({
-                candidature: candidatureUpdate,
-                volontaire: volontaire,
-                affectation: null,
-                message: 'Volontaire déjà affecté à ce projet'
-              });
-            }
-
-            // 3. Créer l'affectation
-            const affectationData = {
-              volontaireId: volontaireId,
-              projectId: projectId,
-              dateAffectation: new Date().toISOString(),
-              statut: 'active' as const,
-              role: candidatureUpdate.poste_vise,
-              notes: `Affectation automatique depuis candidature #${candidatureId}`
+        return this.patchCandidature(resolvedCandidatureId, {
+          statut: 'acceptee',
+          mis_a_jour_le: new Date().toISOString()
+        }).pipe(
+          map(candidatureAcceptee => {
+            this.syncService.notifierCandidatures();
+            return {
+              candidature: candidatureAcceptee,
+              message: `✅ Candidature acceptée avec succès`
             };
-            
-            console.log('📝 Création affectation:', affectationData);
-            
-            return this.affectationService.createAffectation(affectationData).pipe(
-              map(affectation => ({
-                candidature: candidatureUpdate,
-                volontaire: volontaire,
-                affectation: affectation,
-                message: 'Candidature acceptée et volontaire affecté avec succès'
-              }))
-            );
           })
         );
       }),
       catchError(error => {
-        console.error('❌ Erreur lors de l\'acceptation et affectation:', error);
+        console.error('❌ Erreur accepterEtAffecterCandidature:', error);
         return throwError(() => error);
       })
     );
   }
 
-  /**
-   * ✅ Créer un volontaire à partir d'une candidature (méthode de secours)
-   */
-  private creerVolontaireDepuisCandidature(candidature: Candidature): Observable<Volontaire> {
-    const nouveauVolontaire: Volontaire = {
-      nom: candidature.nom,
-      prenom: candidature.prenom,
-      email: candidature.email,
-      telephone: candidature.telephone || '',
-      dateNaissance: '',
-      nationalite: '',
-      sexe: 'M',
-      typePiece: candidature.typePiece,
-      numeroPiece: candidature.numeroPiece,
-      statut: 'Candidat',
-      dateInscription: new Date().toISOString(),
-      competences: this.normalizeCompetences(candidature.competences),
-      regionGeographique: 'À définir',
-      motivation: candidature.lettre_motivation,
-      disponibilite: 'Temps plein'
-    };
-
-    console.log('🆕 Création nouveau volontaire depuis candidature:', nouveauVolontaire);
-    return this.volontaireService.createVolontaire(nouveauVolontaire);
-  }
-
-  // ==================== MÉTHODES SPÉCIFIQUES ====================
+  // ==================== MÉTHODES DE CONSULTATION ====================
 
   getByProject(projectId: number | string): Observable<Candidature[]> {
     return this.http.get<Candidature[]>(`${this.apiUrl}/candidatures?projectId=${projectId}`).pipe(
-      map(candidatures => this.normalizeCandidatures(candidatures)),
-      catchError(error => {
-        console.error(`❌ Erreur candidatures projet ${projectId}:`, error);
-        return of([]);
-      })
+      map(list => this.normalizeCandidatures(list)),
+      catchError(() => of([]))
     );
   }
 
   getByVolontaire(volontaireId: number | string): Observable<Candidature[]> {
     return this.http.get<Candidature[]>(`${this.apiUrl}/candidatures?volontaireId=${volontaireId}`).pipe(
-      map(candidatures => this.normalizeCandidatures(candidatures)),
-      catchError(error => {
-        console.error(`❌ Erreur candidatures volontaire ${volontaireId}:`, error);
-        return of([]);
-      })
+      map(list => this.normalizeCandidatures(list)),
+      catchError(() => of([]))
     );
   }
 
-  // Upload CV
   uploadCV(candidatureId: number | string, file: File): Observable<{ cv_url: string }> {
+    const resolvedId = this.resolveId(candidatureId);
     const formData = new FormData();
     formData.append('cv', file);
-    return this.http.post<{ cv_url: string }>(`${this.apiUrl}/candidatures/${candidatureId}/upload-cv`, formData).pipe(
-      catchError(error => {
-        console.error(`❌ Erreur upload CV ${candidatureId}:`, error);
-        return throwError(() => new Error('Erreur lors de l\'upload du CV'));
-      })
+    return this.http.post<{ cv_url: string }>(
+      `${this.apiUrl}/candidatures/${resolvedId}/upload-cv`, formData
+    ).pipe(catchError(() => throwError(() => new Error('Erreur upload CV'))));
+  }
+
+  emailDejaPostule(email: string, projectId: number | string): Observable<boolean> {
+    return this.getByProject(projectId).pipe(
+      map(list => list.some(c => c.email.toLowerCase() === email.toLowerCase())),
+      catchError(() => of(false))
     );
   }
 
-  /** Récupère les statistiques précises pour un projet */
+  getCandidaturesRecentes(): Observable<Candidature[]> {
+    const limite = new Date();
+    limite.setDate(limite.getDate() - 7);
+    return this.getAll().pipe(
+      map(list => list.filter(c => c.cree_le && new Date(c.cree_le) >= limite))
+    );
+  }
+
+  updateNotes(id: number | string, notes: string): Observable<Candidature> {
+    return this.patchCandidature(id, {
+      notes_interne: notes,
+      mis_a_jour_le: new Date().toISOString()
+    }).pipe(
+      catchError(() => throwError(() => new Error('Erreur mise à jour notes')))
+    );
+  }
+
+  planifierEntretien(id: number | string, dateEntretien: string, notes?: string): Observable<Candidature> {
+    return this.patchCandidature(id, {
+      statut:         'entretien',
+      date_entretien: dateEntretien,
+      notes_interne:  notes,
+      mis_a_jour_le:  new Date().toISOString()
+    }).pipe(
+      map(c => {
+        this.syncService.notifierCandidatures();
+        return c;
+      }),
+      catchError(() => throwError(() => new Error('Erreur planification entretien')))
+    );
+  }
+
+  // ==================== STATISTIQUES ====================
+
   getStatsByProject(projectId: number | string): Observable<any> {
     return forkJoin({
       candidatures: this.getByProject(projectId),
       affectations: this.affectationService.getAffectationsActivesByProject(projectId)
     }).pipe(
-      map(({ candidatures, affectations }) => {
-        const stats = {
-          total: candidatures.length,
-          en_attente: candidatures.filter(c => c.statut === 'en_attente').length,
-          entretien: candidatures.filter(c => c.statut === 'entretien').length,
-          acceptee: candidatures.filter(c => c.statut === 'acceptee').length,
-          refusee: candidatures.filter(c => c.statut === 'refusee').length,
-          volontaires_affectes: affectations.length,
-          volontaires_actifs: affectations.filter(a => a.statut === 'active').length,
-          par_type_piece: {
-            CNIB: candidatures.filter(c => c.typePiece === 'CNIB').length,
-            PASSEPORT: candidatures.filter(c => c.typePiece === 'PASSEPORT').length
-          }
-        };
-
-        console.log(`📊 Stats projet ${projectId}:`, stats);
-        return stats;
-      }),
-      catchError(error => {
-        console.error(`❌ Erreur stats projet ${projectId}:`, error);
-        return of({
-          total: 0, en_attente: 0, entretien: 0, acceptee: 0, refusee: 0,
-          volontaires_affectes: 0, volontaires_actifs: 0,
-          par_type_piece: { CNIB: 0, PASSEPORT: 0 }
-        });
-      })
+      map(({ candidatures, affectations }) => ({
+        total:                candidatures.length,
+        en_attente:           candidatures.filter(c => c.statut === 'en_attente').length,
+        entretien:            candidatures.filter(c => c.statut === 'entretien').length,
+        acceptee:             candidatures.filter(c => c.statut === 'acceptee').length,
+        refusee:              candidatures.filter(c => c.statut === 'refusee').length,
+        volontaires_affectes: affectations.length,
+        volontaires_actifs:   affectations.filter((a: any) => a.statut === 'active').length,
+        par_type_piece: {
+          CNIB:      candidatures.filter(c => c.typePiece === 'CNIB').length,
+          PASSEPORT: candidatures.filter(c => c.typePiece === 'PASSEPORT').length
+        }
+      })),
+      catchError(() => of({
+        total: 0, en_attente: 0, entretien: 0, acceptee: 0, refusee: 0,
+        volontaires_affectes: 0, volontaires_actifs: 0,
+        par_type_piece: { CNIB: 0, PASSEPORT: 0 }
+      }))
     );
   }
 
-  /** Récupère les candidatures avec les données des affectations */
   getCandidaturesAvecAffectations(projectId: number | string): Observable<any[]> {
     return forkJoin({
       candidatures: this.getByProject(projectId),
       affectations: this.affectationService.getAffectationsByProject(projectId),
-      volontaires: this.volontaireService.getVolontaires()
+      volontaires:  this.volontaireService.getVolontaires()
     }).pipe(
-      map(({ candidatures, affectations, volontaires }) => {
-        return candidatures.map(candidature => {
-          const volontaire = volontaires.find(v => 
-            v.id?.toString() === candidature.volontaireId.toString()
-          );
-
-          const affectation = volontaire ?
-            affectations.find(a => a.volontaireId?.toString() === volontaire.id?.toString()) : null;
-
+      map(({ candidatures, affectations, volontaires }) =>
+        candidatures.map(c => {
+          const v = volontaires.find(vol => this.idsEqual(vol.id, c.volontaireId));
+          const a = v ? affectations.find((aff: any) => this.idsEqual(aff.volontaireId, v.id)) : null;
           return {
-            ...candidature,
-            volontaire: volontaire,
-            estAffecte: !!affectation,
-            dateAffectation: affectation?.dateAffectation,
-            statutAffectation: affectation?.statut,
-            roleAffectation: affectation?.role
+            ...c,
+            volontaire:        v,
+            estAffecte:        !!a,
+            dateAffectation:   a?.dateAffectation,
+            statutAffectation: a?.statut
           };
-        });
-      }),
-      catchError(error => {
-        console.error(`❌ Erreur candidatures avec affectations ${projectId}:`, error);
-        return of([]);
-      })
+        })
+      ),
+      catchError(() => of([]))
     );
   }
 
-  // ==================== MÉTHODES POUR LES PARTENAIRES ====================
+  // ==================== PARTENAIRES ====================
 
   getCandidaturesByPartenaire(partenaireId: number | string): Observable<any[]> {
     return forkJoin({
-      projets: this.http.get<Project[]>(`${this.apiUrl}/projets?partenaireId=${partenaireId}`),
+      projets:      this.http.get<Project[]>(`${this.apiUrl}/projets?partenaireId=${partenaireId}`),
       candidatures: this.getAll()
     }).pipe(
       map(({ projets, candidatures }) => {
-        const projetIds = projets.map(p => p.id).filter(id => id !== undefined);
-
-        const candidaturesPartenaire = candidatures.filter(c =>
-          c.projectId && projetIds.includes(c.projectId)
-        );
-
-        return candidaturesPartenaire.map(candidature => {
-          const projet = projets.find(p => p.id === candidature.projectId);
-          return {
-            ...candidature,
-            projetTitre: projet?.titre || 'Projet inconnu',
-            projetRegion: projet?.regionAffectation || 'Non spécifiée',
-            projetStatut: projet?.statutProjet || 'Inconnu'
-          };
-        });
+        const projetIds = projets.map(p => p.id).filter(Boolean);
+        return candidatures
+          .filter(c => c.projectId && projetIds.some(pid => this.idsEqual(pid, c.projectId)))
+          .map(c => {
+            const p = projets.find(proj => this.idsEqual(proj.id, c.projectId));
+            return {
+              ...c,
+              projetTitre:  p?.titre            || 'Inconnu',
+              projetRegion: p?.regionAffectation || '',
+              projetStatut: p?.statutProjet      || ''
+            };
+          });
       }),
-      catchError(error => {
-        console.error('❌ Erreur chargement candidatures partenaire:', error);
-        return of([]);
-      })
+      catchError(() => of([]))
     );
   }
 
   getCandidaturesFiltreesPartenaire(partenaireId: number | string, filtres: any): Observable<any[]> {
     return this.getCandidaturesByPartenaire(partenaireId).pipe(
-      map(candidatures => {
-        let filtered = candidatures;
-
-        // Filtre par statut
-        if (filtres.statut && filtres.statut !== 'tous') {
-          filtered = filtered.filter(c => c.statut === filtres.statut);
-        }
-
-        // Filtre par projet
-        if (filtres.projectId && filtres.projectId !== 'tous') {
-          filtered = filtered.filter(c => c.projectId?.toString() === filtres.projectId.toString());
-        }
-
-        // Filtre par recherche texte
+      map(list => {
+        let f = list;
+        if (filtres.statut          && filtres.statut          !== 'tous') f = f.filter((c: any) => c.statut === filtres.statut);
+        if (filtres.projectId       && filtres.projectId       !== 'tous') f = f.filter((c: any) => this.idsEqual(c.projectId, filtres.projectId));
+        if (filtres.typePiece       && filtres.typePiece       !== 'tous') f = f.filter((c: any) => c.typePiece === filtres.typePiece);
+        if (filtres.niveau_experience && filtres.niveau_experience !== 'tous') f = f.filter((c: any) => c.niveau_experience === filtres.niveau_experience);
         if (filtres.searchTerm) {
-          const term = filtres.searchTerm.toLowerCase();
-          filtered = filtered.filter(c =>
-            c.nom.toLowerCase().includes(term) ||
-            c.prenom.toLowerCase().includes(term) ||
-            c.poste_vise.toLowerCase().includes(term) ||
-            c.email.toLowerCase().includes(term) ||
-            (c.projetTitre && c.projetTitre.toLowerCase().includes(term)) ||
-            c.numeroPiece.toLowerCase().includes(term)
+          const t = filtres.searchTerm.toLowerCase();
+          f = f.filter((c: any) =>
+            c.nom.toLowerCase().includes(t)    ||
+            c.prenom.toLowerCase().includes(t) ||
+            c.email.toLowerCase().includes(t)
           );
         }
-
-        // Filtre par niveau d'expérience
-        if (filtres.niveau_experience && filtres.niveau_experience !== 'tous') {
-          filtered = filtered.filter(c => c.niveau_experience === filtres.niveau_experience);
-        }
-
-        // Filtre par type de pièce
-        if (filtres.typePiece && filtres.typePiece !== 'tous') {
-          filtered = filtered.filter(c => c.typePiece === filtres.typePiece);
-        }
-
-        return filtered;
+        return f;
       })
     );
   }
 
   getProjetsPartenaire(partenaireId: number | string): Observable<Project[]> {
     return this.http.get<Project[]>(`${this.apiUrl}/projets?partenaireId=${partenaireId}`).pipe(
-      catchError(error => {
-        console.error('❌ Erreur chargement projets partenaire:', error);
-        return of([]);
-      })
+      catchError(() => of([]))
     );
   }
-
-  updateNotes(id: number | string, notes: string): Observable<Candidature> {
-    return this.http.patch<Candidature>(`${this.apiUrl}/candidatures/${id}`, {
-      notes_interne: notes,
-      mis_a_jour_le: new Date().toISOString()
-    }).pipe(
-      map(candidature => this.normalizeCandidature(candidature)),
-      catchError(error => {
-        console.error(`❌ Erreur mise à jour notes ${id}:`, error);
-        return throwError(() => new Error('Erreur lors de la mise à jour des notes'));
-      })
-    );
-  }
-
-  planifierEntretien(id: number | string, dateEntretien: string, notes?: string): Observable<Candidature> {
-    return this.http.patch<Candidature>(`${this.apiUrl}/candidatures/${id}`, {
-      statut: 'entretien',
-      date_entretien: dateEntretien,
-      notes_interne: notes,
-      mis_a_jour_le: new Date().toISOString()
-    }).pipe(
-      map(candidature => this.normalizeCandidature(candidature)),
-      catchError(error => {
-        console.error(`❌ Erreur planification entretien ${id}:`, error);
-        return throwError(() => new Error('Erreur lors de la planification de l\'entretien'));
-      })
-    );
-  }
-
-  // ==================== MÉTHODES STATISTIQUES ====================
 
   getStats(): Observable<CandidatureStats> {
     return this.getAll().pipe(
-      map(candidatures => {
-        const par_statut: { [statut: string]: number } = {};
-        const par_type_piece: { [typePiece: string]: number } = {
-          CNIB: 0,
-          PASSEPORT: 0
-        };
-
-        candidatures.forEach(candidature => {
-          const statut = candidature.statut;
-          par_statut[statut] = (par_statut[statut] || 0) + 1;
-
-          // Statistiques par type de pièce
-          if (candidature.typePiece) {
-            par_type_piece[candidature.typePiece] = (par_type_piece[candidature.typePiece] || 0) + 1;
-          }
+      map(list => {
+        const par_statut: { [s: string]: number }   = {};
+        const par_type_piece = { CNIB: 0, PASSEPORT: 0 };
+        list.forEach(c => {
+          par_statut[c.statut] = (par_statut[c.statut] || 0) + 1;
+          if (c.typePiece) (par_type_piece as any)[c.typePiece]++;
         });
-
-        const stats: CandidatureStats = {
-          total: candidatures.length,
-          en_attente: candidatures.filter(c => c.statut === 'en_attente').length,
-          entretien: candidatures.filter(c => c.statut === 'entretien').length,
-          acceptee: candidatures.filter(c => c.statut === 'acceptee').length,
-          refusee: candidatures.filter(c => c.statut === 'refusee').length,
-          par_projet: this.calculerRepartitionProjet(candidatures),
-          par_statut: par_statut,
-          par_type_piece: par_type_piece
+        return {
+          total:      list.length,
+          en_attente: list.filter(c => c.statut === 'en_attente').length,
+          entretien:  list.filter(c => c.statut === 'entretien').length,
+          acceptee:   list.filter(c => c.statut === 'acceptee').length,
+          refusee:    list.filter(c => c.statut === 'refusee').length,
+          par_projet:    this.calculerRepartitionProjet(list),
+          par_statut,
+          par_type_piece
         };
-        return stats;
       }),
-      catchError(error => {
-        console.error('❌ Erreur calcul stats:', error);
-        return of({
-          total: 0, en_attente: 0, entretien: 0, acceptee: 0, refusee: 0,
-          par_projet: {}, par_statut: {}, par_type_piece: { CNIB: 0, PASSEPORT: 0 }
-        });
-      })
+      catchError(() => of({
+        total: 0, en_attente: 0, entretien: 0, acceptee: 0, refusee: 0,
+        par_projet: {}, par_statut: {}, par_type_piece: { CNIB: 0, PASSEPORT: 0 }
+      }))
     );
   }
 
   getCandidaturesAvecProjets(): Observable<any[]> {
     return forkJoin({
       candidatures: this.getAll(),
-      projets: this.http.get<Project[]>(`${this.apiUrl}/projets`)
+      projets:      this.http.get<Project[]>(`${this.apiUrl}/projets`)
     }).pipe(
       map(({ candidatures, projets }) => {
-        const projetsMap = new Map();
-        projets.forEach(projet => projetsMap.set(projet.id, projet));
-
-        return candidatures.map(candidature => {
-          const projet = candidature.projectId ? projetsMap.get(candidature.projectId) : null;
+        const projetsMap = new Map(projets.map(p => [String(p.id), p]));
+        return candidatures.map(c => {
+          const p = c.projectId != null ? projetsMap.get(String(c.projectId)) : null;
           return {
-            ...candidature,
-            region: projet?.regionAffectation || 'Non assignée',
-            projetTitre: projet?.titre || 'Projet non spécifié',
-            projetStatut: projet?.statutProjet || 'Non spécifié'
+            ...c,
+            region:       p?.regionAffectation || 'Non assignée',
+            projetTitre:  p?.titre             || 'Non spécifié',
+            projetStatut: p?.statutProjet      || 'Non spécifié'
           };
         });
       }),
-      catchError(error => {
-        console.error('❌ Erreur candidatures avec projets:', error);
-        return of([]);
-      })
+      catchError(() => of([]))
     );
   }
 
   getStatsDashboard(): Observable<any> {
     return this.getCandidaturesAvecProjets().pipe(
-      map(candidatures => {
-        return {
-          total: candidatures.length,
-          en_attente: candidatures.filter(c => c.statut === 'en_attente').length,
-          entretien: candidatures.filter(c => c.statut === 'entretien').length,
-          acceptee: candidatures.filter(c => c.statut === 'acceptee').length,
-          refusee: candidatures.filter(c => c.statut === 'refusee').length,
-          par_region: this.calculerRepartitionRegion(candidatures),
-          par_mois: this.calculerEvolutionMensuelle(candidatures),
-          par_type_piece: {
-            CNIB: candidatures.filter(c => c.typePiece === 'CNIB').length,
-            PASSEPORT: candidatures.filter(c => c.typePiece === 'PASSEPORT').length
-          },
-          candidatures_urgentes: this.getCandidaturesUrgentes(candidatures)
-        };
-      }),
-      catchError(error => {
-        console.error('❌ Erreur stats dashboard:', error);
-        return of({
-          total: 0, en_attente: 0, entretien: 0, acceptee: 0, refusee: 0,
-          par_region: [], par_mois: [], par_type_piece: { CNIB: 0, PASSEPORT: 0 },
-          candidatures_urgentes: []
-        });
-      })
+      map(list => ({
+        total:      list.length,
+        en_attente: list.filter((c: any) => c.statut === 'en_attente').length,
+        entretien:  list.filter((c: any) => c.statut === 'entretien').length,
+        acceptee:   list.filter((c: any) => c.statut === 'acceptee').length,
+        refusee:    list.filter((c: any) => c.statut === 'refusee').length,
+        par_region: this.calculerRepartitionRegion(list),
+        par_mois:   this.calculerEvolutionMensuelle(list),
+        par_type_piece: {
+          CNIB:      list.filter((c: any) => c.typePiece === 'CNIB').length,
+          PASSEPORT: list.filter((c: any) => c.typePiece === 'PASSEPORT').length
+        },
+        candidatures_urgentes: this.getCandidaturesUrgentes(list)
+      })),
+      catchError(() => of({
+        total: 0, en_attente: 0, entretien: 0, acceptee: 0, refusee: 0,
+        par_region: [], par_mois: [], par_type_piece: { CNIB: 0, PASSEPORT: 0 },
+        candidatures_urgentes: []
+      }))
     );
   }
 
-  // ==================== MÉTHODES UTILITAIRES ====================
+  // ==================== UTILITAIRES PRIVÉS ====================
 
-  /**
-   * ✅ Vérifier si un email a déjà postulé à un projet
-   */
-  emailDejaPostule(email: string, projectId: number | string): Observable<boolean> {
-    return this.getByProject(projectId).pipe(
-      map(candidatures => 
-        candidatures.some(c => 
-          c.email.toLowerCase() === email.toLowerCase()
-        )
-      ),
-      catchError(error => {
-        console.error('❌ Erreur vérification email:', error);
-        return of(false);
-      })
-    );
+  private calculerRepartitionRegion(list: any[]): any[] {
+    const r: { [k: string]: number } = {};
+    list.forEach(c => { const k = c.region || 'Non assignée'; r[k] = (r[k] || 0) + 1; });
+    return Object.entries(r).map(([region, count]) => ({ region, count })).sort((a, b) => b.count - a.count);
   }
 
-  /**
-   * ✅ Récupérer les candidatures récentes (7 derniers jours)
-   */
-  getCandidaturesRecentes(): Observable<Candidature[]> {
-    const dateLimite = new Date();
-    dateLimite.setDate(dateLimite.getDate() - 7);
-
-    return this.getAll().pipe(
-      map(candidatures => 
-        candidatures.filter(c => {
-          if (!c.cree_le) return false;
-          const dateCreation = new Date(c.cree_le);
-          return dateCreation >= dateLimite;
-        })
-      )
-    );
-  }
-
-  // ==================== MÉTHODES PRIVÉES ====================
-
-  private calculerRepartitionRegion(candidatures: any[]): any[] {
-    const regions: { [key: string]: number } = {};
-    candidatures.forEach(candidature => {
-      const region = candidature.region || 'Non assignée';
-      regions[region] = (regions[region] || 0) + 1;
-    });
-    return Object.entries(regions).map(([region, count]) => ({ region, count })).sort((a, b) => b.count - a.count);
-  }
-
-  private calculerEvolutionMensuelle(candidatures: any[]): any[] {
+  private calculerEvolutionMensuelle(list: any[]): any[] {
     const mois = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-    const aujourdhui = new Date();
-    const result = [];
-
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth() - i, 1);
-      const moisKey = mois[date.getMonth()];
-      const annee = date.getFullYear();
-
-      const count = candidatures.filter(c => {
+    const now  = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      const date  = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      const count = list.filter(c => {
         if (!c.cree_le) return false;
-        const dateCandidature = new Date(c.cree_le);
-        return !isNaN(dateCandidature.getTime()) &&
-          dateCandidature.getMonth() === date.getMonth() &&
-          dateCandidature.getFullYear() === annee;
+        const d = new Date(c.cree_le);
+        return !isNaN(d.getTime()) &&
+          d.getMonth()    === date.getMonth()    &&
+          d.getFullYear() === date.getFullYear();
       }).length;
-
-      result.push({ mois: `${moisKey} ${annee}`, count });
-    }
-    return result;
+      return { mois: `${mois[date.getMonth()]} ${date.getFullYear()}`, count };
+    });
   }
 
-  private getCandidaturesUrgentes(candidatures: any[]): any[] {
-    const aujourdhui = new Date();
-    const ilYa7Jours = new Date(aujourdhui.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    return candidatures
-      .filter(c => {
-        if (c.statut !== 'en_attente') return false;
-        if (!c.cree_le) return false;
-        const dateCandidature = new Date(c.cree_le);
-        return !isNaN(dateCandidature.getTime()) && dateCandidature <= ilYa7Jours;
-      })
+  private getCandidaturesUrgentes(list: any[]): any[] {
+    const il7j = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    return list
+      .filter(c => c.statut === 'en_attente' && c.cree_le && new Date(c.cree_le) <= il7j)
       .map(c => ({
-        id: c.id,
-        nom: c.nom,
-        prenom: c.prenom,
-        poste_vise: c.poste_vise,
-        date_reception: c.cree_le,
-        region: c.region,
-        typePiece: c.typePiece
+        id:              c.id,
+        nom:             c.nom,
+        prenom:          c.prenom,
+        poste_vise:      c.poste_vise,
+        date_reception:  c.cree_le,
+        region:          c.region,
+        typePiece:       c.typePiece
       }))
       .slice(0, 10);
   }
 
-  private calculerRepartitionProjet(candidatures: Candidature[]): { [projectId: number]: number } {
-    const repartition: { [projectId: number]: number } = {};
-    candidatures.forEach(candidature => {
-      if (candidature.projectId) {
-        repartition[candidature.projectId] = (repartition[candidature.projectId] || 0) + 1;
-      }
+  private calculerRepartitionProjet(list: Candidature[]): { [p: string]: number } {
+    const r: { [p: string]: number } = {};
+    list.forEach(c => {
+      if (c.projectId) { const key = String(c.projectId); r[key] = (r[key] || 0) + 1; }
     });
-    return repartition;
+    return r;
   }
 
-  // ==================== MÉTHODE POUR PROJETS DISPONIBLES ====================
+  createCandidature(data: any): Observable<Candidature> { return this.create(data); }
 
-  createCandidature(candidatureData: any): Observable<Candidature> {
-    return this.create(candidatureData);
+  synchroniserRolesUtilisateurs(): Observable<{ corriges: number; erreurs: number }> {
+    return forkJoin({
+      volontaires: this.volontaireService.getVolontaires(),
+      users:       this.http.get<User[]>(this.usersUrl)
+    }).pipe(
+      switchMap(({ volontaires, users }) => {
+        const aCorrecter = volontaires
+          .filter(v => v.statut === 'Actif' && v.userId)
+          .filter(v => {
+            const user = users.find(u => this.idsEqual(u.id, v.userId));
+            return user && user.role === 'candidat';
+          });
+
+        if (aCorrecter.length === 0) return of({ corriges: 0, erreurs: 0 });
+
+        const corrections$ = aCorrecter.map(v => {
+          const userId = this.resolveId(v.userId);
+          return this.http.patch<User>(`${this.usersUrl}/${userId}`,
+            { role: 'volontaire' },
+            { headers: this.jsonHeaders }
+          ).pipe(
+            map(() => ({ ok: true })),
+            catchError(() => of({ ok: false }))
+          );
+        });
+
+        return forkJoin(corrections$).pipe(
+          map(results => ({
+            corriges: results.filter(r => r.ok).length,
+            erreurs:  results.filter(r => !r.ok).length
+          }))
+        );
+      }),
+      catchError(() => of({ corriges: 0, erreurs: 1 }))
+    );
   }
 }

@@ -148,6 +148,11 @@
   margin-bottom: 24px;
 }
 
+.notifications-card {
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
 .notifications-list {
   display: flex;
   flex-direction: column;
@@ -178,6 +183,11 @@
 .notification-warning {
   border-left-color: #FF9800; /* Jaune PNVB */
   background-color: #fff3e0;
+}
+
+.notification-error {
+  border-left-color: #D32F2F; /* Rouge erreur */
+  background-color: #ffebee;
 }
 
 .notification-icon {
@@ -220,21 +230,22 @@
   height: fit-content;
   border-radius: 12px;
   border: 1px solid #e9ecef;
+  overflow: hidden;
 }
 
 .content-card .mat-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e9ecef;
-  margin-bottom: 16px;
   padding: 20px 20px 16px;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
 }
 
 .header-icon {
   margin-right: 8px;
   color: #008124; /* Vert PNVB */
+  vertical-align: middle;
 }
 
 .badge-count {
@@ -277,15 +288,20 @@
   font-weight: 400;
 }
 
-/* ===== ITEMS ===== */
+/* ===== ITEMS - HARMONISATION ===== */
 .candidature-item,
 .projet-item {
   padding: 20px;
   border: 1px solid #e9ecef;
   border-radius: 10px;
-  margin-bottom: 16px;
+  margin: 16px;
   transition: all 0.2s ease;
   background: white;
+}
+
+.candidature-item:last-child,
+.projet-item:last-child {
+  margin-bottom: 16px;
 }
 
 .candidature-item:hover,
@@ -320,6 +336,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-family: 'Segoe UI', Tahoma, sans-serif;
+  white-space: nowrap;
 }
 
 .statut-en-attente {
@@ -346,6 +363,18 @@
   border: 2px solid #D32F2F;
 }
 
+/* ===== STATUT PROJET ===== */
+.projet-statut {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #e9ecef;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
 /* ===== DÉTAILS ===== */
 .candidature-details,
 .projet-details {
@@ -360,6 +389,15 @@
   font-size: 0.9rem;
   margin-bottom: 12px;
   font-weight: 500;
+}
+
+.candidature-date mat-icon,
+.projet-region mat-icon,
+.projet-volontaires mat-icon {
+  color: #008124; /* Vert PNVB */
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
 }
 
 .projet-description {
@@ -386,16 +424,15 @@
   font-weight: 500;
 }
 
-.projet-region i,
-.projet-volontaires i {
-  color: #008124; /* Vert PNVB */
+/* ===== COMPÉTENCES ===== */
+.candidature-competences {
+  margin-top: 12px;
 }
 
-/* ===== COMPÉTENCES ===== */
 .mat-chip-set {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .competence-chip {
@@ -406,59 +443,85 @@
   border: 1px solid rgba(0, 129, 36, 0.2);
   border-radius: 16px;
   font-family: 'Segoe UI', Tahoma, sans-serif;
+  min-height: 28px;
 }
 
-/* ===== ACTIONS ===== */
+/* ===== ACTIONS - HARMONISATION ===== */
 .candidature-actions,
 .projet-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e9ecef;
 }
 
-/* Boutons harmonisés */
-.btn-primary {
-  background: linear-gradient(135deg, #008124 0%, #006b1e 100%);
-  border: none;
-  color: white;
+/* Style unifié pour les boutons primaires (Postuler et Détails de ma candidature) */
+.projet-actions button[color="primary"],
+.candidature-actions button[color="primary"],
+button[mat-raised-button][color="primary"],
+button[mat-stroked-button][color="primary"] {
+  background: #008124 !important; /* Vert PNVB */
+  color: white !important;
   font-weight: 600;
   font-family: 'Segoe UI', Tahoma, sans-serif;
+  border: none;
+  transition: all 0.2s ease;
 }
 
-.btn-primary:hover {
-  background: linear-gradient(135deg, #009629 0%, #008124 100%);
-  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.2);
+.projet-actions button[color="primary"]:hover,
+.candidature-actions button[color="primary"]:hover,
+button[mat-raised-button][color="primary"]:hover,
+button[mat-stroked-button][color="primary"]:hover {
+  background: #006b1e !important; /* Vert PNVB foncé */
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.3);
 }
 
-.btn-outline-primary {
+/* Style unifié pour les boutons secondaires (Détails et Retirer) */
+.projet-actions button[mat-button]:not([color="warn"]),
+.candidature-actions button[mat-button]:not([color="warn"]) {
   border: 2px solid #008124;
   color: #008124;
   font-weight: 600;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: transparent;
+  transition: all 0.2s ease;
 }
 
-.btn-outline-primary:hover {
+.projet-actions button[mat-button]:not([color="warn"]):hover,
+.candidature-actions button[mat-button]:not([color="warn"]):hover {
   background: #008124;
   color: white;
 }
 
-.btn-warning {
-  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
-  border: none;
-  color: white;
+/* Style spécifique pour le bouton Retirer (warn) */
+.candidature-actions button[color="warn"] {
+  border: 2px solid #D32F2F;
+  color: #D32F2F;
   font-weight: 600;
+  background: transparent;
 }
 
-.btn-warning:hover {
-  background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);
+.candidature-actions button[color="warn"]:hover {
+  background: #D32F2F;
+  color: white;
 }
 
 /* ===== VOIR TOUT ===== */
 .view-all-section {
   text-align: center;
-  padding-top: 20px;
+  padding: 20px;
   border-top: 1px solid #e9ecef;
-  margin-top: 20px;
+  background-color: #f8f9fa;
+}
+
+.view-all-section button[color="primary"] {
+  color: #008124 !important;
+  font-weight: 600;
+}
+
+.view-all-section button[color="primary"]:hover {
+  background-color: rgba(0, 129, 36, 0.1);
 }
 
 /* ===== LOADING ===== */
@@ -475,18 +538,6 @@
   color: #6c757d;
   font-size: 1rem;
   font-weight: 500;
-}
-
-/* ===== STATUT PROJET ===== */
-.projet-statut {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: #f8f9fa;
-  color: #6c757d;
-  border: 1px solid #e9ecef;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
 }
 
 /* ===== RESPONSIVE ===== */
@@ -518,8 +569,14 @@
   
   .candidature-actions,
   .projet-actions {
-    justify-content: flex-start;
+    flex-direction: column;
     width: 100%;
+  }
+  
+  .candidature-actions button,
+  .projet-actions button {
+    width: 100%;
+    justify-content: center;
   }
   
   .stat-content {
@@ -528,6 +585,12 @@
   
   .stat-number {
     font-size: 1.8rem;
+  }
+  
+  .candidature-item,
+  .projet-item {
+    margin: 12px;
+    padding: 16px;
   }
 }
 
@@ -541,20 +604,13 @@
     grid-template-columns: 1fr;
   }
   
-  .candidature-actions,
-  .projet-actions {
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .candidature-actions button,
-  .projet-actions button {
-    width: 100%;
-    justify-content: center;
-  }
-  
   .notification-item {
     padding: 12px;
+  }
+  
+  .badge-count {
+    padding: 4px 8px;
+    font-size: 0.7rem;
   }
 }
 
@@ -587,10 +643,200 @@ strong, b {
 }
 
 /* ===== ICÔNES ===== */
-.bi {
+mat-icon {
   vertical-align: middle;
 }
 
-.bi-calendar, .bi-geo-alt, .bi-people, .bi-clock, .bi-briefcase, .bi-folder, .bi-envelope {
+.header-icon,
+.stat-icon,
+.notification-icon,
+.candidature-date mat-icon,
+.projet-region mat-icon,
+.projet-volontaires mat-icon,
+.view-all-section mat-icon {
   color: #008124; /* Vert PNVB pour les icônes */
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.candidature-item,
+.projet-item,
+.notification-item {
+  animation: fadeIn 0.3s ease-out;
+}
+
+
+/* ===== BOUTON DÉJÀ POSTULÉ ===== */
+.deja-postule-button {
+  background: linear-gradient(135deg, #e6f4e6 0%, #d1e7dd 100%) !important;
+  color: #008124 !important;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: 2px solid #008124 !important;
+  transition: all 0.3s ease;
+}
+
+.deja-postule-button mat-icon {
+  color: #008124 !important;
+}
+
+.deja-postule-button:hover {
+  background: linear-gradient(135deg, #d1e7dd 0%, #c0e0d0 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.2);
+}
+
+/* Adaptation pour les boutons dans les actions */
+.projet-actions .deja-postule-button {
+  margin-right: 8px;
+}
+
+
+/* src/app/features/candidats/candidat-dashboard/dashboard.component.css */
+
+.view-more-section {
+  text-align: center;
+  margin: 16px 0 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #e0e0e0;
+}
+
+.view-more-section button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.view-more-section button mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.view-all-section {
+  margin-top: 16px;
+  text-align: center;
+}
+
+
+/* src/app/features/candidats/candidat-dashboard/dashboard.component.css */
+
+/* ===== VOIR TOUT - CORRIGÉ ===== */
+.view-all-section {
+  text-align: center;
+  padding: 20px;
+  border-top: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  margin-top: 16px;
+  border-radius: 0 0 12px 12px; /* ✅ Arrondi en bas */
+  display: block; /* ✅ S'assurer que la section est visible */
+  width: 100%; /* ✅ Prendre toute la largeur */
+}
+
+.view-all-section button {
+  display: inline-flex !important; /* ✅ Forcer l'affichage */
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px !important; /* ✅ Padding plus visible */
+  font-weight: 600 !important;
+  font-size: 1rem !important; /* ✅ Taille de police lisible */
+  background: transparent !important;
+  border: 2px solid #008124 !important; /* ✅ Bordure visible */
+  color: #008124 !important; /* ✅ Texte vert PNVB */
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  min-width: 220px; /* ✅ Largeur minimum */
+  text-transform: none !important; /* ✅ Éviter la transformation en majuscules */
+  letter-spacing: normal !important; /* ✅ Espacement normal */
+  box-shadow: none !important; /* ✅ Pas d'ombre par défaut */
+}
+
+.view-all-section button mat-icon {
+  color: #008124 !important; /* ✅ Icône verte */
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+  margin-right: 4px;
+}
+
+.view-all-section button:hover {
+  background: #008124 !important; /* ✅ Fond vert au survol */
+  color: white !important; /* ✅ Texte blanc au survol */
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.3) !important; /* ✅ Ombre au survol */
+  transform: translateY(-2px) !important; /* ✅ Léger effet de levée */
+}
+
+.view-all-section button:hover mat-icon {
+  color: white !important; /* ✅ Icône blanche au survol */
+}
+
+/* ✅ Style spécifique pour le bouton "Voir toutes mes candidatures" */
+.view-all-section button[mat-raised-button][color="primary"] {
+  background: #008124 !important; /* ✅ Fond vert */
+  color: white !important; /* ✅ Texte blanc */
+  border: none !important; /* ✅ Pas de bordure */
+}
+
+.view-all-section button[mat-raised-button][color="primary"] mat-icon {
+  color: white !important; /* ✅ Icône blanche */
+}
+
+.view-all-section button[mat-raised-button][color="primary"]:hover {
+  background: #006b1e !important; /* ✅ Vert plus foncé au survol */
+  border: none !important;
+}
+
+/* ✅ Style spécifique pour le bouton "Explorer toutes les missions" */
+.view-all-section button[mat-button] {
+  background: transparent !important;
+  border: 2px solid #008124 !important;
+  color: #008124 !important;
+}
+
+.view-all-section button[mat-button]:hover {
+  background: #008124 !important;
+  color: white !important;
+}
+
+/* ✅ Responsive */
+@media (max-width: 768px) {
+  .view-all-section {
+    padding: 16px;
+  }
+  
+  .view-all-section button {
+    width: 100%; /* ✅ Pleine largeur sur mobile */
+    justify-content: center;
+    padding: 12px !important;
+  }
+}
+
+/* ✅ Pour s'assurer que les liens ne sont pas cachés */
+.content-card {
+  height: fit-content;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  overflow: visible; /* ✅ Changé de 'hidden' à 'visible' pour ne pas couper le contenu */
+  background: white;
+  position: relative;
+  z-index: 2;
+}
+
+/* ✅ S'assurer que le contenu est au-dessus */
+.candidatures-column,
+.projets-column {
+  position: relative;
+  z-index: 2;
 }

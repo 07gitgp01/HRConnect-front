@@ -1,10 +1,10 @@
 // src/app/features/candidat/mes-candidatures/mes-candidatures.component.ts
-import { Component, OnInit } from '@angular/core';
+
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
-// Angular Material imports
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,6 +15,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { MatTableModule } from '@angular/material/table';
 
 import { AuthService } from '../../services/service_auth/auth.service';
 import { CandidatureService } from '../../services/service_candi/candidature.service';
@@ -37,23 +40,32 @@ import { Project } from '../../models/projects.model';
     MatDividerModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatInputModule
+    MatInputModule,
+    MatTooltipModule,
+    MatPaginatorModule,  // ✅ AJOUTÉ
+    MatTableModule        // ✅ AJOUTÉ
   ],
   templateUrl: './mes-candidatures.component.html',
   styleUrls: ['./mes-candidatures.component.css']
 })
 export class MesCandidaturesComponent implements OnInit {
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+
   user: any;
   mesCandidatures: Candidature[] = [];
+  candidaturesFiltrees: Candidature[] = [];
   projets: Project[] = [];
   loading = true;
 
-  // Filtres
   filtreStatut: string = '';
   filtreProjet: string = '';
   searchTerm: string = '';
 
-  // Statistiques
+  // ✅ Pagination
+  pageSize = 5;
+  pageSizeOptions = [5, 10, 25, 50];
+  currentPage = 0;
+
   stats = {
     total: 0,
     en_attente: 0,
@@ -61,9 +73,6 @@ export class MesCandidaturesComponent implements OnInit {
     acceptee: 0,
     refusee: 0
   };
-
-  // Gestion de l'expansion des lettres de motivation
-  lettresExpanded: { [key: number]: boolean } = {};
 
   constructor(
     private authService: AuthService,
@@ -86,12 +95,14 @@ export class MesCandidaturesComponent implements OnInit {
   loadMesCandidatures(): void {
     this.candidatureService.getAll().subscribe({
       next: (candidatures) => {
-        // Filtrer les candidatures de l'utilisateur connecté
+        const userEmail = this.user?.email?.toLowerCase().trim();
+
         this.mesCandidatures = candidatures
-          .filter(c => c.email === this.user.email)
+          .filter(c => c.email?.toLowerCase().trim() === userEmail)
           .sort((a, b) => new Date(b.cree_le || '').getTime() - new Date(a.cree_le || '').getTime());
-        
+
         this.calculerStats();
+        this.appliquerFiltres();
         this.loading = false;
       },
       error: (error) => {
@@ -104,63 +115,82 @@ export class MesCandidaturesComponent implements OnInit {
 
   loadProjets(): void {
     this.projectService.getProjects().subscribe({
-      next: (projets) => {
-        this.projets = projets;
-      },
-      error: (error) => {
-        console.error('Erreur chargement projets:', error);
-      }
+      next: (projets) => { this.projets = projets; },
+      error: (error)  => { console.error('Erreur chargement projets:', error); }
     });
   }
 
   calculerStats(): void {
     this.stats = {
-      total: this.mesCandidatures.length,
+      total:      this.mesCandidatures.length,
       en_attente: this.mesCandidatures.filter(c => c.statut === 'en_attente').length,
-      entretien: this.mesCandidatures.filter(c => c.statut === 'entretien').length,
-      acceptee: this.mesCandidatures.filter(c => c.statut === 'acceptee').length,
-      refusee: this.mesCandidatures.filter(c => c.statut === 'refusee').length
+      entretien:  this.mesCandidatures.filter(c => c.statut === 'entretien').length,
+      acceptee:   this.mesCandidatures.filter(c => c.statut === 'acceptee').length,
+      refusee:    this.mesCandidatures.filter(c => c.statut === 'refusee').length
     };
   }
 
-  getCandidaturesFiltrees(): Candidature[] {
+  appliquerFiltres(): void {
     let filtered = this.mesCandidatures;
 
-    // ✅ Filtre par statut
     if (this.filtreStatut) {
       filtered = filtered.filter(c => c.statut === this.filtreStatut);
     }
 
-    // ✅ Filtre par projet (corrigé - gestion sécurisée des IDs)
     if (this.filtreProjet) {
-      const filterProjectId = Number(this.filtreProjet);
-      filtered = filtered.filter(c => 
-        c.projectId !== undefined && c.projectId === filterProjectId
-      );
+      filtered = filtered.filter(c => String(c.projectId) === String(this.filtreProjet));
     }
 
-    // ✅ Filtre par recherche (corrigé - éviter les faux positifs)
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(c => {
         const projectName = this.getProjectName(c.projectId);
         const isValidProjectName = projectName !== 'Projet inconnu' && projectName !== 'Non spécifié';
-        
-        return c.poste_vise.toLowerCase().includes(term) ||
-               (c.nom + ' ' + c.prenom).toLowerCase().includes(term) ||
-               (isValidProjectName && projectName.toLowerCase().includes(term));
+        return (
+          c.poste_vise.toLowerCase().includes(term) ||
+          (c.nom + ' ' + c.prenom).toLowerCase().includes(term) ||
+          (isValidProjectName && projectName.toLowerCase().includes(term))
+        );
       });
     }
 
-    return filtered;
+    this.candidaturesFiltrees = filtered;
+    
+    // Reset à la première page quand les filtres changent
+    if (this.paginator) {
+      this.paginator.firstPage();
+    }
   }
 
-  retirerCandidature(candidatureId: number): void {
+  // ✅ Getter pour les candidatures paginées
+  get candidaturesPaginees(): Candidature[] {
+    const startIndex = this.currentPage * this.pageSize;
+    return this.candidaturesFiltrees.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  // ✅ Méthode appelée lors du changement de page
+  onPageChange(event: any): void {
+    this.currentPage = event.pageIndex;
+    this.pageSize = event.pageSize;
+  }
+
+  // ✅ Méthode pour formater le nom du projet dans le filtre
+  getProjetDisplayName(projet: Project): string {
+    if (!projet) return 'Mission inconnue';
+    const titre = projet.titre || 'Mission sans titre';
+    if (titre.length > 40) {
+      return titre.substring(0, 40) + '...';
+    }
+    return titre;
+  }
+
+  retirerCandidature(candidatureId: number | string): void {
     if (confirm('Êtes-vous sûr de vouloir retirer cette candidature ? Cette action est irréversible.')) {
       this.candidatureService.delete(candidatureId).subscribe({
         next: () => {
-          this.mesCandidatures = this.mesCandidatures.filter(c => c.id !== candidatureId);
+          this.mesCandidatures = this.mesCandidatures.filter(c => String(c.id) !== String(candidatureId));
           this.calculerStats();
+          this.appliquerFiltres();
           this.snackBar.open('Candidature retirée avec succès', 'Fermer', { duration: 3000 });
         },
         error: (error) => {
@@ -174,9 +204,9 @@ export class MesCandidaturesComponent implements OnInit {
   getStatutBadgeClass(statut: string): string {
     const classes: { [key: string]: string } = {
       'en_attente': 'statut-en-attente',
-      'entretien': 'statut-entretien',
-      'acceptee': 'statut-acceptee',
-      'refusee': 'statut-refusee'
+      'entretien':  'statut-entretien',
+      'acceptee':   'statut-acceptee',
+      'refusee':    'statut-refusee'
     };
     return classes[statut] || '';
   }
@@ -184,54 +214,54 @@ export class MesCandidaturesComponent implements OnInit {
   getStatutText(statut: string): string {
     const textes: { [key: string]: string } = {
       'en_attente': 'En attente',
-      'entretien': 'En entretien',
-      'acceptee': 'Acceptée',
-      'refusee': 'Refusée'
+      'entretien':  'En entretien',
+      'acceptee':   'Acceptée',
+      'refusee':    'Refusée'
     };
     return textes[statut] || statut;
   }
 
+  getStatutIcon(statut: string): string {
+    const icons: { [key: string]: string } = {
+      'en_attente': 'schedule',
+      'entretien': 'event_available',
+      'acceptee': 'check_circle',
+      'refusee': 'cancel'
+    };
+    return icons[statut] || 'help_outline';
+  }
+
   getNiveauExperienceText(niveau?: string): string {
     const niveaux: { [key: string]: string } = {
-      'debutant': 'Débutant',
+      'debutant':      'Débutant',
       'intermediaire': 'Intermédiaire',
-      'expert': 'Expert'
+      'expert':        'Expert'
     };
     return niveau ? (niveaux[niveau] || niveau) : 'Non spécifié';
   }
 
-  /**
-   * ✅ CORRIGÉ: Éviter la shadow variable
-   */
   getProjectName(projectId?: number | string): string {
-    if (!projectId) return 'Non spécifié';
-    
-    const idToFind = typeof projectId === 'string' ? parseInt(projectId, 10) : projectId;
-    
-    const project = this.projets.find(p => {
-      const pId = typeof p.id === 'string' ? parseInt(p.id, 10) : p.id; // ✅ Renommé
-      return pId === idToFind;
-    });
-    
-    return project ? (project.titre || 'Projet inconnu') : 'Projet inconnu';
+    if (projectId == null) return 'Non spécifié';
+    const project = this.projets.find(p => String(p.id) === String(projectId));
+    return project?.titre || 'Projet inconnu';
   }
 
   getCompetencesArray(competences: any): string[] {
     if (!competences) return [];
-    if (Array.isArray(competences)) {
-      return competences;
-    }
+    if (Array.isArray(competences)) return competences;
     return String(competences).split(',').map(c => c.trim());
   }
 
-  voirDetailsProjet(projectId?: number): void {
-    if (projectId) {
-      this.router.navigate(['/features/candidats/details', projectId]);
+  voirDetailsCandidature(candidatureId?: number | string): void {
+    if (candidatureId != null) {
+      this.router.navigate(['/features/candidats/candidature', candidatureId]);
+    } else {
+      this.snackBar.open('Impossible d\'afficher les détails', 'Fermer', { duration: 3000 });
     }
   }
 
   reappliquer(candidature: Candidature): void {
-    if (candidature.projectId) {
+    if (candidature.projectId != null) {
       this.router.navigate(['/features/candidats/postuler', candidature.projectId]);
     }
   }
@@ -239,12 +269,10 @@ export class MesCandidaturesComponent implements OnInit {
   clearFilters(): void {
     this.filtreStatut = '';
     this.filtreProjet = '';
-    this.searchTerm = '';
+    this.searchTerm   = '';
+    this.appliquerFiltres();
   }
 
-  /**
-   * Ouvre le CV dans un nouvel onglet si disponible
-   */
   ouvrirCV(cvUrl?: string): void {
     if (cvUrl) {
       window.open(cvUrl, '_blank');
@@ -253,44 +281,21 @@ export class MesCandidaturesComponent implements OnInit {
     }
   }
 
-  /**
-   * Formate la date d'entretien pour l'affichage
-   */
   getDateEntretienFormatee(dateEntretien?: string): string {
     if (!dateEntretien) return '';
-    
     try {
       const date = new Date(dateEntretien);
-      if (isNaN(date.getTime())) {
-        return 'Date invalide';
-      }
+      if (isNaN(date.getTime())) return 'Date invalide';
       return date.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
       });
-    } catch (error) {
-      console.error('Erreur formatage date:', error);
+    } catch {
       return 'Date invalide';
     }
   }
 
-  /**
-   * Vérifie si une candidature a un entretien programmé
-   */
   aEntretienProgramme(candidature: Candidature): boolean {
     return candidature.statut === 'entretien' && !!candidature.date_entretien;
-  }
-
-  toggleLettreExpansion(candidature: Candidature): void {
-    if (candidature.id) {
-      this.lettresExpanded[candidature.id] = !this.lettresExpanded[candidature.id];
-    }
-  }
-
-  isLettreExpanded(candidature: Candidature): boolean {
-    return candidature.id ? !!this.lettresExpanded[candidature.id] : false;
   }
 }

@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { VolontairesListComponent } from './volontaires-list/volontaires-list.component';
 // import { ProfilFormComponent } from './profil-form/profil-form.component'; // Importation inutile si non utilisée dans les routes
 import { GestionVolontairesComponent } from './gestion-volontaires.component'; 
+import { VoirProfilVolontaireComponent } from './voir-profil-volontaire/voir-profil-volontaire.component';
 
 const routes: Routes = [
   {
@@ -13,6 +14,8 @@ const routes: Routes = [
       // Les routes suivantes ne sont pas nécessaires car vous utilisez un tiroir latéral (sidenav)
       /*{ path: 'nouveau', component: ProfilFormComponent },
       { path: 'edit/:id', component: ProfilFormComponent }*/
+
+      { path: 'voir-candidat/:id', component: VoirProfilVolontaireComponent }
     ]
   }
 ];

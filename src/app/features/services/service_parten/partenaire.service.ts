@@ -1,156 +1,343 @@
-// src/app/features/services/service_parten/partenaire.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, forkJoin } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { 
-  Partenaire, 
-  PartenaireDashboardStats, 
+import {
+  Partenaire,
+  PartenaireDashboardStats,
   InscriptionPartenaire,
   PartenairePermissionsService,
   TypeStructurePNVB,
   Alerte
 } from '../../models/partenaire.model';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class PartenaireService {
   private apiUrl = 'http://localhost:3000';
 
   constructor(private http: HttpClient) {}
 
-  /** 🔹 Récupérer tous les partenaires */
+  // ============================================================================
+  // CRUD PARTENAIRES
+  // ============================================================================
+
   getAll(): Observable<Partenaire[]> {
     return this.http.get<Partenaire[]>(`${this.apiUrl}/partenaires`);
   }
 
-  /** 🔹 Récupérer un partenaire par son ID (accepte string et number) */
   getById(id: string | number): Observable<Partenaire> {
-    const idString = id.toString();
-    console.log('🔍 Recherche partenaire par ID:', idString);
-    return this.http.get<Partenaire>(`${this.apiUrl}/partenaires/${idString}`).pipe(
-      catchError((error: any) => {
-        console.error('❌ Erreur chargement partenaire:', error);
-        throw error;
-      })
+    return this.http.get<Partenaire>(`${this.apiUrl}/partenaires/${id}`).pipe(
+      catchError((error) => { console.error('❌ Erreur chargement partenaire:', error); throw error; })
     );
   }
 
-  /** 🔹 Inscrire un partenaire avec types multiples */
   inscrirePartenaire(data: InscriptionPartenaire): Observable<Partenaire> {
     const partenaire = PartenairePermissionsService.creerPartenaireAvecPermissions(data);
-    
-    console.log('🔄 Création nouveau partenaire multi-types:', partenaire);
-    
     return this.http.post<Partenaire>(`${this.apiUrl}/partenaires`, partenaire).pipe(
-      tap((newPartenaire: Partenaire) => console.log('✅ Partenaire créé:', newPartenaire)),
-      catchError((error: any) => {
-        console.error('❌ Erreur création partenaire:', error);
-        throw error;
-      })
+      tap(p => console.log('✅ Partenaire créé:', p)),
+      catchError((error) => { console.error('❌ Erreur création partenaire:', error); throw error; })
     );
   }
 
-  /** 🔹 Créer un partenaire (méthode existante pour compatibilité) */
   create(partenaire: Partenaire): Observable<Partenaire> {
-    const partenaireAvecDates = {
+    return this.http.post<Partenaire>(`${this.apiUrl}/partenaires`, {
       ...partenaire,
-      cree_le: new Date().toISOString(),
+      cree_le:       new Date().toISOString(),
       mis_a_jour_le: new Date().toISOString()
-    };
-    return this.http.post<Partenaire>(`${this.apiUrl}/partenaires`, partenaireAvecDates);
+    });
   }
 
-  /** 🔹 Mettre à jour un partenaire existant (accepte string et number) */
-  update(id: string | number, partenaire: Partenaire): Observable<Partenaire> {
-    const idString = id.toString();
-    const partenaireAvecDate = {
+  update(id: string | number, partenaire: Partial<Partenaire>): Observable<Partenaire> {
+    return this.http.put<Partenaire>(`${this.apiUrl}/partenaires/${id}`, {
       ...partenaire,
       mis_a_jour_le: new Date().toISOString()
-    };
-    return this.http.put<Partenaire>(`${this.apiUrl}/partenaires/${idString}`, partenaireAvecDate);
+    });
   }
 
-  /** 🔹 Supprimer un partenaire (accepte string et number) */
   delete(id: string | number): Observable<any> {
-    const idString = id.toString();
-    return this.http.delete(`${this.apiUrl}/partenaires/${idString}`);
+    return this.http.delete(`${this.apiUrl}/partenaires/${id}`);
   }
 
-  /** 🔹 Activer/Désactiver un compte partenaire (accepte string et number) */
   toggleAccountStatus(id: string | number, active: boolean): Observable<Partenaire> {
-    const idString = id.toString();
-    const updateData: any = { 
-      estActive: active,
-      compteActive: active,
+    const patch: any = {
+      estActive:     active,
+      compteActive:  active,
       mis_a_jour_le: new Date().toISOString()
     };
-
-    if (active) {
-      updateData.dateActivation = new Date().toISOString();
-    }
-    
-    return this.http.patch<Partenaire>(`${this.apiUrl}/partenaires/${idString}`, updateData);
+    if (active) patch.dateActivation = new Date().toISOString();
+    return this.http.patch<Partenaire>(`${this.apiUrl}/partenaires/${id}`, patch);
   }
 
-  /** 🔹 Vérifier les permissions d'un partenaire (accepte string et number) */
-  verifierPermissionsPartenaire(partenaireId: string | number): Observable<any> {
-    const idString = partenaireId.toString();
-    return this.getById(idString).pipe(
-      map((partenaire: Partenaire) => {
-        if (!partenaire) {
-          throw new Error('Partenaire non trouvé');
-        }
-        
+  // ============================================================================
+  // PROJETS DU PARTENAIRE
+  // ============================================================================
+
+  /**
+   * Retourne les projets bruts filtrés par partenaireId.
+   * ✅ Filtre côté client pour fiabilité avec json-server.
+   */
+  getProjetsByPartenaire(partenaireId: number | string): Observable<any[]> {
+    const idStr = partenaireId.toString();
+    return this.http.get<any[]>(`${this.apiUrl}/projets`).pipe(
+      map(projets => projets.filter(p =>
+        p.partenaireId != null && p.partenaireId.toString() === idStr
+      )),
+      catchError(() => of([]))
+    );
+  }
+
+  /**
+   * Retourne les projets enrichis avec stats candidatures + affectations.
+   * ✅ Utilise statutProjet (champ normalisé) partout.
+   */
+  getProjetsAvecCandidatures(partenaireId: number | string): Observable<any[]> {
+    const idStr = partenaireId.toString();
+
+    return forkJoin({
+      projets:      this.getProjetsByPartenaire(idStr),
+      candidatures: this.http.get<any[]>(`${this.apiUrl}/candidatures`).pipe(catchError(() => of([]))),
+      affectations: this.http.get<any[]>(`${this.apiUrl}/affectations`).pipe(catchError(() => of([])))
+    }).pipe(
+      map(({ projets, candidatures, affectations }) =>
+        projets.map(projet => {
+          const pid = projet.id?.toString();
+
+          const cands      = candidatures.filter(c => c.projectId?.toString() === pid);
+          const affecActives = affectations.filter(a =>
+            a.projectId?.toString() === pid && a.statut === 'active'
+          );
+
+          // ✅ Normaliser statutProjet ici aussi pour cohérence
+          const statutProjet = this.normaliserStatut(
+            projet.statutProjet ?? projet.status
+          );
+
+          return {
+            ...projet,
+            statutProjet,                                            // ✅ toujours présent
+            total_candidatures:       cands.length,
+            candidatures_en_attente:  cands.filter(c => c.statut === 'en_attente').length,
+            candidatures_entretien:   cands.filter(c => c.statut === 'entretien').length,
+            candidatures_acceptees:   cands.filter(c => c.statut === 'acceptee').length,
+            candidatures_refusees:    cands.filter(c => c.statut === 'refusee').length,
+            volontairesAffectes:      affecActives.length,
+            nouvellesCandidatures:    cands.filter(c => c.statut === 'en_attente').length,
+            _candidatures:            cands,
+            _affectations:            affecActives
+          };
+        })
+      ),
+      catchError(() => of([]))
+    );
+  }
+
+  getProjetDetail(partenaireId: number | string, projetId: number | string): Observable<any> {
+    const idStr    = partenaireId.toString();
+    const projIdStr = projetId.toString();
+
+    return forkJoin({
+      projets:      this.getProjetsAvecCandidatures(idStr),
+      candidatures: this.http.get<any[]>(`${this.apiUrl}/candidatures`).pipe(catchError(() => of([]))),
+      affectations: this.http.get<any[]>(`${this.apiUrl}/affectations`).pipe(catchError(() => of([])))
+    }).pipe(
+      map(({ projets, candidatures, affectations }) => {
+        const projet = projets.find(p => p.id?.toString() === projIdStr);
+        if (!projet) throw new Error(`Projet ${projIdStr} non trouvé`);
+
+        const cands       = candidatures.filter(c => c.projectId?.toString() === projIdStr);
+        const affecActives = affectations.filter(a =>
+          a.projectId?.toString() === projIdStr && a.statut === 'active'
+        );
+
         return {
-          // Permissions globales
-          peutCreerProjets: partenaire.permissions?.peutCreerProjets ?? false,
-          peutGererVolontaires: partenaire.permissions?.peutGererVolontaires ?? false,
-          peutVoirStatistiques: partenaire.permissions?.peutVoirStatistiques ?? true,
-          peutVoirRapports: partenaire.permissions?.peutVoirRapports ?? false,
-          accesZonePTF: partenaire.permissions?.accesZonePTF ?? false,
-          
-          // Informations sur les types
-          typeStructures: partenaire.typeStructures || [],
-          estPTF: PartenairePermissionsService.estPTF(partenaire),
-          estStructureAccueil: PartenairePermissionsService.estStructureAccueil(partenaire),
-          
-          // Détail des permissions par type
-          permissionsParType: partenaire.permissions?.permissionsParType || {}
+          ...projet,
+          total_candidatures:      cands.length,
+          candidatures_en_attente: cands.filter(c => c.statut === 'en_attente').length,
+          candidatures_entretien:  cands.filter(c => c.statut === 'entretien').length,
+          candidatures_acceptees:  cands.filter(c => c.statut === 'acceptee').length,
+          candidatures_refusees:   cands.filter(c => c.statut === 'refusee').length,
+          volontairesAffectes:     affecActives.length,
+          _candidatures:           cands,
+          _affectations:           affecActives
         };
       }),
-      catchError((error: any) => {
-        console.warn('Erreur vérification permissions, retour permissions par défaut');
-        return of({
-          peutCreerProjets: true,
-          peutGererVolontaires: true,
-          peutVoirStatistiques: true,
-          peutVoirRapports: false,
-          accesZonePTF: false,
-          typeStructures: [],
-          estPTF: false,
-          estStructureAccueil: true,
-          permissionsParType: {}
-        });
-      })
+      catchError(error => { console.error('❌ Erreur getProjetDetail:', error); throw error; })
     );
   }
 
-  /** 🔹 Récupérer le dashboard adapté aux types multiples (accepte string et number) */
-  getDashboardAdapte(partenaireId: string | number): Observable<any> {
-    const idString = partenaireId.toString();
-    console.log('🔄 Chargement dashboard adapté pour:', idString);
-    
-    return forkJoin({
-      partenaire: this.getById(idString),
-      projets: this.getProjetsAvecCandidatures(idString)
+  createProjet(projet: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/projets`, {
+      ...projet,
+      cree_le:       new Date().toISOString(),
+      mis_a_jour_le: new Date().toISOString()
     }).pipe(
-      map(({ partenaire, projets }: { partenaire: Partenaire; projets: any[] }) => {
-        const estPTF = PartenairePermissionsService.estPTF(partenaire);
+      catchError(error => { console.error('❌ Erreur création projet:', error); throw error; })
+    );
+  }
+
+  updateProjet(id: number | string, projet: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/projets/${id}`, {
+      ...projet,
+      mis_a_jour_le: new Date().toISOString()
+    }).pipe(
+      catchError(error => { console.error('❌ Erreur mise à jour projet:', error); throw error; })
+    );
+  }
+
+  deleteProjet(projetId: number | string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/projets/${projetId}`).pipe(
+      catchError(error => { console.error('❌ Erreur suppression projet:', error); throw error; })
+    );
+  }
+
+  // ============================================================================
+  // STATISTIQUES
+  // ============================================================================
+
+  getDashboardStats(partenaireId: string | number): Observable<PartenaireDashboardStats> {
+    return this.getProjetsAvecCandidatures(partenaireId).pipe(
+      map(projets => this.calculerStatsDashboard(projets)),
+      catchError(() => of(this.getStatsParDefaut()))
+    );
+  }
+
+  /**
+   * ✅ FIX PRINCIPAL : filtre sur statutProjet (champ normalisé)
+   * et non plus sur p.status qui n'existe pas dans les données normalisées.
+   */
+  getStatsCompletesPartenaire(partenaireId: string | number): Observable<any> {
+    const idStr = partenaireId.toString();
+
+    return forkJoin({
+      partenaire: this.getById(idStr),
+      projets:    this.getProjetsAvecCandidatures(idStr)
+    }).pipe(
+      map(({ partenaire, projets }) => {
+        if (!projets?.length) {
+          return {
+            totalProjets:        0,
+            projetsActifs:       0,
+            projetsTermines:     0,
+            projetsEnAttente:    0,
+            volontairesAffectes: 0,
+            dateDernierProjet:   undefined,
+            statsParType:        this.initialiserStatsParType(partenaire.typeStructures)
+          };
+        }
+
+        // ✅ statutProjet est maintenant toujours présent (normalisé dans getProjetsAvecCandidatures)
+        return {
+          totalProjets:        projets.length,
+          projetsActifs:       projets.filter(p => p.statutProjet === 'actif').length,
+          projetsTermines:     projets.filter(p => p.statutProjet === 'cloture').length,
+          projetsEnAttente:    projets.filter(p => p.statutProjet === 'en_attente').length,
+          volontairesAffectes: projets.reduce((s, p) =>
+            s + (p.volontairesAffectes ?? p.nombreVolontairesActuels ?? 0), 0
+          ),
+          dateDernierProjet: this.getDernierProjetDate(projets),
+          statsParType:      this.calculerStatsParType(partenaire.typeStructures, projets)
+        };
+      }),
+      catchError(() => of({
+        totalProjets: 0, projetsActifs: 0, projetsTermines: 0,
+        projetsEnAttente: 0, volontairesAffectes: 0,
+        dateDernierProjet: undefined, statsParType: {}
+      }))
+    );
+  }
+
+  getStatsGlobales(): Observable<any> {
+    return this.getAll().pipe(
+      map(partenaires => ({
+        totalPartenaires:    partenaires.length,
+        partenairesActifs:   partenaires.filter(p => p.estActive || p.compteActive).length,
+        partenairesInactifs: partenaires.filter(p => !p.estActive && !p.compteActive).length,
+        types:               this.compterTypesMultiples(partenaires),
+        domaines:            this.compterDomaines(partenaires),
+        statsRoles: {
+          totalPTF:               partenaires.filter(p => PartenairePermissionsService.estPTF(p)).length,
+          totalStructuresAccueil: partenaires.filter(p => PartenairePermissionsService.estStructureAccueil(p)).length,
+          totalMixtes:            partenaires.filter(p =>
+            PartenairePermissionsService.estPTF(p) && PartenairePermissionsService.estStructureAccueil(p)
+          ).length
+        }
+      }))
+    );
+  }
+
+  getStatsByPartenaire(partenaireId: string | number): Observable<any> {
+    return this.getProjetsAvecCandidatures(partenaireId).pipe(
+      map(projets => ({
+        total:               projets.length,
+        en_attente:          projets.filter(p => p.statutProjet === 'en_attente').length,
+        actifs:              projets.filter(p => p.statutProjet === 'actif').length,
+        clotures:            projets.filter(p => p.statutProjet === 'cloture').length,
+        volontairesAffectes: projets.reduce((t, p) => t + (p.volontairesAffectes ?? 0), 0)
+      })),
+      catchError(() => of({ total: 0, en_attente: 0, actifs: 0, clotures: 0, volontairesAffectes: 0 }))
+    );
+  }
+
+  getStatistiquesPartenaire(partenaireId: string | number): Observable<any> {
+    return forkJoin({
+      projets:      this.getProjetsAvecCandidatures(partenaireId),
+      candidatures: this.http.get<any[]>(`${this.apiUrl}/candidatures`).pipe(catchError(() => of([])))
+    }).pipe(
+      map(({ projets, candidatures }) => {
+        const projetIds      = projets.map(p => String(p.id)).filter(Boolean);
+        const candPartenaire = candidatures.filter(c => projetIds.includes(String(c.projectId)));
+        return {
+          totalProjets:          projets.length,
+          projetsActifs:         projets.filter(p => p.statutProjet === 'actif').length,
+          projetsEnAttente:      projets.filter(p => p.statutProjet === 'en_attente').length,
+          projetsTermines:       projets.filter(p => p.statutProjet === 'cloture').length,
+          volontairesAffectes:   projets.reduce((s, p) => s + (p.volontairesAffectes ?? 0), 0),
+          candidatures:          candPartenaire.length,
+          nouvellesCandidatures: candPartenaire.filter(c =>
+            c.statut === 'en_attente' && this.isRecent(c.cree_le)
+          ).length
+        };
+      }),
+      catchError(() => of({
+        totalProjets: 0, projetsActifs: 0, projetsEnAttente: 0,
+        projetsTermines: 0, volontairesAffectes: 0,
+        candidatures: 0, nouvellesCandidatures: 0
+      }))
+    );
+  }
+
+  verifierPermissionsPartenaire(partenaireId: string | number): Observable<any> {
+    return this.getById(partenaireId).pipe(
+      map(partenaire => ({
+        peutCreerProjets:     partenaire.permissions?.peutCreerProjets     ?? false,
+        peutGererVolontaires: partenaire.permissions?.peutGererVolontaires ?? false,
+        peutVoirStatistiques: partenaire.permissions?.peutVoirStatistiques ?? true,
+        peutVoirRapports:     partenaire.permissions?.peutVoirRapports     ?? false,
+        accesZonePTF:         partenaire.permissions?.accesZonePTF         ?? false,
+        typeStructures:       partenaire.typeStructures || [],
+        estPTF:               PartenairePermissionsService.estPTF(partenaire),
+        estStructureAccueil:  PartenairePermissionsService.estStructureAccueil(partenaire),
+        permissionsParType:   partenaire.permissions?.permissionsParType || {}
+      })),
+      catchError(() => of({
+        peutCreerProjets: true, peutGererVolontaires: true,
+        peutVoirStatistiques: true, peutVoirRapports: false,
+        accesZonePTF: false, typeStructures: [],
+        estPTF: false, estStructureAccueil: true, permissionsParType: {}
+      }))
+    );
+  }
+
+  getDashboardAdapte(partenaireId: string | number): Observable<any> {
+    return forkJoin({
+      partenaire: this.getById(partenaireId),
+      projets:    this.getProjetsAvecCandidatures(partenaireId)
+    }).pipe(
+      map(({ partenaire, projets }) => {
+        const estPTF             = PartenairePermissionsService.estPTF(partenaire);
         const estStructureAccueil = PartenairePermissionsService.estStructureAccueil(partenaire);
 
-        let dashboardData: any = {
+        let data: any = {
           partenaireInfo: {
             nomStructure: partenaire.nomStructure,
             typeStructures: partenaire.typeStructures,
@@ -159,1012 +346,477 @@ export class PartenaireService {
           }
         };
 
-        // Dashboard pour PTF
-        if (estPTF) {
-          const dashboardPTF = this.genererDashboardPTF(partenaire, projets);
-          dashboardData = { ...dashboardData, ...dashboardPTF };
-        }
+        if (estPTF)             data = { ...data, ...this.genererDashboardPTF(partenaire, projets) };
+        if (estStructureAccueil) data = { ...data, ...this.genererDashboardStructureAccueil(projets) };
+        if (estPTF && estStructureAccueil) data.dashboardMixte = this.genererDashboardMixte(partenaire, projets);
 
-        // Dashboard pour Structure d'Accueil
-        if (estStructureAccueil) {
-          const dashboardStructure = this.genererDashboardStructureAccueil(projets);
-          dashboardData = { ...dashboardData, ...dashboardStructure };
-        }
-
-        // Dashboard mixte si les deux rôles
-        if (estPTF && estStructureAccueil) {
-          dashboardData.dashboardMixte = this.genererDashboardMixte(partenaire, projets);
-        }
-
-        return dashboardData;
+        return data;
       }),
-      catchError((error: any) => {
-        console.error('❌ Erreur chargement dashboard adapté:', error);
-        return of(this.getDashboardParDefaut());
-      })
+      catchError(() => of(this.getDashboardParDefaut()))
     );
   }
 
-  /** 🔹 Récupérer les statistiques dashboard (accepte string et number) */
-  getDashboardStats(partenaireId: string | number): Observable<PartenaireDashboardStats> {
-    const idString = partenaireId.toString();
-    console.log('📊 Chargement stats dashboard pour:', idString);
-    
-    return this.getProjetsAvecCandidatures(idString).pipe(
-      map((projets: any[]) => this.calculerStatsDashboard(projets)),
-      catchError((error: any) => {
-        console.error('❌ Erreur calcul stats dashboard:', error);
-        return of(this.getStatsParDefaut());
-      })
+  peutCreerProjet(partenaireId: string | number): Observable<boolean> {
+    return this.getProjetsAvecCandidatures(partenaireId).pipe(
+      map(projets => projets.filter(p =>
+        p.statutProjet === 'en_attente' || p.statutProjet === 'actif'
+      ).length < 10),
+      catchError(() => of(true))
     );
   }
 
-  /** 🔹 Récupérer les statistiques complètes (accepte string et number) */
-  getStatsCompletesPartenaire(partenaireId: string | number): Observable<any> {
-    const idString = partenaireId.toString();
-    
+  // ============================================================================
+  // AFFECTATIONS & VOLONTAIRES
+  // ============================================================================
+
+  getAffectationsByPartenaire(partenaireId: string | number): Observable<any[]> {
     return forkJoin({
-      partenaire: this.getById(idString),
-      projets: this.getProjetsAvecCandidatures(idString)
+      projets:      this.getProjetsByPartenaire(partenaireId),
+      affectations: this.http.get<any[]>(`${this.apiUrl}/affectations`)
     }).pipe(
-      map(({ partenaire, projets }: { partenaire: Partenaire; projets: any[] }) => {
-        if (!projets || projets.length === 0) {
-          return {
-            totalProjets: 0,
-            projetsActifs: 0,
-            projetsTermines: 0,
-            projetsEnAttente: 0,
-            volontairesAffectes: 0,
-            dateDernierProjet: undefined,
-            statsParType: this.initialiserStatsParType(partenaire.typeStructures)
-          };
-        }
-
-        const totalVolontairesAffectes = projets.reduce((total: number, projet: any) => 
-          total + (projet.volontairesAffectes || 0), 0
-        );
-
-        const totalProjets = projets.length;
-        const projetsActifs = projets.filter((p: any) => 
-          p.status === 'En cours' || p.status === 'en cours' || p.status === 'Actif'
-        ).length;
-        const projetsTermines = projets.filter((p: any) => 
-          p.status === 'Clôturé' || p.status === 'clôturé' || p.status === 'Terminé'
-        ).length;
-        const projetsEnAttente = projets.filter((p: any) => 
-          p.status === 'Soumis' || p.status === 'Planifié' || 
-          p.status === 'soumis' || p.status === 'planifié' ||
-          p.status === 'En attente'
-        ).length;
-
-        return {
-          totalProjets: totalProjets,
-          projetsActifs: projetsActifs,
-          projetsTermines: projetsTermines,
-          projetsEnAttente: projetsEnAttente,
-          volontairesAffectes: totalVolontairesAffectes,
-          dateDernierProjet: this.getDernierProjetDate(projets),
-          statsParType: this.calculerStatsParType(partenaire.typeStructures, projets)
-        };
+      map(({ projets, affectations }) => {
+        const projetIds = projets.map((p: any) => String(p.id));
+        return affectations.filter(a => projetIds.includes(String(a.projectId)));
       }),
-      catchError((error: any) => {
-        console.error('Erreur stats complètes partenaire:', error);
-        return of({
-          totalProjets: 0,
-          projetsActifs: 0,
-          projetsTermines: 0,
-          projetsEnAttente: 0,
-          volontairesAffectes: 0,
-          dateDernierProjet: undefined,
-          statsParType: {}
-        });
-      })
+      catchError(() => of([]))
     );
   }
 
+  getVolontairesDisponibles(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/volontaires`).pipe(catchError(() => of([])));
+  }
+
   // ============================================================================
-  // MÉTHODES POUR LES PROJETS
+  // RAPPORTS & OFFRES
   // ============================================================================
 
-  /** 🔹 Créer un nouveau projet */
-  createProjet(projet: any): Observable<any> {
-    const projetAvecDates = {
-      ...projet,
-      cree_le: new Date().toISOString(),
+  soumettreRapportEvaluation(rapport: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/rapports-evaluation`, {
+      ...rapport,
+      dateSoumission: new Date().toISOString(),
+      cree_le:        new Date().toISOString()
+    });
+  }
+
+  getRapportsEvaluation(partenaireId: string | number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/rapports-evaluation`).pipe(
+      map(rapports => rapports.filter(r => r.partenaireId === partenaireId.toString())),
+      catchError(() => of([]))
+    );
+  }
+
+  getOffresMission(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/offresMission`).pipe(catchError(() => of([])));
+  }
+
+  getOffresMissionByPartenaire(partenaireId: string): Observable<any[]> {
+    return this.getOffresMission().pipe(
+      map(offres => offres.filter(o => o.partenaireId === partenaireId)),
+      catchError(() => of([]))
+    );
+  }
+
+  creerOffreMission(offre: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/offresMission`, {
+      ...offre,
+      id:            this.generateId(),
+      dateCreation:  new Date().toISOString(),
+      cree_le:       new Date().toISOString(),
       mis_a_jour_le: new Date().toISOString()
-    };
-    
-    console.log('🔄 Création nouveau projet:', projetAvecDates);
-    
-    return this.http.post<any>(`${this.apiUrl}/projets`, projetAvecDates).pipe(
-      tap((newProjet: any) => console.log('✅ Projet créé:', newProjet)),
-      catchError((error: any) => {
-        console.error('❌ Erreur création projet:', error);
-        throw error;
-      })
-    );
+    }).pipe(catchError(error => { throw error; }));
   }
 
-  /** 🔹 Mettre à jour un projet existant */
-  updateProjet(id: number, projet: any): Observable<any> {
-    const projetAvecDate = {
-      ...projet,
+  updateOffreMission(id: string, offre: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/offresMission/${id}`, {
+      ...offre,
       mis_a_jour_le: new Date().toISOString()
+    }).pipe(catchError(error => { throw error; }));
+  }
+
+  deleteOffreMission(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/offresMission/${id}`).pipe(
+      catchError(error => { throw error; })
+    );
+  }
+
+  updateStatutOffreMission(offreId: number, statut: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/offres-mission/${offreId}`, {
+      statut,
+      mis_a_jour_le: new Date().toISOString()
+    });
+  }
+
+  getDonneesFinancieresPTF(partenaireId: string | number): Observable<any> {
+    return forkJoin({
+      projets:  this.getProjetsByPartenaire(partenaireId),
+      rapports: this.http.get<any[]>(`${this.apiUrl}/rapports-financiers`).pipe(catchError(() => of([])))
+    }).pipe(
+      map(({ projets, rapports }) => {
+        const projetsPTF   = projets.filter(p => p.type === 'finance_ptf' || p.financeParPTF === true);
+        const montantTotal = projetsPTF.reduce((t, p) => t + (p.budget || 0), 0);
+        const rapportsPTF  = rapports.filter(r => r.partenaireId === partenaireId.toString());
+        return {
+          montantTotal,
+          projetsFinances:       projetsPTF.length,
+          rapportsFinanciers:    rapportsPTF,
+          decompositionBudget:   this.calculerDecompositionBudget(projetsPTF)
+        };
+      }),
+      catchError(() => of({ montantTotal: 0, projetsFinances: 0, rapportsFinanciers: [], decompositionBudget: {} }))
+    );
+  }
+
+  marquerAlerteCommeLue(alerteId: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/alertes/${alerteId}`, { lu: true }).pipe(
+      catchError(() => of({ success: true }))
+    );
+  }
+
+  // ============================================================================
+  // RECHERCHE PARTENAIRE
+  // ============================================================================
+
+  getPartenaireByEmail(email: string): Observable<Partenaire | null> {
+    if (!email) return of(null);
+    return this.http.get<Partenaire[]>(`${this.apiUrl}/partenaires`).pipe(
+      map(partenaires =>
+        partenaires.find(p => p.email?.toLowerCase() === email.toLowerCase()) ?? null
+      ),
+      catchError(() => this.getPartenaireFromLocalStorage(email))
+    );
+  }
+
+  getCurrentPartenaire(): any {
+    try {
+      const userData = localStorage.getItem('currentUser');
+      if (userData) {
+        const user = JSON.parse(userData);
+        if (user.role === 'partenaire') return user;
+      }
+      return null;
+    } catch { return null; }
+  }
+
+  getPartenaireFromJson(partenaireId: string): Observable<any> {
+    return this.http.get<any[]>(`${this.apiUrl}/partenaires`).pipe(
+      map(partenaires => {
+        const p = partenaires.find(x => x.id === partenaireId);
+        if (!p) throw new Error('Partenaire non trouvé');
+        return p;
+      }),
+      catchError(error => { throw error; })
+    );
+  }
+
+  private getPartenaireFromLocalStorage(email: string): Observable<Partenaire | null> {
+    try {
+      const raw = localStorage.getItem('currentPartenaire') ?? localStorage.getItem('currentUser');
+      if (raw) {
+        const obj = JSON.parse(raw);
+        if (obj.email === email) return of(obj);
+      }
+      return of(null);
+    } catch { return of(null); }
+  }
+
+  // ============================================================================
+  // MÉTHODES PRIVÉES — NORMALISATION
+  // ============================================================================
+
+  /**
+   * ✅ Normalise le statut d'un projet vers les valeurs canoniques
+   * 'actif' | 'en_attente' | 'cloture'
+   */
+  private normaliserStatut(statut: any): 'actif' | 'en_attente' | 'cloture' {
+    if (!statut) return 'en_attente';
+    const s = statut.toString().toLowerCase().trim();
+    const map: { [k: string]: 'actif' | 'en_attente' | 'cloture' } = {
+      'actif':        'actif',
+      'active':       'actif',
+      'en_cours':     'actif',
+      'in_progress':  'actif',
+      'ouvert':       'actif',
+      'open':         'actif',
+      'en_attente':   'en_attente',
+      'en attente':   'en_attente',
+      'pending':      'en_attente',
+      'soumis':       'en_attente',
+      'submitted':    'en_attente',
+      'planifié':     'en_attente',
+      'planifie':     'en_attente',
+      'cloture':      'cloture',
+      'clôturé':      'cloture',
+      'cloturé':      'cloture',
+      'closed':       'cloture',
+      'completed':    'cloture',
+      'terminé':      'cloture',
+      'termine':      'cloture'
     };
-    
-    console.log('🔄 Mise à jour projet ID:', id, 'Données:', projetAvecDate);
-    
-    return this.http.put<any>(`${this.apiUrl}/projets/${id}`, projetAvecDate).pipe(
-      tap((updatedProjet: any) => console.log('✅ Projet mis à jour:', updatedProjet)),
-      catchError((error: any) => {
-        console.error('❌ Erreur mise à jour projet:', error);
-        throw error;
-      })
-    );
-  }
-
-  /** 🔹 Supprimer un projet */
-  deleteProjet(projetId: number): Observable<any> {
-    console.log('🔄 Suppression projet ID:', projetId);
-    
-    return this.http.delete(`${this.apiUrl}/projets/${projetId}`).pipe(
-      tap(() => console.log('✅ Projet supprimé:', projetId)),
-      catchError((error: any) => {
-        console.error('❌ Erreur suppression projet:', error);
-        throw error;
-      })
-    );
-  }
-
-  /** 🔹 Récupérer les projets d'un partenaire */
-  getProjetsByPartenaire(partenaireId: number | string): Observable<any[]> {
-    const partenaireIdStr = partenaireId.toString();
-    
-    return this.http.get<any[]>(`${this.apiUrl}/projets`).pipe(
-      map((projets: any[]) => {
-        const projetsFiltres = projets.filter((projet: any) => {
-          if (!projet.partenaireId) return false;
-          return projet.partenaireId.toString() === partenaireIdStr;
-        });
-        
-        console.log(`🔍 Projets pour partenaire ${partenaireIdStr}:`, projetsFiltres.length, 'projets trouvés');
-        return projetsFiltres;
-      }),
-      catchError((error: any) => {
-        console.error('Erreur chargement projets partenaire:', error);
-        return of([]);
-      })
-    );
-  }
-
-  /** 🔹 Récupère un projet spécifique avec toutes ses données */
-  getProjetDetail(partenaireId: number | string, projetId: number | string): Observable<any> {
-    const partenaireIdStr = partenaireId.toString();
-    const projetIdStr = projetId.toString();
-
-    return forkJoin({
-      projets: this.getProjetsByPartenaire(partenaireIdStr),
-      candidatures: this.http.get<any[]>(`${this.apiUrl}/candidatures`).pipe(catchError(() => of([]))),
-      affectations: this.http.get<any[]>(`${this.apiUrl}/affectations`).pipe(catchError(() => of([])))
-    }).pipe(
-      map(({ projets, candidatures, affectations }: { projets: any[]; candidatures: any[]; affectations: any[] }) => {
-        console.log('🔍 Recherche projet', projetIdStr, 'parmi', projets.length, 'projets');
-        
-        const projetTrouve = projets.find((projet: any) => {
-          const idProjet = projet.id?.toString();
-          return idProjet === projetIdStr;
-        });
-
-        if (!projetTrouve) {
-          console.warn('❌ Projet non trouvé. IDs disponibles:', projets.map((p: any) => p.id));
-          throw new Error('Projet non trouvé');
-        }
-
-        console.log('✅ Projet trouvé:', projetTrouve);
-
-        const candidaturesProjet = candidatures.filter((c: any) => 
-          c.projectId?.toString() === projetIdStr
-        );
-
-        const affectationsProjet = affectations.filter((a: any) => 
-          a.projectId?.toString() === projetIdStr && a.statut === 'active'
-        );
-
-        return {
-          ...projetTrouve,
-          total_candidatures: candidaturesProjet.length,
-          candidatures_en_attente: candidaturesProjet.filter((c: any) => 
-            c.statut === 'en_attente'
-          ).length,
-          volontairesAffectes: affectationsProjet.length,
-          candidatures_entretien: candidaturesProjet.filter((c: any) => 
-            c.statut === 'entretien'
-          ).length,
-          candidatures_acceptees: candidaturesProjet.filter((c: any) => 
-            c.statut === 'acceptee'
-          ).length,
-          candidatures_refusees: candidaturesProjet.filter((c: any) => 
-            c.statut === 'refusee'
-          ).length,
-          _candidatures: candidaturesProjet,
-          _affectations: affectationsProjet
-        };
-      }),
-      catchError((error: any) => {
-        console.error('❌ Erreur chargement détail projet:', error);
-        throw error;
-      })
-    );
-  }
-
-  /** 🔹 Récupère les projets avec candidatures ET affectations */
-  getProjetsAvecCandidatures(partenaireId: number | string): Observable<any[]> {
-    const partenaireIdStr = partenaireId.toString();
-    
-    return forkJoin({
-      projets: this.getProjetsByPartenaire(partenaireIdStr),
-      candidatures: this.http.get<any[]>(`${this.apiUrl}/candidatures`).pipe(catchError(() => of([]))),
-      affectations: this.http.get<any[]>(`${this.apiUrl}/affectations`).pipe(catchError(() => of([])))
-    }).pipe(
-      map(({ projets, candidatures, affectations }: { projets: any[]; candidatures: any[]; affectations: any[] }) => {
-        console.log('📊 Données pour calcul stats - Projets:', projets.length, 'Candidatures:', candidatures.length, 'Affectations:', affectations.length);
-
-        return projets.map((projet: any) => {
-          const projetIdStr = projet.id.toString();
-
-          const candidaturesProjet = candidatures.filter((c: any) => {
-            if (!c.projectId) return false;
-            return c.projectId.toString() === projetIdStr;
-          });
-
-          const affectationsProjet = affectations.filter((a: any) => {
-            if (!a.projectId) return false;
-            return a.projectId.toString() === projetIdStr && a.statut === 'active';
-          });
-
-          const total_candidatures = candidaturesProjet.length;
-          const candidatures_en_attente = candidaturesProjet.filter((c: any) => 
-            c.statut === 'en_attente'
-          ).length;
-          const volontairesAffectes = affectationsProjet.length;
-
-          const candidatures_entretien = candidaturesProjet.filter((c: any) => 
-            c.statut === 'entretien'
-          ).length;
-          const candidatures_acceptees = candidaturesProjet.filter((c: any) => 
-            c.statut === 'acceptee'
-          ).length;
-          const candidatures_refusees = candidaturesProjet.filter((c: any) => 
-            c.statut === 'refusee'
-          ).length;
-
-          return {
-            ...projet,
-            total_candidatures,
-            candidatures_en_attente,
-            volontairesAffectes,
-            candidatures_entretien,
-            candidatures_acceptees,
-            candidatures_refusees,
-            nouvellesCandidatures: candidatures_en_attente,
-            currentVolunteers: volontairesAffectes,
-            _candidatures: candidaturesProjet,
-            _affectations: affectationsProjet
-          };
-        });
-      }),
-      catchError((error: any) => {
-        console.error('❌ Erreur chargement projets avec candidatures:', error);
-        return of([]);
-      })
-    );
+    return map[s] ?? 'en_attente';
   }
 
   // ============================================================================
-  // MÉTHODES POUR LES STATISTIQUES
+  // MÉTHODES PRIVÉES — CALCULS STATS
   // ============================================================================
 
-  /** 🔹 Récupérer les statistiques globales */
-  getStatsGlobales(): Observable<any> {
-    return this.getAll().pipe(
-      map((partenaires: Partenaire[]) => {
-        const totalPartenaires = partenaires.length;
-        const partenairesActifs = partenaires.filter((p: Partenaire) => p.estActive || p.compteActive).length;
-        
-        // Compter les types multiples
-        const types = this.compterTypesMultiples(partenaires);
-        const domaines = this.compterDomaines(partenaires);
-        
-        return {
-          totalPartenaires,
-          partenairesActifs,
-          partenairesInactifs: totalPartenaires - partenairesActifs,
-          types,
-          domaines,
-          // NOUVEAU : Statistiques par rôle
-          statsRoles: {
-            totalPTF: partenaires.filter((p: Partenaire) => PartenairePermissionsService.estPTF(p)).length,
-            totalStructuresAccueil: partenaires.filter((p: Partenaire) => PartenairePermissionsService.estStructureAccueil(p)).length,
-            totalMixtes: partenaires.filter((p: Partenaire) => 
-              PartenairePermissionsService.estPTF(p) && PartenairePermissionsService.estStructureAccueil(p)
-            ).length
-          }
-        };
-      })
-    );
+  private calculerStatsDashboard(projets: any[]): PartenaireDashboardStats {
+    if (!projets?.length) return this.getStatsParDefaut();
+
+    return {
+      totalProjets:     projets.length,
+      projetsActifs:    projets.filter(p => p.statutProjet === 'actif').length,
+      projetsEnAttente: projets.filter(p => p.statutProjet === 'en_attente').length,
+      projetsTermines:  projets.filter(p => p.statutProjet === 'cloture').length,
+      totalCandidatures: projets.reduce((t, p) => t + (p.total_candidatures || 0), 0),
+      nouvellesCandidatures: projets.reduce((t, p) =>
+        t + (p.candidatures_en_attente || 0), 0
+      ),
+      volontairesActuels: projets.reduce((t, p) => t + (p.volontairesAffectes || 0), 0),
+      evolutionCandidatures: this.genererEvolutionCandidatures(
+        projets.reduce((t, p) => t + (p.total_candidatures || 0), 0)
+      ),
+      alertes: this.genererAlertesDashboard(projets)
+    };
   }
 
-  // ============================================================================
-  // MÉTHODES UTILITAIRES
-  // ============================================================================
+  private initialiserStatsParType(typeStructures: TypeStructurePNVB[]): any {
+    const stats: any = {};
+    (typeStructures || []).forEach(type => {
+      stats[type] = { projets: 0, volontaires: 0, budgetTotal: 0 };
+    });
+    return stats;
+  }
 
-  /** 🔹 Compter les types de partenaires (multiples) */
+  private calculerStatsParType(typeStructures: TypeStructurePNVB[], projets: any[]): any {
+    const stats = this.initialiserStatsParType(typeStructures);
+    if (!typeStructures?.length) return stats;
+
+    const projetsParType    = Math.floor(projets.length / typeStructures.length) || 0;
+    const volontairesParType = Math.floor(
+      projets.reduce((t, p) => t + (p.volontairesAffectes || 0), 0) / typeStructures.length
+    ) || 0;
+
+    typeStructures.forEach(type => {
+      stats[type] = { projets: projetsParType, volontaires: volontairesParType, budgetTotal: 0 };
+    });
+    return stats;
+  }
+
   private compterTypesMultiples(partenaires: Partenaire[]): any {
     const types: any = {};
-    partenaires.forEach((p: Partenaire) => {
-      p.typeStructures?.forEach((type: string) => {
-        types[type] = (types[type] || 0) + 1;
-      });
+    partenaires.forEach(p => {
+      p.typeStructures?.forEach(type => { types[type] = (types[type] || 0) + 1; });
     });
     return types;
   }
 
-  /** 🔹 Compter les domaines d'activité */
   private compterDomaines(partenaires: Partenaire[]): any {
     const domaines: any = {};
-    partenaires.forEach((p: Partenaire) => {
-      const domaine = p.domaineActivite || 'Non spécifié';
-      domaines[domaine] = (domaines[domaine] || 0) + 1;
+    partenaires.forEach(p => {
+      const d = p.domaineActivite || 'Non spécifié';
+      domaines[d] = (domaines[d] || 0) + 1;
     });
     return domaines;
   }
 
-  /** 🔹 Initialiser les statistiques par type */
-  private initialiserStatsParType(typeStructures: TypeStructurePNVB[]): any {
-    const stats: any = {};
-    typeStructures.forEach((type: TypeStructurePNVB) => {
-      stats[type] = {
-        projets: 0,
-        volontaires: 0,
-        budgetTotal: 0
-      };
-    });
-    return stats;
+  private getDernierProjetDate(projets: any[]): string | undefined {
+    if (!projets.length) return undefined;
+    const dates = projets
+      .map(p => new Date(p.cree_le || p.dateDebut || p.created_at || ''))
+      .filter(d => !isNaN(d.getTime()));
+    if (!dates.length) return undefined;
+    return new Date(Math.max(...dates.map(d => d.getTime())))
+      .toLocaleDateString('fr-FR');
   }
 
-  /** 🔹 Calculer les statistiques par type */
-  private calculerStatsParType(typeStructures: TypeStructurePNVB[], projets: any[]): any {
-    const stats = this.initialiserStatsParType(typeStructures);
-    
-    const projetsParType = Math.floor(projets.length / typeStructures.length) || 0;
-    const volontairesParType = Math.floor(
-      projets.reduce((total: number, p: any) => total + (p.volontairesAffectes || 0), 0) / typeStructures.length
-    ) || 0;
-
-    typeStructures.forEach((type: TypeStructurePNVB) => {
-      stats[type] = {
-        projets: projetsParType,
-        volontaires: volontairesParType,
-        budgetTotal: 0
-      };
-    });
-
-    return stats;
+  private isRecent(dateString: string): boolean {
+    if (!dateString) return false;
+    try {
+      return (new Date().getTime() - new Date(dateString).getTime()) / (1000 * 60 * 60 * 24) <= 7;
+    } catch { return false; }
   }
 
-  /** 🔹 Vérifier si un projet est actif */
-  private estProjetActif(projet: any): boolean {
-    const status = projet.status || projet.statut || '';
-    return [
-      'en cours', 'actif', 'active', 'en_cours', 'published'
-    ].includes(status.toLowerCase());
+  private generateId(): string {
+    return Math.random().toString(36).substr(2, 9);
   }
 
-  /** 🔹 Vérifier si un projet est en attente */
-  private estProjetEnAttente(projet: any): boolean {
-    const status = projet.status || projet.statut || '';
-    return [
-      'soumis', 'en attente', 'pending', 'submitted', 'en_attente', 'under_review'
-    ].includes(status.toLowerCase());
-  }
+  // ============================================================================
+  // MÉTHODES PRIVÉES — DASHBOARDS
+  // ============================================================================
 
-  /** 🔹 Vérifier si un projet est terminé */
-  private estProjetTermine(projet: any): boolean {
-    const status = projet.status || projet.statut || '';
-    return [
-      'clôturé', 'terminé', 'completed', 'closed', 'finished', 'cloture', 'termine'
-    ].includes(status.toLowerCase());
-  }
-
-  /** 🔹 Obtenir le statut d'un projet pour PTF */
   private getStatutProjet(projet: any): 'actif' | 'termine' | 'en_attente' {
-    if (this.estProjetActif(projet)) return 'actif';
-    if (this.estProjetTermine(projet)) return 'termine';
+    const s = projet.statutProjet;
+    if (s === 'actif')      return 'actif';
+    if (s === 'cloture')    return 'termine';
     return 'en_attente';
   }
 
-  /** 🔹 Générer l'évolution des candidatures */
-  private genererEvolutionCandidatures(totalCandidatures: number): { date: string; count: number }[] {
-    const today = new Date();
-    const baseCount = Math.max(1, Math.floor(totalCandidatures / 30));
-    
-    return Array.from({ length: 30 }, (_, i: number) => {
-      const date = new Date(today);
-      date.setDate(date.getDate() - (29 - i));
-      return {
-        date: date.toISOString().split('T')[0],
-        count: Math.floor(Math.random() * baseCount * 1.5) + 1
-      };
-    });
-  }
-
-  /** 🔹 Générer les rapports PTF */
-  private genererRapportsPTF(partenaireId: number): any[] {
-    return [
-      {
-        id: 1,
-        titre: 'Rapport Trimestriel Q1 2024',
-        type: 'rapport_trimestriel',
-        date: '2024-03-31',
-        url: `/rapports/trimestriel-q1-2024-${partenaireId}`
-      },
-      {
-        id: 2,
-        titre: 'Rapport d\'Impact Annuel 2023',
-        type: 'rapport_annuel',
-        date: '2024-01-15',
-        url: `/rapports/impact-annuel-2023-${partenaireId}`
-      }
-    ];
-  }
-
-  /** 🔹 Générer les alertes PTF */
-  private genererAlertesPTF(projetsFinances: any[]): any[] {
-    const alertes: any[] = [];
-    
-    // Alerte rapport à soumettre
-    alertes.push({
-      id: 1,
-      type: 'rapport_a_soumettre',
-      titre: 'Rapport trimestriel à soumettre',
-      message: 'Votre rapport trimestriel pour Q2 2024 est attendu avant le 30 juin',
-      date: new Date().toISOString(),
-      lu: false,
-      lien: '/rapports/soumettre'
-    });
-
-    // Alertes échéances projets
-    const dans30Jours = new Date();
-    dans30Jours.setDate(dans30Jours.getDate() + 30);
-    
-    projetsFinances.forEach((projet: any) => {
-      if (projet.statut === 'actif' && new Date(projet.dateFin) < dans30Jours) {
-        alertes.push({
-          id: alertes.length + 1,
-          type: 'projet_echeance',
-          titre: 'Projet arrivant à échéance',
-          message: `Le projet "${projet.titre}" se termine le ${new Date(projet.dateFin).toLocaleDateString()}`,
-          date: new Date().toISOString(),
-          lu: false,
-          lien: `/projets/${projet.id}`
-        });
-      }
-    });
-
-    return alertes;
-  }
-
-  /** 🔹 Générer les alertes du dashboard */
-  private genererAlertesDashboard(projets: any[]): any[] {
-    const alertes: any[] = [];
-    
-    if (!projets || !Array.isArray(projets)) return alertes;
-
-    // Alertes nouvelles candidatures
-    projets.forEach((projet: any) => {
-      const nouvellesCandidatures = projet.candidatures_en_attente || projet.nouvellesCandidatures || 0;
-      
-      if (nouvellesCandidatures > 0) {
-        alertes.push({
-          id: Date.now() + alertes.length,
-          type: 'nouvelle_candidature',
-          titre: 'Nouvelles candidatures',
-          message: `${nouvellesCandidatures} nouvelle(s) candidature(s) pour "${projet.title || projet.nom || 'Projet sans nom'}"`,
-          date: new Date().toISOString(),
-          lu: false,
-          lien: `/features/partenaires/candidatures?projet=${projet.id}`
-        });
-      }
-    });
-
-    // Alertes échéances projets
-    const dans7Jours = new Date();
-    dans7Jours.setDate(dans7Jours.getDate() + 7);
-    
-    projets.forEach((projet: any) => {
-      const endDate = projet.endDate || projet.dateFin;
-      const isActif = this.estProjetActif(projet);
-      
-      if (endDate && isActif && new Date(endDate) < dans7Jours) {
-        alertes.push({
-          id: Date.now() + alertes.length,
-          type: 'projet_echeance',
-          titre: 'Projet arrivant à échéance',
-          message: `Le projet "${projet.title || projet.nom}" se termine le ${new Date(endDate).toLocaleDateString()}`,
-          date: new Date().toISOString(),
-          lu: false,
-          lien: `/features/partenaires/projets/${projet.id}`
-        });
-      }
-    });
-
-    // Alerte si aucun projet actif
-    const projetsActifs = projets.filter((p: any) => this.estProjetActif(p));
-    if (projetsActifs.length === 0 && projets.length > 0) {
-      alertes.push({
-        id: Date.now(),
-        type: 'action_requise',
-        titre: 'Aucun projet actif',
-        message: 'Vous n\'avez actuellement aucun projet en cours. Souhaitez-vous en créer un nouveau ?',
-        date: new Date().toISOString(),
-        lu: false,
-        lien: '/features/partenaires/soumettre'
-      });
-    }
-
-    return alertes.slice(0, 5);
-  }
-
-  /** 🔹 Calculer les statistiques du dashboard */
-  private calculerStatsDashboard(projets: any[]): PartenaireDashboardStats {
-    console.log('📈 Calcul stats sur', projets?.length, 'projets');
-
-    if (!projets || !Array.isArray(projets)) {
-      console.warn('⚠️ Aucun projet trouvé pour calcul stats');
-      return this.getStatsParDefaut();
-    }
-
-    const totalProjets = projets.length;
-    const projetsActifs = projets.filter((p: any) => this.estProjetActif(p)).length;
-    const projetsEnAttente = projets.filter((p: any) => this.estProjetEnAttente(p)).length;
-    const projetsTermines = projets.filter((p: any) => this.estProjetTermine(p)).length;
-
-    const totalCandidatures = projets.reduce((total: number, p: any) => 
-      total + (p.total_candidatures || 0), 0
-    );
-    
-    const nouvellesCandidatures = projets.reduce((total: number, p: any) => 
-      total + (p.candidatures_en_attente || p.nouvellesCandidatures || 0), 0
-    );
-
-    const volontairesActuels = projets.reduce((total: number, p: any) => 
-      total + (p.volontairesAffectes || p.currentVolunteers || 0), 0
-    );
-
-    const stats: PartenaireDashboardStats = {
-      totalProjets,
-      projetsActifs,
-      projetsEnAttente,
-      projetsTermines,
-      totalCandidatures,
-      nouvellesCandidatures,
-      volontairesActuels,
-      evolutionCandidatures: this.genererEvolutionCandidatures(totalCandidatures),
-      alertes: this.genererAlertesDashboard(projets)
-    };
-
-    console.log('✅ Stats dashboard calculées:', stats);
-    return stats;
-  }
-
-  /** 🔹 Stats par défaut */
-  private getStatsParDefaut(): PartenaireDashboardStats {
-    return {
-      totalProjets: 0,
-      projetsActifs: 0,
-      projetsEnAttente: 0,
-      projetsTermines: 0,
-      totalCandidatures: 0,
-      nouvellesCandidatures: 0,
-      volontairesActuels: 0,
-      evolutionCandidatures: [],
-      alertes: []
-    };
-  }
-
-  /** 🔹 Dashboard par défaut */
-  private getDashboardParDefaut(): any {
-    return {
-      partenaireInfo: {
-        nomStructure: '',
-        typeStructures: [],
-        estPTF: false,
-        estStructureAccueil: false
-      },
-      dashboardStructure: this.getStatsParDefaut()
-    };
-  }
-
-  /** 🔹 Méthode utilitaire pour obtenir la date du dernier projet */
-  private getDernierProjetDate(projets: any[]): string | undefined {
-    if (!projets.length) return undefined;
-    
-    const datesValides = projets
-      .map((p: any) => new Date(p.cree_le || p.startDate || p.mis_a_jour_le || p.created_at))
-      .filter((date: Date) => !isNaN(date.getTime()));
-    
-    if (!datesValides.length) return undefined;
-    
-    const derniereDate = new Date(Math.max(...datesValides.map((d: Date) => d.getTime())));
-    return derniereDate.toLocaleDateString('fr-FR');
-  }
-
-  /** 🔹 Marquer une alerte comme lue */
-  marquerAlerteCommeLue(alerteId: number): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/alertes/${alerteId}`, { lu: true }).pipe(
-      catchError((error: any) => {
-        console.warn('Service alertes non disponible, marquage local');
-        return of({ success: true });
-      })
-    );
-  }
-
-  // Version robuste de getPartenaireByEmail
-  getPartenaireByEmail(email: string): Observable<Partenaire | null> {
-    console.log('🔍 Recherche partenaire par email:', email);
-    
-    if (!email) {
-      console.error('❌ Email non fourni');
-      return of(null);
-    }
-
-    return this.http.get<Partenaire[]>(`${this.apiUrl}/partenaires`).pipe(
-      map((partenaires: Partenaire[]) => {
-        // Filtrer côté client pour plus de robustesse
-        const partenaireTrouve = partenaires.find((p: Partenaire) => 
-          p.email?.toLowerCase() === email.toLowerCase()
-        );
-        
-        if (partenaireTrouve) {
-          console.log('✅ Partenaire trouvé:', partenaireTrouve);
-          return partenaireTrouve;
-        } else {
-          console.error('❌ Aucun partenaire trouvé pour email:', email);
-          console.log('📋 Emails disponibles:', partenaires.map(p => p.email));
-          return null;
-        }
-      }),
-      catchError((error: any) => {
-        console.error('💥 Erreur API recherche partenaire:', error);
-        // En cas d'erreur, essayer de récupérer depuis le localStorage
-        return this.getPartenaireFromLocalStorage(email);
-      })
-    );
-  }
-
-  /** 🔹 Méthode de secours - récupérer depuis localStorage */
-  private getPartenaireFromLocalStorage(email: string): Observable<Partenaire | null> {
-    try {
-      const partenaireData = localStorage.getItem('currentPartenaire');
-      if (partenaireData) {
-        const partenaire = JSON.parse(partenaireData);
-        if (partenaire.email === email) {
-          console.log('✅ Partenaire récupéré depuis localStorage');
-          return of(partenaire);
-        }
-      }
-      
-      // Essayer depuis currentUser
-      const userData = localStorage.getItem('currentUser');
-      if (userData) {
-        const user = JSON.parse(userData);
-        if (user.email === email && user.role === 'partenaire') {
-          console.log('✅ Partenaire récupéré depuis currentUser');
-          return of(user);
-        }
-      }
-      
-      return of(null);
-    } catch (error) {
-      console.error('Erreur lecture localStorage:', error);
-      return of(null);
-    }
-  }
-
-  /** 🔹 Générer le dashboard PTF */
   private genererDashboardPTF(partenaire: Partenaire, projets: any[]): any {
-    const projetsFinances = projets.map((projet: any) => ({
-      id: projet.id,
-      titre: projet.title || projet.nom,
-      structurePorteuse: projet.structurePorteuse || 'PNVB',
-      montantFinance: projet.budget || 0,
-      dateDebut: projet.startDate,
-      dateFin: projet.endDate,
-      statut: this.getStatutProjet(projet),
-      volontairesAffectes: projet.volontairesAffectes || 0
+    const projetsFinances = projets.map(p => ({
+      id:               p.id,
+      titre:            p.titre,
+      structurePorteuse: p.structurePorteuse || 'PNVB',
+      montantFinance:   p.budget || 0,
+      dateDebut:        p.dateDebut,
+      dateFin:          p.dateFin,
+      statut:           this.getStatutProjet(p),
+      volontairesAffectes: p.volontairesAffectes || 0
     }));
 
-    const totalInvesti = projetsFinances.reduce((total: number, projet: any) => total + projet.montantFinance, 0);
-    const projetsActifs = projetsFinances.filter((p: any) => p.statut === 'actif').length;
-    const projetsTermines = projetsFinances.filter((p: any) => p.statut === 'termine').length;
-    const volontairesSupportes = projetsFinances.reduce((total: number, projet: any) => total + projet.volontairesAffectes, 0);
+    const totalInvesti       = projetsFinances.reduce((t, p) => t + p.montantFinance, 0);
+    const volontairesSupportes = projetsFinances.reduce((t, p) => t + p.volontairesAffectes, 0);
 
     return {
       dashboardPTF: {
         projetsFinances,
         statistiquesFinancement: {
           totalInvesti,
-          projetsActifs,
-          projetsTermines,
-          impactCommunautaire: Math.round((volontairesSupportes / 100) * 75),
+          projetsActifs:         projetsFinances.filter(p => p.statut === 'actif').length,
+          projetsTermines:       projetsFinances.filter(p => p.statut === 'termine').length,
+          impactCommunautaire:   Math.round((volontairesSupportes / 100) * 75),
           volontairesSupportes
         },
         rapports: this.genererRapportsPTF(partenaire.id!),
-        alertes: this.genererAlertesPTF(projetsFinances)
+        alertes:  this.genererAlertesPTF(projetsFinances)
       }
     };
   }
 
-  /** 🔹 Générer le dashboard Structure d'Accueil */
   private genererDashboardStructureAccueil(projets: any[]): any {
-    const stats = this.calculerStatsDashboard(projets);
-    
     return {
       dashboardStructure: {
-        ...stats,
-        projetsRecents: projets
-          .sort((a: any, b: any) => new Date(b.cree_le).getTime() - new Date(a.cree_le).getTime())
+        ...this.calculerStatsDashboard(projets),
+        projetsRecents: [...projets]
+          .sort((a, b) =>
+            new Date(b.cree_le || '').getTime() - new Date(a.cree_le || '').getTime()
+          )
           .slice(0, 5)
       }
     };
   }
 
-  /** 🔹 Générer le dashboard mixte */
   private genererDashboardMixte(partenaire: Partenaire, projets: any[]): any {
-    const dashboardPTF = this.genererDashboardPTF(partenaire, projets);
-    const dashboardStructure = this.genererDashboardStructureAccueil(projets);
-
+    const ptf       = this.genererDashboardPTF(partenaire, projets);
+    const structure = this.genererDashboardStructureAccueil(projets);
     return {
       resume: {
-        totalProjets: dashboardStructure.dashboardStructure.totalProjets,
-        totalInvestissements: dashboardPTF.dashboardPTF.statistiquesFinancement.totalInvesti,
-        volontairesTotal: dashboardStructure.dashboardStructure.volontairesActuels + 
-                         dashboardPTF.dashboardPTF.statistiquesFinancement.volontairesSupportes
+        totalProjets:        structure.dashboardStructure.totalProjets,
+        totalInvestissements: ptf.dashboardPTF.statistiquesFinancement.totalInvesti,
+        volontairesTotal:    structure.dashboardStructure.volontairesActuels +
+                             ptf.dashboardPTF.statistiquesFinancement.volontairesSupportes
       },
       alertesCombinees: [
-        ...(dashboardPTF.dashboardPTF.alertes || []),
-        ...(dashboardStructure.dashboardStructure.alertes || [])
+        ...(ptf.dashboardPTF.alertes || []),
+        ...(structure.dashboardStructure.alertes || [])
       ].slice(0, 10)
     };
   }
 
-  // Méthodes à ajouter dans la classe PartenaireService
-
-/** 🔹 Récupérer les affectations d'un partenaire */
-getAffectationsByPartenaire(partenaireId: string | number): Observable<any[]> {
-  return forkJoin({
-    projets: this.getProjetsByPartenaire(partenaireId),
-    affectations: this.http.get<any[]>(`${this.apiUrl}/affectations`)
-  }).pipe(
-    map(({ projets, affectations }) => {
-      const projetIds = projets.map((p: any) => p.id);
-      return affectations.filter((affectation: any) => 
-        projetIds.includes(affectation.projectId)
-      );
-    }),
-    catchError(() => of([]))
-  );
-}
-
-/** 🔹 Récupérer les volontaires disponibles */
-getVolontairesDisponibles(): Observable<any[]> {
-  return this.http.get<any[]>(`${this.apiUrl}/volontaires`).pipe(
-    catchError(() => of([]))
-  );
-}
-
-/** 🔹 Soumettre un rapport d'évaluation */
-soumettreRapportEvaluation(rapport: any): Observable<any> {
-  const rapportAvecDates = {
-    ...rapport,
-    dateSoumission: new Date().toISOString(),
-    cree_le: new Date().toISOString()
-  };
-  
-  return this.http.post(`${this.apiUrl}/rapports-evaluation`, rapportAvecDates);
-}
-
-/** 🔹 Récupérer les rapports d'évaluation d'un partenaire */
-getRapportsEvaluation(partenaireId: string | number): Observable<any[]> {
-  return this.http.get<any[]>(`${this.apiUrl}/rapports-evaluation`).pipe(
-    map((rapports: any[]) => 
-      rapports.filter((rapport: any) => 
-        rapport.partenaireId === partenaireId.toString()
-      )
-    ),
-    catchError(() => of([]))
-  );
-}
-
-/** 🔹 Mettre à jour le statut d'une offre de mission */
-updateStatutOffreMission(offreId: number, statut: string): Observable<any> {
-  return this.http.patch(`${this.apiUrl}/offres-mission/${offreId}`, {
-    statut,
-    mis_a_jour_le: new Date().toISOString()
-  });
-}
-
-/** 🔹 Récupérer les données financières PTF */
-getDonneesFinancieresPTF(partenaireId: string | number): Observable<any> {
-  return forkJoin({
-    projets: this.getProjetsByPartenaire(partenaireId),
-    rapports: this.http.get<any[]>(`${this.apiUrl}/rapports-financiers`)
-  }).pipe(
-    map(({ projets, rapports }) => {
-      // Calculer les données financières
-      const projetsPTF = projets.filter((p: any) => 
-        p.type === 'finance_ptf' || p.financeParPTF === true
-      );
-      
-      const montantTotal = projetsPTF.reduce((total: number, p: any) => 
-        total + (p.budget || 0), 0
-      );
-      
-      const rapportsPTF = rapports.filter((r: any) => 
-        r.partenaireId === partenaireId.toString()
-      );
-      
-      return {
-        montantTotal,
-        projetsFinances: projetsPTF.length,
-        rapportsFinanciers: rapportsPTF,
-        decompositionBudget: this.calculerDecompositionBudget(projetsPTF)
-      };
-    }),
-    catchError(() => of({
-      montantTotal: 0,
-      projetsFinances: 0,
-      rapportsFinanciers: [],
-      decompositionBudget: {}
-    }))
-  );
-}
-
-private calculerDecompositionBudget(projets: any[]): any {
-  const decomposition: any = {
-    salaires: 0,
-    equipement: 0,
-    formation: 0,
-    logistique: 0,
-    autres: 0
-  };
-  
-  projets.forEach((projet: any) => {
-    if (projet.decompositionBudget) {
-      Object.keys(projet.decompositionBudget).forEach((poste: string) => {
-        if (decomposition[poste] !== undefined) {
-          decomposition[poste] += projet.decompositionBudget[poste];
-        }
-      });
-    }
-  });
-  
-  return decomposition;
-}
-
-// Dans la classe PartenaireService
-
-/** 🔹 Récupérer les offres de mission depuis le JSON */
-getOffresMission(): Observable<any[]> {
-  return this.http.get<any[]>(`${this.apiUrl}/offresMission`).pipe(
-    catchError(() => {
-      // Si l'endpoint n'existe pas encore, retourner un tableau vide
-      console.log('Endpoint offresMission non disponible, retour tableau vide');
-      return of([]);
-    })
-  );
-}
-
-/** 🔹 Créer une nouvelle offre de mission */
-creerOffreMission(offre: any): Observable<any> {
-  const offreAvecDates = {
-    ...offre,
-    id: this.generateId(),
-    dateCreation: new Date().toISOString(),
-    cree_le: new Date().toISOString(),
-    mis_a_jour_le: new Date().toISOString()
-  };
-  
-  return this.http.post<any>(`${this.apiUrl}/offresMission`, offreAvecDates).pipe(
-    tap((newOffre: any) => console.log('✅ Offre créée:', newOffre)),
-    catchError((error: any) => {
-      console.error('❌ Erreur création offre:', error);
-      throw error;
-    })
-  );
-}
-
-/** 🔹 Mettre à jour une offre de mission */
-updateOffreMission(id: string, offre: any): Observable<any> {
-  const offreAvecDate = {
-    ...offre,
-    mis_a_jour_le: new Date().toISOString()
-  };
-  
-  return this.http.put<any>(`${this.apiUrl}/offresMission/${id}`, offreAvecDate).pipe(
-    tap((updatedOffre: any) => console.log('✅ Offre mise à jour:', updatedOffre)),
-    catchError((error: any) => {
-      console.error('❌ Erreur mise à jour offre:', error);
-      throw error;
-    })
-  );
-}
-
-/** 🔹 Supprimer une offre de mission */
-deleteOffreMission(id: string): Observable<any> {
-  return this.http.delete(`${this.apiUrl}/offresMission/${id}`).pipe(
-    tap(() => console.log('✅ Offre supprimée:', id)),
-    catchError((error: any) => {
-      console.error('❌ Erreur suppression offre:', error);
-      throw error;
-    })
-  );
-}
-
-/** 🔹 Récupérer les offres de mission d'un partenaire spécifique */
-getOffresMissionByPartenaire(partenaireId: string): Observable<any[]> {
-  return this.getOffresMission().pipe(
-    map((offres: any[]) => {
-      const offresFiltrees = offres.filter((offre: any) => 
-        offre.partenaireId === partenaireId
-      );
-      
-      console.log(`🔍 Offres pour partenaire ${partenaireId}:`, offresFiltrees.length, 'offres trouvées');
-      return offresFiltrees;
-    }),
-    catchError((error: any) => {
-      console.error('Erreur chargement offres partenaire:', error);
-      return of([]);
-    })
-  );
-}
-
-/** 🔹 Générer un ID unique */
-private generateId(): string {
-  return Math.random().toString(36).substr(2, 9);
-}
-
-/** 🔹 Récupérer le partenaire connecté depuis localStorage */
-getCurrentPartenaire(): any {
-  try {
-    const userData = localStorage.getItem('currentUser');
-    if (userData) {
-      const user = JSON.parse(userData);
-      if (user.role === 'partenaire') {
-        return user;
-      }
-    }
-    return null;
-  } catch (error) {
-    console.error('Erreur récupération partenaire:', error);
-    return null;
+  private getDashboardParDefaut(): any {
+    return {
+      partenaireInfo: { nomStructure: '', typeStructures: [], estPTF: false, estStructureAccueil: false },
+      dashboardStructure: this.getStatsParDefaut()
+    };
   }
-}
 
-/** 🔹 Récupérer les données détaillées d'un partenaire depuis le JSON */
-getPartenaireFromJson(partenaireId: string): Observable<any> {
-  return this.http.get<any[]>(`${this.apiUrl}/partenaires`).pipe(
-    map((partenaires: any[]) => {
-      const partenaire = partenaires.find(p => p.id === partenaireId);
-      if (!partenaire) {
-        throw new Error('Partenaire non trouvé');
+  private getStatsParDefaut(): PartenaireDashboardStats {
+    return {
+      totalProjets: 0, projetsActifs: 0, projetsEnAttente: 0, projetsTermines: 0,
+      totalCandidatures: 0, nouvellesCandidatures: 0, volontairesActuels: 0,
+      evolutionCandidatures: [], alertes: []
+    };
+  }
+
+  private genererEvolutionCandidatures(total: number): { date: string; count: number }[] {
+    const today = new Date();
+    const base  = Math.max(1, Math.floor(total / 30));
+    return Array.from({ length: 30 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(d.getDate() - (29 - i));
+      return { date: d.toISOString().split('T')[0], count: Math.floor(Math.random() * base * 1.5) + 1 };
+    });
+  }
+
+  private genererAlertesDashboard(projets: any[]): any[] {
+    const alertes: any[] = [];
+
+    projets.forEach(p => {
+      const nb = p.candidatures_en_attente || 0;
+      if (nb > 0) {
+        alertes.push({
+          id:      Date.now() + alertes.length,
+          type:    'nouvelle_candidature',
+          titre:   'Nouvelles candidatures',
+          message: `${nb} nouvelle(s) candidature(s) pour "${p.titre || 'Projet'}"`,
+          date:    new Date().toISOString(),
+          lu:      false,
+          lien:    `/features/partenaires/candidatures?projet=${p.id}`
+        });
       }
-      return partenaire;
-    }),
-    catchError((error: any) => {
-      console.error('Erreur récupération partenaire depuis JSON:', error);
-      throw error;
-    })
-  );
-}
+    });
+
+    const dans7j = new Date();
+    dans7j.setDate(dans7j.getDate() + 7);
+    projets.forEach(p => {
+      if (p.dateFin && p.statutProjet === 'actif' && new Date(p.dateFin) < dans7j) {
+        alertes.push({
+          id:      Date.now() + alertes.length,
+          type:    'projet_echeance',
+          titre:   'Projet arrivant à échéance',
+          message: `Le projet "${p.titre}" se termine le ${new Date(p.dateFin).toLocaleDateString()}`,
+          date:    new Date().toISOString(),
+          lu:      false,
+          lien:    `/features/partenaires/projets/${p.id}`
+        });
+      }
+    });
+
+    return alertes.slice(0, 5);
+  }
+
+  private genererRapportsPTF(partenaireId: string | number): any[] {
+    return [
+      { id: 1, titre: 'Rapport Trimestriel Q1 2024', type: 'rapport_trimestriel', date: '2024-03-31', url: `/rapports/q1-2024-${partenaireId}` },
+      { id: 2, titre: "Rapport d'Impact Annuel 2023",  type: 'rapport_annuel',      date: '2024-01-15', url: `/rapports/impact-2023-${partenaireId}` }
+    ];
+  }
+
+  private genererAlertesPTF(projetsFinances: any[]): any[] {
+    const alertes: any[] = [{
+      id: 1, type: 'rapport_a_soumettre',
+      titre: 'Rapport trimestriel à soumettre',
+      message: 'Votre rapport trimestriel pour Q2 2024 est attendu avant le 30 juin',
+      date: new Date().toISOString(), lu: false, lien: '/rapports/soumettre'
+    }];
+
+    const dans30j = new Date();
+    dans30j.setDate(dans30j.getDate() + 30);
+    projetsFinances.forEach(p => {
+      if (p.statut === 'actif' && p.dateFin && new Date(p.dateFin) < dans30j) {
+        alertes.push({
+          id:      alertes.length + 1,
+          type:    'projet_echeance',
+          titre:   'Projet arrivant à échéance',
+          message: `Le projet "${p.titre}" se termine le ${new Date(p.dateFin).toLocaleDateString()}`,
+          date:    new Date().toISOString(),
+          lu:      false,
+          lien:    `/projets/${p.id}`
+        });
+      }
+    });
+    return alertes;
+  }
+
+  private calculerDecompositionBudget(projets: any[]): any {
+    const d: any = { salaires: 0, equipement: 0, formation: 0, logistique: 0, autres: 0 };
+    projets.forEach(p => {
+      if (p.decompositionBudget) {
+        Object.keys(p.decompositionBudget).forEach(k => {
+          if (d[k] !== undefined) d[k] += p.decompositionBudget[k];
+        });
+      }
+    });
+    return d;
+  }
+  
 }

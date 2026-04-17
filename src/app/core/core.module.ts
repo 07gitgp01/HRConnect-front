@@ -5,11 +5,13 @@ import { CoreRoutingModule } from './core-routing.module';
 import { PermissionService } from '../features/services/permission.service';
 import { PartenairePermissionGuard } from './guards/partenaire-permission.guard';
 import { PartenaireService } from '../features/services/service_parten/partenaire.service';
-import {  } from './layout/recrutements/recrutements.component';
+
 
 
 @NgModule({
   declarations: [
+  
+
   
     
   ],

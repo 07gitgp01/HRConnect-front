@@ -1,0 +1,255 @@
+<!-- src/app/features/admin/messages-admin/messages-admin.component.html -->
+<div class="messages-admin-container">
+  <!-- En-tête avec statistiques -->
+  <div class="admin-header">
+    <h1>Gestion des Messages de Contact</h1>
+    <p>Consultez et gérez les demandes reçues via le formulaire de contact</p>
+  </div>
+
+  <!-- Cartes de statistiques -->
+  <div class="stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon total">email</mat-icon>
+          <div class="stat-info">
+            <span class="stat-number">{{ stats.total || 0 }}</span>
+            <span class="stat-label">Total Messages</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon new">mark_email_unread</mat-icon>
+          <div class="stat-info">
+            <span class="stat-number">{{ stats.new || 0 }}</span>
+            <span class="stat-label">Nouveaux</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon urgent">warning</mat-icon>
+          <div class="stat-info">
+            <span class="stat-number">{{ stats.urgent || 0 }}</span>
+            <span class="stat-label">Urgents</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon responded">check_circle</mat-icon>
+          <div class="stat-info">
+            <span class="stat-number">{{ stats.responded || 0 }}</span>
+            <span class="stat-label">Répondu</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Filtres -->
+  <mat-card class="filters-card">
+    <mat-card-header>
+      <mat-card-title>Filtres et Recherche</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filters-form">
+        <div class="filters-row">
+          <!-- Statut -->
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Statut</mat-label>
+            <mat-select formControlName="status">
+              <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Priorité -->
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Priorité</mat-label>
+            <mat-select formControlName="priority">
+              <mat-option *ngFor="let option of priorityOptions" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Recherche -->
+          <mat-form-field appearance="outline" class="filter-field search-field">
+            <mat-label>Rechercher</mat-label>
+            <input matInput formControlName="search" placeholder="Nom, email, sujet...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+
+          <!-- Actions -->
+          <div class="filter-actions">
+            <button mat-raised-button color="primary" (click)="applyFilters()">
+              <mat-icon>filter_list</mat-icon>
+              Appliquer
+            </button>
+            <button mat-stroked-button color="warn" (click)="resetFilters()">
+              <mat-icon>clear</mat-icon>
+              Réinitialiser
+            </button>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Tableau des messages -->
+  <mat-card class="messages-card">
+    <mat-card-header>
+      <mat-card-title>Liste des Messages</mat-card-title>
+      <mat-card-subtitle>{{ messages.length }} message(s) trouvé(s)</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Loading -->
+      <div *ngIf="isLoading" class="loading-section">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Chargement des messages...</p>
+      </div>
+
+      <!-- Aucun message -->
+      <div *ngIf="!isLoading && messages.length === 0" class="empty-section">
+        <mat-icon>inbox</mat-icon>
+        <h3>Aucun message trouvé</h3>
+        <p>Aucun message ne correspond à vos critères de recherche.</p>
+      </div>
+
+      <!-- Tableau -->
+      <div *ngIf="!isLoading && messages.length > 0" class="table-container">
+        <table mat-table [dataSource]="messages" class="messages-table">
+          
+          <!-- Priorité -->
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef>Priorité</th>
+            <td mat-cell *matCellDef="let message">
+              <span class="priority-badge" [class]="getPriorityBadgeClass(message.priority)">
+                {{ getPriorityLabel(message.priority) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Statut -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Statut</th>
+            <td mat-cell *matCellDef="let message">
+              <span class="status-badge" [class]="getStatusBadgeClass(message.status)">
+                {{ getStatusLabel(message.status) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Nom -->
+          <ng-container matColumnDef="fullName">
+            <th mat-header-cell *matHeaderCellDef>Nom</th>
+            <td mat-cell *matCellDef="let message">
+              <div class="contact-info">
+                <strong>{{ message.fullName }}</strong>
+                <small class="email">{{ message.email }}</small>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Dans messages-admin.component.html -->
+<!-- Colonne Email séparée -->
+<ng-container matColumnDef="email">
+  <th mat-header-cell *matHeaderCellDef>Email</th>
+  <td mat-cell *matCellDef="let message">
+    <span class="email-text">{{ message.email }}</span>
+  </td>
+</ng-container>
+
+          <!-- Sujet -->
+          <ng-container matColumnDef="subject">
+            <th mat-header-cell *matHeaderCellDef>Sujet</th>
+            <td mat-cell *matCellDef="let message">
+              <span class="subject-text">{{ getSubjectLabel(message.subject) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Date -->
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef>Date</th>
+            <td mat-cell *matCellDef="let message">
+              <span class="date-text">{{ formatDate(message.createdAt) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let message">
+              <div class="action-buttons">
+                <!-- Voir -->
+                <button mat-icon-button color="primary" 
+                        (click)="viewMessage(message)"
+                        matTooltip="Voir les détails">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+
+                <!-- Répondre -->
+                <button mat-icon-button color="accent" 
+                        *ngIf="message.status !== MessageStatus.RESPONDED && message.status !== MessageStatus.CLOSED"
+                        (click)="respondToMessage(message)"
+                        matTooltip="Répondre">
+                  <mat-icon>reply</mat-icon>
+                </button>
+
+                <!-- Menu d'actions -->
+                <button mat-icon-button [matMenuTriggerFor]="menu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+
+                <mat-menu #menu="matMenu">
+                  <!-- Marquer comme traité -->
+                  <button mat-menu-item 
+                          *ngIf="message.status === MessageStatus.NEW || message.status === MessageStatus.IN_PROGRESS"
+                          (click)="updateStatus(message, MessageStatus.RESPONDED)">
+                    <mat-icon>check_circle</mat-icon>
+                    <span>Marquer comme répondu</span>
+                  </button>
+
+                  <!-- Marquer comme fermé -->
+                  <button mat-menu-item 
+                          *ngIf="message.status !== MessageStatus.CLOSED"
+                          (click)="updateStatus(message, MessageStatus.CLOSED)">
+                    <mat-icon>archive</mat-icon>
+                    <span>Archiver</span>
+                  </button>
+
+                  <mat-divider></mat-divider>
+
+                  <!-- Supprimer -->
+                  <button mat-menu-item (click)="deleteMessage(message)">
+                    <mat-icon color="warn">delete</mat-icon>
+                    <span>Supprimer</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Header -->
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+              [class.unread]="row.status === MessageStatus.NEW"
+              class="message-row"></tr>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

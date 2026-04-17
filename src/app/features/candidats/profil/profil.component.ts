@@ -1,21 +1,28 @@
+// src/app/features/candidats/profil/profil.component.ts
+
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
+
 import { AuthService } from '../../services/service_auth/auth.service';
 import { User } from '../../models/user.model';
 import { CandidatureService } from '../../services/service_candi/candidature.service';
 import { Candidature } from '../../models/candidature.model';
 import { Volontaire } from '../../models/volontaire.model';
 import { VolontaireService, calculerCompletionProfil } from '../../services/service_volont/volontaire.service';
+import { UploadService } from '../../services/upload.service';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-profil-candidat',
   standalone: true,
   templateUrl: './profil.component.html',
   styleUrls: ['./profil.component.css'],
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, MatIconModule]
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, MatIconModule, MatTooltipModule]
 })
 export class ProfilCandidatComponent implements OnInit {
   profilForm: FormGroup;
@@ -26,65 +33,48 @@ export class ProfilCandidatComponent implements OnInit {
   message = '';
   messageType: 'success' | 'error' = 'success';
 
-  typePieceSelectionne: 'CNIB' | 'PASSEPORT' = 'CNIB';
-
   selectedCV: File | null = null;
   cvPreview: { name: string; size: number } | null = null;
   selectedDocumentIdentity: File | null = null;
   documentIdentityPreview: { name: string; size: number } | null = null;
 
-  stats = {
-    total: 0,
-    en_attente: 0,
-    entretien: 0,
-    acceptee: 0,
-    refusee: 0
-  };
-
+  stats = { total: 0, en_attente: 0, entretien: 0, acceptee: 0, refusee: 0 };
   dernieresCandidatures: Candidature[] = [];
 
-  niveauxEtudes = ['Sans diplôme', 'Bac', 'Bac+2', 'Licence', 'Master', 'Doctorat'];
-
-  domainesEtudes = [
-    'Informatique', 'Médecine', 'Droit', 'Commerce',
-    'Ingénierie', 'Éducation', 'Autre'
-  ];
-
-  competencesList = [
-    'Communication', 'Leadership', "Travail d'équipe",
-    'Gestion de projet', 'Numérique', 'Langues étrangères',
-    'Animation', 'Sensibilisation'
-  ];
-
+  niveauxEtudes   = ['Sans diplôme', 'Bac', 'Bac+2', 'Licence', 'Master', 'Doctorat'];
+  domainesEtudes  = ['Informatique', 'Médecine', 'Droit', 'Commerce', 'Ingénierie', 'Éducation', 'Autre'];
+  competencesList = ['Communication', 'Leadership', "Travail d'équipe", 'Gestion de projet', 'Numérique', 'Langues étrangères', 'Animation', 'Sensibilisation'];
   regions = [
-    'Adamaoua', 'Centre', 'Est', 'Extrême-Nord',
-    'Littoral', 'Nord', 'Nord-Ouest', 'Ouest',
-    'Sud', 'Sud-Ouest'
+    'Boucle du Mouhoun', 'Cascades', 'Centre', 'Centre-Est', 'Centre-Nord',
+    'Centre-Ouest', 'Centre-Sud', 'Est', 'Hauts-Bassins', 'Nord',
+    'Plateau-Central', 'Sahel', 'Sud-Ouest'
   ];
 
   selectedCompetences: string[] = [];
+
+  private apiUrl = 'http://localhost:3000';
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private candidatureService: CandidatureService,
     private volontaireService: VolontaireService,
-    private router: Router
+    private router: Router,
+    private http: HttpClient,
+    private uploadService: UploadService
   ) {
     this.profilForm = this.createProfilForm();
     this.initializeCompetencesFormArray();
   }
 
   ngOnInit(): void {
-    if (!this.authService.isCandidat()) {
+    if (!this.authService.isCandidat() && !this.authService.isVolontaire()) {
       this.router.navigate(['/login']);
       return;
     }
-
     this.loadUserData();
     this.loadVolontaireData();
     this.loadCandidaturesStats();
-    this.setupTypePieceListener();
     this.setupCompetencesListener();
   }
 
@@ -95,27 +85,26 @@ export class ProfilCandidatComponent implements OnInit {
   private createProfilForm(): FormGroup {
     return this.fb.group({
       informationsPersonnelles: this.fb.group({
-        nom:            [{ value: '', disabled: true }],
-        prenom:         [{ value: '', disabled: true }],
-        email:          [{ value: '', disabled: true }],
-        telephone:      [{ value: '', disabled: true }],
-        dateNaissance:  [{ value: '', disabled: true }],
-        nationalite:    [{ value: '', disabled: true }],
-        sexe:           [{ value: '', disabled: true }]
+        nom:           [{ value: '', disabled: true }],
+        prenom:        [{ value: '', disabled: true }],
+        email:         [{ value: '', disabled: true }],
+        telephone:     [{ value: '', disabled: true }],
+        dateNaissance: [{ value: '', disabled: true }],
+        nationalite:   [{ value: '', disabled: true }],
+        sexe:          [{ value: '', disabled: true }],
+        typePiece:     [{ value: '', disabled: true }],
+        numeroPiece:   [{ value: '', disabled: true }]
       }),
-
       profil: this.fb.group({
-        adresseResidence:  ['', Validators.required],
-        regionGeographique:['', Validators.required],
-        niveauEtudes:      ['', Validators.required],
-        domaineEtudes:     ['', Validators.required],
-        competences:       this.fb.array([]),
-        motivation:        ['', [Validators.required, Validators.minLength(50)]],
-        disponibilite:     ['', Validators.required],
-        typePiece:         ['CNIB', Validators.required],
-        numeroPiece:       ['', [Validators.required, Validators.minLength(3)]],
-        urlCV:             ['', Validators.required],
-        urlPieceIdentite:  ['', Validators.required]
+        adresseResidence:   ['', Validators.required],
+        regionGeographique: ['', Validators.required],
+        niveauEtudes:       ['', Validators.required],
+        domaineEtudes:      ['', Validators.required],
+        competences:        this.fb.array([]),
+        motivation:         ['', [Validators.required, Validators.minLength(50)]],
+        disponibilite:      ['', Validators.required],
+        urlCV:              ['', Validators.required],
+        urlPieceIdentite:   ['', Validators.required]
       })
     });
   }
@@ -126,110 +115,123 @@ export class ProfilCandidatComponent implements OnInit {
     this.competencesList.forEach(() => arr.push(this.fb.control(false)));
   }
 
-  private setupTypePieceListener(): void {
-    this.profilForm.get('profil.typePiece')?.valueChanges.subscribe((value: 'CNIB' | 'PASSEPORT') => {
-      this.typePieceSelectionne = value;
-      this.updateNumeroPieceValidation();
-    });
-  }
-
   private setupCompetencesListener(): void {
     (this.profilForm.get('profil.competences') as FormArray)?.valueChanges.subscribe(() => {
       this.updateSelectedCompetences();
     });
   }
 
-  private updateNumeroPieceValidation(): void {
-    const ctrl = this.profilForm.get('profil.numeroPiece');
-    if (!ctrl) return;
-    ctrl.setErrors(null);
-
-    ctrl.setValidators(
-      this.typePieceSelectionne === 'CNIB'
-        ? [Validators.required, Validators.pattern(/^[0-9]{17}$/), Validators.minLength(17), Validators.maxLength(17)]
-        : [Validators.required, Validators.pattern(/^[A-Z0-9]{6,9}$/), Validators.minLength(6),  Validators.maxLength(9)]
-    );
-    ctrl.updateValueAndValidity();
-  }
-
-  getLabelNumeroPiece(): string {
-    return this.typePieceSelectionne === 'CNIB' ? 'NIP CNIB (17 chiffres) *' : 'Numéro de Passeport *';
-  }
-
-  getPlaceholderNumeroPiece(): string {
-    return this.typePieceSelectionne === 'CNIB' ? 'Ex: 12345678901234567' : 'Ex: AB123456';
-  }
-
-  getNumeroPieceErrorMessage(): string {
-    const ctrl = this.profilForm.get('profil.numeroPiece');
-    if (!ctrl) return '';
-    if (ctrl.hasError('required')) {
-      return this.typePieceSelectionne === 'CNIB' ? 'Le NIP CNIB est requis' : 'Le numéro de passeport est requis';
-    }
-    if (ctrl.hasError('pattern') || ctrl.hasError('minlength') || ctrl.hasError('maxlength')) {
-      return this.typePieceSelectionne === 'CNIB'
-        ? 'Le NIP CNIB doit contenir exactement 17 chiffres'
-        : 'Le numéro de passeport : 6 à 9 caractères (lettres majuscules et chiffres)';
-    }
-    return '';
-  }
-
-  onTypePieceChange(): void {
-    this.typePieceSelectionne = this.profilForm.get('profil.typePiece')?.value;
-    this.updateNumeroPieceValidation();
-    const ctrl = this.profilForm.get('profil.numeroPiece');
-    if (ctrl) { ctrl.setValue(''); ctrl.markAsUntouched(); }
-  }
-
   // ============================================================
-  // FICHIERS
+  // UPLOAD DE FICHIERS
   // ============================================================
+
+  /**
+   * ✅ Upload réel d'un fichier vers le serveur
+   */
+  private uploadFile(file: File, type: 'cv' | 'identity'): Promise<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const url = type === 'cv' 
+      ? `${this.apiUrl}/api/upload/cv` 
+      : `${this.apiUrl}/api/upload/identity`;
+    
+    return lastValueFrom(
+      this.http.post<{url: string}>(url, formData)
+    ).then(response => response.url);
+  }
 
   onCVSelected(event: any): void {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { this.showMessage('CV trop volumineux (max 5MB)', 'error'); return; }
-
+    
+    if (file.size > 5 * 1024 * 1024) { 
+      this.showMessage('CV trop volumineux (max 5MB)', 'error'); 
+      return; 
+    }
+    
     const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!allowed.includes(file.type)) { this.showMessage('Format CV non supporté. Utilisez PDF, DOC ou DOCX', 'error'); return; }
-
+    if (!allowed.includes(file.type)) { 
+      this.showMessage('Format non supporté. PDF, DOC ou DOCX', 'error'); 
+      return; 
+    }
+    
     this.selectedCV = file;
     this.cvPreview  = { name: file.name, size: file.size };
-    this.profilForm.get('profil.urlCV')?.setValue(`uploads/cv_${Date.now()}_${file.name}`);
   }
 
   removeCV(): void {
     this.selectedCV = null;
     this.cvPreview  = null;
-    this.profilForm.get('profil.urlCV')?.setValue('');
   }
 
   onDocumentIdentitySelected(event: any): void {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { this.showMessage('Fichier trop volumineux (max 5MB)', 'error'); return; }
-
-    const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png',
-                     'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!allowed.includes(file.type)) { this.showMessage('Format non supporté. PDF, JPG, PNG, DOC ou DOCX', 'error'); return; }
-
-    this.selectedDocumentIdentity    = file;
-    this.documentIdentityPreview     = { name: file.name, size: file.size };
-    this.profilForm.get('profil.urlPieceIdentite')?.setValue(`uploads/identity_${Date.now()}_${file.name}`);
+    
+    if (file.size > 5 * 1024 * 1024) { 
+      this.showMessage('Fichier trop volumineux (max 5MB)', 'error'); 
+      return; 
+    }
+    
+    const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowed.includes(file.type)) { 
+      this.showMessage('Format non supporté. PDF, JPG, PNG, DOC ou DOCX', 'error'); 
+      return; 
+    }
+    
+    this.selectedDocumentIdentity = file;
+    this.documentIdentityPreview  = { name: file.name, size: file.size };
   }
 
   removeDocumentIdentity(): void {
     this.selectedDocumentIdentity = null;
     this.documentIdentityPreview  = null;
-    this.profilForm.get('profil.urlPieceIdentite')?.setValue('');
   }
 
   getFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const k = 1024, sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // ============================================================
+  // OUVERTURE DES DOCUMENTS (NOUVELLE MÉTHODE)
+  // ============================================================
+
+  /**
+   * ✅ Ouvre un document dans un nouvel onglet
+   */
+  ouvrirDocument(url: string | undefined, type: 'cv' | 'identity'): void {
+    if (!url) {
+      this.showMessage(`Aucun ${type === 'cv' ? 'CV' : 'document'} trouvé`, 'error');
+      return;
+    }
+    
+    const fullUrl = this.uploadService.getFullUrl(url);
+    console.log(`📄 Ouverture ${type}:`, fullUrl);
+    window.open(fullUrl, '_blank');
+  }
+
+  /**
+   * ✅ Vérifie si un document existe
+   */
+  verifierDocument(url: string | undefined, type: 'cv' | 'identity'): void {
+    if (!url) {
+      this.showMessage(`Aucun ${type === 'cv' ? 'CV' : 'document'} trouvé`, 'error');
+      return;
+    }
+    
+    this.uploadService.checkFileExists(url).subscribe({
+      next: (exists) => {
+        if (exists) {
+          this.showMessage(`✅ ${type === 'cv' ? 'CV' : 'Document'} accessible`, 'success');
+        } else {
+          this.showMessage(`❌ ${type === 'cv' ? 'CV' : 'Document'} introuvable sur le serveur`, 'error');
+        }
+      }
+    });
   }
 
   // ============================================================
@@ -238,7 +240,6 @@ export class ProfilCandidatComponent implements OnInit {
 
   private loadUserData(): void {
     const currentUser = this.authService.getCurrentUser();
-    // ✅ accepte 'candidat' ET 'volontaire'
     if (currentUser && (currentUser.role === 'candidat' || currentUser.role === 'volontaire')) {
       this.user = currentUser;
     } else {
@@ -248,20 +249,17 @@ export class ProfilCandidatComponent implements OnInit {
 
   private loadVolontaireData(): void {
     const volontaireId = this.authService.getVolontaireId();
-    if (!volontaireId) {
-      this.showMessage('Aucun profil volontaire trouvé', 'error');
-      return;
+    if (!volontaireId) { 
+      this.showMessage('Aucun profil volontaire trouvé', 'error'); 
+      return; 
     }
 
     this.volontaireService.getVolontaire(volontaireId).subscribe({
-      next: (volontaire) => {
-        this.volontaire = volontaire;
-        this.patchFormValues(volontaire);
+      next:  v    => { 
+        this.volontaire = v; 
+        this.patchFormValues(v); 
       },
-      error: (err) => {
-        console.error('❌ Erreur chargement profil volontaire:', err);
-        this.showMessage('Erreur lors du chargement du profil', 'error');
-      }
+      error: ()   => this.showMessage('Erreur lors du chargement du profil', 'error')
     });
   }
 
@@ -273,7 +271,9 @@ export class ProfilCandidatComponent implements OnInit {
       telephone:     volontaire.telephone,
       dateNaissance: this.formatDate(volontaire.dateNaissance),
       nationalite:   volontaire.nationalite,
-      sexe:          volontaire.sexe
+      sexe:          volontaire.sexe,
+      typePiece:     volontaire.typePiece   || '',
+      numeroPiece:   volontaire.numeroPiece || ''
     });
 
     this.profilForm.get('profil')?.patchValue({
@@ -284,19 +284,15 @@ export class ProfilCandidatComponent implements OnInit {
       motivation:         volontaire.motivation         || '',
       disponibilite:      volontaire.disponibilite      || '',
       urlCV:              volontaire.urlCV              || '',
-      urlPieceIdentite:   volontaire.urlPieceIdentite   || '',
-      typePiece:          volontaire.typePiece          || 'CNIB',
-      numeroPiece:        volontaire.numeroPiece        || ''
+      urlPieceIdentite:   volontaire.urlPieceIdentite   || ''
     });
 
-    this.typePieceSelectionne = volontaire.typePiece || 'CNIB';
     if (volontaire.competences) this.updateCompetencesFormArray(volontaire.competences);
   }
 
   private updateCompetencesFormArray(competences: string[]): void {
     const arr = this.profilForm.get('profil.competences') as FormArray;
     if (!arr || arr.length === 0) this.initializeCompetencesFormArray();
-
     this.competencesList.forEach((comp, i) => {
       arr.at(i)?.setValue(Array.isArray(competences) && competences.includes(comp));
     });
@@ -305,12 +301,15 @@ export class ProfilCandidatComponent implements OnInit {
 
   private updateSelectedCompetences(): void {
     const arr = this.profilForm.get('profil.competences') as FormArray;
-    if (!arr || arr.length === 0) { this.selectedCompetences = []; return; }
+    if (!arr || arr.length === 0) { 
+      this.selectedCompetences = []; 
+      return; 
+    }
     this.selectedCompetences = this.competencesList.filter((_, i) => arr.at(i)?.value === true);
   }
 
-  getSelectedCompetences(): string[] {
-    return this.selectedCompetences;
+  getSelectedCompetences(): string[] { 
+    return this.selectedCompetences; 
   }
 
   private loadCandidaturesStats(): void {
@@ -318,25 +317,19 @@ export class ProfilCandidatComponent implements OnInit {
     if (!volontaireId) return;
 
     this.candidatureService.getAll().subscribe({
-      next: (candidatures) => {
-        const mine = candidatures.filter(c =>
-          c.volontaireId?.toString() === volontaireId.toString()
-        );
+      next: candidatures => {
+        const mine = candidatures.filter(c => c.volontaireId?.toString() === volontaireId.toString());
         this.dernieresCandidatures = mine.slice(0, 5);
-        this.calculateStats(mine);
+        this.stats = {
+          total:      mine.length,
+          en_attente: mine.filter(c => c.statut === 'en_attente').length,
+          entretien:  mine.filter(c => c.statut === 'entretien').length,
+          acceptee:   mine.filter(c => c.statut === 'acceptee').length,
+          refusee:    mine.filter(c => c.statut === 'refusee').length
+        };
       },
-      error: (err) => console.error('❌ Erreur candidatures:', err)
+      error: err => console.error('❌ Erreur candidatures:', err)
     });
-  }
-
-  private calculateStats(candidatures: Candidature[]): void {
-    this.stats = {
-      total:      candidatures.length,
-      en_attente: candidatures.filter(c => c.statut === 'en_attente').length,
-      entretien:  candidatures.filter(c => c.statut === 'entretien').length,
-      acceptee:   candidatures.filter(c => c.statut === 'acceptee').length,
-      refusee:    candidatures.filter(c => c.statut === 'refusee').length
-    };
   }
 
   // ============================================================
@@ -346,71 +339,97 @@ export class ProfilCandidatComponent implements OnInit {
   toggleEdit(): void {
     this.isEditing = !this.isEditing;
     const grp = this.profilForm.get('profil');
-
     if (this.isEditing) {
       grp?.enable();
     } else {
       grp?.disable();
       if (this.volontaire) this.patchFormValues(this.volontaire);
-      this.selectedCV = null; this.cvPreview = null;
-      this.selectedDocumentIdentity = null; this.documentIdentityPreview = null;
+      this.selectedCV = null; 
+      this.cvPreview = null;
+      this.selectedDocumentIdentity = null; 
+      this.documentIdentityPreview = null;
     }
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     if (this.profilForm.get('profil')?.invalid) {
       this.showMessage('Veuillez corriger les erreurs du formulaire', 'error');
       this.markProfilGroupTouched();
       return;
     }
 
-    this.isLoading = true;
-    const formData   = this.profilForm.get('profil')?.value;
-    const competences = this.getSelectedCompetences();
-
-    const updateData: Volontaire = {
-      ...this.volontaire!,
-      adresseResidence:   formData.adresseResidence,
-      regionGeographique: formData.regionGeographique,
-      niveauEtudes:       formData.niveauEtudes,
-      domaineEtudes:      formData.domaineEtudes,
-      competences:        competences,
-      motivation:         formData.motivation,
-      disponibilite:      formData.disponibilite,
-      urlCV:              formData.urlCV,
-      urlPieceIdentite:   formData.urlPieceIdentite,
-      typePiece:          formData.typePiece,
-      numeroPiece:        formData.numeroPiece,
-      updated_at:         new Date().toISOString()
-    };
-
     if (!this.volontaire?.id) return;
 
-    this.simulateFileUpload().then(() => {
-      this.volontaireService.updateVolontaire(this.volontaire!.id!, updateData).subscribe({
-        next: (updated) => {
-          this.isLoading  = false;
-          this.isEditing  = false;
-          this.volontaire = updated;
-          this.showMessage('✅ Profil mis à jour avec succès !', 'success');
-          this.profilForm.get('profil')?.disable();
-          this.selectedCV = null; this.cvPreview = null;
-          this.selectedDocumentIdentity = null; this.documentIdentityPreview = null;
-        },
-        error: (err) => {
-          this.isLoading = false;
-          console.error('❌ Erreur mise à jour profil:', err);
-          this.showMessage('❌ Erreur lors de la mise à jour du profil', 'error');
-        }
-      });
-    }).catch(() => {
-      this.isLoading = false;
-      this.showMessage('❌ Erreur lors de l\'upload des fichiers', 'error');
-    });
-  }
+    this.isLoading = true;
+    this.message = '';
+    
+    try {
+      const formData = this.profilForm.get('profil')?.value;
+      
+      const uploadPromises: Promise<void>[] = [];
+      
+      if (this.selectedCV) {
+        uploadPromises.push(
+          this.uploadFile(this.selectedCV, 'cv').then(url => {
+            formData.urlCV = url;
+            console.log('✅ CV uploadé:', url);
+          })
+        );
+      }
+      
+      if (this.selectedDocumentIdentity) {
+        uploadPromises.push(
+          this.uploadFile(this.selectedDocumentIdentity, 'identity').then(url => {
+            formData.urlPieceIdentite = url;
+            console.log('✅ Pièce d\'identité uploadée:', url);
+          })
+        );
+      }
 
-  private simulateFileUpload(): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, 1000));
+      if (uploadPromises.length > 0) {
+        await Promise.all(uploadPromises);
+      }
+
+      const donneesMAJ: Partial<Volontaire> = {
+        adresseResidence:   formData.adresseResidence,
+        regionGeographique: formData.regionGeographique,
+        niveauEtudes:       formData.niveauEtudes,
+        domaineEtudes:      formData.domaineEtudes,
+        competences:        this.getSelectedCompetences(),
+        motivation:         formData.motivation,
+        disponibilite:      formData.disponibilite,
+        urlCV:              formData.urlCV,
+        urlPieceIdentite:   formData.urlPieceIdentite
+      };
+
+      const ancienStatut = this.volontaire!.statut;
+      const updated = await lastValueFrom(
+        this.volontaireService.mettreAJourProfil(this.volontaire!.id!, donneesMAJ)
+      );
+
+      this.isLoading = false;
+      this.isEditing = false;
+      this.volontaire = updated;
+      this.profilForm.get('profil')?.disable();
+      this.selectedCV = null; 
+      this.cvPreview = null;
+      this.selectedDocumentIdentity = null; 
+      this.documentIdentityPreview = null;
+
+      if (ancienStatut === 'Candidat' && updated.statut === 'En attente') {
+        this.showMessage(
+          '🎉 Profil complété à 100% ! Votre dossier est maintenant en attente.',
+          'success'
+        );
+      } else {
+        this.showMessage('✅ Profil mis à jour avec succès !', 'success');
+      }
+
+    } catch (error) {
+      this.isLoading = false;
+      console.error('❌ Erreur lors de la mise à jour:', error);
+      this.showMessage('❌ Erreur lors de la mise à jour du profil', 'error');
+    }
   }
 
   private markProfilGroupTouched(): void {
@@ -421,18 +440,20 @@ export class ProfilCandidatComponent implements OnInit {
   private showMessage(message: string, type: 'success' | 'error'): void {
     this.message     = message;
     this.messageType = type;
-    setTimeout(() => { this.message = ''; }, 5000);
+    setTimeout(() => { this.message = ''; }, 6000);
   }
 
   private formatDate(dateString: string): string {
     if (!dateString) return '';
-    try { return new Date(dateString).toLocaleDateString('fr-FR'); }
-    catch { return dateString; }
+    try { 
+      return new Date(dateString).toLocaleDateString('fr-FR'); 
+    } catch { 
+      return dateString; 
+    }
   }
 
   // ============================================================
-  // ✅ COMPLÉTION DU PROFIL — délègue à calculerCompletionProfil()
-  //    exactement la même fonction que dans le dashboard et le service
+  // COMPLÉTION DU PROFIL
   // ============================================================
 
   getProfilCompletion(): number {
@@ -460,17 +481,17 @@ export class ProfilCandidatComponent implements OnInit {
   }
 
   getCandidatureStatutLabel(statut: string): string {
-    const map: Record<string, string> = {
-      'en_attente': 'En attente',
-      'entretien':  'Entretien',
-      'acceptee':   'Acceptée',
-      'refusee':    'Refusée'
+    const labels: Record<string, string> = {
+      en_attente: 'En attente',
+      entretien:  'Entretien',
+      acceptee:   'Acceptée',
+      refusee:    'Refusée'
     };
-    return map[statut] || statut;
+    return labels[statut] || statut;
   }
 
   // ============================================================
-  // GETTERS POUR LE TEMPLATE
+  // GETTERS TEMPLATE
   // ============================================================
 
   get informationsPersonnelles() { return this.profilForm.get('informationsPersonnelles') as FormGroup; }
@@ -490,6 +511,4 @@ export class ProfilCandidatComponent implements OnInit {
   get disponibilite()      { return this.profil.get('disponibilite'); }
   get urlCV()              { return this.profil.get('urlCV'); }
   get urlPieceIdentite()   { return this.profil.get('urlPieceIdentite'); }
-  get typePiece()          { return this.profil.get('typePiece'); }
-  get numeroPiece()        { return this.profil.get('numeroPiece'); }
 }

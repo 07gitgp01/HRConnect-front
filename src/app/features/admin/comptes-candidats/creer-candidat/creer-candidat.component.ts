@@ -4,7 +4,7 @@ import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators }
 import { ActivatedRoute, Router } from '@angular/router';
 import { AdminCandidatService } from '../../../services/service_candidats/admin-candidat.service';
 import { InscriptionVolontaire, ProfilVolontaire } from '../../../models/volontaire.model';
-import { AuthService } from '../../../services/service_auth/auth.service'; // ← AJOUT IMPORT
+import { AuthService } from '../../../services/service_auth/auth.service';
 
 @Component({
   selector: 'app-creer-candidat',
@@ -24,66 +24,69 @@ export class CreerCandidatComponent {
     private adminCandidatService: AdminCandidatService,
     private router: Router,
     private route: ActivatedRoute,
-    private authService: AuthService // ← AJOUT INJECTION
+    private authService: AuthService
   ) {
     this.creationForm = this.creerCreationForm();
     this.profilForm = this.creerProfilForm();
   }
 
   creerCreationForm(): FormGroup {
+    // ✅ CORRECTION : typePiece et numeroPiece déplacés ici (étape identité),
+    // car ce sont des données fixes saisies à l'inscription, pas dans le profil.
     return this.fb.group({
-      nom: ['', [Validators.required, Validators.minLength(2)]],
-      prenom: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]],
-      telephone: ['', [Validators.required, Validators.pattern(/^[0-9+\-\s()]{10,}$/)]],
-      dateNaissance: ['', [Validators.required, this.ageValidator(18)]],
-      nationalite: ['', [Validators.required]],
-      sexe: ['', [Validators.required]],
-      motDePasse: ['', [Validators.required, Validators.minLength(6)]],
-      confirmerMotDePasse: ['', [Validators.required]]
+      nom:                    ['', [Validators.required, Validators.minLength(2)]],
+      prenom:                 ['', [Validators.required, Validators.minLength(2)]],
+      email:                  ['', [Validators.required, Validators.email]],
+      telephone:              ['', [Validators.required, Validators.pattern(/^[0-9+\-\s()]{10,}$/)]],
+      dateNaissance:          ['', [Validators.required, this.ageValidator(18)]],
+      nationalite:            ['', [Validators.required]],
+      sexe:                   ['', [Validators.required]],
+      // ✅ Pièce d'identité dans le formulaire d'identité
+      typePiece:              ['CNIB', [Validators.required]],
+      numeroPiece:            ['', [Validators.required]],
+      motDePasse:             ['', [Validators.required, Validators.minLength(6)]],
+      confirmerMotDePasse:    ['', [Validators.required]]
     }, { validators: this.motsDePasseEgaux });
   }
 
   creerProfilForm(): FormGroup {
+    // ✅ CORRECTION : typePiece et numeroPiece RETIRÉS du profilForm.
+    // ProfilVolontaire ne les contient plus — ils sont en lecture seule
+    // dans le profil et ont été saisis à l'étape identité.
     return this.fb.group({
-      adresseResidence: [''],
+      adresseResidence:   [''],
       regionGeographique: [''],
-      niveauEtudes: [''],
-      domaineEtudes: [''],
-      competences: [[]],
-      motivation: [''],
-      disponibilite: ['Temps plein'],
-      urlCV: [''],
-      typePiece: ['CNIB'],
-      numeroPiece: [''],
-      urlPieceIdentite: ['']
+      niveauEtudes:       [''],
+      domaineEtudes:      [''],
+      competences:        [[]],
+      motivation:         [''],
+      disponibilite:      ['Temps plein'],
+      urlCV:              [''],
+      urlPieceIdentite:   ['']  // document scanné — reste dans le profil
     });
   }
 
-  // Validateur pour vérifier que l'utilisateur a au moins 18 ans
   ageValidator(minAge: number) {
     return (control: AbstractControl): ValidationErrors | null => {
-      if (!control.value) {
-        return null;
-      }
-      
+      if (!control.value) return null;
+
       const birthDate = new Date(control.value);
-      const today = new Date();
+      const today     = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
-      
+
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
         age--;
       }
-      
+
       return age >= minAge ? null : { tooYoung: { requiredAge: minAge, actualAge: age } };
     };
   }
 
   motsDePasseEgaux(group: FormGroup): { [key: string]: any } | null {
-    const motDePasse = group.get('motDePasse')?.value;
-    const confirmerMotDePasse = group.get('confirmerMotDePasse')?.value;
-    return motDePasse === confirmerMotDePasse ? null : { motsDePasseDifferents: true };
+    const mdp     = group.get('motDePasse')?.value;
+    const confirm = group.get('confirmerMotDePasse')?.value;
+    return mdp === confirm ? null : { motsDePasseDifferents: true };
   }
 
   passerAuProfil(): void {
@@ -104,40 +107,40 @@ export class CreerCandidatComponent {
       return;
     }
 
-    this.isLoading = true;
+    this.isLoading    = true;
     this.messageErreur = '';
     this.messageSucces = '';
 
+    // ✅ inscriptionData inclut typePiece et numeroPiece depuis creationForm
     const inscriptionData: InscriptionVolontaire = {
       ...this.creationForm.value,
       consentementPolitique: true
     };
 
+    // ✅ profilData ne contient que les 9 champs de ProfilVolontaire
     const profilData: ProfilVolontaire = {
-      adresseResidence: this.profilForm.get('adresseResidence')?.value || '',
+      adresseResidence:   this.profilForm.get('adresseResidence')?.value   || '',
       regionGeographique: this.profilForm.get('regionGeographique')?.value || '',
-      niveauEtudes: this.profilForm.get('niveauEtudes')?.value || '',
-      domaineEtudes: this.profilForm.get('domaineEtudes')?.value || '',
-      competences: this.profilForm.get('competences')?.value || [],
-      motivation: this.profilForm.get('motivation')?.value || '',
-      disponibilite: this.profilForm.get('disponibilite')?.value || 'Temps plein',
-      urlCV: this.profilForm.get('urlCV')?.value || '',
-      typePiece: this.profilForm.get('typePiece')?.value || 'CNIB',
-      numeroPiece: this.profilForm.get('numeroPiece')?.value || '',
-      urlPieceIdentite: this.profilForm.get('urlPieceIdentite')?.value || ''
+      niveauEtudes:       this.profilForm.get('niveauEtudes')?.value       || '',
+      domaineEtudes:      this.profilForm.get('domaineEtudes')?.value      || '',
+      competences:        this.profilForm.get('competences')?.value        || [],
+      motivation:         this.profilForm.get('motivation')?.value         || '',
+      disponibilite:      this.profilForm.get('disponibilite')?.value      || 'Temps plein',
+      urlCV:              this.profilForm.get('urlCV')?.value              || '',
+      urlPieceIdentite:   this.profilForm.get('urlPieceIdentite')?.value   || ''
+      // ✅ SUPPRIMÉ : typePiece et numeroPiece (n'existent plus sur ProfilVolontaire)
     };
 
     this.adminCandidatService.creerCandidatComplet(inscriptionData, profilData).subscribe({
       next: (result) => {
-        this.isLoading = false;
+        this.isLoading    = false;
         this.messageSucces = `Candidat ${result.user.prenom} ${result.user.nom} créé avec succès !`;
-        
         setTimeout(() => {
           this.router.navigate(['/features/admin/comptes/gestion-candidats']);
         }, 2000);
       },
       error: (error) => {
-        this.isLoading = false;
+        this.isLoading    = false;
         this.messageErreur = 'Erreur lors de la création du candidat: ' + error.message;
       }
     });
@@ -145,53 +148,34 @@ export class CreerCandidatComponent {
 
   private marquerChampsCommeTouches(formGroup: FormGroup): void {
     Object.keys(formGroup.controls).forEach(key => {
-      const control = formGroup.get(key);
-      control?.markAsTouched();
+      formGroup.get(key)?.markAsTouched();
     });
   }
 
-  ajouterCompetence(event: any): void {
-    const input = event.target as HTMLInputElement;
-    const valeur = input.value.trim();
-    
-    if (valeur) {
-      const competencesActuelles = this.profilForm.get('competences')?.value || [];
-      if (!competencesActuelles.includes(valeur)) {
-        this.profilForm.patchValue({
-          competences: [...competencesActuelles, valeur]
-        });
+  ajouterCompetence(valeur: string): void {
+    const trimmed = valeur.trim();
+    if (trimmed) {
+      const actuelles = this.profilForm.get('competences')?.value || [];
+      if (!actuelles.includes(trimmed)) {
+        this.profilForm.patchValue({ competences: [...actuelles, trimmed] });
       }
-      input.value = '';
     }
   }
 
   supprimerCompetence(competence: string): void {
-    const competencesActuelles = this.profilForm.get('competences')?.value || [];
-    const nouvellesCompetences = competencesActuelles.filter((c: string) => c !== competence);
+    const actuelles = this.profilForm.get('competences')?.value || [];
     this.profilForm.patchValue({
-      competences: nouvellesCompetences
+      competences: actuelles.filter((c: string) => c !== competence)
     });
   }
 
-  // Dans creer-candidat.component.ts - CORRIGER la méthode annuler()
-annuler(): void {
-  console.log('🔄 Navigation depuis annuler()...');
-  
-  // 🔥 CORRECTION : Utiliser la navigation absolue avec des options
-  this.router.navigate(['/features/admin/comptes/gestion-candidats'], {
-    replaceUrl: true, // Remplace l'URL actuelle dans l'historique
-    skipLocationChange: false // Assure que l'URL change
-  }).then(success => {
-    if (success) {
-      console.log('✅ Navigation annuler réussie');
-    } else {
-      console.error('❌ Échec navigation annuler');
-      // Fallback: rechargement complet
+  annuler(): void {
+    this.router.navigate(['/features/admin/comptes/gestion-candidats'], {
+      replaceUrl: true
+    }).then(success => {
+      if (!success) window.location.href = '/features/admin/comptes/gestion-candidats';
+    }).catch(() => {
       window.location.href = '/features/admin/comptes/gestion-candidats';
-    }
-  }).catch(error => {
-    console.error('💥 Erreur navigation annuler:', error);
-    window.location.href = '/features/admin/comptes/gestion-candidats';
-  });
-}
+    });
+  }
 }

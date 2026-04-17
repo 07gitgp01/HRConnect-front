@@ -1,0 +1,363 @@
+<div class="container-fluid py-4">
+  <!-- Header avec titre -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">
+          <i class="bi bi-file-text me-2"></i>
+          {{ isEditMode ? 'Modifier le rapport' : 'Nouveau rapport d\'évaluation' }}
+        </h1>
+        <button class="btn btn-outline-secondary" (click)="cancel()">
+          <i class="bi bi-x-circle me-2"></i>Annuler
+        </button>
+      </div>
+      <p class="text-muted mb-0">
+        Évaluez la performance et le suivi d'un volontaire
+      </p>
+    </div>
+  </div>
+
+  <!-- Messages d'alerte -->
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle me-2"></i>
+    {{ successMessage }}
+    <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+    <p class="mt-3">Chargement en cours...</p>
+  </div>
+
+  <!-- Formulaire -->
+  <form [formGroup]="rapportForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+    <div class="row">
+      <!-- Colonne gauche -->
+      <div class="col-lg-8">
+        <!-- Informations de base -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-info-circle me-2"></i>Informations de base
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <!-- Volontaire -->
+              <div class="col-md-6">
+                <label for="volontaireId" class="form-label">
+                  Volontaire <span class="text-danger">*</span>
+                </label>
+                <select id="volontaireId" 
+                        class="form-select" 
+                        formControlName="volontaireId"
+                        [class.is-invalid]="formSubmitted && rapportForm.get('volontaireId')?.invalid">
+                  <option value="" disabled>Sélectionnez un volontaire</option>
+                  <option *ngFor="let volontaire of volontaires" 
+                          [value]="volontaire.id">
+                    {{ volontaire.prenom }} {{ volontaire.nom }}
+                    <span *ngIf="volontaire.domaineEtudes"> - {{ volontaire.domaineEtudes }}</span>
+                  </option>
+                </select>
+                <div *ngIf="formSubmitted && rapportForm.get('volontaireId')?.invalid" 
+                     class="invalid-feedback">
+                  Veuillez sélectionner un volontaire.
+                </div>
+              </div>
+
+              <!-- Période -->
+              <div class="col-md-6">
+                <label for="periode" class="form-label">
+                  Période d'évaluation <span class="text-danger">*</span>
+                </label>
+                <select id="periode" 
+                        class="form-select" 
+                        formControlName="periode"
+                        [class.is-invalid]="formSubmitted && rapportForm.get('periode')?.invalid">
+                  <option value="" disabled>Sélectionnez une période</option>
+                  <option *ngFor="let periode of periodes" [value]="periode">
+                    {{ periode }}
+                  </option>
+                </select>
+                <div *ngIf="formSubmitted && rapportForm.get('periode')?.invalid" 
+                     class="invalid-feedback">
+                  Veuillez sélectionner une période.
+                </div>
+              </div>
+
+              <!-- Évaluation globale -->
+              <div class="col-12">
+                <label for="evaluationGlobale" class="form-label">
+                  Évaluation globale (0-10) <span class="text-danger">*</span>
+                  <span class="badge bg-secondary ms-2">
+                    {{ rapportForm.get('evaluationGlobale')?.value }}/10
+                  </span>
+                </label>
+                <input type="range" 
+                       id="evaluationGlobale"
+                       class="form-range" 
+                       min="0" 
+                       max="10" 
+                       step="0.5"
+                       formControlName="evaluationGlobale"
+                       [class.is-invalid]="formSubmitted && rapportForm.get('evaluationGlobale')?.invalid">
+                
+                <div class="d-flex justify-content-between mt-2">
+                  <small class="text-muted">0 - Insuffisant</small>
+                  <span class="badge" 
+                        [class]="getEvaluationBadgeClass(rapportForm.get('evaluationGlobale')?.value)">
+                    {{ getEvaluationLabel(rapportForm.get('evaluationGlobale')?.value) }}
+                  </span>
+                  <small class="text-muted">10 - Excellent</small>
+                </div>
+                
+                <div class="text-center mt-3">
+                  <div class="display-4 fw-bold" 
+                       [class]="getEvaluationTextClass(rapportForm.get('evaluationGlobale')?.value)">
+                    {{ rapportForm.get('evaluationGlobale')?.value }}/10
+                  </div>
+                  <div class="star-rating mt-2">
+                    <i *ngFor="let star of getStarIcons(rapportForm.get('evaluationGlobale')?.value / 2)" 
+                       [class]="star"
+                       class="bi mx-1 fs-4"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Critères détaillés -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-list-check me-2"></i>Critères d'évaluation détaillés
+            </h5>
+            <small class="text-muted">Évaluez chaque critère sur 5</small>
+          </div>
+          <div class="card-body">
+            <div formGroupName="criteres" (change)="onCriteresChange()">
+              <div class="row g-3">
+                <div class="col-md-6" *ngFor="let critere of criteres">
+                  <div class="border rounded p-3 h-100">
+                    <label class="form-label fw-bold">
+                      {{ critere.libelle }}
+                      <span class="badge bg-info ms-2">
+                        {{ rapportForm.get('criteres.' + critere.code)?.value }}/5
+                      </span>
+                    </label>
+                    <p class="text-muted small mb-3">{{ critere.description }}</p>
+                    
+                    <input type="range" 
+                           class="form-range" 
+                           [formControlName]="critere.code"
+                           min="0" 
+                           max="5" 
+                           step="0.5">
+                    
+                    <div class="d-flex justify-content-between mt-2">
+                      <small>0</small>
+                      <div class="star-rating">
+                        <i *ngFor="let star of getStarIcons(rapportForm.get('criteres.' + critere.code)?.value)" 
+                           [class]="star"
+                           class="bi"></i>
+                      </div>
+                      <small>5</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Commentaires -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-chat-text me-2"></i>Commentaires détaillés
+              <span class="text-muted ms-2">
+                ({{ rapportForm.get('commentaires')?.value?.length || 0 }}/5000 caractères)
+              </span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <label for="commentaires" class="form-label">
+              Décrivez le travail réalisé, les défis rencontrés, les succès et les axes d'amélioration
+              <span class="text-danger">*</span>
+            </label>
+            <textarea id="commentaires" 
+                      class="form-control" 
+                      rows="10"
+                      formControlName="commentaires"
+                      [class.is-invalid]="formSubmitted && rapportForm.get('commentaires')?.invalid"
+                      placeholder="Exemple: Le volontaire a démontré une excellente capacité à..."></textarea>
+            
+            <div class="mt-2 text-muted small">
+              <i class="bi bi-lightbulb me-1"></i>
+              Conseils : Soyez spécifique, fournissez des exemples concrets.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne droite -->
+      <div class="col-lg-4">
+        <!-- Document annexe -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-paperclip me-2"></i>Document annexe
+            </h5>
+          </div>
+          <div class="card-body">
+            <!-- Zone d'upload -->
+            <div class="upload-zone border rounded p-4 text-center mb-3" 
+                 (click)="fileInput.click()">
+              
+              <i class="bi bi-cloud-upload display-4 text-muted d-block mb-3"></i>
+              
+              <h6 *ngIf="!selectedFile" class="mb-2">
+                Cliquez pour sélectionner un fichier
+              </h6>
+              
+              <div *ngIf="selectedFile" class="mb-3">
+  <div class="d-flex align-items-center justify-content-center">
+    <i class="bi bi-file-earmark-text fs-3 text-primary me-3"></i>
+    <div class="text-start">
+      <div class="fw-bold text-truncate" style="max-width: 200px;">
+        <!-- Changement ici : selectedFile.name au lieu de selectedFile?.name -->
+        {{ selectedFile.name || '' }}
+      </div>
+      <small class="text-muted">
+        <!-- Changement ici : selectedFile.size au lieu de selectedFile?.size -->
+        {{ getFileSize(selectedFile.size) }} MB
+      </small>
+    </div>
+  </div>
+</div>
+              
+              <p class="small text-muted mb-3">
+                Formats : PDF, DOC, DOCX, JPG, PNG<br>
+                Max : 5 MB
+              </p>
+              
+              <input #fileInput 
+                     type="file" 
+                     class="d-none" 
+                     (change)="onFileSelected($event)"
+                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+              
+              <button type="button" 
+                      class="btn btn-outline-primary btn-sm"
+                      (click)="fileInput.click()">
+                <i class="bi bi-folder2-open me-2"></i>
+                {{ selectedFile ? 'Changer' : 'Choisir' }}
+              </button>
+            </div>
+
+            <!-- Barre de progression -->
+            <div *ngIf="isUploading" class="mb-3">
+              <div class="d-flex justify-content-between mb-1">
+                <small>Upload en cours...</small>
+                <small>{{ uploadProgress }}%</small>
+              </div>
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                     [style.width]="uploadProgress + '%'"></div>
+              </div>
+            </div>
+
+            <!-- Document uploadé -->
+            <div *ngIf="rapportForm.get('urlDocumentAnnexe')?.value && !isUploading" 
+                 class="alert alert-success">
+              <i class="bi bi-check-circle me-2"></i>
+              Document prêt
+            </div>
+          </div>
+        </div>
+
+        <!-- Statut et actions -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-gear me-2"></i>Statut et actions
+            </h5>
+          </div>
+          <div class="card-body">
+            <!-- Statut courant -->
+            <div class="mb-4">
+              <label class="form-label">Statut courant</label>
+              <div class="alert" 
+                   [class]="getStatutAlertClass(rapportForm.get('statut')?.value)">
+                <div class="d-flex align-items-center">
+                  <i class="bi me-2" 
+                     [class]="getStatutIcon(rapportForm.get('statut')?.value)"></i>
+                  <span class="fw-bold">{{ rapportForm.get('statut')?.value }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-grid gap-2">
+              <button type="button" 
+                      class="btn btn-success" 
+                      (click)="onSoumettre()"
+                      [disabled]="isSubmitting || rapportForm.invalid">
+                <i class="bi bi-send me-2"></i>
+                {{ isSubmitting ? 'En cours...' : 'Soumettre' }}
+              </button>
+              
+              <button type="button" 
+                      class="btn btn-outline-primary" 
+                      (click)="onSauvegarderBrouillon()"
+                      [disabled]="isSubmitting">
+                <i class="bi bi-save me-2"></i>
+                Sauvegarder brouillon
+              </button>
+              
+              <button type="submit" 
+                      class="btn btn-primary" 
+                      [disabled]="isSubmitting">
+                <i class="bi bi-check-circle me-2"></i>
+                {{ isEditMode ? 'Mettre à jour' : 'Créer' }}
+              </button>
+              
+              <button type="button" 
+                      class="btn btn-outline-secondary" 
+                      (click)="cancel()">
+                <i class="bi bi-x-circle me-2"></i>
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Validation errors summary -->
+  <div *ngIf="formSubmitted && rapportForm.invalid" class="alert alert-danger mt-3">
+    <h6><i class="bi bi-exclamation-triangle me-2"></i>Erreurs de validation</h6>
+    <ul class="mb-0">
+      <li *ngIf="rapportForm.get('volontaireId')?.invalid">
+        Sélectionnez un volontaire
+      </li>
+      <li *ngIf="rapportForm.get('periode')?.invalid">
+        Sélectionnez une période
+      </li>
+      <li *ngIf="rapportForm.get('commentaires')?.invalid">
+        Commentaires requis (50-5000 caractères)
+      </li>
+    </ul>
+  </div>
+</div>

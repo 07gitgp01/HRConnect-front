@@ -1,0 +1,261 @@
+<div class="projet-detail-container" *ngIf="projet">
+  <!-- En-tête -->
+  <div class="header-section">
+    <div class="header-content">
+      <div class="title-section">
+        <h1 class="projet-title">{{ projet.titre }}</h1>
+        <div class="projet-meta">
+          <span class="region-badge" *ngIf="projet.regionAffectation">
+            <span class="material-icons">location_on</span>
+            {{ projet.regionAffectation }}
+          </span>
+          <!-- ✅ CORRECTION : Utilisation de getStatusClass() -->
+          <span class="status-badge" [ngClass]="getStatusClass(projet.statutProjet)">
+            {{ getStatusLabel(projet.statutProjet) }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <button 
+          *ngIf="peutPostuler()"
+          class="postuler-btn"
+          (click)="postuler()">
+          <span class="material-icons">send</span>
+          Postuler
+        </button>
+        
+        <button 
+          *ngIf="aDejaPostule()"
+          class="deja-postule-btn"
+          disabled>
+          <span class="material-icons">check_circle</span>
+          Candidature envoyée
+        </button>
+        
+        <!-- ✅ Ajout d'un bouton si le projet est clôturé -->
+        <button 
+          *ngIf="projet.statutProjet === 'cloture'"
+          class="cloture-btn"
+          disabled>
+          <span class="material-icons">lock</span>
+          Projet clôturé
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-icon">
+          <span class="material-icons">people</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ (projet.nombreVolontairesActuels || 0) }}/{{ projet.nombreVolontairesRequis }}</div>
+          <div class="stat-label">Volontaires</div>
+        </div>
+      </div>
+      
+      <div class="stat-item">
+        <div class="stat-icon">
+          <span class="material-icons">flag</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getStatusLabel(projet.statutProjet) }}</div>
+          <div class="stat-label">Statut</div>
+        </div>
+      </div>
+      
+      <div class="stat-item" *ngIf="projet.dateDebut">
+        <div class="stat-icon">
+          <span class="material-icons">calendar_today</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ projet.dateDebut | date:'MMM yyyy' }}</div>
+          <div class="stat-label">Début</div>
+        </div>
+      </div>
+      
+      <div class="stat-item" *ngIf="projet.dateLimiteCandidature">
+        <div class="stat-icon">
+          <span class="material-icons">event_available</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getDaysUntilDeadline() }}j</div>
+          <div class="stat-label">Pour postuler</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="content-section">
+    <div class="main-content">
+      <!-- Description -->
+      <div class="description-card">
+        <h2 class="section-title">Description du projet</h2>
+        <div class="description-text" [class.no-description]="!projet.descriptionLongue">
+          {{ projet.descriptionLongue || 'Aucune description disponible pour ce projet' }}
+        </div>
+      </div>
+
+      <!-- Description courte -->
+      <div class="description-courte-card" *ngIf="projet.descriptionCourte">
+        <h3 class="section-subtitle">Description courte</h3>
+        <p class="description-courte-text">{{ projet.descriptionCourte }}</p>
+      </div>
+
+      <!-- Compétences requises -->
+      <div class="skills-card" *ngIf="projet.competences_requises">
+        <h2 class="section-title">Compétences recherchées</h2>
+        <div class="skills-list">
+          <span class="skill-tag" *ngFor="let competence of getCompetencesList()">
+            {{ competence }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Informations pratiques -->
+      <div class="info-card">
+        <h2 class="section-title">Informations pratiques</h2>
+        <div class="info-grid">
+          <div class="info-item" *ngIf="projet.type_mission">
+            <span class="material-icons">work</span>
+            <div class="info-content">
+              <div class="info-label">Type de mission</div>
+              <div class="info-value">{{ projet.type_mission }}</div>
+            </div>
+          </div>
+          
+          <div class="info-item" *ngIf="projet.domaineActivite">
+            <span class="material-icons">category</span>
+            <div class="info-content">
+              <div class="info-label">Domaine d'activité</div>
+              <div class="info-value">{{ projet.domaineActivite }}</div>
+            </div>
+          </div>
+          
+          <div class="info-item" *ngIf="projet.ville_commune">
+            <span class="material-icons">place</span>
+            <div class="info-content">
+              <div class="info-label">Localisation</div>
+              <div class="info-value">{{ projet.ville_commune }}{{ projet.regionAffectation ? ', ' + projet.regionAffectation : '' }}</div>
+            </div>
+          </div>
+          
+          <div class="info-item" *ngIf="projet.avantagesVolontaire">
+            <span class="material-icons">card_giftcard</span>
+            <div class="info-content">
+              <div class="info-label">Avantages</div>
+              <div class="info-value">{{ projet.avantagesVolontaire }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Dates importantes -->
+      <div class="dates-card">
+        <h3 class="sidebar-title">Dates importantes</h3>
+        <div class="dates-list">
+          <div class="date-item" *ngIf="projet.dateDebut">
+            <span class="material-icons">play_arrow</span>
+            <div class="date-content">
+              <div class="date-label">Début du projet</div>
+              <div class="date-value">{{ projet.dateDebut | date:'dd/MM/yyyy' }}</div>
+            </div>
+          </div>
+          
+          <div class="date-item" *ngIf="projet.dateFin">
+            <span class="material-icons">stop</span>
+            <div class="date-content">
+              <div class="date-label">Fin du projet</div>
+              <div class="date-value">{{ projet.dateFin | date:'dd/MM/yyyy' }}</div>
+            </div>
+          </div>
+          
+          <div class="date-item" *ngIf="projet.dateLimiteCandidature">
+            <span class="material-icons">event_available</span>
+            <div class="date-content">
+              <div class="date-label">Date limite de candidature</div>
+              <div class="date-value">{{ projet.dateLimiteCandidature | date:'dd/MM/yyyy' }}</div>
+            </div>
+          </div>
+          
+          <!-- ✅ Ajout de la date de publication si disponible -->
+          <div class="date-item" *ngIf="projet.datePublication">
+            <span class="material-icons">publish</span>
+            <div class="date-content">
+              <div class="date-label">Date de publication</div>
+              <div class="date-value">{{ projet.datePublication | date:'dd/MM/yyyy' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="contact-card" *ngIf="projet.contact_responsable || projet.email_contact">
+        <h3 class="sidebar-title">Contact</h3>
+        <div class="contact-info">
+          <div class="contact-item" *ngIf="projet.contact_responsable">
+            <span class="material-icons">person</span>
+            <span>{{ projet.contact_responsable }}</span>
+          </div>
+          <div class="contact-item" *ngIf="projet.email_contact">
+            <span class="material-icons">email</span>
+            <a [href]="'mailto:' + projet.email_contact" *ngIf="projet.email_contact">
+              {{ projet.email_contact }}
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conditions particulières -->
+      <div class="conditions-card" *ngIf="projet.conditions_particulieres">
+        <h3 class="sidebar-title">Conditions particulières</h3>
+        <p class="conditions-text">{{ projet.conditions_particulieres }}</p>
+      </div>
+      
+      <!-- ✅ Information sur le partenaire si disponible -->
+      <div class="partenaire-card" *ngIf="projet.partenaire">
+        <h3 class="sidebar-title">Partenaire</h3>
+        <div class="partenaire-info">
+          <div class="partenaire-nom">{{ projet.partenaire.nom || 'Partenaire' }}</div>
+          <div class="partenaire-description" *ngIf="projet.partenaire.description">
+            {{ projet.partenaire.description }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bouton flottant pour mobile -->
+  <div class="floating-action" *ngIf="peutPostuler()">
+    <button 
+      class="floating-postuler-btn"
+      (click)="postuler()">
+      <span class="material-icons">send</span>
+    </button>
+  </div>
+</div>
+
+<!-- Loading state -->
+<div class="loading-container" *ngIf="loading">
+  <div class="spinner"></div>
+  <p>Chargement du projet...</p>
+</div>
+
+<!-- Error state -->
+<div class="error-container" *ngIf="error">
+  <span class="material-icons error-icon">error_outline</span>
+  <h2>Projet non trouvé</h2>
+  <p>Le projet que vous recherchez n'existe pas ou n'est plus disponible.</p>
+  <button class="back-btn" routerLink="/candidat/projets">
+    <span class="material-icons">arrow_back</span>
+    Retour aux projets
+  </button>
+</div>

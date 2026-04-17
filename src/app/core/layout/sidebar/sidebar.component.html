@@ -4,51 +4,23 @@
     <!-- ===== HEADER VERT AVEC TITRE DU RÔLE ===== -->
     <div class="user-profile-section">
       <div class="role-header-container">
-        <!-- 🧑‍💼 ADMINISTRATEUR -->
         @if (user.role === 'admin') {
           <mat-icon class="role-header-icon">admin_panel_settings</mat-icon>
           <span class="role-header-title">Administration</span>
         }
-        
-        <!-- 👨‍🎓 CANDIDAT -->
         @if (user.role === 'candidat') {
           <mat-icon class="role-header-icon">school</mat-icon>
           <span class="role-header-title">Espace Candidat</span>
         }
-        
-        <!-- 🏢 PARTENAIRE -->
+        <!-- ✅ AJOUTÉ : header pour le rôle volontaire -->
+        @if (user.role === 'volontaire') {
+          <mat-icon class="role-header-icon">volunteer_activism</mat-icon>
+          <span class="role-header-title">Espace Volontaire</span>
+        }
         @if (user.role === 'partenaire') {
           <mat-icon class="role-header-icon">business</mat-icon>
           <span class="role-header-title">Espace Partenaire</span>
-          
-          <!-- Afficher les types de partenaire si applicable -->
-          <!-- @if (user.partenaireData) {
-            <div class="role-subtitle">
-              <span class="user-type-label">{{ getPartenaireTypesDisplay(user.partenaireData) }}</span>
-              @if (aPlusieursTypes(user)) {
-                <mat-chip class="multi-type-badge" color="primary" variant="outlined">
-                  {{ user.partenaireData.typeStructures.length }} type(s)
-                </mat-chip>
-              }
-            </div> -->
-            
-            <!-- Indicateurs de rôles -->
-            <!-- <div class="role-indicators">
-              @if (estPTF(user)) {
-                <span class="role-indicator ptf-indicator">
-                  <mat-icon>account_balance</mat-icon>
-                  PTF
-                </span>
-              }
-              @if (estStructureAccueil(user)) {
-                <span class="role-indicator structure-indicator">
-                  <mat-icon>business</mat-icon>
-                  Structure d'Accueil
-                </span>
-              }
-            </div> -->
-          }
-       <!--  } -->
+        }
       </div>
     </div>
 
@@ -57,6 +29,7 @@
     <!-- 🧑‍💼 MENU ADMINISTRATEUR -->
     @if (user.role === 'admin') {
       <div class="menu-section">
+
         <a mat-list-item 
           routerLink="/features/admin" 
           routerLinkActive="active"
@@ -70,44 +43,61 @@
           <span matListItemTitle>Gestion des missions</span>
         </a>
 
-        <a mat-list-item routerLink="/features/admin/volontaires" routerLinkActive="active">
-          <mat-icon matListItemIcon>people</mat-icon>
-          <span matListItemTitle>Gestion Volontaires</span>
-        </a>
-
-        <a mat-list-item routerLink="/features/admin/candidatures" routerLinkActive="active">
-          <mat-icon matListItemIcon>how_to_reg</mat-icon>
-          <span matListItemTitle>Gestion Candidatures</span>
-        </a>
+        <!-- ===== GROUPE ACCORDÉON : VOLONTAIRES & CANDIDATS ===== -->
+        <div class="menu-group" [class.open]="groupVolontairesOpen">
+          <div class="menu-group-label" (click)="groupVolontairesOpen = !groupVolontairesOpen">
+            <mat-icon class="menu-group-icon">group</mat-icon>
+            <span>Volontaires & Candidatures</span>
+            <mat-icon class="menu-group-chevron">
+              {{ groupVolontairesOpen ? 'expand_less' : 'expand_more' }}
+            </mat-icon>
+          </div>
+          <div class="menu-group-items" [@expandCollapse]="groupVolontairesOpen ? 'open' : 'closed'">
+            <a mat-list-item routerLink="/features/admin/volontaires" routerLinkActive="active">
+              <mat-icon matListItemIcon>people</mat-icon>
+              <span matListItemTitle>Les Volontaires</span>
+            </a>
+            <a mat-list-item routerLink="/features/admin/candidatures" routerLinkActive="active">
+              <mat-icon matListItemIcon>how_to_reg</mat-icon>
+              <span matListItemTitle>Gestion Candidatures</span>
+            </a>
+            <a mat-list-item routerLink="/features/admin/comptes" routerLinkActive="active">
+              <mat-icon matListItemIcon>supervised_user_circle</mat-icon>
+              <span matListItemTitle>Gestion des comptes</span>
+            </a>
+          </div>
+        </div>
 
         <a mat-list-item routerLink="/features/admin/partenaires" routerLinkActive="active">
           <mat-icon matListItemIcon>handshake</mat-icon>
           <span matListItemTitle>Gestion Partenaires</span>
         </a>
 
-        <!-- Gestion des rapports PTF -->
-        <a mat-list-item routerLink="/features/admin/rapports-ptf" routerLinkActive="active">
-          <mat-icon matListItemIcon>description</mat-icon>
-          <span matListItemTitle>Rapports PTF</span>
-        </a>
-
-        <!-- Gestion des rapports Structures -->
-        <a mat-list-item routerLink="/features/admin/rap-struct" routerLinkActive="active">
-          <mat-icon matListItemIcon>description</mat-icon>
-          <span matListItemTitle>Rapports Structures</span>
-        </a>
-
-        <a mat-list-item routerLink="/features/admin/comptes" routerLinkActive="active">
-          <mat-icon matListItemIcon>supervised_user_circle</mat-icon>
-          <span matListItemTitle>Comptes candidats</span>
-        </a>
+        <!-- ===== GROUPE ACCORDÉON : RAPPORTS ===== -->
+        <div class="menu-group" [class.open]="groupRapportsOpen">
+          <div class="menu-group-label" (click)="groupRapportsOpen = !groupRapportsOpen">
+            <mat-icon class="menu-group-icon">description</mat-icon>
+            <span>Rapports</span>
+            <mat-icon class="menu-group-chevron">
+              {{ groupRapportsOpen ? 'expand_less' : 'expand_more' }}
+            </mat-icon>
+          </div>
+          <div class="menu-group-items" [@expandCollapse]="groupRapportsOpen ? 'open' : 'closed'">
+            <a mat-list-item routerLink="/features/admin/rapports-ptf" routerLinkActive="active">
+              <mat-icon matListItemIcon>description</mat-icon>
+              <span matListItemTitle>Rapports PTF</span>
+            </a>
+            <a mat-list-item routerLink="/features/admin/rap-struct" routerLinkActive="active">
+              <mat-icon matListItemIcon>description</mat-icon>
+              <span matListItemTitle>Rapports Structures</span>
+            </a>
+          </div>
+        </div>
 
         <!-- 🔔 Boîte de messagerie avec badge -->
         <a mat-list-item routerLink="/features/admin/messages" routerLinkActive="active" class="message-item">
           <mat-icon matListItemIcon>mail</mat-icon>
           <span matListItemTitle>Boîte de Messagerie</span>
-          
-          <!-- Badge pour les nouveaux messages -->
           @if (newMessagesCount$ | async; as count) {
             @if (count > 0) {
               <div class="message-badge-container">
@@ -122,10 +112,11 @@
             }
           }
         </a>
+
       </div>
     }
 
-    <!-- 👨‍🎓 MENU CANDIDAT -->
+    <!-- 👨‍🎓 MENU CANDIDAT (profil incomplet / en attente) -->
     @if (user.role === 'candidat') {
       <div class="menu-section">
         <a mat-list-item 
@@ -135,12 +126,10 @@
           <mat-icon matListItemIcon>home</mat-icon>
           <span matListItemTitle>Tableau de Bord</span>
         </a>
-
         <a mat-list-item routerLink="/features/candidats/mes-candidatures" routerLinkActive="active">
           <mat-icon matListItemIcon>assignment_turned_in</mat-icon>
           <span matListItemTitle>Mes Candidatures</span>
         </a>
-
         <a mat-list-item routerLink="/features/candidats/projets" routerLinkActive="active">
           <mat-icon matListItemIcon>search</mat-icon>
           <span matListItemTitle>Missions Disponibles</span>
@@ -148,10 +137,39 @@
       </div>
     }
 
-    <!-- 🏢 MENU PARTENAIRE AVEC GESTION MULTI-TYPES -->
+    <!-- ✅ AJOUTÉ : MENU VOLONTAIRE ACTIF -->
+    @if (user.role === 'volontaire') {
+      <div class="menu-section">
+        <a mat-list-item 
+           routerLink="/features/candidats/" 
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{exact: true}">
+          <mat-icon matListItemIcon>home</mat-icon>
+          <span matListItemTitle>Tableau de Bord</span>
+        </a>
+        <a mat-list-item routerLink="/features/candidats/mes-candidatures" routerLinkActive="active">
+          <mat-icon matListItemIcon>assignment_turned_in</mat-icon>
+          <span matListItemTitle>Mes Candidatures</span>
+        </a>
+        <a mat-list-item routerLink="/features/candidats/projets" routerLinkActive="active">
+          <mat-icon matListItemIcon>search</mat-icon>
+          <span matListItemTitle>Missions Disponibles</span>
+        </a>
+        <!-- Liens supplémentaires réservés au volontaire actif -->
+       <!--  <a mat-list-item routerLink="/features/candidats/mon-profil" routerLinkActive="active">
+          <mat-icon matListItemIcon>person</mat-icon>
+          <span matListItemTitle>Mon Profil</span>
+        </a>
+        <a mat-list-item routerLink="/features/candidats/mes-missions" routerLinkActive="active">
+          <mat-icon matListItemIcon>volunteer_activism</mat-icon>
+          <span matListItemTitle>Mes Missions</span>
+        </a> -->
+      </div>
+    }
+
+    <!-- 🏢 MENU PARTENAIRE -->
     @if (user.role === 'partenaire') {
       <div class="menu-section">
-        <!-- Tableau de bord principal -->
         <a mat-list-item 
            routerLink="/features/partenaires/dashboard" 
            routerLinkActive="active"
@@ -159,35 +177,26 @@
           <mat-icon matListItemIcon>dashboard</mat-icon>
           <span matListItemTitle>Tableau de Bord</span>
         </a>
-
-        <!-- Gestion des volontaires -->
         @if (peutGererVolontaires(user)) {
           <a mat-list-item routerLink="/features/partenaires/mes-volontaires" routerLinkActive="active">
             <mat-icon matListItemIcon>people</mat-icon>
             <span matListItemTitle>Mes Volontaires</span>
           </a>
-
           <a mat-list-item routerLink="/features/partenaires/rapports" routerLinkActive="active">
             <mat-icon matListItemIcon>assignment</mat-icon>
             <span matListItemTitle>Gestion Rapports</span>
           </a>
         }
-
-        <!-- Offres de mission -->
         @if (peutCreerProjets(user)) {
           <a mat-list-item routerLink="/features/partenaires/offres-mission" routerLinkActive="active">
             <mat-icon matListItemIcon>work</mat-icon>
             <span matListItemTitle>Offres de Mission</span>
           </a>
         }
-
-        <!-- Rapports PNVB (visible uniquement pour les PTF) -->
         @if (aAccesZonePTF(user)) {
           <a mat-list-item routerLink="/features/partenaires/rapports-pnvb" routerLinkActive="active">
             <mat-icon matListItemIcon>description</mat-icon>
             <span matListItemTitle>Rapports PNVB</span>
-            
-            <!-- Badge optionnel pour nouveaux rapports -->
             @if (nouveauxRapportsCount$ | async; as count) {
               @if (count > 0) {
                 <div class="rapport-badge-container">
@@ -215,7 +224,6 @@
     </div>
 
   } @else {
-    <!-- État de chargement -->
     <div class="loading-section">
       <div class="loading-avatar"></div>
       <div class="loading-info">

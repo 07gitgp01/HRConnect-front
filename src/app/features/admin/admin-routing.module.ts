@@ -12,7 +12,7 @@ import { ResponseDialogComponent } from './response-dialog/response-dialog.compo
 import { GestionAdminsComponent } from './gestion-admins/gestion-admins.component';
 import { AdminRapportsPTFComponent } from './admin-rapports-ptf/admin-rapports-ptf.component';
 import { RapportAdminListComponent } from './rap-pnvb-struct/rapport-admin-list/rapport-admin-list.component';
-import { RapportAdminDetailComponent } from './rap-pnvb-struct/rapport-admin-detail/rapport-admin-detail.component';
+import { RapportAdminDetailComponent } from './rap-pnvb-struct/rapport-detail-admin/rapport-detail-admin.component';
 
 const routes: Routes = [
   {
@@ -43,11 +43,11 @@ const routes: Routes = [
     path: 'rapports', 
     loadComponent: () => import('./rapports/rapports.component').then(m => m.RapportsComponent)
   },
-  {
+  /* {
     path: 'parametres',
     loadComponent: () => import('./parametres/parametres.component').then(m => m.ParametresComponent),
     title: 'Paramètres | Administration'
-  },
+  }, */
   {
     path: 'messages',
     component: MessagesAdminComponent,
@@ -87,8 +87,9 @@ const routes: Routes = [
   },
 
    { path: 'rap-struct', component: RapportAdminListComponent },
-  { path: 'rap-struct/:id', component: RapportAdminDetailComponent },
-
+   { path: 'rapports/:id', component: RapportAdminDetailComponent },
+/*   { path: 'rap-struct/:id', component: RapportAdminDetailComponent },
+ */
   {
     path: 'contact-messages',
     redirectTo: 'messages',

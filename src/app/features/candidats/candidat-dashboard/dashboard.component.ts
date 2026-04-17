@@ -1,3 +1,5 @@
+// src/app/features/candidats/candidat-dashboard/dashboard.component.ts
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -11,6 +13,9 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+
+import { forkJoin } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { AuthService } from '../../services/service_auth/auth.service';
 import { CandidatureService } from '../../services/service_candi/candidature.service';
@@ -47,6 +52,10 @@ export class CandidatDashboardComponent implements OnInit {
   projetsDisponibles: any[] = [];
   loading = true;
 
+  // ✅ Supprimer les propriétés de bascule
+  // afficherToutesCandidatures = false;
+  // afficherTousProjets = false;
+
   stats = {
     totalCandidatures: 0,
     enAttente: 0,
@@ -55,8 +64,10 @@ export class CandidatDashboardComponent implements OnInit {
     refusee: 0
   };
 
-  // ✅ pourcentage calculé une seule fois après chargement du volontaire
   profilCompletion = 0;
+
+  // ✅ FIX : Set<number | string> pour supporter les IDs hex json-server
+  projetsDejaPostules: Set<number | string> = new Set();
 
   constructor(
     private authService: AuthService,
@@ -68,154 +79,261 @@ export class CandidatDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.user = this.authService.getCurrentUser();
+
+    console.log('🔍 USER COMPLET:', JSON.stringify(this.user, null, 2));
+    console.log('🔍 getVolontaireId():', this.authService.getVolontaireId?.());
+
     if (!this.user) {
       this.router.navigate(['/login']);
       return;
     }
 
-    // ✅ deux branches indépendantes :
-    //   1) charger le volontaire → puis candidatures → puis notifications
-    //   2) charger les projets disponibles (pas de dépendance)
     this.chargerVolontairePuisSuite();
-    this.loadProjetsDisponiblesAvecStats();
+    this.loadProjetsDisponibles();
   }
 
-  // ============================================================
-  // ✅ BRANCHE 1 — volontaire → candidatures → notifications
-  //    Chaque étape attend que la précédente soit terminée.
-  // ============================================================
+  // ✅ Supprimer les méthodes de bascule
+  // toggleAfficherToutesCandidatures(): void { ... }
+  // toggleAfficherTousProjets(): void { ... }
 
-  /**
-   * Charge le volontaire via getVolontaireId() (fonctionne pour
-   * role === 'candidat' ET role === 'volontaire').
-   * Puis enchaîne les étapes suivantes dans le callback next.
-   */
+  // ✅ Getter pour les candidatures limitées à 3
+  get candidaturesAffichees(): Candidature[] {
+    return this.mesCandidatures.slice(0, 3);
+  }
+
+  // ✅ Getter pour les projets limités à 3
+  get projetsAffiches(): any[] {
+    return this.projetsDisponibles.slice(0, 3);
+  }
+
+  // ✅ FIX : utilise String() pour normaliser les IDs avant de les stocker dans le Set
+  chargerProjetsDejaPostules(): void {
+    if (!this.user?.email) {
+      console.log('⚠️ Utilisateur non connecté');
+      return;
+    }
+
+    this.projectService.getProjects().subscribe({
+      next: (projets) => {
+        if (!projets || projets.length === 0) {
+          this.projetsDejaPostules = new Set();
+          return;
+        }
+
+        const verifications$ = projets.map(projet =>
+          this.candidatureService.emailDejaPostule(this.user.email, projet.id!).pipe(
+            map((dejaPostule: boolean) => dejaPostule ? projet.id : null)
+          )
+        );
+
+        forkJoin(verifications$).subscribe({
+          next: (resultats) => {
+            const ids = resultats.filter(
+              (id): id is number | string => id !== null && id !== undefined
+            );
+            this.projetsDejaPostules = new Set(ids);
+            console.log(`✅ ${this.projetsDejaPostules.size} projet(s) déjà postulé(s) dans le dashboard`);
+          },
+          error: (err) => {
+            console.error('❌ Erreur lors des vérifications:', err);
+            this.projetsDejaPostules = new Set();
+          }
+        });
+      },
+      error: (err) => {
+        console.error('❌ Erreur chargement projets:', err);
+        this.projetsDejaPostules = new Set();
+      }
+    });
+  }
+
+  // ✅ FIX : comparaison String() pour être robuste number vs string
+  estDejaPostule(projetId: number | string | undefined): boolean {
+    if (projetId === undefined || projetId === null) return false;
+    if (this.projetsDejaPostules.has(projetId)) return true;
+    const projetIdStr = String(projetId);
+    for (const id of this.projetsDejaPostules) {
+      if (String(id) === projetIdStr) return true;
+    }
+    return false;
+  }
+
+  // ================================================================
+  // ÉTAPE 1 — Charger le volontaire
+  // ================================================================
   private chargerVolontairePuisSuite(): void {
-    const volontaireId = this.authService.getVolontaireId();
+    const volontaireId =
+      this.authService.getVolontaireId?.() ??
+      this.user?.volontaireId ??
+      this.user?.id ??
+      this.user?.userId ??
+      null;
+
+    console.log('🔍 volontaireId utilisé pour getVolontaire():', volontaireId);
 
     if (!volontaireId) {
-      // pas de volontaireId → on reste "Candidat", on charge quand même les candidatures
-      console.warn('⚠️ Aucun volontaireId dans la session. Tentative avec user.id.');
-
-      if (this.user?.id) {
-        this.volontaireService.getVolontaire(this.user.id).subscribe({
-          next:  (v) => this.appliquerVolontaire(v),
-          error: ()  => this.finirChargementSansVolontaire()
-        });
-      } else {
-        this.finirChargementSansVolontaire();
-      }
+      console.warn('⚠️ Impossible de trouver un volontaireId');
+      this.finirChargementSansVolontaire();
       return;
     }
 
     this.volontaireService.getVolontaire(volontaireId).subscribe({
-      next:  (v) => this.appliquerVolontaire(v),
-      error: ()  => this.finirChargementSansVolontaire()
-    });
-  }
-
-  /** Applique les données du volontaire puis charge les candidatures */
-  private appliquerVolontaire(volontaire: Volontaire): void {
-    this.volontaire       = volontaire;
-    this.statutPrincipal  = this.getStatutPrincipal(volontaire.statut);
-    // ✅ calcul du pourcentage avec la fonction centralisée du service
-    this.profilCompletion = calculerCompletionProfil(volontaire);
-    console.log('✅ Volontaire chargé — completion:', this.profilCompletion, '%');
-
-    // maintenant on peut charger les candidatures
-    this.loadMesCandidatures();
-  }
-
-  /** Chemin d'erreur : pas de volontaire → candidatures quand même */
-  private finirChargementSansVolontaire(): void {
-    this.volontaire       = null;
-    this.statutPrincipal  = 'Candidat';
-    this.profilCompletion = 0;
-    this.loadMesCandidatures();   // on essaie quand même
-  }
-
-  // ============================================================
-  // CANDIDATURES
-  // ============================================================
-
-  /**
-   * Charge les candidatures puis calcule les stats et les notifications.
-   * Filtre par volontaireId si disponible, sinon par email (fallback).
-   */
-  loadMesCandidatures(): void {
-    this.candidatureService.getAll().subscribe({
-      next: (candidatures) => {
-        const volontaireId = this.authService.getVolontaireId();
-
-        if (volontaireId) {
-          this.mesCandidatures = candidatures
-            .filter(c => c.volontaireId?.toString() === volontaireId.toString());
-        } else if (this.user?.email) {
-          console.warn('⚠️ Filtrage par email (fallback)');
-          this.mesCandidatures = candidatures
-            .filter(c => c.email === this.user.email);
-        }
-
-        // trier par date desc et limiter à 5
-        this.mesCandidatures = this.mesCandidatures
-          .sort((a, b) => new Date(b.cree_le || '').getTime() - new Date(a.cree_le || '').getTime())
-          .slice(0, 5);
-
-        this.calculerStats();
-
-        // ✅ notifications APRÈS que volontaire + candidatures sont prêts
-        this.loadNotifications();
-
-        this.loading = false;
+      next: (v) => {
+        this.volontaire       = v;
+        this.statutPrincipal  = this.getStatutPrincipal(v.statut);
+        this.profilCompletion = calculerCompletionProfil(v);
+        console.log('✅ Volontaire chargé:', v);
+        console.log('✅ Complétion profil:', this.profilCompletion, '%');
+        this.loadMesCandidatures(volontaireId);
       },
       error: (err) => {
-        console.error('❌ Erreur chargement candidatures:', err);
-        this.loadNotifications(); // quand même
-        this.loading = false;
+        console.error('❌ Erreur getVolontaire:', err);
+        this.finirChargementSansVolontaire();
       }
     });
   }
 
-  // ============================================================
-  // NOTIFICATIONS  (appelée uniquement après candidatures)
-  // ============================================================
+  private finirChargementSansVolontaire(): void {
+    const id =
+      this.authService.getVolontaireId?.() ??
+      this.user?.volontaireId ??
+      this.user?.id ??
+      null;
+    this.loadMesCandidatures(id);
+  }
 
-  loadNotifications(): void {
-    this.notifications = [
-      {
-        id: 1,
-        message: 'Bienvenue dans votre espace candidat PNVB !',
-        date: new Date().toISOString(),
-        type: 'info',
-        lu: false
+  // ================================================================
+  // ÉTAPE 2 — Charger les candidatures
+  // ================================================================
+  private loadMesCandidatures(volontaireId: any): void {
+    console.log('🔍 Chargement candidatures pour volontaireId:', volontaireId);
+
+    const candidaturesObs =
+      (this.candidatureService as any).getCandidaturesByVolontaire &&
+      volontaireId
+        ? (this.candidatureService as any).getCandidaturesByVolontaire(volontaireId)
+        : null;
+
+    if (candidaturesObs) {
+      candidaturesObs.subscribe({
+        next: (candidatures: Candidature[]) => {
+          console.log('✅ Candidatures (endpoint dédié):', candidatures.length, candidatures);
+          this.appliquerCandidatures(candidatures);
+        },
+        error: (err: any) => {
+          console.warn('⚠️ getCandidaturesByVolontaire a échoué, fallback getAll:', err);
+          this.loadMesCandidaturesViaGetAll(volontaireId);
+        }
+      });
+    } else {
+      this.loadMesCandidaturesViaGetAll(volontaireId);
+    }
+  }
+
+  private loadMesCandidaturesViaGetAll(volontaireId: any): void {
+    this.candidatureService.getAll().subscribe({
+      next: (toutes: Candidature[]) => {
+        console.log('🔍 Toutes les candidatures (getAll):', toutes.length, toutes);
+
+        let miennes: Candidature[] = [];
+
+        if (volontaireId !== null && volontaireId !== undefined) {
+          const idStr = String(volontaireId).trim();
+
+          miennes = toutes.filter(c => {
+            const cId = c.volontaireId !== undefined && c.volontaireId !== null
+              ? String(c.volontaireId).trim()
+              : '';
+            return cId === idStr;
+          });
+
+          console.log(`🔍 Filtre par volontaireId="${idStr}" → ${miennes.length} candidature(s)`);
+
+          if (miennes.length === 0 && this.user?.email) {
+            console.warn('⚠️ Aucune correspondance sur volontaireId, tentative par email:', this.user.email);
+            miennes = toutes.filter(c =>
+              c.email?.toLowerCase().trim() === this.user.email?.toLowerCase().trim()
+            );
+            console.log(`🔍 Filtre par email → ${miennes.length} candidature(s)`);
+          }
+        } else if (this.user?.email) {
+          console.warn('⚠️ Pas de volontaireId, filtrage par email uniquement');
+          miennes = toutes.filter(c =>
+            c.email?.toLowerCase().trim() === this.user.email?.toLowerCase().trim()
+          );
+        }
+
+        this.appliquerCandidatures(miennes);
+      },
+      error: (err) => {
+        console.error('❌ Erreur getAll candidatures:', err);
+        this.appliquerCandidatures([]);
       }
-    ];
+    });
+  }
 
-    // basées sur les candidatures (déjà chargées à ce point)
-    const enAttente  = this.mesCandidatures.filter(c => c.statut === 'en_attente');
-    const entretien  = this.mesCandidatures.filter(c => c.statut === 'entretien');
+  private appliquerCandidatures(candidatures: Candidature[]): void {
+    this.mesCandidatures = candidatures
+      .sort((a, b) =>
+        new Date(b.cree_le || 0).getTime() - new Date(a.cree_le || 0).getTime()
+      );
 
-    if (enAttente.length > 0) {
+    this.calculerStats(candidatures);
+    this.buildNotifications();
+    this.loading = false;
+
+    console.log('✅ Candidatures appliquées:', this.mesCandidatures.length);
+    console.log('✅ Stats:', this.stats);
+  }
+
+  // ================================================================
+  // STATS
+  // ================================================================
+  calculerStats(toutes?: Candidature[]): void {
+    const source = toutes ?? this.mesCandidatures;
+    this.stats = {
+      totalCandidatures: source.length,
+      enAttente: source.filter(c => c.statut === 'en_attente').length,
+      entretien: source.filter(c => c.statut === 'entretien').length,
+      acceptee:  source.filter(c => c.statut === 'acceptee').length,
+      refusee:   source.filter(c => c.statut === 'refusee').length
+    };
+  }
+
+  // ================================================================
+  // NOTIFICATIONS
+  // ================================================================
+  private buildNotifications(): void {
+    this.notifications = [];
+
+    this.notifications.push({
+      id: 1,
+      message: 'Bienvenue dans votre espace candidat PNVB !',
+      date: new Date().toISOString(),
+      type: 'info',
+      lu: false
+    });
+
+    if (this.stats.enAttente > 0) {
       this.notifications.push({
         id: 2,
-        message: `Vous avez ${enAttente.length} candidature(s) en attente de traitement`,
+        message: `Vous avez ${this.stats.enAttente} candidature(s) en attente de traitement`,
         date: new Date().toISOString(),
         type: 'warning',
         lu: false
       });
     }
 
-    if (entretien.length > 0) {
+    if (this.stats.entretien > 0) {
       this.notifications.push({
         id: 3,
-        message: `Félicitations ! ${entretien.length} de vos candidatures ont été présélectionnées`,
+        message: `Félicitations ! ${this.stats.entretien} de vos candidatures ont été présélectionnées`,
         date: new Date().toISOString(),
         type: 'success',
         lu: false
       });
     }
 
-    // ✅ utilise profilCompletion déjà calculé (pas de re-calcul)
     if (!this.isProfilComplet()) {
       this.notifications.push({
         id: 4,
@@ -227,124 +345,131 @@ export class CandidatDashboardComponent implements OnInit {
     }
   }
 
-  // ============================================================
-  // ✅ COMPLÉTION DU PROFIL — délègue à calculerCompletionProfil()
-  // ============================================================
+  // ================================================================
+  // PROJETS DISPONIBLES
+  // ================================================================
+  private loadProjetsDisponibles(): void {
+    const obs$ = (this.projectService as any).getAllProjectsWithStats
+      ? (this.projectService as any).getAllProjectsWithStats()
+      : this.projectService.getProjects();
 
-  isProfilComplet(): boolean {
-    return this.profilCompletion >= 100;
-  }
-
-  getProfilCompletion(): number {
-    return this.profilCompletion;
-  }
-
-  // ============================================================
-  // BRANCHE 2 — projets disponibles (indépendant du volontaire)
-  // ============================================================
-
-  loadProjetsDisponiblesAvecStats(): void {
-    this.projectService.getAllProjectsWithStats().subscribe({
-      next: (projetsAvecStats) => {
-        this.projetsDisponibles = projetsAvecStats
-          .filter((p: any) => this.estProjetEnCours(p) && this.aBesoinDeVolontaires(p))
-          .slice(0, 6);
-      },
-      error: () => this.loadProjetsDisponiblesNormaux()
-    });
-  }
-
-  private loadProjetsDisponiblesNormaux(): void {
-    this.projectService.getProjects().subscribe({
-      next: (projets) => {
+    obs$.subscribe({
+      next: (projets: any[]) => {
         this.projetsDisponibles = projets
-          .filter((p: any) => this.estProjetEnCours(p) && this.aBesoinDeVolontaires(p))
-          .slice(0, 6);
+          .filter(p => this.estProjetOuvert(p));
+        console.log('✅ Projets disponibles:', this.projetsDisponibles.length);
+        this.chargerProjetsDejaPostules();
       },
-      error: (err) => console.error('❌ Erreur chargement projets:', err)
+      error: (err: any) => {
+        console.error('❌ Erreur chargement projets:', err);
+        this.projetsDisponibles = [];
+      }
     });
   }
 
-  private aBesoinDeVolontaires(projet: any): boolean {
-    return (projet.nombreVolontairesRequis ?? 0) > (projet.nombreVolontairesActuels ?? 0);
-  }
-
-  private estProjetEnCours(projet: any): boolean {
-    const statut = (projet.statutProjet || '').toLowerCase();
-    const statutsValides = [
-      'en cours', 'encours', 'en_cours', 'active', 'actif',
-      'en progression', 'disponible', 'ouvert', 'planifié',
-      'soumis', 'ouvert_aux_candidatures'
+  private estProjetOuvert(projet: any): boolean {
+    const statut = (projet.statutProjet || '').toLowerCase().replace(/\s/g, '_');
+    const ok = [
+      'en_cours', 'actif', 'active', 'ouvert', 'disponible',
+      'soumis', 'ouvert_aux_candidatures', 'planifié', 'planifie'
     ];
-    return statutsValides.some(s => statut.includes(s));
+    return ok.some(s => statut.includes(s));
   }
 
-  // ============================================================
-  // STATS CANDIDATURES
-  // ============================================================
-
-  calculerStats(): void {
-    this.stats = {
-      totalCandidatures: this.mesCandidatures.length,
-      enAttente:  this.mesCandidatures.filter(c => c.statut === 'en_attente').length,
-      entretien:  this.mesCandidatures.filter(c => c.statut === 'entretien').length,
-      acceptee:   this.mesCandidatures.filter(c => c.statut === 'acceptee').length,
-      refusee:    this.mesCandidatures.filter(c => c.statut === 'refusee').length
-    };
-  }
-
-  // ============================================================
+  // ================================================================
   // ACTIONS
-  // ============================================================
+  // ================================================================
 
   postulerAuProjet(projet: any): void {
+    if (!projet?.id) {
+      alert('Projet invalide');
+      return;
+    }
+
     if (!this.isProfilComplet()) {
-      if (confirm(`Votre profil est complété à ${this.profilCompletion}%.\nVoulez-vous le compléter maintenant ?`)) {
+      const msg = `Votre profil est complété à ${this.profilCompletion}%.\n\n` +
+                  `Pour postuler, votre profil doit être complet à 100%.\n\n` +
+                  `Voulez-vous le compléter maintenant ?`;
+      if (confirm(msg)) {
         this.router.navigate(['/features/candidats/profil']);
       }
       return;
     }
-    this.router.navigate(['/features/candidats/postuler', projet.id?.toString()]);
+
+    const dejaPostuleLocal = this.mesCandidatures.some(c =>
+      String(c.projectId ?? '').trim() === String(projet.id ?? '').trim()
+    );
+
+    if (dejaPostuleLocal) {
+      alert('Vous avez déjà postulé à cette mission.\nConsultez "Mes candidatures" pour voir le statut.');
+      this.router.navigate(['/features/candidats/mes-candidatures']);
+      return;
+    }
+
+    if (!this.user?.email) {
+      alert('Erreur : email introuvable. Reconnectez-vous.');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.loading = true;
+
+    this.candidatureService.emailDejaPostule(this.user.email, projet.id).subscribe({
+      next: (dejaPostule) => {
+        this.loading = false;
+
+        if (dejaPostule) {
+          alert('Vous avez déjà postulé à cette mission.');
+          this.router.navigate(['/features/candidats/mes-candidatures']);
+          return;
+        }
+
+        this.router.navigate(['/features/candidats/postuler', String(projet.id)]);
+      },
+      error: (err) => {
+        this.loading = false;
+        console.warn('⚠️ emailDejaPostule échoué, redirection quand même:', err);
+        this.router.navigate(['/features/candidats/postuler', String(projet.id)]);
+      }
+    });
   }
 
-  retirerCandidature(candidatureId: number): void {
-    if (!confirm('Êtes-vous sûr ? Cette action est irréversible.')) return;
+  voirDetailsCandidature(candidatureId?: number | string): void {
+    if (!candidatureId) {
+      alert('Erreur : candidature introuvable');
+      return;
+    }
+    this.router.navigate(['/features/candidats/candidature', candidatureId]);
+  }
 
+  retirerCandidature(candidatureId: number | string): void {
+    if (!confirm('Êtes-vous sûr ? Cette action est irréversible.')) return;
     this.candidatureService.delete(candidatureId).subscribe({
       next: () => {
-        this.mesCandidatures = this.mesCandidatures.filter(c => c.id !== candidatureId);
+        this.mesCandidatures = this.mesCandidatures.filter(c =>
+          String(c.id) !== String(candidatureId)
+        );
         this.calculerStats();
-        this.loadNotifications();
+        this.buildNotifications();
+        alert('Candidature retirée avec succès');
       },
       error: () => alert('Erreur lors du retrait de la candidature')
     });
   }
 
-  // ============================================================
-  // HELPERS D'AFFICHAGE
-  // ============================================================
+  voirToutesCandidatures(): void { this.router.navigate(['/features/candidats/mes-candidatures/']); }
+  voirTousProjets(): void        { this.router.navigate(['/features/candidats/projets/']); }
+  completerProfil(): void        { this.router.navigate(['/features/candidats/profil']); }
 
-  getProjectStatusLabel(statut: string): string {
-    const map: Record<string, string> = {
-      'soumis': 'Soumis',
-      'en_attente_validation': 'En attente',
-      'ouvert_aux_candidatures': 'Ouvert',
-      'en_cours': 'En cours',
-      'actif': 'Actif',
-      'a_cloturer': 'À clôturer',
-      'cloture': 'Clôturé'
-    };
-    return map[statut] || statut;
-  }
+  // ================================================================
+  // HELPERS PROFIL
+  // ================================================================
+  isProfilComplet(): boolean    { return this.profilCompletion >= 100; }
+  getProfilCompletion(): number { return this.profilCompletion; }
 
-  getVolontairesNecessaires(projet: any): number {
-    return projet.nombreVolontairesRequis ?? 0;
-  }
-
-  getVolontairesAffectes(projet: any): number {
-    return projet.nombreVolontairesActuels ?? 0;
-  }
-
+  // ================================================================
+  // HELPERS AFFICHAGE
+  // ================================================================
   getStatutPrincipal(statutVolontaire: string): string {
     const map: Record<string, string> = {
       'Actif':          'Volontaire Actif',
@@ -358,16 +483,12 @@ export class CandidatDashboardComponent implements OnInit {
 
   getStatutBadgeClass(statut: string): string {
     const map: Record<string, string> = {
-      'en_attente':           'statut-en-attente',
-      'entretien':            'statut-entretien',
-      'acceptee':             'statut-acceptee',
-      'refusee':              'statut-refusee',
-      'candidat':             'statut-candidat',
-      'volontaire actif':     'statut-actif',
-      'en attente de mission':'statut-en-attente',
-      'mission terminée':     'statut-termine'
+      'en_attente': 'statut-en-attente',
+      'entretien':  'statut-entretien',
+      'acceptee':   'statut-acceptee',
+      'refusee':    'statut-refusee'
     };
-    return map[statut.toLowerCase()] || 'statut-default';
+    return map[statut] || 'statut-default';
   }
 
   getStatutText(statut: string): string {
@@ -380,21 +501,25 @@ export class CandidatDashboardComponent implements OnInit {
     return map[statut] || statut;
   }
 
+  getProjectStatusLabel(statut: string): string {
+    const map: Record<string, string> = {
+      'soumis':                  'Soumis',
+      'en_attente_validation':   'En attente',
+      'ouvert_aux_candidatures': 'Ouvert',
+      'en_cours':                'En cours',
+      'actif':                   'Actif',
+      'a_cloturer':              'À clôturer',
+      'cloture':                 'Clôturé'
+    };
+    return map[statut] || statut;
+  }
+
   getCompetencesArray(competences: any): string[] {
     if (!competences) return [];
-    if (Array.isArray(competences)) return competences;
-    return String(competences).split(',').map(c => c.trim());
+    if (Array.isArray(competences)) return competences.filter(Boolean);
+    return String(competences).split(',').map(c => c.trim()).filter(Boolean);
   }
 
-  voirToutesCandidatures(): void {
-    this.router.navigate(['/features/candidats/mes-candidatures/']);
-  }
-
-  voirTousProjets(): void {
-    this.router.navigate(['/features/candidats/projets/']);
-  }
-
-  completerProfil(): void {
-    this.router.navigate(['/features/candidats/profil']);
-  }
+  getVolontairesNecessaires(projet: any): number { return projet.nombreVolontairesRequis ?? 0; }
+  getVolontairesAffectes(projet: any): number    { return projet.nombreVolontairesActuels ?? 0; }
 }

@@ -1,0 +1,241 @@
+<div class="candidature-detail-dialog">
+  <div mat-dialog-title class="dialog-title">
+    <h2>Détails de la Candidature</h2>
+    <button mat-icon-button (click)="close()" aria-label="Fermer">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div mat-dialog-content class="dialog-content">
+    <!-- Informations du candidat -->
+    <mat-card class="candidat-info-card">
+      <mat-card-header>
+        <div class="header-content">
+          <mat-card-title class="candidate-name">
+            {{ data.candidature.prenom }} {{ data.candidature.nom }}
+          </mat-card-title>
+          <mat-card-subtitle class="candidate-position">
+            {{ data.candidature.poste_vise }}
+          </mat-card-subtitle>
+          <div class="contact-info">
+            {{ data.candidature.email }}
+            <span *ngIf="data.candidature.telephone"> • {{ data.candidature.telephone }}</span>
+          </div>
+        </div>
+        <div class="statut-container">
+          <span [class]="'statut-badge ' + getStatutClass(data.candidature.statut)">
+            {{ getStatutLabel(data.candidature.statut) }}
+          </span>
+        </div>
+      </mat-card-header>
+
+      <mat-divider></mat-divider>
+
+      <mat-card-content class="card-content">
+        <!-- Informations personnelles -->
+        <div class="info-section">
+          <h3 class="section-title">
+            <mat-icon>person</mat-icon>
+            Informations personnelles
+          </h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <mat-icon class="info-icon">person_outline</mat-icon>
+              <div class="info-content">
+                <div class="info-label">Nom complet</div>
+                <div class="info-value">{{ data.candidature.prenom }} {{ data.candidature.nom }}</div>
+              </div>
+            </div>
+            
+            <div class="info-item">
+              <mat-icon class="info-icon">email</mat-icon>
+              <div class="info-content">
+                <div class="info-label">Email</div>
+                <div class="info-value">
+                  <a [href]="'mailto:' + data.candidature.email" class="email-link">
+                    {{ data.candidature.email }}
+                  </a>
+                </div>
+              </div>
+            </div>
+            
+            <div class="info-item" *ngIf="data.candidature.telephone">
+              <mat-icon class="info-icon">phone</mat-icon>
+              <div class="info-content">
+                <div class="info-label">Téléphone</div>
+                <div class="info-value">
+                  <a [href]="'tel:' + data.candidature.telephone" class="phone-link">
+                    {{ data.candidature.telephone }}
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <mat-icon class="info-icon">badge</mat-icon>
+              <div class="info-content">
+                <div class="info-label">Pièce d'identité</div>
+                <div class="info-value">
+                  {{ data.candidature.typePiece }}: {{ data.candidature.numeroPiece }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compétences -->
+        <div class="info-section" *ngIf="getCompetencesArray(data.candidature.competences).length > 0">
+  <h3 class="section-title">
+    <mat-icon>code</mat-icon>
+    Compétences
+  </h3>
+  <div class="competences-container">
+    <mat-chip *ngFor="let competence of getCompetencesArray(data.candidature.competences)" 
+             class="competence-chip">
+      {{ competence }}
+    </mat-chip>
+  </div>
+</div>
+
+        <!-- Lettre de motivation -->
+        <div class="info-section" *ngIf="data.candidature.lettre_motivation">
+          <h3 class="section-title">
+            <mat-icon>description</mat-icon>
+            Lettre de motivation
+          </h3>
+          <div class="motivation-content">
+            {{ data.candidature.lettre_motivation }}
+          </div>
+        </div>
+
+        <!-- Informations complémentaires -->
+        <div class="info-section" *ngIf="data.candidature.niveau_experience || data.candidature.disponibilite">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Informations complémentaires
+          </h3>
+          <div class="info-grid">
+            <div class="info-item" *ngIf="data.candidature.niveau_experience">
+              <mat-icon class="info-icon">trending_up</mat-icon>
+              <div class="info-content">
+                <div class="info-label">Niveau d'expérience</div>
+                <div class="info-value">
+                  {{ getNiveauExperienceLabel(data.candidature.niveau_experience) }}
+                </div>
+              </div>
+            </div>
+            
+            <div class="info-item" *ngIf="data.candidature.disponibilite">
+              <mat-icon class="info-icon">access_time</mat-icon>
+              <div class="info-content">
+                <div class="info-label">Disponibilité</div>
+                <div class="info-value">{{ data.candidature.disponibilite }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CV -->
+        <div class="info-section" *ngIf="data.candidature.cv_url">
+          <h3 class="section-title">
+            <mat-icon>attachment</mat-icon>
+            Curriculum Vitae
+          </h3>
+          <div class="cv-section">
+            <mat-icon>picture_as_pdf</mat-icon>
+            <a [href]="data.candidature.cv_url" target="_blank" class="cv-link">
+              Télécharger le CV
+            </a>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Informations du projet -->
+    <mat-card class="project-info-card" *ngIf="project">
+      <mat-card-header>
+        <mat-card-title>Projet concerné</mat-card-title>
+        <mat-card-subtitle>{{ getProjectTitle() }}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-divider></mat-divider>
+
+      <mat-card-content>
+        <div class="project-details">
+          <div class="project-info">
+            <div class="info-item" *ngIf="getProjectRegion()">
+              <mat-icon class="info-icon">location_on</mat-icon>
+              <div class="info-content">
+                <div class="info-label">Région</div>
+                <div class="info-value">{{ getProjectRegion() }}</div>
+              </div>
+            </div>
+            
+            <div class="info-item" *ngIf="getProjectStatus()">
+              <mat-icon class="info-icon">flag</mat-icon>
+              <div class="info-content">
+                <div class="info-label">Statut</div>
+                <div class="info-value">{{ getProjectStatus() }}</div>
+              </div>
+            </div>
+            
+            <div class="info-item" *ngIf="getProjectDescription()">
+              <mat-icon class="info-icon">description</mat-icon>
+              <div class="info-content">
+                <div class="info-label">Description</div>
+                <div class="info-value">{{ getProjectDescription() }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Dates -->
+    <mat-card class="dates-card">
+      <mat-card-header>
+        <mat-card-title>Dates importantes</mat-card-title>
+      </mat-card-header>
+      
+      <mat-divider></mat-divider>
+
+      <mat-card-content>
+        <div class="dates-grid">
+          <div class="info-item" *ngIf="data.candidature.cree_le">
+            <mat-icon class="info-icon">schedule</mat-icon>
+            <div class="info-content">
+              <div class="info-label">Date de candidature</div>
+              <div class="info-value">
+                {{ formatDate(data.candidature.cree_le) }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="info-item" *ngIf="data.candidature.mis_a_jour_le">
+            <mat-icon class="info-icon">update</mat-icon>
+            <div class="info-content">
+              <div class="info-label">Dernière mise à jour</div>
+              <div class="info-value">
+                {{ formatDate(data.candidature.mis_a_jour_le) }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="info-item" *ngIf="data.candidature.date_entretien">
+            <mat-icon class="info-icon">event</mat-icon>
+            <div class="info-content">
+              <div class="info-label">Date d'entretien</div>
+              <div class="info-value">
+                {{ formatDate(data.candidature.date_entretien) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div mat-dialog-actions align="end">
+    <button mat-button (click)="close()">Fermer</button>
+  </div>
+</div>

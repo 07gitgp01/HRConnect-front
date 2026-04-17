@@ -15,7 +15,7 @@ import { PartenaireDetailComponent } from './partenaire-detail/partenaire-detail
   declarations: [
   
   
-    PartenaireDetailComponent
+   
   ],
   imports: [
       CommonModule,

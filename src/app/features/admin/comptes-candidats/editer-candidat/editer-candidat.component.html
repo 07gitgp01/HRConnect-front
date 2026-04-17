@@ -13,12 +13,12 @@
           </button>
         </div>
         <div class="card-body">
+
           <!-- Messages -->
           <div *ngIf="messageSucces" class="alert alert-success">
             <i class="fas fa-check-circle me-2"></i>
             {{ messageSucces }}
           </div>
-
           <div *ngIf="messageErreur" class="alert alert-danger">
             <i class="fas fa-exclamation-triangle me-2"></i>
             {{ messageErreur }}
@@ -34,6 +34,37 @@
 
           <!-- Formulaire -->
           <form [formGroup]="profilForm" *ngIf="!isChargement">
+
+            <!-- ✅ Pièce d'identité en LECTURE SEULE (données fixes saisies à l'inscription) -->
+            <div class="card bg-light mb-4">
+              <div class="card-body">
+                <h6 class="card-title text-muted mb-3">
+                  <i class="fas fa-id-card me-2"></i>
+                  Pièce d'identité <span class="badge bg-secondary ms-2">Lecture seule</span>
+                </h6>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-0">
+                      <label class="form-label text-muted small">Type de pièce</label>
+                      <input type="text" class="form-control-plaintext fw-semibold"
+                             [value]="typePieceActuel" readonly>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-0">
+                      <label class="form-label text-muted small">Numéro de pièce</label>
+                      <input type="text" class="form-control-plaintext fw-semibold"
+                             [value]="numeroPieceActuel" readonly>
+                    </div>
+                  </div>
+                </div>
+                <small class="text-muted">
+                  Ces informations ont été saisies à l'inscription et ne sont pas modifiables ici.
+                </small>
+              </div>
+            </div>
+
+            <!-- Champs éditables du profil -->
             <div class="row">
               <div class="col-md-6">
                 <div class="mb-3">
@@ -45,7 +76,6 @@
               <div class="col-md-6">
                 <div class="mb-3">
                   <label class="form-label">Région géographique</label>
-                  <!-- ✅ CORRECTION: "regionGeographique" au lieu de "regionGeographic" -->
                   <input type="text" class="form-control" formControlName="regionGeographique"
                          placeholder="Région de résidence">
                 </div>
@@ -70,32 +100,6 @@
             </div>
 
             <div class="row">
-              <div class="col-md-4">
-                <div class="mb-3">
-                  <label class="form-label">Type de pièce</label>
-                  <select class="form-control" formControlName="typePiece">
-                    <option value="CNIB">CNIB</option>
-                    <option value="PASSEPORT">Passeport</option>
-                  </select>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="mb-3">
-                  <label class="form-label">Numéro de pièce</label>
-                  <input type="text" class="form-control" formControlName="numeroPiece"
-                         placeholder="Numéro de la pièce">
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="mb-3">
-                  <label class="form-label">URL Pièce d'identité</label>
-                  <input type="text" class="form-control" formControlName="urlPieceIdentite" 
-                         placeholder="https://...">
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
               <div class="col-md-6">
                 <div class="mb-3">
                   <label class="form-label">Disponibilité</label>
@@ -108,25 +112,35 @@
               <div class="col-md-6">
                 <div class="mb-3">
                   <label class="form-label">URL CV</label>
-                  <input type="text" class="form-control" formControlName="urlCV" 
+                  <input type="text" class="form-control" formControlName="urlCV"
                          placeholder="https://...">
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12">
+                <div class="mb-3">
+                  <label class="form-label">URL document scanné (pièce d'identité)</label>
+                  <input type="text" class="form-control" formControlName="urlPieceIdentite"
+                         placeholder="https://...">
+                  <small class="text-muted">Scan ou photo de la pièce d'identité</small>
                 </div>
               </div>
             </div>
 
             <div class="mb-3">
               <label class="form-label">Compétences</label>
-              <input type="text" class="form-control" placeholder="Séparer par des virgules" 
+              <input type="text" class="form-control"
+                     placeholder="Saisir une compétence et appuyer sur Entrée"
                      (keyup.enter)="ajouterCompetence($event)" #competenceInput>
               <small class="text-muted">Appuyez sur Entrée pour ajouter une compétence</small>
-              
-              <!-- Affichage des compétences ajoutées -->
               <div class="mt-2" *ngIf="profilForm.get('competences')?.value?.length > 0">
-                <span *ngFor="let competence of profilForm.get('competences')?.value" 
+                <span *ngFor="let competence of profilForm.get('competences')?.value"
                       class="badge bg-primary me-1 mb-1">
                   {{ competence }}
-                  <button type="button" class="btn-close btn-close-white ms-1" 
-                          (click)="supprimerCompetence(competence)" 
+                  <button type="button" class="btn-close btn-close-white ms-1"
+                          (click)="supprimerCompetence(competence)"
                           style="font-size: 0.7rem;"></button>
                 </span>
               </div>
@@ -134,7 +148,7 @@
 
             <div class="mb-3">
               <label class="form-label">Motivation</label>
-              <textarea class="form-control" rows="4" formControlName="motivation" 
+              <textarea class="form-control" rows="4" formControlName="motivation"
                         placeholder="Décrivez vos motivations pour rejoindre le programme..."></textarea>
             </div>
 
@@ -143,13 +157,13 @@
                 <i class="fas fa-times me-2"></i>Annuler
               </button>
               <div>
-                <button type="button" class="btn btn-primary me-2" 
+                <button type="button" class="btn btn-primary me-2"
                         (click)="mettreAJourProfil()" [disabled]="isLoading">
                   <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
                   <i class="fas fa-save me-2" *ngIf="!isLoading"></i>
                   Mettre à jour
                 </button>
-                <button type="button" class="btn btn-success" 
+                <button type="button" class="btn btn-success"
                         (click)="completerProfil()" [disabled]="isLoading">
                   <i class="fas fa-check-circle me-2"></i>
                   Compléter le profil
@@ -157,6 +171,7 @@
               </div>
             </div>
           </form>
+
         </div>
       </div>
     </div>

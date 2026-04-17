@@ -1,3 +1,5 @@
+// src/app/shared/components/header/header.component.ts
+
 import { Component, signal, OnInit, inject, Output, EventEmitter, OnDestroy } from '@angular/core';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule, TitleCasePipe } from '@angular/common';
@@ -32,7 +34,7 @@ import { MatDividerModule } from '@angular/material/divider';
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   username = signal<string | null>(null);
-  userRole = signal<'candidat' | 'partenaire' | 'admin' | null>(null);
+  userRole = signal<'candidat' | 'volontaire' | 'partenaire' | 'admin' | null>(null); // ✅ AJOUTER 'volontaire'
   userInitials = signal<string>('');
   currentRoute = signal<string>('');
 
@@ -41,7 +43,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private authSubscription!: Subscription; 
   private routerSubscription!: Subscription;
 
-  // ✅ SUPPRIMEZ l'@Input() isMobile
   @Output() toggleMenu = new EventEmitter<void>();
 
   ngOnInit(): void {
@@ -62,7 +63,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (user) {
       const displayedName = this.getDisplayName(user);
       this.username.set(displayedName);
-      this.userRole.set(user.role as 'candidat' | 'partenaire' | 'admin');
+      
+      // ✅ Gérer tous les rôles possibles
+      if (user.role === 'candidat' || user.role === 'volontaire' || user.role === 'partenaire' || user.role === 'admin') {
+        this.userRole.set(user.role);
+      } else {
+        this.userRole.set(null);
+      }
+      
       this.userInitials.set(this.generateInitials(displayedName));
     } else {
       this.clearUserInfo();
@@ -72,11 +80,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private getDisplayName(user: User | Partenaire | any): string {
     if (!user) return 'Utilisateur';
     
-    if (user.role === 'candidat') {
+    // ✅ Traiter à la fois 'candidat' ET 'volontaire'
+    if (user.role === 'candidat' || user.role === 'volontaire') {
       const candidat = user as User;
       return candidat.prenom && candidat.nom 
         ? `${candidat.prenom} ${candidat.nom}`
-        : candidat.username || 'Candidat';
+        : candidat.username || (user.role === 'candidat' ? 'Candidat' : 'Volontaire');
     } 
     
     if (user.role === 'partenaire') {
@@ -120,6 +129,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     
     switch(role) {
       case 'candidat':
+      case 'volontaire': // ✅ AJOUTER volontaire
         return current.includes('/features/candidats' + route);
       case 'partenaire':
         return current.includes('/features/partenaires' + route);
@@ -134,6 +144,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     const role = this.userRole();
     switch (role) {
       case 'candidat':
+      case 'volontaire': // ✅ AJOUTER volontaire
         this.router.navigate(['/features/candidats']);
         break;
       case 'partenaire':
@@ -149,9 +160,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   navigateToProfil(): void {
     const role = this.userRole();
+    console.log('🔍 Navigation vers profil, rôle:', role);
+    
     switch (role) {
       case 'candidat':
-        this.router.navigate(['/features/candidats/profil']);
+      case 'volontaire': // ✅ AJOUTER volontaire - les deux vont vers le même profil
+        this.router.navigate(['/features/candidats/profil']).then(success => {
+          if (success) {
+            console.log('✅ Navigation vers profil candidat/volontaire réussie');
+          } else {
+            console.error('❌ Échec navigation vers profil');
+          }
+        });
         break;
       case 'partenaire':
         this.router.navigate(['/features/partenaires/profil']);
@@ -160,6 +180,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.router.navigate(['/features/admin/profil']);
         break;
       default:
+        console.warn('⚠️ Rôle non reconnu, redirection vers login');
         this.router.navigate(['/login']);
     }
   }

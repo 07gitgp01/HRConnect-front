@@ -1,4 +1,5 @@
 // src/app/features/services/service_auth/auth.service.ts
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, map, forkJoin, catchError, throwError, BehaviorSubject, of } from 'rxjs'; 
@@ -15,7 +16,8 @@ export class AuthService {
 
   private partenairesUrl = 'http://localhost:3000/partenaires';
   private usersUrl = 'http://localhost:3000/users';
-  private adminUrl = 'http://localhost:3000/admins'; 
+  private adminUrl = 'http://localhost:3000/admins';
+  private volontairesUrl = 'http://localhost:3000/volontaires';
 
   constructor(
     private http: HttpClient, 
@@ -44,7 +46,7 @@ export class AuthService {
   }
 
   /**
-   * 🔐 CONNEXION - Recherche dans tous les types d'utilisateurs
+   * 🔐 CONNEXION - Avec vérification du compte actif
    */
   login(email: string, password: string): Observable<AuthenticatedUser> {
     console.log('=== 🔐 TENTATIVE DE CONNEXION ===');
@@ -53,7 +55,8 @@ export class AuthService {
     return forkJoin({
       partenaires: this.http.get<Partenaire[]>(this.partenairesUrl).pipe(catchError(() => of([]))),
       users: this.http.get<User[]>(this.usersUrl).pipe(catchError(() => of([]))),
-      admins: this.http.get<AdminUser[]>(this.adminUrl).pipe(catchError(() => of([])))
+      admins: this.http.get<AdminUser[]>(this.adminUrl).pipe(catchError(() => of([]))),
+      volontaires: this.http.get<any[]>(this.volontairesUrl).pipe(catchError(() => of([])))
     }).pipe(
       map(data => {
         console.log('=== 🔍 RECHERCHE UTILISATEUR ===');
@@ -65,10 +68,36 @@ export class AuthService {
         const user = data.users.find(u => 
           (u.email === email || u.username === email) && u.password === password
         );
+        
         if (user) {
           console.log('✅ Candidat/Volontaire trouvé:', user);
           console.log('   Rôle:', user.role);
-          console.log('   VolontaireId:', user.volontaireId);
+          console.log('   Actif:', user.actif);
+          
+          // ✅ VÉRIFICATION 1: Le compte utilisateur doit être actif
+          if (user.actif === false) {
+            console.log('🚫 Compte utilisateur désactivé - Accès refusé');
+            throw new Error('Votre compte a été désactivé. Veuillez contacter l\'administrateur.');
+          }
+          
+          // ✅ VÉRIFICATION 2: Si c'est un volontaire, vérifier son statut
+          if (user.role === 'volontaire' && user.volontaireId) {
+            const volontaireData = data.volontaires.find(v => 
+              String(v.id) === String(user.volontaireId)
+            );
+            
+            if (volontaireData) {
+              console.log('🔍 Statut volontaire:', volontaireData.statut);
+              
+              if (volontaireData.statut === 'Inactif') {
+                console.log('🚫 Compte volontaire inactif - Accès refusé');
+                throw new Error('Votre compte volontaire est actuellement inactif. Veuillez contacter l\'administrateur.');
+              }
+              
+              console.log('✅ Statut volontaire valide:', volontaireData.statut);
+            }
+          }
+          
           return user;
         }
 
@@ -76,12 +105,15 @@ export class AuthService {
         const partenaire = data.partenaires.find(p => 
           p.email === email && p.motDePasseTemporaire === password
         );
+        
         if (partenaire) {
           console.log('✅ Partenaire trouvé:', partenaire);
-          // Vérifier si le compte partenaire est actif
+          
           if (partenaire.estActive === false || partenaire.compteActive === false) {
+            console.log('🚫 Compte partenaire désactivé - Accès refusé');
             throw new Error('Votre compte partenaire a été désactivé. Veuillez contacter l\'administrateur.');
           }
+          
           return partenaire;
         }
 
@@ -89,9 +121,15 @@ export class AuthService {
         const admin = data.admins.find(a => 
           (a.email === email || a.username === email) && a.password === password
         );
+        
         if (admin) {
           console.log('✅ Admin trouvé:', admin);
-          console.log('🔐 Rôle admin:', admin.role);
+          
+          if (admin.actif === false) {
+            console.log('🚫 Compte admin désactivé - Accès refusé');
+            throw new Error('Votre compte administrateur a été désactivé. Veuillez contacter l\'administrateur.');
+          }
+          
           return admin;
         }
 
@@ -106,9 +144,6 @@ export class AuthService {
           console.log('=== ✅ CONNEXION RÉUSSIE ===');
           console.log('Utilisateur connecté:', user);
           console.log('Rôle:', user.role);
-          console.log('isAdmin():', this.isAdmin());
-          console.log('isCandidat():', this.isCandidat());
-          console.log('isVolontaire():', this.isVolontaire());
         }
       }),
       catchError(err => {
@@ -122,18 +157,17 @@ export class AuthService {
 
   /**
    * 📝 INSCRIPTION - UNIQUEMENT pour les candidats
-   * Crée un compte avec role: 'candidat' par défaut
    */
   signup(userData: User): Observable<User> {
     console.log('📝 Inscription nouveau candidat:', userData.email);
     
-    // ✅ Forcer le rôle candidat lors de l'inscription
     const candidatData: User = {
       ...userData,
-      role: 'candidat', // ✅ TOUJOURS 'candidat' à l'inscription
+      role: 'candidat',
+      actif: true, // ✅ Par défaut, le compte est actif
       date_inscription: new Date().toISOString(),
       profilComplete: false,
-      volontaireId: undefined // Sera défini après création du profil volontaire
+      volontaireId: undefined
     };
 
     return this.http.post<User>(this.usersUrl, candidatData).pipe(
@@ -145,12 +179,15 @@ export class AuthService {
     );
   }
 
-  /**
-   * 👤 CRÉATION ADMIN - Réservé aux administrateurs techniques
-   */
   createAdmin(adminData: AdminUser): Observable<AdminUser> {
     console.log('👤 Création admin:', adminData.email);
-    return this.http.post<AdminUser>(this.adminUrl, adminData).pipe(
+    
+    const adminAvecActif = {
+      ...adminData,
+      actif: true // ✅ Par défaut, le compte admin est actif
+    };
+    
+    return this.http.post<AdminUser>(this.adminUrl, adminAvecActif).pipe(
       catchError(error => {
         console.error('❌ Erreur création admin:', error);
         return throwError(() => new Error('Erreur lors de la création de l\'admin'));
@@ -158,12 +195,16 @@ export class AuthService {
     );
   }
 
-  /**
-   * 🏢 CRÉATION PARTENAIRE - Réservé aux administrateurs
-   */
   createPartenaire(partenaireData: Partenaire): Observable<Partenaire> {
     console.log('🏢 Création partenaire:', partenaireData.email);
-    return this.http.post<Partenaire>(this.partenairesUrl, partenaireData).pipe(
+    
+    const partenaireAvecActif = {
+      ...partenaireData,
+      compteActive: true,
+      estActive: true
+    };
+    
+    return this.http.post<Partenaire>(this.partenairesUrl, partenaireAvecActif).pipe(
       catchError(error => {
         console.error('❌ Erreur création partenaire:', error);
         return throwError(() => new Error('Erreur lors de la création du partenaire'));
@@ -171,196 +212,80 @@ export class AuthService {
     );
   }
 
-  /**
-   * 🚪 DÉCONNEXION
-   */
   logout(): void {
     console.log('🚪 Déconnexion en cours...');
-    console.log('Utilisateur avant déconnexion:', this.getCurrentUser());
     this.currentUserSubject.next(null);
     this.clearStorage();
     this.router.navigate(['/login']);
     console.log('✅ Déconnexion effectuée');
   }
 
-  /**
-   * 🧹 NETTOYAGE STORAGE
-   */
   private clearStorage(): void {
     localStorage.removeItem('userRole');
     localStorage.removeItem('userData');
     console.log('🧹 Storage nettoyé');
   }
 
-  /**
-   * 🔍 VÉRIFICATIONS D'AUTHENTIFICATION
-   */
   isLoggedIn(): boolean {
-    const isLogged = !!this.currentUserSubject.value;
-    console.log('🔍 isLoggedIn():', isLogged);
-    return isLogged;
+    return !!this.currentUserSubject.value;
   }
 
   getUserRole(): string | null {
-    const role = this.currentUserSubject.value?.role || localStorage.getItem('userRole');
-    console.log('🔍 getUserRole():', role);
-    return role;
+    return this.currentUserSubject.value?.role || localStorage.getItem('userRole');
   }
 
   getCurrentUser(): AuthenticatedUser {
-    const user = this.currentUserSubject.value;
-    console.log('🔍 getCurrentUser():', user);
-    return user;
+    return this.currentUserSubject.value;
   }
 
-  /**
-   * ✅ VÉRIFICATIONS DE RÔLES - CORRIGÉES avec type guards
-   */
-  
-  /**
-   * Vérifie si l'utilisateur actuel est un candidat
-   * @returns true si role === 'candidat'
-   */
   isCandidat(): boolean {
     const user = this.getCurrentUser();
-    const isCandidat = user?.role === 'candidat';
-    console.log('🎭 isCandidat():', isCandidat);
-    return isCandidat;
+    return user?.role === 'candidat';
   }
 
-  /**
-   * ✅ NOUVEAU: Vérifie si l'utilisateur actuel est un volontaire
-   * @returns true si role === 'volontaire'
-   */
   isVolontaire(): boolean {
     const user = this.getCurrentUser();
-    const isVol = user?.role === 'volontaire';
-    console.log('🎭 isVolontaire():', isVol);
-    return isVol;
+    return user?.role === 'volontaire';
   }
 
-  /**
-   * ✅ NOUVEAU: Vérifie si l'utilisateur est candidat OU volontaire
-   * Utile pour les pages accessibles aux deux
-   * @returns true si role === 'candidat' || role === 'volontaire'
-   */
   isCandidatOuVolontaire(): boolean {
-    const user = this.getCurrentUser();
-    const result = isUser(user); // Utilise le type guard du modèle
-    console.log('🎭 isCandidatOuVolontaire():', result);
-    return result;
+    return isUser(this.getCurrentUser());
   }
 
   isPartenaire(): boolean {
     const user = this.getCurrentUser();
-    const isPart = user?.role === 'partenaire';
-    console.log('🎭 isPartenaire():', isPart);
-    return isPart;
+    return user?.role === 'partenaire';
   }
 
   isAdmin(): boolean {
     const user = this.getCurrentUser();
-    const userRole = user?.role;
-    
-    console.log('=== 🔍 VÉRIFICATION ADMIN ===');
-    console.log('Utilisateur:', user);
-    console.log('Rôle:', userRole);
-    
-    if (!user || !userRole) {
-      console.log('❌ isAdmin(): false (non connecté ou rôle indéfini)');
-      return false;
-    }
-    
-    // ✅ ACCEPTER tous les formats de rôles admin
-    const adminRoles = [
-      'admin', 
-      'super admin',
-      'SUPER_ADMIN',
-      'super_admin',
-      'superAdmin',
-      'super-admin'
-    ];
-    
-    const isAdminUser = adminRoles.includes(userRole);
-    
-    console.log('✅ isAdmin():', isAdminUser);
-    console.log('🎯 Rôles acceptés:', adminRoles);
-    return isAdminUser;
+    return user?.role === 'admin';
   }
 
-  isSuperAdmin(): boolean {
-    const user = this.getCurrentUser();
-    const userRole = user?.role;
-    
-    if (!userRole) {
-      console.log('🎭 isSuperAdmin(): false (rôle indéfini)');
-      return false;
-    }
-    
-    // ✅ ACCEPTER tous les formats de super admin
-    const superAdminRoles = ['SUPER_ADMIN', 'super_admin', 'super admin', 'superAdmin', 'super-admin'];
-    const isSuperAdminUser = superAdminRoles.includes(userRole);
-    
-    console.log('🎭 isSuperAdmin():', isSuperAdminUser);
-    console.log('🎯 Rôles super admin acceptés:', superAdminRoles);
-    return isSuperAdminUser;
-  }
-
-  /**
-   * 🔧 MÉTHODES UTILITAIRES
-   */
-  
-  /**
-   * Récupère l'ID du volontaire lié au user actuel
-   * Fonctionne pour role === 'candidat' ET role === 'volontaire'
-   */
   getVolontaireId(): number | string | null {
     const user = this.getCurrentUser();
-    
-    // ✅ CORRECTION: Accepte candidat ET volontaire
     if (user && isUser(user)) {
-      const volontaireId = (user as User).volontaireId || null;
-      console.log('🔧 getVolontaireId():', volontaireId);
-      return volontaireId;
+      return (user as User).volontaireId || null;
     }
-    
-    console.log('🔧 getVolontaireId(): null (pas un user candidat/volontaire)');
     return null;
   }
 
-  /**
-   * Récupère l'utilisateur actuel s'il est de type User (candidat ou volontaire)
-   */
   getCurrentCandidat(): User | null {
     const user = this.getCurrentUser();
-    
-    // ✅ CORRECTION: Retourne le user s'il est candidat OU volontaire
-    if (isUser(user)) {
-      console.log('🔧 getCurrentCandidat():', user);
-      return user as User;
-    }
-    
-    console.log('🔧 getCurrentCandidat(): null');
-    return null;
+    return isUser(user) ? user as User : null;
   }
 
-  /**
-   * 🆔 Mettre à jour le volontaireId d'un User
-   * Appelé après la création du profil volontaire
-   */
   updateUserVolontaireId(userId: number | string, volontaireId: number | string): Observable<User> {
     console.log(`🆔 Mise à jour volontaireId ${userId} -> ${volontaireId}`);
     return this.http.patch<User>(`${this.usersUrl}/${userId}`, {
       volontaireId: volontaireId,
-      profilComplete: false // Le profil n'est pas encore complet
+      profilComplete: false
     }).pipe(
       tap(updatedUser => {
-        // ✅ Mettre à jour l'utilisateur en session si c'est le même
         const currentUser = this.getCurrentUser();
         if (currentUser && currentUser.id === userId) {
           this.currentUserSubject.next(updatedUser);
           localStorage.setItem('userData', JSON.stringify(updatedUser));
-          console.log('✅ Session utilisateur mise à jour avec volontaireId');
         }
       }),
       catchError(error => {
@@ -370,10 +295,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * ✅ NOUVEAU: Promouvoir un candidat en volontaire
-   * Appelé par l'admin après validation du profil
-   */
   promouvoirEnVolontaire(userId: number | string): Observable<User> {
     console.log(`🎓 Promotion candidat → volontaire: ${userId}`);
     return this.http.patch<User>(`${this.usersUrl}/${userId}`, {
@@ -382,13 +303,11 @@ export class AuthService {
       updated_at: new Date().toISOString()
     }).pipe(
       tap(updatedUser => {
-        // ✅ Mettre à jour la session si c'est l'utilisateur connecté
         const currentUser = this.getCurrentUser();
         if (currentUser && currentUser.id === userId) {
           this.currentUserSubject.next(updatedUser);
           localStorage.setItem('userData', JSON.stringify(updatedUser));
           localStorage.setItem('userRole', 'volontaire');
-          console.log('✅ Utilisateur promu en volontaire dans la session');
         }
       }),
       catchError(error => {
@@ -398,10 +317,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * ✅ NOUVEAU: Rétrograder un volontaire en candidat
-   * Appelé si l'admin refuse le profil
-   */
   retrograderEnCandidat(userId: number | string): Observable<User> {
     console.log(`⬇️ Rétrogradation volontaire → candidat: ${userId}`);
     return this.http.patch<User>(`${this.usersUrl}/${userId}`, {
@@ -415,7 +330,6 @@ export class AuthService {
           this.currentUserSubject.next(updatedUser);
           localStorage.setItem('userData', JSON.stringify(updatedUser));
           localStorage.setItem('userRole', 'candidat');
-          console.log('✅ Utilisateur rétrogradé en candidat dans la session');
         }
       }),
       catchError(error => {
@@ -425,9 +339,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * ✅ NOUVEAU: Marquer le profil comme complet
-   */
   marquerProfilComplet(userId: number | string): Observable<User> {
     console.log(`✅ Marquage profil complet: ${userId}`);
     return this.http.patch<User>(`${this.usersUrl}/${userId}`, {
@@ -439,7 +350,6 @@ export class AuthService {
         if (currentUser && currentUser.id === userId) {
           this.currentUserSubject.next(updatedUser);
           localStorage.setItem('userData', JSON.stringify(updatedUser));
-          console.log('✅ Profil marqué comme complet dans la session');
         }
       }),
       catchError(error => {
@@ -449,9 +359,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * 🗑️ Supprimer un User (en cas d'échec de l'inscription)
-   */
   deleteUser(userId: number | string): Observable<void> {
     console.log(`🗑️ Suppression user ${userId}`);
     return this.http.delete<void>(`${this.usersUrl}/${userId}`).pipe(
@@ -462,71 +369,20 @@ export class AuthService {
     );
   }
 
-  /**
-   * 🔍 Récupérer un User par email
-   */
   getUserByEmail(email: string): Observable<User[]> {
-    console.log(`🔍 Recherche user par email: ${email}`);
     return this.http.get<User[]>(`${this.usersUrl}?email=${email.toLowerCase()}`).pipe(
-      catchError(error => {
-        console.error(`❌ Erreur recherche user par email ${email}:`, error);
-        return of([]);
-      })
+      catchError(() => of([]))
     );
   }
 
-  /**
-   * 🔄 Rafraîchir les données utilisateur
-   */
   refreshUserData(): void {
-    console.log('🔄 Rafraîchissement des données utilisateur');
     this.restoreUserFromStorage();
   }
 
-  /**
-   * 🎯 Vérifier les permissions (méthode utilitaire)
-   */
-  hasRole(role: string): boolean {
-    const userRole = this.getUserRole();
-    const hasRoleCheck = userRole ? userRole === role : false;
-    console.log(`🎯 hasRole("${role}"):`, hasRoleCheck);
-    return hasRoleCheck;
-  }
-
-  /**
-   * 📊 Obtenir tous les rôles disponibles
-   */
-  getAvailableRoles(): string[] {
-    return ['candidat', 'volontaire', 'partenaire', 'admin', 'super admin'];
-  }
-
-  /**
-   * 🛡️ Vérifier les permissions avec multiple rôles
-   */
-  hasAnyRole(roles: string[]): boolean {
-    const userRole = this.getUserRole();
-    const hasAnyRoleCheck = userRole ? roles.includes(userRole) : false;
-    console.log(`🛡️ hasAnyRole(${JSON.stringify(roles)}):`, hasAnyRoleCheck);
-    return hasAnyRoleCheck;
-  }
-
-  /**
-   * ✅ NOUVEAU: Vérifier si l'utilisateur peut accéder à l'espace candidat
-   * (candidat OU volontaire)
-   */
-  canAccessCandidatSpace(): boolean {
-    return this.isCandidatOuVolontaire();
-  }
-
-  /**
-   * ✅ NOUVEAU: Vérifier si le profil user est complet
-   */
   isProfilComplet(): boolean {
     const user = this.getCurrentUser();
     if (isUser(user)) {
-      const result = (user as User).profilComplete || false;
-      console.log('🔍 isProfilComplet():', result);
-      return result;
+      return (user as User).profilComplete || false;
     }
     return false;
   }

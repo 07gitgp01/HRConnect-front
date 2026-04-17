@@ -1,10 +1,9 @@
-import { Partenaire } from "./partenaire.model";
-
 // src/app/models/user.model.ts
+
+import { Partenaire } from "./partenaire.model";
 
 /**
  * Interface User - Utilisateur de base (candidat/volontaire)
- * Créé lors de l'inscription publique
  */
 export interface User {
   id?: number | string;
@@ -15,21 +14,32 @@ export interface User {
   // ✅ CORRECTION: 'candidat' OU 'volontaire' selon l'évolution du profil
   role: 'candidat' | 'volontaire';
   
+  // ✅ NOUVEAU: Champ actif pour gérer l'état du compte
+  actif?: boolean;  // true par défaut à la création
+  
   // Champs de liaison avec le profil volontaire
   volontaireId?: number | string;
   profilComplete?: boolean;
   
-  // Informations de profil supplémentaires
+  // Informations personnelles (FIXES - saisies à l'inscription)
   prenom?: string;
   nom?: string;
   telephone?: string;
+  dateNaissance?: string;
+  nationalite?: string;
+  sexe?: 'M' | 'F';
+  
+  // ✅ Pièce d'identité (FIXES - saisies à l'inscription)
+  typePiece?: 'CNIB' | 'PASSEPORT';
+  numeroPiece?: string;
+  
+  // Métadonnées
   avatar?: string;
   date_inscription?: string;
 }
 
 /**
  * Interface AdminUser - Administrateur système
- * Créé uniquement par super admin
  */
 export interface AdminUser {
   id?: number | string;
@@ -37,6 +47,9 @@ export interface AdminUser {
   email: string;
   password: string;
   role: 'admin';
+  
+  // ✅ NOUVEAU: Champ actif pour les admins aussi
+  actif?: boolean;
   
   // Champs spécifiques admin
   nom?: string;
@@ -50,7 +63,6 @@ export interface AdminUser {
 
 /**
  * Type union pour tous les utilisateurs authentifiés
- * Utilisé par AuthService.currentUser$
  */
 export type AuthenticatedUser = User | Partenaire | AdminUser | null;
 
@@ -96,5 +108,12 @@ export interface RegisterUserData {
   prenom?: string;
   nom?: string;
   telephone?: string;
+  dateNaissance?: string;
+  sexe?: 'M' | 'F';
+  nationalite?: string;
+  
+  typePiece: 'CNIB' | 'PASSEPORT';
+  numeroPiece: string;
+  
   consentementPolitique: boolean;
 }

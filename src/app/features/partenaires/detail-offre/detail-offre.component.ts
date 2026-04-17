@@ -1,4 +1,5 @@
 // src/app/features/partenaires/detail-offre/detail-offre.component.ts
+
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -6,9 +7,12 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Project, ProjectStatus, ProjectWorkflow } from '../../models/projects.model';
 import { ProjectService } from '../../services/service_projects/projects.service';
 import { AuthService } from '../../services/service_auth/auth.service';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { Volontaire } from '../../models/volontaire.model';
+import { AffectationService } from '../../services/service-affecta/affectation.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-detail-offre',
@@ -38,6 +42,13 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
   candidatures: any[] = [];
   volontairesDisponibles: Volontaire[] = [];
   
+  // Statistiques
+  statsVolontaires = {
+    actifs: 0,
+    termines: 0,
+    total: 0
+  };
+  
   // Modal d'affectation
   showModalAffectation = false;
   showModalCandidatures = false;
@@ -47,6 +58,7 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
   commentaireForm!: FormGroup;
   affectationForm!: FormGroup;
   
+  private apiUrl = 'http://localhost:3000';
   private subscriptions: Subscription = new Subscription();
 
   constructor(
@@ -55,7 +67,9 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private projectService: ProjectService,
     private authService: AuthService,
-    private snackBar: MatSnackBar
+    private affectationService: AffectationService,
+    private snackBar: MatSnackBar,
+    private http: HttpClient // ✅ AJOUTER HttpClient
   ) {
     this.initForms();
   }
@@ -129,14 +143,55 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
   private chargerDonneesAssociees(): void {
     if (!this.offreId) return;
 
-    // Charger les volontaires affectés (accessible à tous)
+    // ✅ Charger les volontaires affectés (actifs ET terminés)
     this.subscriptions.add(
-      this.projectService.getVolontairesByProject(this.offreId).subscribe({
-        next: (volontaires) => {
-          this.volontairesAffectes = volontaires;
+      this.affectationService.getAffectationsByProject(this.offreId).subscribe({
+        next: (affectations: any[]) => {
+          // Récupérer les détails des volontaires
+          const volontaireIds = [...new Set(affectations.map(a => a.volontaireId))];
+          
+          if (volontaireIds.length === 0) {
+            this.volontairesAffectes = [];
+            this.statsVolontaires = { actifs: 0, termines: 0, total: 0 };
+            return;
+          }
+          
+          // ✅ Utiliser HttpClient directement au lieu de ProjectService
+          const requests = volontaireIds.map(id => 
+            this.http.get<Volontaire>(`${this.apiUrl}/volontaires/${id}`).pipe(
+              catchError(() => of(null))
+            )
+          );
+          
+          forkJoin(requests).subscribe({
+            next: (volontaires: (Volontaire | null)[]) => {
+              this.volontairesAffectes = affectations.map((affectation: any) => {
+                const volontaire = volontaires.find(v => v && v.id?.toString() === affectation.volontaireId?.toString());
+                return {
+                  ...affectation,
+                  volontaire: volontaire || {
+                    id: affectation.volontaireId,
+                    prenom: 'Volontaire',
+                    nom: `#${affectation.volontaireId}`,
+                    email: 'inconnu'
+                  }
+                };
+              });
+              
+              // ✅ Calculer les statistiques
+              this.statsVolontaires = {
+                actifs: this.volontairesAffectes.filter((v: any) => v.statut === 'active').length,
+                termines: this.volontairesAffectes.filter((v: any) => v.statut === 'terminee').length,
+                total: this.volontairesAffectes.length
+              };
+            },
+            error: (error) => {
+              console.error('Erreur chargement volontaires:', error);
+            }
+          });
         },
         error: (error) => {
-          console.error('Erreur chargement volontaires:', error);
+          console.error('Erreur chargement affectations:', error);
         }
       })
     );
@@ -145,7 +200,7 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
     if (this.estAdmin) {
       this.subscriptions.add(
         this.projectService.getCandidaturesByProject(this.offreId).subscribe({
-          next: (candidatures) => {
+          next: (candidatures: any[]) => {
             this.candidatures = candidatures;
           },
           error: (error) => {
@@ -159,7 +214,7 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
     if (this.estAdmin) {
       this.subscriptions.add(
         this.projectService.getVolontairesDisponibles().subscribe({
-          next: (volontaires) => {
+          next: (volontaires: Volontaire[]) => {
             this.volontairesDisponibles = volontaires;
           },
           error: (error) => {
@@ -173,8 +228,6 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
   // ===== ACTIONS SUR L'OFFRE =====
   soumettrePourValidation(): void {
     if (!this.offre?.id) return;
-
-    // Avec les nouveaux statuts, les offres sont automatiquement "en_attente"
     this.afficherMessage('L\'offre est déjà en attente de validation', 'info');
   }
 
@@ -197,8 +250,6 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
 
   mettreEnCours(): void {
     if (!this.offre?.id) return;
-
-    // Avec les nouveaux statuts, pas de séparation "mettre en cours"
     this.afficherMessage('Le projet est déjà actif', 'info');
   }
 
@@ -290,17 +341,46 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
     );
   }
 
-  retirerVolontaire(affectationId: string): void {
-    if (!this.offreId || !this.estAdmin) {
+  /**
+   * ✅ Termine une mission (statut 'terminee') - le volontaire reste visible
+   */
+  terminerMission(affectationId: string, volontaireNom: string): void {
+    if (!this.estAdmin) {
       this.afficherMessage('Action non autorisée', 'error');
       return;
     }
 
-    const confirmation = confirm('Êtes-vous sûr de vouloir retirer ce volontaire ?');
+    const confirmation = confirm(`Confirmer la fin de mission pour ${volontaireNom} ?`);
     if (!confirmation) return;
 
     this.subscriptions.add(
-      this.projectService.retirerVolontaire(this.offreId, affectationId).subscribe({
+      this.affectationService.terminerAffectation(affectationId).subscribe({
+        next: () => {
+          this.chargerDonneesAssociees();
+          this.afficherMessage('Mission terminée avec succès', 'success');
+        },
+        error: (error) => {
+          console.error('Erreur terminaison mission:', error);
+          this.afficherMessage('Erreur lors de la terminaison', 'error');
+        }
+      })
+    );
+  }
+
+  /**
+   * ✅ Retire un volontaire (statut 'annulee') - le volontaire disparaît
+   */
+  retirerVolontaire(affectationId: string, volontaireNom: string): void {
+    if (!this.estAdmin) {
+      this.afficherMessage('Action non autorisée', 'error');
+      return;
+    }
+
+    const confirmation = confirm(`Êtes-vous sûr de vouloir retirer ${volontaireNom} de cette mission ?`);
+    if (!confirmation) return;
+
+    this.subscriptions.add(
+      this.affectationService.annulerAffectation(affectationId).subscribe({
         next: () => {
           this.chargerDonneesAssociees();
           this.chargerOffre();
@@ -324,7 +404,6 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
   }
 
   traiterCandidature(candidatureId: string, action: 'accepter' | 'refuser'): void {
-    // SEUL L'ADMIN PEUT TRAITER LES CANDIDATURES
     if (!this.estAdmin) {
       this.afficherMessage('Seuls les administrateurs peuvent traiter les candidatures.', 'error');
       return;
@@ -333,11 +412,8 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
     const confirmation = confirm(`Êtes-vous sûr de vouloir ${action === 'accepter' ? 'accepter' : 'refuser'} cette candidature ?`);
     if (!confirmation) return;
 
-    // Ici, vous devriez appeler un service pour traiter la candidature
     console.log(`Traiter candidature ${candidatureId}: ${action}`);
     this.afficherMessage(`Candidature ${action === 'accepter' ? 'acceptée' : 'refusée'}`, 'success');
-    
-    // Après traitement, recharger les données
     this.chargerDonneesAssociees();
   }
 
@@ -403,7 +479,6 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
 
   getProgressionOffre(): number {
     if (!this.offre) return 0;
-    // Progression simplifiée avec 3 statuts
     const steps: Record<ProjectStatus, number> = {
       'en_attente': 33,
       'actif': 66,
@@ -419,13 +494,11 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
   }
 
   peutSoumettre(): boolean {
-    // Plus nécessaire avec les nouveaux statuts
     return false;
   }
 
   peutAnnuler(): boolean {
     if (!this.offre) return false;
-    // Le partenaire peut demander l'annulation si l'offre est en_attente ou actif
     return (this.offre.statutProjet === 'en_attente' || this.offre.statutProjet === 'actif') && this.peutCreerOffres;
   }
 
@@ -435,13 +508,11 @@ export class DetailOffreComponent implements OnInit, OnDestroy {
   }
 
   peutMettreEnCours(): boolean {
-    // Avec les nouveaux statuts, pas de séparation "mettre en cours"
     return false;
   }
 
   peutCloturer(): boolean {
     if (!this.offre) return false;
-    // Seul l'admin peut clôturer (le partenaire peut seulement demander l'annulation)
     return this.estAdmin && (this.offre.statutProjet === 'en_attente' || this.offre.statutProjet === 'actif');
   }
 

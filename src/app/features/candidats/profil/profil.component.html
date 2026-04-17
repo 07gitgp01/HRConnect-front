@@ -1,4 +1,5 @@
 <!-- src/app/features/candidats/profil/profil.component.html -->
+
 <div class="profil-container">
   <!-- En-tête -->
   <div class="profil-header">
@@ -38,7 +39,7 @@
     <div class="profil-form-section">
       <form [formGroup]="profilForm" (ngSubmit)="onSubmit()">
         
-        <!-- Informations personnelles (lecture seule) -->
+        <!-- ✅ Informations personnelles (lecture seule) AVEC pièce d'identité -->
         <div class="form-section">
           <h3>📋 Informations Personnelles</h3>
           <p class="section-description">
@@ -72,6 +73,16 @@
             <div class="info-item">
               <label>Sexe</label>
               <input type="text" formControlName="sexe" class="form-control" readonly>
+            </div>
+            
+            <!-- ✅ Pièce d'identité en lecture seule -->
+            <div class="info-item">
+              <label>Type de pièce d'identité</label>
+              <input type="text" formControlName="typePiece" class="form-control" readonly>
+            </div>
+            <div class="info-item">
+              <label>Numéro de pièce</label>
+              <input type="text" formControlName="numeroPiece" class="form-control numero-piece-readonly" readonly>
             </div>
           </div>
         </div>
@@ -142,48 +153,15 @@
             </div>
           </div>
 
-          <!-- Pièce d'identité avec upload -->
+          <!-- ✅ SECTION DOCUMENTS COMPLÈTE AVEC BOUTONS D'OUVERTURE -->
+          
+          <!-- Document d'identité scanné -->
           <div class="form-section document-section">
-            <h4>🆔 Pièce d'Identité</h4>
+            <h4>📄 Document scanné de la pièce d'identité</h4>
             
-            <!-- Type de pièce -->
-            <div class="form-row">
-              <div class="form-group">
-                <label>Type de pièce d'identité *</label>
-                <select formControlName="typePiece"
-                        [class.is-invalid]="typePiece?.invalid && typePiece?.touched"
-                        class="form-control"
-                        (change)="onTypePieceChange()">
-                  <option value="">Sélectionnez...</option>
-                  <option value="CNIB">CNIB</option>
-                  <option value="PASSEPORT">Passeport</option>
-                </select>
-                <div *ngIf="typePiece?.invalid && typePiece?.touched" class="invalid-feedback">
-                  Le type de pièce est requis
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>{{ getLabelNumeroPiece() }}</label>
-                <input type="text" formControlName="numeroPiece" 
-                      [class.is-invalid]="numeroPiece?.invalid && numeroPiece?.touched"
-                      [placeholder]="getPlaceholderNumeroPiece()"
-                      [attr.maxlength]="typePieceSelectionne === 'CNIB' ? '17' : '9'"
-                      class="form-control numero-piece-input"
-                      [class.type-cnib]="typePieceSelectionne === 'CNIB'"
-                      [class.type-passeport]="typePieceSelectionne === 'PASSEPORT'">
-                <div *ngIf="numeroPiece?.invalid && numeroPiece?.touched" class="invalid-feedback">
-                  {{ getNumeroPieceErrorMessage() }}
-                </div>
-                <small class="text-muted">
-                  {{ typePieceSelectionne === 'CNIB' ? '17 chiffres exactement' : '6 à 9 caractères (lettres majuscules et chiffres)' }}
-                </small>
-              </div>
-            </div>
-
             <!-- Upload du document -->
             <div class="form-group">
-              <label>Document scanné *</label>
+              <label>Document d'identité scanné *</label>
               <div class="file-upload-section">
                 <div class="file-input-container">
                   <input type="file" 
@@ -199,7 +177,7 @@
                   </button>
                 </div>
                 
-                <!-- Aperçu du document -->
+                <!-- Aperçu du nouveau document -->
                 <div *ngIf="documentIdentityPreview" class="file-preview">
                   <div class="preview-content">
                     <mat-icon>description</mat-icon>
@@ -209,24 +187,38 @@
                     </div>
                     <button type="button" 
                             class="btn btn-sm btn-outline-danger"
-                            (click)="removeDocumentIdentity()">
+                            (click)="removeDocumentIdentity()"
+                            matTooltip="Supprimer">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
                 </div>
 
-                <!-- Document existant -->
+                <!-- Document existant avec bouton d'ouverture -->
                 <div *ngIf="!selectedDocumentIdentity && volontaire?.urlPieceIdentite" 
                      class="existing-document">
                   <div class="existing-file">
-                    <mat-icon>description</mat-icon>
-                    <span>Document déjà uploadé</span>
-                    <a [href]="volontaire?.urlPieceIdentite || '#'" 
-                       target="_blank" 
-                       class="btn btn-sm btn-outline-primary">
-                      <mat-icon>visibility</mat-icon>
-                      Voir
-                    </a>
+                    <mat-icon class="doc-icon">badge</mat-icon>
+                    <div class="file-info">
+                      <span class="file-name">Pièce d'identité actuelle</span>
+                      <span class="file-path">{{ volontaire?.urlPieceIdentite }}</span>
+                    </div>
+                    <div class="file-actions">
+                      <button 
+                        class="btn btn-sm btn-outline-primary"
+                        (click)="ouvrirDocument(volontaire?.urlPieceIdentite, 'identity')"
+                        matTooltip="Ouvrir la pièce d'identité">
+                        <mat-icon>visibility</mat-icon>
+                        Ouvrir
+                      </button>
+                      <button 
+                        class="btn btn-sm btn-outline-info"
+                        (click)="verifierDocument(volontaire?.urlPieceIdentite, 'identity')"
+                        matTooltip="Vérifier si le document est accessible">
+                        <mat-icon>check_circle</mat-icon>
+                        Vérifier
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -237,35 +229,32 @@
             </div>
           </div>
 
-          <!-- Dans la section compétences, remplacer par : -->
-<div class="form-group">
-  <label>Compétences *</label>
-  
-  <!-- Vérifier que le FormArray est prêt avant d'afficher -->
-  <div *ngIf="isCompetencesFormArrayReady()" class="competences-grid" formArrayName="competences">
-    <div *ngFor="let competence of competencesList; let i = index" class="competence-item">
-      <label>
-        <input type="checkbox" [formControlName]="i">
-        {{ competence }}
-      </label>
-    </div>
-  </div>
-  
-  <!-- Message de chargement si le FormArray n'est pas encore prêt -->
-  <div *ngIf="!isCompetencesFormArrayReady()" class="loading-competences">
-    <p>Chargement des compétences...</p>
-  </div>
-  
-  <!-- Affichage des compétences sélectionnées -->
-  <div *ngIf="selectedCompetences && selectedCompetences.length > 0" class="selected-competences">
-    <p><strong>Compétences sélectionnées :</strong> {{ selectedCompetences.join(', ') }}</p>
-  </div>
-  
-  <div *ngIf="selectedCompetences && selectedCompetences.length === 0 && profil.get('competences')?.touched" 
-       class="invalid-feedback">
-    Sélectionnez au moins une compétence
-  </div>
-</div>
+          <!-- Compétences -->
+          <div class="form-group">
+            <label>Compétences *</label>
+            
+            <div *ngIf="isCompetencesFormArrayReady()" class="competences-grid" formArrayName="competences">
+              <div *ngFor="let competence of competencesList; let i = index" class="competence-item">
+                <label>
+                  <input type="checkbox" [formControlName]="i">
+                  {{ competence }}
+                </label>
+              </div>
+            </div>
+            
+            <div *ngIf="!isCompetencesFormArrayReady()" class="loading-competences">
+              <p>Chargement des compétences...</p>
+            </div>
+            
+            <div *ngIf="selectedCompetences && selectedCompetences.length > 0" class="selected-competences">
+              <p><strong>Compétences sélectionnées :</strong> {{ selectedCompetences.join(', ') }}</p>
+            </div>
+            
+            <div *ngIf="selectedCompetences && selectedCompetences.length === 0 && profil.get('competences')?.touched" 
+                 class="invalid-feedback">
+              Sélectionnez au moins une compétence
+            </div>
+          </div>
 
           <!-- Motivation -->
           <div class="form-group">
@@ -297,7 +286,7 @@
             </div>
           </div>
 
-          <!-- CV avec upload -->
+          <!-- CV avec upload et bouton d'ouverture -->
           <div class="form-group">
             <label>Curriculum Vitae (CV) *</label>
             <div class="file-upload-section">
@@ -315,7 +304,7 @@
                 </button>
               </div>
               
-              <!-- Aperçu du CV -->
+              <!-- Aperçu du nouveau CV -->
               <div *ngIf="cvPreview" class="file-preview">
                 <div class="preview-content">
                   <mat-icon>description</mat-icon>
@@ -325,24 +314,38 @@
                   </div>
                   <button type="button" 
                           class="btn btn-sm btn-outline-danger"
-                          (click)="removeCV()">
+                          (click)="removeCV()"
+                          matTooltip="Supprimer">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
               </div>
 
-              <!-- CV existant -->
+              <!-- CV existant avec bouton d'ouverture -->
               <div *ngIf="!selectedCV && volontaire?.urlCV" 
                    class="existing-document">
                 <div class="existing-file">
-                  <mat-icon>description</mat-icon>
-                  <span>CV déjà uploadé</span>
-                  <a [href]="volontaire?.urlCV || '#'" 
-                     target="_blank" 
-                     class="btn btn-sm btn-outline-primary">
-                    <mat-icon>visibility</mat-icon>
-                    Voir
-                  </a>
+                  <mat-icon class="doc-icon">description</mat-icon>
+                  <div class="file-info">
+                    <span class="file-name">CV actuel</span>
+                    <span class="file-path">{{ volontaire?.urlCV }}</span>
+                  </div>
+                  <div class="file-actions">
+                    <button 
+                      class="btn btn-sm btn-outline-primary"
+                      (click)="ouvrirDocument(volontaire?.urlCV, 'cv')"
+                      matTooltip="Ouvrir le CV">
+                      <mat-icon>visibility</mat-icon>
+                      Ouvrir
+                    </button>
+                    <button 
+                      class="btn btn-sm btn-outline-info"
+                      (click)="verifierDocument(volontaire?.urlCV, 'cv')"
+                      matTooltip="Vérifier si le document est accessible">
+                      <mat-icon>check_circle</mat-icon>
+                      Vérifier
+                    </button>
+                  </div>
                 </div>
               </div>
 

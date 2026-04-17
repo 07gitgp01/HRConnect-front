@@ -4,7 +4,7 @@
   margin: 0 auto;
 
   .container-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #008124 0%, #006b1e 100%); /* Dégradé vert PNVB */
     border-radius: 10px;
     padding: 30px;
     margin-bottom: 30px;
@@ -43,34 +43,38 @@
     .spinner-border {
       width: 3rem;
       height: 3rem;
+      color: #008124 !important; /* Vert PNVB */
+      border-right-color: transparent !important;
     }
 
     p {
       margin-top: 20px;
       font-size: 1.2rem;
-      color: #666;
+      color: #6c757d;
     }
   }
 
   .content-section {
     .card {
       border: none;
-      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 20px rgba(0, 129, 36, 0.08); /* Ombre verte légère */
       border-radius: 10px;
       overflow: hidden;
+      border-left: 4px solid #008124; /* Bordure gauche verte */
 
       .card-header {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: #e6f4e6; /* Vert PNVB très clair */
         padding: 20px 30px;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid #e9ecef;
 
         .card-title {
           font-weight: 600;
-          color: #333;
+          color: #006b1e; /* Vert PNVB foncé */
         }
 
         .card-subtitle {
           font-size: 0.9rem;
+          color: #6c757d;
         }
       }
 
@@ -86,34 +90,34 @@
     .section-title {
       font-size: 1.2rem;
       font-weight: 600;
-      color: #333;
+      color: #006b1e; /* Vert PNVB foncé */
       margin-bottom: 20px;
       padding-bottom: 10px;
-      border-bottom: 2px solid #667eea;
+      border-bottom: 2px solid #008124; /* Bordure verte PNVB */
       display: flex;
       align-items: center;
 
       i {
-        color: #667eea;
+        color: #008124; /* Vert PNVB */
       }
     }
 
     .form-label {
-      font-weight: 500;
-      color: #555;
+      font-weight: 600;
+      color: #006b1e; /* Vert PNVB foncé */
       margin-bottom: 8px;
     }
 
     .form-control, .form-select {
-      border: 1px solid #ddd;
+      border: 2px solid #e9ecef;
       border-radius: 6px;
       padding: 10px 15px;
       font-size: 1rem;
-      transition: all 0.3s;
+      transition: all 0.2s;
 
       &:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        border-color: #008124; /* Vert PNVB */
+        box-shadow: 0 0 0 0.2rem rgba(0, 129, 36, 0.25); /* Ombre verte */
       }
 
       &.ng-invalid.ng-touched {
@@ -156,7 +160,7 @@
 
       &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 5px 15px rgba(0, 129, 36, 0.15); /* Ombre verte */
       }
 
       &:disabled {
@@ -168,21 +172,23 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #008124 0%, #006b1e 100%); /* Dégradé vert PNVB */
       border: none;
+      color: white;
 
       &:hover {
-        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        background: linear-gradient(135deg, #009629 0%, #008124 100%);
+        box-shadow: 0 4px 12px rgba(0, 129, 36, 0.3);
       }
     }
 
     .btn-outline-secondary {
-      border-color: #ddd;
-      color: #666;
+      border-color: #6c757d;
+      color: #6c757d;
 
       &:hover {
-        background-color: #f8f9fa;
-        border-color: #bbb;
+        background-color: #6c757d;
+        color: white;
       }
     }
   }
@@ -193,21 +199,21 @@
     margin-bottom: 30px;
 
     &.alert-info {
-      background-color: #e7f3ff;
-      border-color: #b3d7ff;
-      color: #0066cc;
+      background-color: #e6f4e6; /* Vert PNVB très clair */
+      border-color: #b3e0b3;
+      color: #006b1e; /* Vert PNVB foncé */
     }
 
     &.alert-warning {
       background-color: #fff8e1;
       border-color: #ffe082;
-      color: #ff8f00;
+      color: #FF9800; /* Couleur warning du premier code */
     }
 
     &.alert-danger {
       background-color: #ffebee;
       border-color: #ffcdd2;
-      color: #d32f2f;
+      color: #dc3545;
     }
 
     i {
@@ -227,6 +233,35 @@
         margin-bottom: 5px;
       }
     }
+  }
+
+  /* Boutons supplémentaires harmonisés avec les couleurs PNVB */
+  .btn-outline-primary {
+    border-color: #008124;
+    color: #008124;
+    border-radius: 6px;
+
+    &:hover {
+      background-color: #008124;
+      color: white;
+    }
+  }
+
+  .btn-warning {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    border: none;
+    color: white;
+    border-radius: 6px;
+
+    &:hover {
+      background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);
+    }
+  }
+
+  /* Icônes vertes */
+  .bi {
+    vertical-align: middle;
+    color: #008124;
   }
 
   @media (max-width: 768px) {

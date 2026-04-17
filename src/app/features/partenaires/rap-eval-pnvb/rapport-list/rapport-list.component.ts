@@ -1,106 +1,134 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { RapportService } from '../../../services/rap-eval/rapport.service';
+// src/app/features/partenaires/components/rapport-list/rapport-list.component.ts
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router }                       from '@angular/router';
+import { Subject, takeUntil }           from 'rxjs';
+import { RapportService }               from '../../../services/rap-eval/rapport.service';
 import { RapportAvecDetails, RapportStats } from '../../../models/rapport-evaluation.model';
 
 @Component({
-  selector: 'app-rapport-list',
+  selector:    'app-rapport-list',
   templateUrl: './rapport-list.component.html',
-  styleUrls: ['./rapport-list.component.css']
+  styleUrls:   ['./rapport-list.component.scss']
 })
-export class RapportListComponent implements OnInit {
-  rapports: RapportAvecDetails[] = [];
+export class RapportListComponent implements OnInit, OnDestroy {
+  rapports:         RapportAvecDetails[] = [];
   filteredRapports: RapportAvecDetails[] = [];
-  stats: RapportStats | null = null;
+  stats:            RapportStats | null  = null;
   isLoading = true;
-  
-  // Filtres
-  statutFilter: string = '';
-  periodeFilter: string = '';
-  searchTerm: string = '';
-  
-  // Pagination
-  currentPage = 1;
+
+  statutFilter  = '';
+  periodeFilter = '';
+  searchTerm    = '';
+
+  currentPage  = 1;
   itemsPerPage = 10;
-  
-  // Données pour les filtres
+
   periodes: string[] = [];
-  statuts: string[] = [];
+  statuts:  string[] = [];
+
+  private destroy$ = new Subject<void>();
+  readonly math = Math;
 
   constructor(
     private rapportService: RapportService,
-    private router: Router
+    private router:         Router
   ) {}
 
   ngOnInit(): void {
-    this.loadData();
     this.periodes = this.rapportService.getPeriodesDisponibles();
-    this.statuts = this.rapportService.getStatutsDisponibles();
+    this.statuts  = this.rapportService.getStatutsDisponibles();
+    this.loadData();
   }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ─── Chargement ──────────────────────────────────────────────────────────
 
   loadData(): void {
     this.isLoading = true;
-    
-    this.rapportService.getRapportsByPartenaire(this.getPartenaireId()).subscribe({
-      next: (data) => {
-        this.rapports = data;
-        this.filteredRapports = [...data];
-        this.calculateStats();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Erreur:', error);
-        this.isLoading = false;
-      }
-    });
-    
-    this.rapportService.getStatsPartenaire(this.getPartenaireId()).subscribe({
-      next: (stats) => {
-        this.stats = stats;
-      }
-    });
-  }
+    const partenaireId = this.rapportService.getPartenaireIdFromStorage();
 
-  getPartenaireId(): number {
-    // À remplacer par l'ID réel du partenaire connecté
-    return 201;
+    this.rapportService.getRapportsByPartenaire(partenaireId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.rapports         = data;
+          this.filteredRapports = [...data];
+          this.calculateStats();
+          this.isLoading        = false;
+        },
+        error: (err) => {
+          console.error('Erreur chargement rapports:', err);
+          this.isLoading = false;
+        }
+      });
+
+    this.rapportService.getStatsPartenaire(partenaireId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next:  (stats) => this.stats = stats,
+        error: (err)   => console.error('Erreur stats:', err)
+      });
   }
 
   calculateStats(): void {
-    if (!this.stats) return;
-    
-    this.stats = {
-      ...this.stats,
-      total: this.rapports.length,
-      soumis: this.rapports.filter(r => r.statut === 'Soumis').length,
-      valide: this.rapports.filter(r => r.statut === 'Validé').length,
-      brouillon: this.rapports.filter(r => r.statut === 'Brouillon').length
+    const base = {
+      total:     this.rapports.length,
+      soumis:    this.rapports.filter(r => r.statut === 'Soumis').length,
+      valide:    this.rapports.filter(r => r.statut === 'Validé').length,
+      brouillon: this.rapports.filter(r => r.statut === 'Brouillon').length,
+      rejete:    this.rapports.filter(r => r.statut === 'Rejeté').length,
+      enAttente: this.rapports.filter(r =>
+        r.statut === 'Lu par PNVB' || r.statut === 'En attente'
+      ).length
     };
+
+    this.stats = this.stats
+      ? { ...this.stats, ...base }
+      : {
+          ...base,
+          moyenneEvaluation: 0,
+          parStatut:         {},
+          parPeriode:        {},
+          parPartenaire:     {}
+        };
   }
+
+  // ─── Filtres ──────────────────────────────────────────────────────────────
 
   applyFilters(): void {
-    this.filteredRapports = this.rapports.filter(rapport => {
-      const matchesStatut = !this.statutFilter || rapport.statut === this.statutFilter;
-      const matchesPeriode = !this.periodeFilter || rapport.periode === this.periodeFilter;
-      const matchesSearch = !this.searchTerm || 
-        rapport.volontaireNomComplet.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        rapport.commentaires.toLowerCase().includes(this.searchTerm.toLowerCase());
-      
-      return matchesStatut && matchesPeriode && matchesSearch;
-    });
-    
-    this.currentPage = 1; // Retour à la première page après filtrage
-  }
+    this.filteredRapports = this.rapports.filter(r => {
+      const matchStatut  = !this.statutFilter  || r.statut  === this.statutFilter;
+      const matchPeriode = !this.periodeFilter || r.periode === this.periodeFilter;
+      const term         = this.searchTerm.toLowerCase();
 
-  clearFilters(): void {
-    this.statutFilter = '';
-    this.periodeFilter = '';
-    this.searchTerm = '';
-    this.filteredRapports = [...this.rapports];
+      const missionNom   = (r as any).missionNom   ?? '';
+      const commentaires = r.commentaires           ?? '';
+      const partenaire   = r.partenaireNom           ?? '';
+
+      const matchSearch = !term ||
+        missionNom.toLowerCase().includes(term)   ||
+        commentaires.toLowerCase().includes(term) ||
+        partenaire.toLowerCase().includes(term);
+
+      return matchStatut && matchPeriode && matchSearch;
+    });
     this.currentPage = 1;
   }
 
-  // Navigation
+  clearFilters(): void {
+    this.statutFilter     = '';
+    this.periodeFilter    = '';
+    this.searchTerm       = '';
+    this.filteredRapports = [...this.rapports];
+    this.currentPage      = 1;
+  }
+
+  // ─── Navigation ───────────────────────────────────────────────────────────
+
   createRapport(): void {
     this.router.navigate(['/features/partenaires/rapports/nouveau']);
   }
@@ -113,45 +141,49 @@ export class RapportListComponent implements OnInit {
     this.router.navigate(['/features/partenaires/rapports', id]);
   }
 
-  // Utilitaires d'affichage
-  getStatutBadgeClass(statut: string): string {
-    switch(statut) {
-      case 'Validé': return 'badge-success';
-      case 'Soumis': return 'badge-primary';
-      case 'Brouillon': return 'badge-secondary';
-      case 'Rejeté': return 'badge-danger';
-      case 'Lu par PNVB': return 'badge-info';
-      default: return 'badge-light';
-    }
+  // ─── Actions ──────────────────────────────────────────────────────────────
+
+  soumettreRapport(id: number | string): void {
+    if (!confirm('Soumettre ce rapport ? Cette action est définitive.')) return;
+
+    this.rapportService.soumettreRapport(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next:  () => this.loadData(),
+        error: (err) => {
+          console.error('Erreur soumission:', err);
+          alert('Erreur lors de la soumission');
+        }
+      });
   }
 
-  getStatutIcon(statut: string): string {
-    switch(statut) {
-      case 'Validé': return 'check-circle';
-      case 'Soumis': return 'send';
-      case 'Brouillon': return 'edit';
-      case 'Rejeté': return 'x-circle';
-      case 'Lu par PNVB': return 'eye';
-      default: return 'file-text';
-    }
+  deleteRapport(id: number | string): void {
+    if (!confirm('Supprimer ce rapport ?')) return;
+
+    this.rapportService.deleteRapport(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.rapports         = this.rapports.filter(r => r.id !== id);
+          this.filteredRapports = this.filteredRapports.filter(r => r.id !== id);
+          this.calculateStats();
+        },
+        error: (err) => {
+          console.error('Erreur suppression:', err);
+          alert('Erreur lors de la suppression');
+        }
+      });
   }
 
-  getEvaluationColor(score: number): string {
-    if (score >= 8) return 'text-success fw-bold';
-    if (score >= 6) return 'text-warning';
-    return 'text-danger';
+  exportToExcel(): void {
+    console.log('Export Excel — à implémenter');
   }
 
-  getEvaluationIcon(score: number): string {
-    if (score >= 8) return 'star-fill';
-    if (score >= 6) return 'star-half';
-    return 'star';
-  }
+  // ─── Pagination ───────────────────────────────────────────────────────────
 
-  // Pagination
   get paginatedRapports(): RapportAvecDetails[] {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    return this.filteredRapports.slice(startIndex, startIndex + this.itemsPerPage);
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredRapports.slice(start, start + this.itemsPerPage);
   }
 
   get totalPages(): number {
@@ -159,49 +191,49 @@ export class RapportListComponent implements OnInit {
   }
 
   goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
+    if (page >= 1 && page <= this.totalPages) this.currentPage = page;
   }
 
-  // Actions
-  soumettreRapport(id: number | string): void {
-    if (confirm('Êtes-vous sûr de vouloir soumettre ce rapport ? Cette action est définitive.')) {
-      this.rapportService.soumettreRapport(id).subscribe({
-        next: () => {
-          this.loadData();
-        },
-        error: (error) => {
-          console.error('Erreur:', error);
-          alert('Erreur lors de la soumission');
-        }
-      });
-    }
+  // ─── Utilitaires ─────────────────────────────────────────────────────────
+
+  getMissionNom(rapport: RapportAvecDetails): string {
+    return (rapport as any).missionNom ?? rapport.missionVolontaire ?? '—';
   }
 
-  deleteRapport(id: number | string): void {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce rapport ?')) {
-      this.rapportService.deleteRapport(id).subscribe({
-        next: () => {
-          this.rapports = this.rapports.filter(r => r.id !== id);
-          this.filteredRapports = this.filteredRapports.filter(r => r.id !== id);
-          this.calculateStats();
-        },
-        error: (error) => {
-          console.error('Erreur:', error);
-          alert('Erreur lors de la suppression');
-        }
-      });
-    }
+  getStatutBadgeClass(statut: string): string {
+    const map: Record<string, string> = {
+      'Validé':      'badge-success',
+      'Soumis':      'badge-primary',
+      'Brouillon':   'badge-secondary',
+      'Rejeté':      'badge-danger',
+      'Lu par PNVB': 'badge-info',
+      'En attente':  'badge-warning'
+    };
+    return map[statut] || 'badge-light';
   }
 
-  // Export
-  exportToExcel(): void {
-    // À implémenter selon vos besoins
-    console.log('Export Excel des rapports');
+  getStatutIcon(statut: string): string {
+    const map: Record<string, string> = {
+      'Validé':      'check-circle',
+      'Soumis':      'send',
+      'Brouillon':   'edit',
+      'Rejeté':      'x-circle',
+      'Lu par PNVB': 'eye',
+      'En attente':  'clock'
+    };
+    return map[statut] || 'file-text';
   }
-  // Ajoutez dans la classe :
-get math() {
-  return Math;
-}
+
+  getEvaluationColor(score: number): string {
+    if (score >= 8) return 'evaluation-excellente';
+    if (score >= 6) return 'evaluation-bonne';
+    if (score >= 4) return 'evaluation-moyenne';
+    return 'evaluation-insuffisante';
+  }
+
+  getEvaluationIcon(score: number): string {
+    if (score >= 8) return 'bi-star-fill text-warning';
+    if (score >= 6) return 'bi-star-half text-warning';
+    return 'bi-star text-muted';
+  }
 }

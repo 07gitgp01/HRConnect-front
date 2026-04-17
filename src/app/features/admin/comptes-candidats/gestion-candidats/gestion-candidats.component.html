@@ -1,132 +1,208 @@
-<!-- src/app/features/admin/components/gestion-candidats/gestion-candidats.component.html -->
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h3 class="card-title">
-            <i class="fas fa-users me-2"></i>
-            Comptes des candidats
-          </h3>
-<button class="btn btn-primary" 
-        routerLink="/features/admin/comptes/creer-candidat">
-  <i class="fas fa-user-plus me-2"></i>Nouveau candidat
-</button>
-        </div>
-        <div class="card-body">
-          <!-- Filtres -->
-          <div class="row mb-4">
-            <div class="col-md-6">
-              <div class="input-group">
-                <span class="input-group-text">
-                  <i class="fas fa-search"></i>
-                </span>
-                <input type="text" class="form-control" placeholder="Rechercher par nom, prénom ou email..."
-                       [(ngModel)]="filtres.recherche" (input)="filtres.recherche = $any($event.target).value">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <select class="form-control" [(ngModel)]="filtres.statut">
-                <option value="">Tous les statuts</option>
-                <option value="Candidat">Candidat</option>
-                <option value="En attente">En attente</option>
-                <option value="Actif">Actif</option>
-                <option value="Inactif">Inactif</option>
-                <option value="Refusé">Refusé</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <div class="text-end">
-                <span class="badge bg-light text-dark">
-                  {{ candidatsFiltres.length }} candidat(s)
-                </span>
-              </div>
-            </div>
-          </div>
+<!-- src/app/features/admin/comptes/gestion-candidats/gestion-candidats.component.html -->
 
-          <!-- Tableau -->
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead class="table-light">
-                <tr>
-                  <th>Nom & Prénom</th>
-                  <th>Email</th>
-                  <th>Téléphone</th>
-                  <th>Statut</th>
-                  <th>Profil complété</th>
-                  <th>Date inscription</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngIf="isLoading">
-                  <td colspan="7" class="text-center py-4">
-                    <div class="spinner-border" role="status">
-                      <span class="visually-hidden">Chargement...</span>
-                    </div>
-                  </td>
-                </tr>
-                
-                <tr *ngFor="let candidat of candidatsFiltres" class="align-middle">
-                  <td>
-                    <strong>{{ candidat.user.prenom }} {{ candidat.user.nom }}</strong>
-                  </td>
-                  <td>{{ candidat.user.email }}</td>
-                  <td>{{ candidat.user.telephone || 'Non renseigné' }}</td>
-                  <td>
-                    <span [class]="getStatutBadgeClass(candidat.volontaire.statut)">
-                      {{ candidat.volontaire.statut }}
-                    </span>
-                  </td>
-                  <td>
-                    <i *ngIf="candidat.user.profilComplete" class="fas fa-check text-success"></i>
-                    <i *ngIf="!candidat.user.profilComplete" class="fas fa-times text-danger"></i>
-                  </td>
-                  <td>
-                    {{ candidat.user.date_inscription | date:'dd/MM/yyyy' }}
-                  </td>
-                  <td>
-                    <div class="btn-group btn-group-sm">
-                      <button class="btn btn-outline-primary" 
-        [routerLink]="['/features/admin/comptes/editer-candidat', candidat.volontaire.id]"
-        title="Éditer le profil">
-  <i class="fas fa-edit"></i>
-</button>
-                      
-                      <button *ngIf="candidat.volontaire.statut !== 'Inactif'" 
-                              class="btn btn-outline-warning"
-                              (click)="desactiverCandidat(candidat)"
-                              title="Désactiver le compte">
-                        <i class="fas fa-user-slash"></i>
-                      </button>
-                      
-                      <button *ngIf="candidat.volontaire.statut === 'Inactif'" 
-                              class="btn btn-outline-success"
-                              (click)="reactiverCandidat(candidat)"
-                              title="Réactiver le compte">
-                        <i class="fas fa-user-check"></i>
-                      </button>
-                      
-                      <button class="btn btn-outline-danger"
-                              (click)="supprimerCandidat(candidat)"
-                              title="Supprimer définitivement">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+<div class="cl-container">
 
-                <tr *ngIf="!isLoading && candidatsFiltres.length === 0">
-                  <td colspan="7" class="text-center py-4 text-muted">
-                    <i class="fas fa-users fa-2x mb-3"></i>
-                    <p>Aucun candidat trouvé</p>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+  <!-- ===== EN-TÊTE ===== -->
+  <div class="cl-header">
+    <div class="cl-header-left">
+      <div class="cl-header-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div>
+        <h1 class="cl-title">Comptes des Volontaires</h1>
+        <p class="cl-subtitle">Gérez les comptes et les profils des volontaires inscrits</p>
       </div>
     </div>
+    <button class="cl-btn-primary" routerLink="/features/admin/comptes/creer-candidat">
+      <i class="fas fa-user-plus"></i>
+      Nouveau Volontaire
+    </button>
   </div>
+
+  <!-- ===== FILTRES ===== -->
+  <div class="cl-filters">
+    <div class="cl-search-wrap">
+      <i class="fas fa-search cl-search-icon"></i>
+      <input
+        class="cl-search-input"
+        type="text"
+        [(ngModel)]="filtres.recherche"
+        (input)="appliquerFiltres()"
+        placeholder="Rechercher par nom, prénom ou email…"
+      />
+    </div>
+
+    <div class="cl-select-wrap">
+      <i class="fas fa-filter cl-select-icon"></i>
+      <select class="cl-select" [(ngModel)]="filtres.statut" (change)="appliquerFiltres()">
+        <option value="">Tous les statuts</option>
+        <option value="Candidat">Candidat</option>
+        <option value="En attente">En attente</option>
+        <option value="Actif">Actif</option>
+        <option value="Inactif">Inactif</option>
+        <option value="Refusé">Refusé</option>
+      </select>
+    </div>
+
+    <button class="cl-btn-ghost" (click)="reinitialiserFiltres()">
+      <i class="fas fa-times"></i>
+      Réinitialiser
+    </button>
+  </div>
+
+  <!-- ===== META ===== -->
+  <div class="cl-meta">
+    <span class="cl-count">
+      <i class="fas fa-list"></i>
+      {{ totalCandidats }} volontaire(s)
+    </span>
+  </div>
+
+  <!-- ===== LOADING ===== -->
+  <div class="cl-loading" *ngIf="isLoading">
+    <div class="cl-spinner"></div>
+    <p>Chargement des volontaires…</p>
+  </div>
+
+  <!-- ===== ÉTAT VIDE ===== -->
+  <div class="cl-empty" *ngIf="!isLoading && totalCandidats === 0">
+    <i class="fas fa-users cl-empty-icon"></i>
+    <h3>Aucun volontaire trouvé</h3>
+    <p *ngIf="filtres.recherche || filtres.statut">Modifiez vos critères de recherche.</p>
+    <p *ngIf="!filtres.recherche && !filtres.statut">Aucun compte enregistré pour le moment.</p>
+  </div>
+
+  <!-- ===== TABLEAU AVEC PAGINATION ===== -->
+  <div class="cl-table-wrap" *ngIf="!isLoading && totalCandidats > 0">
+    
+    <!-- Conteneur du tableau avec défilement -->
+    <div class="cl-table-container">
+      <table class="cl-table">
+        <thead>
+          <tr>
+            <th>Volontaire</th>
+            <th>Contact</th>
+            <th>Statut</th>
+            <th>Profil</th>
+            <th>Inscription</th>
+            <th class="th-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let candidat of candidatsPaginees" class="cl-row">
+
+            <!-- Volontaire -->
+            <td>
+              <div class="cl-person">
+                <div class="cl-avatar">
+                  {{ candidat.user.prenom?.charAt(0) }}{{ candidat.user.nom?.charAt(0) }}
+                </div>
+                <div class="cl-person-info">
+                  <span class="cl-person-name">{{ candidat.user.prenom }} {{ candidat.user.nom }}</span>
+                  <span class="cl-person-email">{{ candidat.user.email }}</span>
+                </div>
+              </div>
+            </td>
+
+            <!-- Contact -->
+            <td>
+              <div class="cl-contact">
+                <span class="cl-contact-phone" *ngIf="candidat.user.telephone">
+                  <i class="fas fa-phone"></i>
+                  {{ candidat.user.telephone }}
+                </span>
+                <span class="cl-contact-none" *ngIf="!candidat.user.telephone">
+                  Non renseigné
+                </span>
+              </div>
+            </td>
+
+            <!-- Statut -->
+            <td>
+              <span [class]="'cl-badge cl-badge-' + getStatutKey(candidat.volontaire.statut)">
+                {{ candidat.volontaire.statut }}
+              </span>
+            </td>
+
+            <!-- Profil complété -->
+            <td>
+              <div class="cl-profil-status">
+                <span class="cl-profil-ok" *ngIf="candidat.user.profilComplete">
+                  <i class="fas fa-check-circle"></i> Complété
+                </span>
+                <span class="cl-profil-ko" *ngIf="!candidat.user.profilComplete">
+                  <i class="fas fa-clock"></i> Incomplet
+                </span>
+              </div>
+            </td>
+
+            <!-- Date inscription -->
+            <td>
+              <div class="cl-dates">
+                <span class="cl-date-main">
+                  {{ candidat.user.date_inscription | date:'dd MMM yyyy' }}
+                </span>
+              </div>
+            </td>
+
+            <!-- Actions -->
+            <td class="td-actions">
+              <div class="cl-actions">
+
+                <!-- Éditer -->
+                <button
+                  class="cl-action-btn cl-action-edit"
+                  [routerLink]="['/features/admin/comptes/editer-candidat', candidat.volontaire.id]"
+                  title="Éditer le profil">
+                  <i class="fas fa-edit"></i>
+                </button>
+
+                <!-- Désactiver -->
+                <button
+                  *ngIf="candidat.volontaire.statut !== 'Inactif'"
+                  class="cl-action-btn cl-action-warn"
+                  (click)="desactiverCandidat(candidat)"
+                  title="Désactiver le compte">
+                  <i class="fas fa-user-slash"></i>
+                </button>
+
+                <!-- Réactiver -->
+                <button
+                  *ngIf="candidat.volontaire.statut === 'Inactif'"
+                  class="cl-action-btn cl-action-success"
+                  (click)="reactiverCandidat(candidat)"
+                  title="Réactiver le compte">
+                  <i class="fas fa-user-check"></i>
+                </button>
+
+                <!-- Supprimer -->
+                <button
+                  class="cl-action-btn cl-action-delete"
+                  (click)="supprimerCandidat(candidat)"
+                  title="Supprimer définitivement">
+                  <i class="fas fa-trash"></i>
+                </button>
+
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ===== PAGINATION ===== -->
+    <div class="cl-paginator-wrap">
+      <mat-paginator
+        #paginator
+        [length]="totalCandidats"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        [pageIndex]="currentPage"
+        (page)="onPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
+    </div>
+
+  </div>
+
 </div>

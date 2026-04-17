@@ -173,7 +173,7 @@
           </div>
 
           <!-- Barre de progression -->
-          <div class="progress-container">
+          <!-- <div class="progress-container">
             <div class="progress-bar">
               <div 
                 class="progress-fill" 
@@ -184,7 +184,7 @@
             <span class="progress-text">
               {{ projet.nombreVolontairesActuels }} / {{ projet.nombreVolontairesRequis }} volontaires
             </span>
-          </div>
+          </div> -->
         </div>
 
         <!-- Compétences requises -->
@@ -250,7 +250,7 @@
   </div>
 
   <!-- Message non authentifié -->
-  <mat-card class="auth-info-card" *ngIf="!isAuthenticated && !isLoading && projetsFiltres.length > 0">
+  <!-- <mat-card class="auth-info-card" *ngIf="!isAuthenticated && !isLoading && projetsFiltres.length > 0">
     <mat-card-content>
       <mat-icon>info</mat-icon>
       <div class="auth-info-text">
@@ -262,7 +262,7 @@
         Se connecter
       </button>
     </mat-card-content>
-  </mat-card>
+  </mat-card> -->
 
   <!-- Guide d'utilisation -->
   <mat-card class="guide-card" *ngIf="!isLoading">

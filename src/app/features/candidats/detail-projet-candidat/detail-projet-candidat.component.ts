@@ -38,20 +38,24 @@ export class DetailProjetCandidatComponent implements OnInit {
   loadProjet(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
+      console.error('❌ Aucun ID de projet dans l\'URL');
       this.error = true;
       this.loading = false;
       return;
     }
 
+    console.log('🔍 Chargement du projet avec ID:', id);
     this.loading = true;
+    
     this.projectService.getProject(id).subscribe({
       next: (projet) => {
+        console.log('✅ Projet chargé:', projet);
         this.projet = projet;
         this.loadCandidatures();
         this.loading = false;
       },
       error: (error) => {
-        console.error('Erreur chargement projet:', error);
+        console.error('❌ Erreur chargement projet:', error);
         this.error = true;
         this.loading = false;
       }
@@ -59,34 +63,45 @@ export class DetailProjetCandidatComponent implements OnInit {
   }
 
   loadCandidatures(): void {
-    if (!this.projet?.id) return;
+    if (!this.projet?.id) {
+      console.log('⚠️ Impossible de charger les candidatures: pas d\'ID de projet');
+      return;
+    }
 
     this.candidatureService.getByProject(this.projet.id).subscribe({
       next: (candidatures) => {
+        console.log('✅ Candidatures chargées:', candidatures.length);
         this.candidatures = candidatures;
         this.findUserCandidature();
       },
       error: (error) => {
-        console.error('Erreur chargement candidatures:', error);
+        console.error('❌ Erreur chargement candidatures:', error);
       }
     });
   }
 
   findUserCandidature(): void {
     const currentUser = this.authService.getCurrentUser();
-    if (!currentUser?.email || !this.candidatures.length) return;
+    if (!currentUser?.email || !this.candidatures.length) {
+      console.log('ℹ️ Pas de candidature utilisateur trouvée');
+      return;
+    }
 
     this.userCandidature = this.candidatures.find(c => 
       c.email?.toLowerCase() === currentUser.email.toLowerCase()
     );
+
+    if (this.userCandidature) {
+      console.log('✅ Candidature utilisateur trouvée:', this.userCandidature.id);
+    }
   }
 
-  // ✅ CORRECTION : Utilisation de ProjectWorkflow selon votre modèle
+  // ✅ Utilisation de ProjectWorkflow selon votre modèle
   getStatusLabel(status: string): string {
     return ProjectWorkflow.getStatusLabel(status as any);
   }
 
-  // ✅ CORRECTION : Ajout de la méthode pour obtenir la classe CSS du statut
+  // ✅ Ajout de la méthode pour obtenir la classe CSS du statut
   getStatusClass(status: string): string {
     return ProjectWorkflow.getStatusClass(status as any);
   }
@@ -116,45 +131,71 @@ export class DetailProjetCandidatComponent implements OnInit {
     return Math.max(0, diffDays);
   }
 
-  // ✅ CORRECTION : Mise à jour selon votre nouveau modèle de statuts
+  // ✅ Mise à jour selon votre nouveau modèle de statuts
   peutPostuler(): boolean {
-    if (!this.projet) return false;
+    if (!this.projet) {
+      console.log('❌ Impossible de postuler: pas de projet chargé');
+      return false;
+    }
     
-    // Vérifier si le projet est actif (anciennement 'ouvert_aux_candidatures')
-    if (this.projet.statutProjet !== 'actif') return false;
+    // Vérifier si le projet est actif
+    if (this.projet.statutProjet !== 'actif') {
+      console.log('❌ Impossible de postuler: projet non actif (statut:', this.projet.statutProjet, ')');
+      return false;
+    }
     
     // Vérifier si la date limite n'est pas dépassée
     if (this.projet.dateLimiteCandidature) {
       const deadline = new Date(this.projet.dateLimiteCandidature);
       const today = new Date();
-      if (deadline < today) return false;
+      if (deadline < today) {
+        console.log('❌ Impossible de postuler: date limite dépassée');
+        return false;
+      }
     }
     
     // Vérifier si l'utilisateur n'a pas déjà postulé
-    if (this.aDejaPostule()) return false;
+    if (this.aDejaPostule()) {
+      console.log('ℹ️ Impossible de postuler: candidature déjà envoyée');
+      return false;
+    }
     
     // Vérifier si l'utilisateur est connecté
-    return this.authService.isLoggedIn();
+    const isLoggedIn = this.authService.isLoggedIn();
+    if (!isLoggedIn) {
+      console.log('❌ Impossible de postuler: utilisateur non connecté');
+    }
+    
+    return isLoggedIn;
   }
 
   aDejaPostule(): boolean {
     return !!this.userCandidature;
   }
 
+  // ✅ CORRECTION: Route correcte vers le formulaire de candidature
   postuler(): void {
-    if (!this.projet || !this.peutPostuler()) return;
-
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      this.router.navigate(['/login']);
+    if (!this.projet || !this.peutPostuler()) {
+      console.log('❌ Conditions non remplies pour postuler');
       return;
     }
 
-    // Rediriger vers le formulaire de candidature
-    this.router.navigate(['/candidat/candidature', this.projet.id]);
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      console.log('⚠️ Utilisateur non connecté, redirection vers login');
+      this.router.navigate(['/login'], {
+        queryParams: { returnUrl: `/features/candidats/details/${this.projet.id}` }
+      });
+      return;
+    }
+
+    // ✅ Route correcte vers le formulaire de candidature
+    console.log('📝 Navigation vers le formulaire de candidature pour le projet:', this.projet.id);
+    this.router.navigate(['/features/candidats/postuler', this.projet.id]);
   }
 
   goBack(): void {
+    console.log('⬅️ Retour à la page précédente');
     this.location.back();
   }
 }

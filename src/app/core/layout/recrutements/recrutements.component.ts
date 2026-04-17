@@ -21,7 +21,7 @@ import { ProjectService } from '../../../features/services/service_projects/proj
 import { AuthService } from '../../../features/services/service_auth/auth.service';
 
 interface ProjetRecrutement {
-  id?: number;
+  id?: number| string;
   titre: string;
   descriptionCourte?: string;
   descriptionLongue?: string;
@@ -41,6 +41,23 @@ interface ProjetRecrutement {
   tauxRemplissage: number;
   estUrgent: boolean;
   joursRestants: number;
+}
+
+function toNumericId(id: string | number | undefined): number | string | undefined {
+  if (id === undefined || id === null) {
+    return undefined;
+  }
+  // Si c'est déjà un nombre, le retourner
+  if (typeof id === 'number') {
+    return id;
+  }
+  // Si c'est une chaîne qui commence par 'proj', la garder comme telle
+  if (typeof id === 'string' && id.startsWith('proj')) {
+    return id; // Garder l'ID string pour la navigation
+  }
+  // Sinon, essayer de convertir en nombre
+  const n = Number(id);
+  return isNaN(n) ? id : n;
 }
 
 @Component({
@@ -220,7 +237,8 @@ export class RecrutementsComponent implements OnInit, OnDestroy {
     }
     
     return {
-      id: projet.id,
+      // ✅ CORRIGÉ: conversion string | number | undefined → number | undefined
+      id: toNumericId(projet.id),
       titre: projet.titre,
       descriptionCourte: projet.descriptionCourte,
       descriptionLongue: projet.descriptionLongue,
@@ -346,7 +364,7 @@ export class RecrutementsComponent implements OnInit, OnDestroy {
         'Se connecter',
         { duration: 5000 }
       ).onAction().subscribe(() => {
-        this.router.navigate(['/auth/login'], {
+        this.router.navigate(['login'], {
           queryParams: { returnUrl: `/recrutements/${projet.id}` }
         });
       });
@@ -356,9 +374,16 @@ export class RecrutementsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/projets', projet.id]);
   }
 
-  voirDetails(projet: ProjetRecrutement): void {
-    this.router.navigate(['/projets', projet.id]);
+ voirDetails(projet: ProjetRecrutement): void {
+  if (!projet || !projet.id) {
+    console.error('❌ ID invalide pour le projet:', projet);
+    this.snackBar.open('Impossible d\'afficher les détails', 'Fermer', { duration: 3000 });
+    return;
   }
+  
+  // ✅ Navigation absolue vers le même chemin
+  this.router.navigate(['/detail', projet.id]);
+}
 
   getUrgenceClass(projet: ProjetRecrutement): string {
     if (!projet.estUrgent) return '';

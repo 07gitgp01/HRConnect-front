@@ -14,10 +14,11 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { provideNativeDateAdapter } from '@angular/material/core';
+import { RouterModule } from '@angular/router';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
   ],
   imports: [
     BrowserModule,
@@ -26,7 +27,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
     CoreModule,
     ConfirmDialogComponent,
     HttpClientModule,
-    
+    RouterModule, 
     // ⭐ AJOUTEZ CES MODULES ICI ⭐
     MatDatepickerModule,
     MatNativeDateModule,

@@ -1,0 +1,701 @@
+/* src/app/features/candidat/detail-candidature/detail-candidature.component.css */
+
+/* ================================================================
+   VARIABLES — palette PNVB unifiée
+   ================================================================ */
+:host {
+  --vert:         #008124;
+  --vert-fonce:   #006b1e;
+  --vert-clair:   #e6f4e6;
+  --vert-pale:    #f0faf0;
+  --vert-light:   #009629;
+  --orange:       #f57c00;
+  --orange-clair: #fff3e0;
+  --bleu:         #1565c0;
+  --bleu-clair:   #e3f2fd;
+  --rouge:        #c62828;
+  --rouge-clair:  #ffebee;
+  --gris-bg:      #f8fafc;
+  --gris-border:  #e5e7eb;
+  --gris-texte:   #1e293b;
+  --gris-muted:   #64748b;
+  --blanc:        #ffffff;
+  --shadow-sm:    0 2px 8px rgba(0, 0, 0, 0.07);
+  --shadow-md:    0 4px 20px rgba(0, 0, 0, 0.09);
+  --radius:       14px;
+}
+
+/* ================================================================
+   CONTENEUR PRINCIPAL
+   ================================================================ */
+.detail-candidature-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: calc(100vh - 64px);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* ✅ CORRECTION : empêche tout débordement horizontal au niveau racine */
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* ================================================================
+   ÉTATS CHARGEMENT / ERREUR
+   ================================================================ */
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.loading-container p,
+.error-container p {
+  margin-top: 20px;
+  font-size: 1.05rem;
+  color: var(--gris-muted);
+}
+
+.error-icon {
+  font-size: 64px !important;
+  width: 64px !important;
+  height: 64px !important;
+  color: var(--rouge);
+  margin-bottom: 16px;
+}
+
+::ng-deep .loading-container mat-spinner circle {
+  stroke: var(--vert) !important;
+}
+
+/* ================================================================
+   EN-TÊTE
+   ================================================================ */
+.header-card {
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border-left: 4px solid var(--vert);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 8px;
+  /* ✅ CORRECTION : les enfants ne peuvent pas sortir de la carte */
+  min-width: 0;
+}
+
+.back-button {
+  color: var(--vert) !important;
+  flex-shrink: 0;
+}
+
+.header-info {
+  flex: 1;
+  /* ✅ CORRECTION : empêche le texte de forcer l'extension du conteneur */
+  min-width: 0;
+  overflow: hidden;
+}
+
+.candidature-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 6px;
+  font-size: 1.7rem;
+  color: var(--vert-fonce);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.title-icon {
+  color: var(--vert);
+  font-size: 30px !important;
+  width: 30px !important;
+  height: 30px !important;
+  flex-shrink: 0;
+}
+
+.candidature-subtitle {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--gris-muted);
+  font-weight: 500;
+  /* ✅ CORRECTION : tronque si trop long */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-status {
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   BADGES DE STATUT
+   ================================================================ */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.2px;
+  /* ✅ empêche le badge de déborder */
+  white-space: nowrap;
+}
+
+.status-badge mat-icon {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.status-badge.statut-en-attente {
+  background: var(--orange-clair);
+  color: #bf360c;
+  border: 1.5px solid rgba(245, 124, 0, 0.45);
+}
+
+.status-badge.statut-entretien {
+  background: var(--bleu-clair);
+  color: var(--bleu);
+  border: 1.5px solid rgba(21, 101, 192, 0.35);
+}
+
+.status-badge.statut-acceptee {
+  background: var(--vert-clair);
+  color: var(--vert-fonce);
+  border: 1.5px solid rgba(0, 129, 36, 0.35);
+}
+
+.status-badge.statut-refusee {
+  background: var(--rouge-clair);
+  color: var(--rouge);
+  border: 1.5px solid rgba(198, 40, 40, 0.35);
+}
+
+/* ================================================================
+   TIMELINE
+   ================================================================ */
+.timeline-card {
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.timeline {
+  padding: 20px 0;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 20px;
+  padding: 16px 0;
+  position: relative;
+}
+
+.timeline-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 23px;
+  top: 56px;
+  bottom: -16px;
+  width: 2px;
+  background: var(--gris-border);
+}
+
+.timeline-item.completed:not(:last-child)::after {
+  background: var(--vert);
+}
+
+.timeline-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border: 2px solid var(--gris-border);
+}
+
+.timeline-item.completed .timeline-icon {
+  background: linear-gradient(135deg, var(--vert) 0%, var(--vert-light) 100%);
+  color: var(--blanc);
+  border-color: var(--vert);
+  box-shadow: 0 3px 10px rgba(0, 129, 36, 0.25);
+}
+
+.timeline-item.rejected .timeline-icon {
+  background: linear-gradient(135deg, #e53935 0%, var(--rouge) 100%);
+  color: var(--blanc);
+  border-color: var(--rouge);
+  box-shadow: 0 3px 10px rgba(198, 40, 40, 0.25);
+}
+
+.timeline-content {
+  flex: 1;
+  padding-top: 8px;
+  /* ✅ CORRECTION : empêche le texte de déborder */
+  min-width: 0;
+  overflow: hidden;
+}
+
+.timeline-content h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gris-texte);
+}
+
+.timeline-content p {
+  margin: 0 0 4px;
+  font-size: 0.92rem;
+  color: var(--gris-muted);
+  line-height: 1.5;
+}
+
+.timeline-content small {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.text-muted   { color: #94a3b8 !important; }
+.text-success { color: var(--vert-fonce) !important; font-weight: 600; }
+.text-danger  { color: var(--rouge) !important; font-weight: 600; }
+
+/* ================================================================
+   GRILLE DE CONTENU
+   ================================================================ */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+  align-items: start;
+  /* ✅ CORRECTION : la grille ne peut pas dépasser son parent */
+  min-width: 0;
+  width: 100%;
+}
+
+/* Les colonnes ne débordent pas */
+.main-column,
+.sidebar-column {
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ================================================================
+   CARTES — base commune
+   ================================================================ */
+.info-card,
+.lettre-card,
+.cv-card,
+.feedback-card,
+.projet-card,
+.actions-card,
+.help-card {
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  border: 1px solid rgba(0, 129, 36, 0.08);
+  animation: slideIn 0.3s ease-out;
+  /* ✅ CORRECTION : contenu interne ne peut pas faire gonfler la carte */
+  overflow: hidden;
+  min-width: 0;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 20px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--vert-clair);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--vert-fonce);
+}
+
+.section-title mat-icon {
+  color: var(--vert);
+  font-size: 26px !important;
+  width: 26px !important;
+  height: 26px !important;
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   GRILLE D'INFORMATIONS
+   ================================================================ */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--vert-pale);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 129, 36, 0.15);
+  /* ✅ CORRECTION : item ne déborde pas de la grille */
+  min-width: 0;
+  overflow: hidden;
+}
+
+.info-item mat-icon {
+  color: var(--vert);
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.info-content {
+  flex: 1;
+  /* ✅ CORRECTION : empêche le texte long (email, numéro pièce) de déborder */
+  min-width: 0;
+  overflow: hidden;
+}
+
+.info-label {
+  font-size: 0.78rem;
+  color: var(--gris-muted);
+  margin-bottom: 3px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.info-value {
+  font-size: 0.95rem;
+  color: var(--gris-texte);
+  font-weight: 600;
+  /* ✅ CORRECTION : tronque les valeurs longues (email, numéro pièce...) */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ================================================================
+   COMPÉTENCES
+   ✅ CORRECTION PRINCIPALE : les chips débordaient car mat-chip-set
+   n'avait pas de contrainte de largeur et les chips ne retournaient
+   pas à la ligne. On force le wrapping et on contraindre la largeur.
+   ================================================================ */
+.competences-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid var(--vert-clair);
+  /* ✅ empêche la section de dépasser la carte */
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.subsection-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--vert-fonce);
+}
+
+.subsection-title mat-icon {
+  color: var(--vert);
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* ✅ CORRECTION : le chip-set doit être block et autoriser le retour à la ligne */
+::ng-deep .competences-section mat-chip-set {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+::ng-deep .competences-section mat-chip-set .mdc-evolution-chip-set__chips {
+  flex-wrap: wrap !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+::ng-deep .competence-chip {
+  background: linear-gradient(135deg, var(--vert) 0%, var(--vert-light) 100%) !important;
+  color: var(--blanc) !important;
+  font-weight: 600 !important;
+  border-radius: 20px !important;
+  font-size: 0.85rem !important;
+  /* ✅ les chips ne peuvent pas dépasser la largeur dispo */
+  max-width: 100% !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+/* ================================================================
+   LETTRE DE MOTIVATION
+   ✅ CORRECTION PRINCIPALE : le texte sans espaces (saaaa...aaaa)
+   débordait horizontalement. On force le retour à la ligne.
+   ================================================================ */
+.lettre-content {
+  padding: 18px 20px;
+  background: var(--gris-bg);
+  border-radius: 10px;
+  border-left: 4px solid var(--vert);
+  line-height: 1.85;
+  color: #334155;
+  font-size: 0.97rem;
+
+  /* ✅ CORRECTIONS DÉBORDEMENT — ordre de priorité CSS */
+  overflow-wrap: break-word;   /* coupe les mots sans espace (urls, chaînes longues) */
+  word-break: break-word;      /* fallback pour les anciens navigateurs */
+  white-space: pre-wrap;       /* conserve les sauts de ligne mais autorise le wrapping */
+  hyphens: auto;               /* coupe avec trait d'union si possible */
+
+  /* ✅ contraindre la largeur au conteneur parent */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ================================================================
+   BOUTON CV
+   ================================================================ */
+.cv-button {
+  width: 100%;
+  padding: 14px 20px !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #f57c00 0%, #e65100 100%) !important;
+  color: var(--blanc) !important;
+  box-shadow: 0 4px 12px rgba(245, 124, 0, 0.28) !important;
+  transition: all 0.25s ease !important;
+}
+
+.cv-button:hover {
+  box-shadow: 0 6px 16px rgba(245, 124, 0, 0.4) !important;
+  transform: translateY(-2px);
+}
+
+/* ================================================================
+   FEEDBACK
+   ================================================================ */
+.feedback-content {
+  padding: 18px 20px;
+  background: var(--orange-clair);
+  border-radius: 10px;
+  border-left: 4px solid var(--orange);
+  color: #4e342e;
+  font-size: 0.97rem;
+  line-height: 1.7;
+  /* ✅ même protection que la lettre */
+  overflow-wrap: break-word;
+  word-break: break-word;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ================================================================
+   CARTE PROJET (sidebar)
+   ================================================================ */
+.projet-info {
+  padding: 14px 16px;
+  background: var(--vert-pale);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 129, 36, 0.12);
+}
+
+.projet-title {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--vert-fonce);
+  /* ✅ tronque si le titre est très long */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projet-description {
+  margin: 0 0 14px;
+  color: var(--gris-muted);
+  line-height: 1.6;
+  font-size: 0.93rem;
+  overflow-wrap: break-word;
+}
+
+.projet-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.projet-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gris-muted);
+  font-size: 0.92rem;
+  min-width: 0;
+}
+
+.projet-detail span {
+  /* ✅ le span texte ne déborde pas */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projet-detail mat-icon {
+  color: var(--vert);
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0;
+}
+
+.voir-projet-btn {
+  width: 100%;
+  margin-top: 6px;
+  border-color: var(--vert) !important;
+  color: var(--vert) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.voir-projet-btn:hover {
+  background: var(--vert-clair) !important;
+}
+
+/* ================================================================
+   ACTIONS (sidebar)
+   ================================================================ */
+.actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action-button {
+  width: 100%;
+  padding: 12px 16px !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  transition: all 0.2s ease !important;
+  font-size: 0.93rem !important;
+}
+
+/* ================================================================
+   AIDE
+   ================================================================ */
+.help-content {
+  padding: 14px 16px;
+  background: var(--gris-bg);
+  border-radius: 8px;
+  color: var(--gris-muted);
+  line-height: 1.65;
+  font-size: 0.92rem;
+}
+
+.help-content p {
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+/* ================================================================
+   ANIMATIONS
+   ================================================================ */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 1100px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar-column {
+    order: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .sidebar-column > * {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .detail-candidature-container { padding: 12px; }
+
+  .header-content { flex-wrap: wrap; gap: 10px; }
+
+  .header-status {
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  .status-badge {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .candidature-title { font-size: 1.3rem; }
+
+  .info-grid { grid-template-columns: 1fr; }
+
+  .timeline-item { gap: 12px; }
+  .timeline-icon { width: 38px; height: 38px; }
+
+  .sidebar-column { grid-template-columns: 1fr; }
+
+  .lettre-content { padding: 14px 16px; }
+
+  /* Sur mobile, les valeurs peuvent passer en 2 lignes plutôt que tronquer */
+  .info-value {
+    white-space: normal;
+    word-break: break-all;
+  }
+}
+
+@media (max-width: 480px) {
+  .candidature-title { font-size: 1.15rem; gap: 8px; }
+  .section-title { font-size: 1rem; }
+  .status-badge { font-size: 0.82rem; padding: 8px 12px; }
+}

@@ -1,0 +1,395 @@
+<div class="detail-projet-container">
+
+  <!-- Header -->
+  <div class="detail-header">
+    <button mat-icon-button class="back-button" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1 class="page-title">Détails de la Mission</h1>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Chargement des détails de la mission...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="!isLoading && errorMessage">
+    <mat-icon color="warn">error_outline</mat-icon>
+    <h2>{{ errorMessage }}</h2>
+    <button mat-raised-button color="primary" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Retour aux missions
+    </button>
+  </div>
+
+  <!-- Project Details -->
+  <div class="detail-content" *ngIf="!isLoading && !errorMessage && project">
+    
+    <!-- Titre et statut -->
+    <div class="project-hero">
+      <div class="hero-content">
+        <div class="hero-title-section">
+          <h1 class="project-title">{{ project.titre }}</h1>
+          <div class="project-meta-top">
+            <span class="meta-badge">
+              <mat-icon>domain</mat-icon>
+              {{ project.partenaire?.nom || 'Organisation' }}
+            </span>
+            <span class="meta-badge">
+              <mat-icon>location_on</mat-icon>
+              {{ project.regionAffectation }}
+            </span>
+            <span class="meta-badge" *ngIf="project.ville_commune">
+              <mat-icon>place</mat-icon>
+              {{ project.ville_commune }}
+            </span>
+          </div>
+        </div>
+        <div class="hero-status">
+          <div class="status-badge" [class]="getStatusClass(project.statutProjet)">
+            <mat-icon>{{ getStatusIcon(project.statutProjet) }}</mat-icon>
+            <span>{{ getStatusLabel(project.statutProjet) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions principales -->
+      <div class="hero-actions" *ngIf="canApply">
+        <button mat-raised-button color="primary" class="btn-apply-large" (click)="applyToProject()">
+          <mat-icon>send</mat-icon>
+          {{ isLoggedIn ? 'Postuler à cette mission' : 'Se connecter pour postuler' }}
+        </button>
+        <button mat-stroked-button color="primary" (click)="shareProject()">
+          <mat-icon>share</mat-icon>
+          Partager
+        </button>
+      </div>
+    </div>
+
+    <!-- Informations clés en grille -->
+    <mat-card class="key-info-card">
+      <mat-card-content>
+        <div class="key-info-grid">
+          <div class="info-box">
+            <div class="info-icon primary">
+              <mat-icon>{{ getDomainIcon(project.type_mission || '') }}</mat-icon>
+            </div>
+            <div class="info-details">
+              <span class="info-label">Domaine d'activité</span>
+              <span class="info-value">{{ project.domaineActivite || 'Non spécifié' }}</span>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-icon success">
+              <mat-icon>groups</mat-icon>
+            </div>
+            <div class="info-details">
+              <span class="info-label">Volontaires recherchés</span>
+              <span class="info-value highlight">{{ project.nombreVolontairesRequis }} postes</span>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-icon warning">
+              <mat-icon>event</mat-icon>
+            </div>
+            <div class="info-details">
+              <span class="info-label">Date de début</span>
+              <span class="info-value">{{ formatDate(project.dateDebut) }}</span>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-icon danger">
+              <mat-icon>event_available</mat-icon>
+            </div>
+            <div class="info-details">
+              <span class="info-label">Date de fin</span>
+              <span class="info-value">{{ formatDate(project.dateFin) }}</span>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-icon info">
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="info-details">
+              <span class="info-label">Durée de la mission</span>
+              <span class="info-value">{{ getProjectDuration() }}</span>
+            </div>
+          </div>
+
+          <div class="info-box" *ngIf="getDaysRemaining(project.dateLimiteCandidature) !== null">
+            <div class="info-icon" [class]="getUrgencyClass(getDaysRemaining(project.dateLimiteCandidature))">
+              <mat-icon>alarm</mat-icon>
+            </div>
+            <div class="info-details">
+              <span class="info-label">Date limite de candidature</span>
+              <span class="info-value" [class]="getUrgencyClass(getDaysRemaining(project.dateLimiteCandidature))">
+                {{ getDaysRemaining(project.dateLimiteCandidature) }} jours restants
+              </span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Contenu principal avec onglets -->
+    <mat-tab-group class="detail-tabs" animationDuration="300ms">
+      
+      <!-- Onglet Description -->
+      <mat-tab label="Description de la mission">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-icon mat-card-avatar>description</mat-icon>
+              <mat-card-title>À propos de cette mission</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="description-section">
+                <h3>Description courte</h3>
+                <p class="description-text">{{ project.descriptionCourte || 'Non renseignée' }}</p>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <div class="description-section">
+                <h3>Description détaillée</h3>
+                <p class="description-text long">{{ project.descriptionLongue || 'Non renseignée' }}</p>
+              </div>
+
+              <mat-divider *ngIf="project.conditions_particulieres"></mat-divider>
+
+              <div class="description-section" *ngIf="project.conditions_particulieres">
+                <h3>Conditions particulières</h3>
+                <p class="description-text">{{ project.conditions_particulieres }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Onglet Compétences -->
+      <mat-tab label="Compétences requises">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-icon mat-card-avatar>verified</mat-icon>
+              <mat-card-title>Profil recherché</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="competences-section">
+                <h3>Compétences et qualifications</h3>
+                <p class="section-intro" *ngIf="getCompetences().length === 0">
+                  Aucune compétence spécifique n'est requise pour cette mission.
+                </p>
+                <div class="competences-grid" *ngIf="getCompetences().length > 0">
+                  <mat-chip-set>
+                    <mat-chip *ngFor="let competence of getCompetences()" class="competence-chip">
+                      <mat-icon>check_circle</mat-icon>
+                      {{ competence }}
+                    </mat-chip>
+                  </mat-chip-set>
+                </div>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <div class="profil-section">
+                <h3>Profil idéal</h3>
+                <ul class="profil-list">
+                  <li>
+                    <mat-icon>check</mat-icon>
+                    <span>Motivation et engagement envers la mission</span>
+                  </li>
+                  <li>
+                    <mat-icon>check</mat-icon>
+                    <span>Capacité à travailler en équipe</span>
+                  </li>
+                  <li>
+                    <mat-icon>check</mat-icon>
+                    <span>Adaptabilité et flexibilité</span>
+                  </li>
+                  <li>
+                    <mat-icon>check</mat-icon>
+                    <span>Sens des responsabilités</span>
+                  </li>
+                </ul>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Onglet Avantages -->
+      <mat-tab label="Ce que nous offrons">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-icon mat-card-avatar>card_giftcard</mat-icon>
+              <mat-card-title>Avantages de la mission</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="avantages-section">
+                <h3>Avantages pour les volontaires</h3>
+                <p class="section-intro" *ngIf="getAvantages().length === 0">
+                  Les avantages seront communiqués lors de la sélection.
+                </p>
+                <div class="avantages-grid" *ngIf="getAvantages().length > 0">
+                  <div class="avantage-item" *ngFor="let avantage of getAvantages()">
+                    <mat-icon class="avantage-icon">star</mat-icon>
+                    <span>{{ avantage }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <div class="benefits-section">
+                <h3>Expérience acquise</h3>
+                <ul class="benefits-list">
+                  <li>
+                    <mat-icon>trending_up</mat-icon>
+                    <div>
+                      <strong>Développement de compétences</strong>
+                      <p>Acquérir de nouvelles compétences pratiques et professionnelles</p>
+                    </div>
+                  </li>
+                  <li>
+                    <mat-icon>people</mat-icon>
+                    <div>
+                      <strong>Réseau professionnel</strong>
+                      <p>Élargir votre réseau et créer des connexions durables</p>
+                    </div>
+                  </li>
+                  <li>
+                    <mat-icon>emoji_events</mat-icon>
+                    <div>
+                      <strong>Reconnaissance</strong>
+                      <p>Certificat de participation et lettre de recommandation</p>
+                    </div>
+                  </li>
+                  <li>
+                    <mat-icon>favorite</mat-icon>
+                    <div>
+                      <strong>Impact social</strong>
+                      <p>Contribuer concrètement au développement de votre pays</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Onglet Contact -->
+      <mat-tab label="Contact">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-icon mat-card-avatar>contact_mail</mat-icon>
+              <mat-card-title>Informations de contact</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="contact-section">
+                <h3>Responsable de la mission</h3>
+                <div class="contact-info">
+                  <div class="contact-item" *ngIf="project.contact_responsable">
+                    <mat-icon>person</mat-icon>
+                    <div>
+                      <span class="contact-label">Nom du responsable</span>
+                      <span class="contact-value">{{ project.contact_responsable }}</span>
+                    </div>
+                  </div>
+                  <div class="contact-item" *ngIf="project.email_contact">
+                    <mat-icon>email</mat-icon>
+                    <div>
+                      <span class="contact-label">Email de contact</span>
+                      <a [href]="'mailto:' + project.email_contact" class="contact-value link">
+                        {{ project.email_contact }}
+                      </a>
+                    </div>
+                  </div>
+                  <div class="contact-item">
+                    <mat-icon>domain</mat-icon>
+                    <div>
+                      <span class="contact-label">Organisation</span>
+                      <span class="contact-value">{{ project.partenaire?.nom || 'Non spécifié' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="contact-note" *ngIf="!project.contact_responsable && !project.email_contact">
+                  <mat-icon>info</mat-icon>
+                  <p>Les informations de contact seront fournies après validation de votre candidature.</p>
+                </div>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <div class="faq-section">
+                <h3>Questions fréquentes</h3>
+                <div class="faq-list">
+                  <div class="faq-item">
+                    <h4>Comment postuler ?</h4>
+                    <p>Cliquez sur le bouton "Postuler" en haut de cette page. Vous devrez être connecté pour soumettre votre candidature.</p>
+                  </div>
+                  <div class="faq-item">
+                    <h4>Quel est le délai de réponse ?</h4>
+                    <p>Les candidatures sont généralement traitées dans un délai de 7 à 14 jours ouvrables.</p>
+                  </div>
+                  <div class="faq-item">
+                    <h4>Puis-je postuler si je ne remplis pas tous les critères ?</h4>
+                    <p>Oui, nous encourageons toutes les candidatures motivées. Votre engagement compte autant que vos compétences.</p>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+
+    <!-- Call to action final -->
+    <div class="final-cta" *ngIf="canApply">
+      <mat-card class="cta-card">
+        <mat-card-content>
+          <div class="cta-content">
+            <div class="cta-text">
+              <h3>Prêt à vous engager ?</h3>
+              <p>Rejoignez cette mission et contribuez au développement du Burkina Faso</p>
+            </div>
+            <div class="cta-actions">
+              <button mat-raised-button color="primary" class="btn-apply-final" (click)="applyToProject()">
+                <mat-icon>send</mat-icon>
+                {{ isLoggedIn ? 'Postuler maintenant' : 'Se connecter pour postuler' }}
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Message si clôturé -->
+    <div class="closed-message" *ngIf="!canApply && project.statutProjet === 'cloture'">
+      <mat-card class="info-card">
+        <mat-card-content>
+          <mat-icon>info</mat-icon>
+          <h3>Cette mission est clôturée</h3>
+          <p>Cette mission n'accepte plus de nouvelles candidatures. Consultez nos autres offres disponibles.</p>
+          <button mat-raised-button color="primary" (click)="goBack()">
+            <mat-icon>arrow_back</mat-icon>
+            Voir les autres missions
+          </button>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+  </div>
+
+</div>

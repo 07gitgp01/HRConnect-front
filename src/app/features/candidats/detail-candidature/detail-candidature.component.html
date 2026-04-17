@@ -1,0 +1,323 @@
+<!-- src/app/features/candidat/detail-candidature/detail-candidature.component.html -->
+<div class="detail-candidature-container">
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Chargement des détails de votre candidature...</p>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="error && !loading" class="error-container">
+    <mat-icon class="error-icon">error_outline</mat-icon>
+    <h2>Erreur</h2>
+    <p>{{ errorMessage }}</p>
+    <button mat-raised-button color="primary" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Retour
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading && !error && candidature" class="content-container">
+    
+    <!-- En-tête -->
+    <mat-card class="header-card">
+      <mat-card-content>
+        <div class="header-content">
+          <button mat-icon-button (click)="goBack()" class="back-button">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          
+          <div class="header-info">
+            <!-- <h1 class="candidature-title">
+              <mat-icon class="title-icon">description</mat-icon>
+              Ma candidature
+            </h1> -->
+            <p class="candidature-subtitle">{{ candidature.poste_vise }}</p>
+          </div>
+          
+          <div class="header-status">
+            <span [class]="'status-badge ' + getStatutBadgeClass(candidature.statut)">
+              <mat-icon>{{ getStatutIcon(candidature.statut) }}</mat-icon>
+              {{ getStatutText(candidature.statut) }}
+            </span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Timeline / Statut -->
+    <mat-card class="timeline-card">
+      <mat-card-content>
+        <h2 class="section-title">
+          <mat-icon>timeline</mat-icon>
+          Suivi de candidature
+        </h2>
+        
+        <div class="timeline">
+          <div class="timeline-item completed">
+            <div class="timeline-icon">
+              <mat-icon>send</mat-icon>
+            </div>
+            <div class="timeline-content">
+              <h3>Candidature envoyée</h3>
+              <p>{{ candidature.cree_le | date:'dd/MM/yyyy à HH:mm' }}</p>
+              <small>{{ getDelaiReponse() }}</small>
+            </div>
+          </div>
+
+          <div class="timeline-item" [class.completed]="candidature.statut === 'entretien' || candidature.statut === 'acceptee'">
+            <div class="timeline-icon">
+              <mat-icon>event_available</mat-icon>
+            </div>
+            <div class="timeline-content">
+              <h3>Entretien</h3>
+              <p *ngIf="aEntretienProgramme()">
+                Programmé le {{ getDateEntretienFormatee(candidature.date_entretien) }}
+              </p>
+              <p *ngIf="!aEntretienProgramme()" class="text-muted">En attente de programmation</p>
+            </div>
+          </div>
+
+          <div class="timeline-item" [class.completed]="candidature.statut === 'acceptee'" [class.rejected]="candidature.statut === 'refusee'">
+            <div class="timeline-icon">
+              <mat-icon>{{ candidature.statut === 'acceptee' ? 'check_circle' : (candidature.statut === 'refusee' ? 'cancel' : 'help_outline') }}</mat-icon>
+            </div>
+            <div class="timeline-content">
+              <h3>Décision finale</h3>
+              <p *ngIf="candidature.statut === 'acceptee'" class="text-success">
+                Candidature acceptée !
+              </p>
+              <p *ngIf="candidature.statut === 'refusee'" class="text-danger">
+                Candidature refusée
+              </p>
+              <p *ngIf="candidature.statut === 'en_attente' || candidature.statut === 'entretien'" class="text-muted">
+                En attente de décision
+              </p>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="content-grid">
+      <!-- Colonne principale -->
+      <div class="main-column">
+        
+        <!-- Informations de candidature -->
+        <mat-card class="info-card">
+          <mat-card-content>
+            <h2 class="section-title">
+              <mat-icon>person</mat-icon>
+              Informations de candidature
+            </h2>
+            
+            <div class="info-grid">
+              <div class="info-item">
+                <mat-icon>person</mat-icon>
+                <div class="info-content">
+                  <div class="info-label">Nom complet</div>
+                  <div class="info-value">{{ candidature.prenom }} {{ candidature.nom }}</div>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <mat-icon>email</mat-icon>
+                <div class="info-content">
+                  <div class="info-label">Email</div>
+                  <div class="info-value">{{ candidature.email }}</div>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <mat-icon>phone</mat-icon>
+                <div class="info-content">
+                  <div class="info-label">Téléphone</div>
+                  <div class="info-value">{{ candidature.telephone || 'Non renseigné' }}</div>
+                </div>
+              </div>
+
+              <div class="info-item" *ngIf="candidature.niveau_experience">
+                <mat-icon>trending_up</mat-icon>
+                <div class="info-content">
+                  <div class="info-label">Niveau d'expérience</div>
+                  <div class="info-value">{{ getNiveauExperienceText(candidature.niveau_experience) }}</div>
+                </div>
+              </div>
+
+              <div class="info-item" *ngIf="candidature.disponibilite">
+                <mat-icon>access_time</mat-icon>
+                <div class="info-content">
+                  <div class="info-label">Disponibilité</div>
+                  <div class="info-value">{{ candidature.disponibilite }}</div>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <mat-icon>badge</mat-icon>
+                <div class="info-content">
+                  <div class="info-label">Pièce d'identité</div>
+                  <div class="info-value">{{ candidature.typePiece }} - {{ candidature.numeroPiece }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compétences -->
+            <div class="competences-section" *ngIf="getCompetencesArray(candidature.competences).length > 0">
+              <h3 class="subsection-title">
+                <mat-icon>star</mat-icon>
+                Compétences
+              </h3>
+              <mat-chip-set>
+                <mat-chip *ngFor="let competence of getCompetencesArray(candidature.competences)" class="competence-chip">
+                  {{ competence }}
+                </mat-chip>
+              </mat-chip-set>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Lettre de motivation -->
+        <mat-card class="lettre-card">
+          <mat-card-content>
+            <h2 class="section-title">
+              <mat-icon>mail</mat-icon>
+              Lettre de motivation
+            </h2>
+            <div class="lettre-content">
+              {{ candidature.lettre_motivation }}
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- CV -->
+        <mat-card class="cv-card" *ngIf="candidature.cv_url">
+          <mat-card-content>
+            <h2 class="section-title">
+              <mat-icon>description</mat-icon>
+              Curriculum Vitae
+            </h2>
+            <button mat-raised-button color="accent" (click)="ouvrirCV()" class="cv-button">
+              <mat-icon>open_in_new</mat-icon>
+              Ouvrir mon CV
+            </button>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Feedback (si refusé ou accepté) -->
+       <!--  <mat-card class="feedback-card" *ngIf="candidature.commentaires">
+          <mat-card-content>
+            <h2 class="section-title">
+              <mat-icon>comment</mat-icon>
+              Retour de l'équipe PNVB
+            </h2>
+            <div class="feedback-content">
+              {{ candidature.commentaires }}
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div> -->
+
+      <!-- Sidebar -->
+      <div class="sidebar-column">
+        
+        <!-- Mission associée -->
+        <mat-card class="projet-card" *ngIf="projet">
+          <mat-card-content>
+            <h2 class="section-title">
+              <mat-icon>business</mat-icon>
+              Mission
+            </h2>
+            
+            <div class="projet-info">
+              <h3 class="projet-title">{{ projet.titre }}</h3>
+              <p class="projet-description" *ngIf="projet.descriptionCourte">
+                {{ projet.descriptionCourte }}
+              </p>
+              
+              <div class="projet-details">
+                <div class="projet-detail" *ngIf="projet.regionAffectation">
+                  <mat-icon>location_on</mat-icon>
+                  <span>{{ projet.regionAffectation }}</span>
+                </div>
+                
+                <div class="projet-detail" *ngIf="projet.dateDebut">
+                  <mat-icon>calendar_today</mat-icon>
+                  <span>Début : {{ projet.dateDebut | date:'dd/MM/yyyy' }}</span>
+                </div>
+              </div>
+              
+              <button mat-stroked-button color="primary" (click)="voirProjet()" class="voir-projet-btn">
+                <mat-icon>visibility</mat-icon>
+                Voir la mission complète
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Actions -->
+        <mat-card class="actions-card">
+          <mat-card-content>
+            <h2 class="section-title">
+              <mat-icon>settings</mat-icon>
+              Actions
+            </h2>
+            
+            <div class="actions-list">
+              <button mat-raised-button color="warn" 
+                      *ngIf="peutRetirer()"
+                      (click)="retirerCandidature()" 
+                      class="action-button">
+                <mat-icon>delete</mat-icon>
+                Retirer la candidature
+              </button>
+
+              <button mat-raised-button color="accent" 
+                      *ngIf="peutReappliquer()"
+                      (click)="reappliquer()" 
+                      class="action-button">
+                <mat-icon>replay</mat-icon>
+                Repostuler
+              </button>
+
+              <button mat-stroked-button 
+                      (click)="goBack()" 
+                      class="action-button">
+                <mat-icon>arrow_back</mat-icon>
+                Retour à mes candidatures
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Aide -->
+        <mat-card class="help-card">
+          <mat-card-content>
+            <h2 class="section-title">
+              <mat-icon>help_outline</mat-icon>
+              Besoin d'aide ?
+            </h2>
+            
+            <div class="help-content">
+              <p *ngIf="candidature.statut === 'en_attente'">
+                Votre candidature est en cours d'examen. Vous recevrez une notification par email dès qu'une décision sera prise.
+              </p>
+              
+              <p *ngIf="candidature.statut === 'entretien'">
+                Un entretien a été programmé. Préparez-vous en relisant votre candidature et en vous renseignant sur la mission.
+              </p>
+              
+              <p *ngIf="candidature.statut === 'acceptee'">
+                Félicitations ! Votre candidature a été acceptée. Vous serez contacté prochainement pour les prochaines étapes.
+              </p>
+              
+              <p *ngIf="candidature.statut === 'refusee'">
+                Votre candidature n'a pas été retenue cette fois-ci. N'hésitez pas à postuler à d'autres missions !
+              </p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>

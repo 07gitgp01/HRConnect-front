@@ -1,70 +1,53 @@
-// src/app/features/admin/models/rapport-ptf.model.ts
+// src/app/features/models/rapport-ptf.model.ts
 
-/**
- * Interface principale pour un rapport PTF
- */
 export interface RapportPTF {
   id: number;
   titre: string;
   type: RapportType;
   description?: string;
-  date: string; // ISO date string
+  date: string;
   url: string;
-  partenairePTFId?: string | number; // Peut être undefined = "tous PTF"
+  /** Nouveau format multi-PTF */
+  partenairePTFIds?: string[];
+  /** Ancien format singulier — conservé pour rétrocompatibilité db.json */
+  partenairePTFId?: string | number | null;
   categories?: string[];
-  taille?: number; // Taille en octets
+  taille?: number;
   statut: RapportStatut;
   metadata?: RapportMetadata;
   createdAt?: string;
   updatedAt?: string;
 }
 
-/**
- * Types de rapports disponibles
- */
-export type RapportType = 
+export type RapportType =
   | 'rapport_trimestriel'
   | 'rapport_annuel'
   | 'rapport_impact'
   | 'rapport_special'
   | 'autre';
 
-/**
- * Statuts possibles d'un rapport
- */
-export type RapportStatut = 
-  | 'actif'
-  | 'archive'
-  | 'brouillon';
+export type RapportStatut = 'actif' | 'archive' | 'brouillon';
 
-/**
- * Métadonnées optionnelles d'un rapport
- */
 export interface RapportMetadata {
-  periode?: string; // Ex: "Q1 2024", "Année 2023"
-  zoneGeographique?: string[]; // Ex: ["Dakar", "Thiès"]
-  themes?: string[]; // Ex: ["Éducation", "Santé"]
+  periode?: string | null;
+  zoneGeographique?: string[];
+  themes?: string[];
   auteur?: string;
   version?: string;
   nombrePages?: number;
   langue?: string;
 }
 
-/**
- * Requête pour uploader un nouveau rapport
- */
 export interface RapportPTFUploadRequest {
   titre: string;
   type: RapportType;
   description?: string;
-  partenairePTFId?: string | number;
+  /** IDs des PTF destinataires. Vide = visible par tous */
+  partenairePTFIds?: string[];
   categories?: string[];
   metadata?: RapportMetadata;
 }
 
-/**
- * Réponse de l'API pour la liste des rapports
- */
 export interface RapportPTFResponse {
   rapports: RapportPTF[];
   total: number;
@@ -73,9 +56,6 @@ export interface RapportPTFResponse {
   totalPages: number;
 }
 
-/**
- * Paramètres de recherche et filtrage
- */
 export interface RapportPTFSearchParams {
   page?: number;
   limit?: number;
@@ -89,9 +69,6 @@ export interface RapportPTFSearchParams {
   statut?: RapportStatut;
 }
 
-/**
- * Statistiques de consultation pour un PTF
- */
 export interface StatsConsultation {
   totalRapports: number;
   rapportsConsultes: number;
@@ -100,27 +77,21 @@ export interface StatsConsultation {
   consultationsParMois?: { [mois: string]: number };
 }
 
-/**
- * Enregistrement d'une consultation
- */
 export interface ConsultationRapport {
   id: number;
   rapportId: number;
-  partenairePTFId: number;
+  partenairePTFId: string;
   dateConsultation: string;
   typeConsultation: 'telechargement' | 'preview';
 }
 
-/**
- * Statistiques globales (pour admin)
- */
 export interface StatsGlobales {
   totalRapports: number;
   rapportsParType: { [type: string]: number };
   consultationsTotal: number;
   consultationsParMois: { [mois: string]: number };
   ptfLesPlsActifs: Array<{
-    ptfId: number;
+    ptfId: string;
     ptfNom: string;
     nombreConsultations: number;
   }>;

@@ -5,7 +5,6 @@
     <div class="role-info">
       <p><strong>Espace réservé aux candidats volontaires</strong></p>
       <p>Créez votre compte pour postuler aux missions de bénévolat du PNVB</p>
-      <p><small>Vous compléterez votre pièce d'identité dans votre profil après l'inscription</small></p>
     </div>
 
     <!-- Message de succès -->
@@ -103,6 +102,50 @@
           <div *ngIf="nationalite?.invalid && nationalite?.touched" class="error">
             La nationalité est requise
           </div>
+        </div>
+      </div>
+
+      <!-- ✅ NOUVEAU: Section Pièce d'identité -->
+      <div class="form-section">
+        <h3>Pièce d'Identité</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Type de pièce d'identité *</label>
+            <select formControlName="typePiece" class="form-control"
+                    [class.is-invalid]="typePiece?.invalid && typePiece?.touched"
+                    (change)="onTypePieceChange()">
+              <option value="CNIB">CNIB</option>
+              <option value="PASSEPORT">Passeport</option>
+            </select>
+            <div *ngIf="typePiece?.invalid && typePiece?.touched" class="error">
+              Le type de pièce est requis
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>{{ getLabelNumeroPiece() }}</label>
+            <input type="text" formControlName="numeroPiece" class="form-control"
+                   [class.is-invalid]="numeroPiece?.invalid && numeroPiece?.touched"
+                   [placeholder]="getPlaceholderNumeroPiece()"
+                   [attr.maxlength]="typePieceSelectionne === 'CNIB' ? '17' : '9'"
+                   class="numero-piece-input"
+                   [class.type-cnib]="typePieceSelectionne === 'CNIB'"
+                   [class.type-passeport]="typePieceSelectionne === 'PASSEPORT'">
+            <div *ngIf="numeroPiece?.invalid && numeroPiece?.touched" class="error">
+              {{ getNumeroPieceErrorMessage() }}
+            </div>
+            <small class="form-hint">
+              {{ typePieceSelectionne === 'CNIB' 
+                 ? 'Le NIP CNIB doit contenir exactement 17 chiffres' 
+                 : 'Le numéro de passeport doit contenir 6 à 9 caractères (lettres majuscules et chiffres)' }}
+            </small>
+          </div>
+        </div>
+
+        <div class="info-note">
+          <strong>Note importante :</strong> Ces informations ne pourront pas être modifiées après l'inscription. 
+          Assurez-vous qu'elles sont correctes.
         </div>
       </div>
 
