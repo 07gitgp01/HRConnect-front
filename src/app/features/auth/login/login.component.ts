@@ -4,8 +4,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/service_auth/auth.service';
-import { Subscription } from 'rxjs';
+import { AuthSupabaseService } from '../../services/service_auth/auth-supabase.service';
+import { Subscription, from } from 'rxjs';
 import { environment } from '../../environment/environment';
+import { SupabaseService } from '../../services/supabase/supabase.service';
 
 @Component({
   selector: 'app-login',
@@ -36,6 +38,8 @@ export class LoginComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
+    private authSupabase: AuthSupabaseService,
+    private supabaseService: SupabaseService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
@@ -54,7 +58,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   private checkExistingAuth(): void {
     if (this.redirectAttempted) return;
-    
+
     if (this.auth.isLoggedIn()) {
       this.redirectAttempted = true;
       console.log('🔍 Utilisateur déjà connecté, redirection...');
@@ -109,28 +113,60 @@ export class LoginComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('🔐 Tentative de connexion pour:', email);
+    console.log('?? Tentative de connexion pour:', email);
 
-    this.auth.login(email, password).subscribe({
-      next: (user) => {
+    // Utiliser le service Supabase directement
+    from(this.supabaseService.signIn(email, password)).subscribe({
+      next: (result: { user: any, session: any, error?: any }) => {
         this.isLoading = false;
-        
-        if (user) {
-          console.log('✅ Connexion réussie pour:', user.role);
-          this.redirectAttempted = true;
-          this.redirectByRole();
-        } else {
-          this.errorMessage = 'Erreur inattendue lors de la connexion.';
-          console.error('❌ User object is null after login');
+
+        if (result.error) {
+          console.error('Supabase login error:', result.error);
+          this.errorMessage = 'Email ou mot de passe incorrect.';
+          return;
         }
+
+        if (!result.user || !result.session) {
+          this.errorMessage = 'Échec de la connexion.';
+          console.error('?? User or session is null after login');
+          return;
+        }
+
+        console.log('?? Connexion réussie pour:', result.user.email);
+        console.log('?? User ID:', result.user.id);
+
+        // Récupérer le rôle depuis nos tables personnalisées
+        this.authSupabase.getUserCompleteData(result.user.email).subscribe({
+          next: (userData) => {
+            console.log('?? Données utilisateur complètes:', userData);
+
+            if (!userData) {
+              console.error('?? Aucune donnée utilisateur trouvée pour:', result.user.email);
+              this.errorMessage = 'Utilisateur non trouvé dans nos tables. Veuillez contacter l\'administrateur.';
+              return;
+            }
+
+            // Sauvegarder manuellement dans localStorage pour éviter les erreurs TypeScript
+            localStorage.setItem('userRole', userData.role);
+            localStorage.setItem('userData', JSON.stringify(userData));
+
+            // Rediriger selon le rôle
+            this.redirectAttempted = true;
+            this.redirectByRole();
+          },
+          error: (error) => {
+            console.error('?? Erreur récupération données utilisateur:', error);
+            this.errorMessage = 'Erreur lors de la récupération des données utilisateur.';
+          }
+        });
       },
       error: (error) => {
         this.isLoading = false;
         console.error('❌ Erreur connexion:', error);
-        
+
         this.handleLoginError(error);
         this.loginForm.get('password')?.reset();
-        
+
         setTimeout(() => {
           const emailField = document.getElementById('email');
           if (emailField) (emailField as HTMLInputElement).focus();
@@ -144,7 +180,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   private handleLoginError(error: any): void {
     const errorMsg = error?.message || error?.error?.message || 'Erreur de connexion';
-    
+
     if (errorMsg.includes('désactivé')) {
       this.errorMessage = errorMsg;
     } else if (errorMsg.includes('Email ou mot de passe incorrect')) {
@@ -164,12 +200,14 @@ export class LoginComponent implements OnInit, OnDestroy {
    * ✅ CORRIGÉ: Redirection selon le rôle avec support candidat/volontaire
    */
   private redirectByRole(): void {
-    const role = this.auth.getUserRole();
-    
-    console.log('🔄 Redirection en cours pour le rôle:', role);
-    
+    const currentUser = this.authSupabase.getCurrentUser();
+    const role = currentUser?.role as any;
+
+    console.log('?? Redirection en cours pour le rôle:', role);
+    console.log('?? Current user:', currentUser);
+
     setTimeout(() => {
-      switch (role) {
+      switch (role as string) {
         // Admin (tous les formats)
         case 'admin':
         case 'super admin':
@@ -179,18 +217,18 @@ export class LoginComponent implements OnInit, OnDestroy {
         case 'super-admin':
           this.router.navigate(['/features/admin/']);
           break;
-          
+
         // Partenaire
         case 'partenaire':
           this.verifyAndRedirectPartenaire();
           break;
-          
+
         // ✅ NOUVEAU: Candidat ET Volontaire → même espace
         case 'candidat':
         case 'volontaire':
           this.router.navigate(['/features/candidats/']);
           break;
-          
+
         default:
           console.warn('Rôle inconnu ou non défini:', role);
           this.router.navigate(['/home']);
@@ -200,26 +238,26 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   private verifyAndRedirectPartenaire(): void {
-    const user = this.auth.getCurrentUser();
-    
+    const user = this.authSupabase.getCurrentUser();
+
     if (!user) {
       this.errorMessage = 'Erreur lors de la récupération des informations utilisateur.';
-      this.auth.logout();
+      this.authSupabase.logout();
       return;
     }
 
     const partenaire = user as any;
-    
-    if (partenaire.estActive === false || partenaire.compteActive === false) {
+
+    if (partenaire.est_active === false || partenaire.compte_active === false) {
       this.errorMessage = 'Votre compte partenaire a été désactivé. Veuillez contacter l\'administrateur.';
-      this.auth.logout();
-      
+      this.authSupabase.logout();
+
       this.router.navigate(['/login'], {
         queryParams: { message: 'compte_desactive' }
       });
       return;
     }
-    
+
     this.router.navigate(['/features/partenaires/']);
   }
 
@@ -228,7 +266,7 @@ export class LoginComponent implements OnInit, OnDestroy {
    */
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
-    
+
     const passwordField = document.getElementById('password') as HTMLInputElement;
     if (passwordField) {
       passwordField.type = this.showPassword ? 'text' : 'password';
@@ -259,7 +297,7 @@ export class LoginComponent implements OnInit, OnDestroy {
         password: account.password
       });
       console.log(`🔧 Remplissage automatique pour ${role}`);
-      
+
       setTimeout(() => {
         const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
         if (submitButton) submitButton.focus();
@@ -279,7 +317,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.redirectAttempted = false;
     this.showPassword = false;
-    
+
     const passwordField = document.getElementById('password') as HTMLInputElement;
     if (passwordField) {
       passwordField.type = 'password';

@@ -1,0 +1,55 @@
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-header">
+      <h2>🧪 Test Supabase Connection</h2>
+    </div>
+    <div class="card-body">
+      
+      <div class="mb-3">
+        <button class="btn btn-primary me-2" (click)="testConnection()">
+          🔗 Test Connection
+        </button>
+        <button class="btn btn-success me-2" (click)="testSignUp()">
+          ✅ Test Sign Up
+        </button>
+        <button class="btn btn-warning me-2" (click)="testSignIn()">
+          🔑 Test Sign In
+        </button>
+        <button class="btn btn-danger" (click)="signOut()">
+          🚪 Sign Out
+        </button>
+      </div>
+
+      <div *ngIf="message" class="alert mt-3" 
+           [class.alert-success]="message.type === 'success'"
+           [class.alert-danger]="message.type === 'error'"
+           [class.alert-info]="message.type === 'info'"
+           [class.alert-warning]="message.type === 'warning'">
+        <strong>{{ message.type.toUpperCase() }}:</strong> {{ message.text }}
+      </div>
+
+      <div *ngIf="currentUser" class="mt-4">
+        <h4>👤 Current User:</h4>
+        <div class="card bg-light">
+          <div class="card-body">
+            <pre>{{ currentUser | json }}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <h5>📊 Connection Status:</h5>
+        <div class="progress">
+          <div class="progress-bar" 
+               [class.bg-success]="isConnected"
+               [class.bg-danger]="!isConnected"
+               role="progressbar" 
+               style="width: 100%">
+            {{ isConnected ? '✅ Connected to Supabase' : '❌ Not Connected' }}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
