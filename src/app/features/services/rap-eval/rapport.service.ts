@@ -1,13 +1,11 @@
 // src/app/features/services/rap-eval/rapport.service.ts
 //
-// ⚠️  CE FICHIER REMPLACE L'ANCIEN service qui référençait volontaireId.
-//    Copiez-le dans src/app/features/services/rap-eval/rapport.service.ts
-//    (écrasez l'ancien fichier).
+// ✅ SERVICE COMPLET AVEC INTÉGRATION DE L'UPLOAD
 //
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, forkJoin, of, from } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import {
   RapportEvaluation,
   RapportAvecDetails,
@@ -15,12 +13,16 @@ import {
   RapportStats
 } from '../../models/rapport-evaluation.model';
 import { Partenaire } from '../../models/partenaire.model';
+import { environment } from '../../environment/environment';
 
 @Injectable({ providedIn: 'root' })
 export class RapportService {
-  private apiUrl = 'http://localhost:3000';
+  // ✅ Utilisation de environment.apiUrl
+  private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    console.log('📡 RapportService (rap-eval) initialisé avec API URL:', this.apiUrl);
+  }
 
   // ============================================================
   // CRUD BASIQUE
@@ -34,6 +36,9 @@ export class RapportService {
     return this.http.get<RapportEvaluation>(`${this.apiUrl}/rapports/${id}`);
   }
 
+  /**
+   * ✅ Créer un rapport SANS fichier
+   */
   createRapport(rapport: NouveauRapport): Observable<RapportEvaluation> {
     const rapportComplet: Omit<RapportEvaluation, 'id'> = {
       ...rapport,
@@ -46,6 +51,43 @@ export class RapportService {
     return this.http.post<RapportEvaluation>(`${this.apiUrl}/rapports`, rapportComplet);
   }
 
+  /**
+   * ✅ Créer un rapport AVEC fichier (upload d'abord)
+   */
+  createRapportWithFile(rapport: NouveauRapport, file: File): Observable<RapportEvaluation> {
+    // D'abord uploader le fichier
+    const formData = new FormData();
+    formData.append('fichier', file);
+    
+    console.log('📤 Upload du fichier pour le rapport:', file.name);
+    
+    return this.http.post<any>(`${this.apiUrl}/upload`, formData).pipe(
+      switchMap(uploadResponse => {
+        console.log('✅ Fichier uploadé avec succès:', uploadResponse);
+        
+        // Ensuite créer le rapport avec l'URL du fichier
+        const rapportComplet = {
+          ...rapport,
+          partenaireId:     rapport.partenaireId || this.getPartenaireIdFromStorage(),
+          urlDocumentAnnexe: uploadResponse.url,  // URL retournée par l'upload
+          dateSoumission:   new Date().toISOString(),
+          dateModification: new Date().toISOString(),
+          created_at:       new Date().toISOString(),
+          updated_at:       new Date().toISOString()
+        };
+        
+        return this.http.post<RapportEvaluation>(`${this.apiUrl}/rapports`, rapportComplet);
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de l\'upload ou création:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * ✅ Mettre à jour un rapport existant
+   */
   updateRapport(
     id: number | string,
     rapport: Partial<RapportEvaluation>
@@ -57,32 +99,57 @@ export class RapportService {
     });
   }
 
+  /**
+   * ✅ Mettre à jour le fichier d'un rapport existant
+   */
+  updateRapportFile(id: number | string, file: File): Observable<RapportEvaluation> {
+    const formData = new FormData();
+    formData.append('fichier', file);
+    
+    console.log('📤 Mise à jour du fichier pour le rapport:', file.name);
+    
+    return this.http.post<any>(`${this.apiUrl}/upload`, formData).pipe(
+      switchMap(uploadResponse => {
+        console.log('✅ Nouveau fichier uploadé:', uploadResponse);
+        return this.updateRapport(id, {
+          urlDocumentAnnexe: uploadResponse.url,
+          dateModification: new Date().toISOString()
+        });
+      })
+    );
+  }
+
   deleteRapport(id: number | string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/rapports/${id}`);
   }
 
   // ─── Alias pour compatibilité avec les anciens composants ────────────────
-  /** @deprecated Utilisez createRapport() */
+  /** @deprecated Utilisez createRapport() ou createRapportWithFile() */
   creerRapport(rapport: NouveauRapport): Observable<RapportEvaluation> {
     return this.createRapport(rapport);
   }
+  
   /** @deprecated Utilisez deleteRapport() */
   supprimerRapport(id: number | string): Observable<void> {
     return this.deleteRapport(id);
   }
+  
   /** @deprecated Utilisez getRapportsByPartenaire() */
   getRapportsParPartenaire(partenaireId: number | string): Observable<RapportAvecDetails[]> {
     return this.getRapportsByPartenaire(partenaireId);
   }
+  
   /** @deprecated Non implémenté — retourne un Blob vide */
   genererRapportPDF(_id: number | string): Observable<Blob> {
     return of(new Blob([''], { type: 'application/pdf' }));
   }
+  
   /** @deprecated */
   formaterDateEcheance(date?: string): string {
     if (!date) return '—';
     return new Date(date).toLocaleDateString('fr-FR');
   }
+  
   /** @deprecated Retourne un tableau vide — les types de rapport ne sont plus utilisés */
   getTypesRapport(): Observable<any[]> {
     return of([]);
@@ -157,6 +224,10 @@ export class RapportService {
     return this.createRapport({ ...rapport, statut: 'Brouillon' });
   }
 
+  sauvegarderBrouillonWithFile(rapport: NouveauRapport, file: File): Observable<RapportEvaluation> {
+    return this.createRapportWithFile({ ...rapport, statut: 'Brouillon' }, file);
+  }
+
   validerRapport(id: number | string, feedback?: string): Observable<RapportEvaluation> {
     return this.updateRapport(id, {
       statut:         'Validé',
@@ -176,7 +247,7 @@ export class RapportService {
 
   getPartenaireIdFromStorage(): string {
     try {
-      // Priorité 1 : userData (format AuthService Anthropic)
+      // Priorité 1 : userData (format AuthService)
       const userData = localStorage.getItem('userData');
       if (userData) {
         const user = JSON.parse(userData);

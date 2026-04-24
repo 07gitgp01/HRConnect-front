@@ -699,3 +699,61 @@
   .section-title { font-size: 1rem; }
   .status-badge { font-size: 0.82rem; padding: 8px 12px; }
 }
+
+.cv-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.cv-preview {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pdf-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #dc2626;
+}
+
+.cv-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.cv-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.cv-size {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.cv-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cv-empty {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+}
+
+.cv-empty mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  color: #cbd5e1;
+}

@@ -5,6 +5,7 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { RapportEvaluation } from '../../models/rapport-evaluation.model';
 import { Partenaire }        from '../../models/partenaire.model';
+import { environment } from '../../environment/environment';
 
 // ── DTO enrichi côté admin ──────────────────────────────────────────────────
 export interface RapportAdmin extends RapportEvaluation {
@@ -23,9 +24,12 @@ export interface StatsAdmin {
 
 @Injectable({ providedIn: 'root' })
 export class PnvbAdminService {
-  private apiUrl = 'http://localhost:3000';
+  // ✅ Utilisation de environment.apiUrl
+  private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    console.log('📡 PnvbAdminService initialisé avec API URL:', this.apiUrl);
+  }
 
   // ── Récupérer tous les rapports enrichis ────────────────────────────────
 
@@ -157,4 +161,9 @@ export class PnvbAdminService {
       catchError(() => of(new Blob([''], { type: 'text/csv' })))
     );
   }
+
+  supprimerRapport(id: number | string): Observable<void> {
+  return this.http.delete<void>(`${this.apiUrl}/rapports/${id}`);
+}
+
 }

@@ -64,170 +64,161 @@
   <div class="cl-empty" *ngIf="!loading && getCandidaturesFiltrees().length === 0">
     <mat-icon>inbox</mat-icon>
     <h3>Aucune candidature trouvée</h3>
-    <p *ngIf="filtreStatut || filtreProjet || searchTerm">
+    <p *ngIf="filtreStatut || searchTerm">
       Modifiez vos critères de recherche.
     </p>
-    <p *ngIf="!filtreStatut && !filtreProjet && !searchTerm">
+    <p *ngIf="!filtreStatut && !searchTerm">
       Aucune candidature enregistrée pour le moment.
     </p>
   </div>
 
-  <!-- ===== TABLEAU ===== -->
+  <!-- ===== TABLEAU AVEC DÉFILEMENT ===== -->
   <div class="cl-table-wrap" *ngIf="!loading && getCandidaturesFiltrees().length > 0">
-    <table class="cl-table">
-      <thead>
-        <tr>
-          <th>Volontaire</th>
-          <th>Mission / Poste</th>
-          <th>Compétences</th>
-          <th>Statut</th>
-          <th>Date</th>
-          <th class="th-actions">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- ✅ Méthode sans accents -->
-        <tr *ngFor="let c of getCandidaturesPaginees()" class="cl-row">
+    
+    <div class="cl-table-container">
+      <table class="cl-table">
+        <thead>
+          <tr>
+            <th>Volontaire</th>
+            <th>Mission / Poste</th>
+            <th>Compétences</th>
+            <th>Statut</th>
+            <th>Date</th>
+            <th class="th-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of getCandidaturesPaginees()" class="cl-row">
 
-          <!-- Volontaire -->
-          <td>
-            <div class="cl-person">
-              <div class="cl-avatar">{{ c.prenom.charAt(0) }}{{ c.nom.charAt(0) }}</div>
-              <div class="cl-person-info">
-                <span class="cl-person-name">{{ c.prenom }} {{ c.nom }}</span>
-                <span class="cl-person-email">{{ c.email }}</span>
-                <span class="cl-person-phone" *ngIf="c.telephone">{{ c.telephone }}</span>
+            <!-- Volontaire -->
+            <td>
+              <div class="cl-person">
+                <div class="cl-avatar">{{ c.prenom.charAt(0) }}{{ c.nom.charAt(0) }}</div>
+                <div class="cl-person-info">
+                  <span class="cl-person-name">{{ c.prenom }} {{ c.nom }}</span>
+                  <span class="cl-person-email">{{ c.email }}</span>
+                  <span class="cl-person-phone" *ngIf="c.telephone">{{ c.telephone }}</span>
+                </div>
               </div>
-            </div>
-          </td>
+            </td>
 
-          <!-- Mission / Poste -->
-          <td>
-            <div class="cl-mission">
-              <span class="cl-mission-name">{{ getProjectName(c.projectId) }}</span>
-              <span class="cl-mission-region" *ngIf="getProjectRegion(c.projectId)">
-                <mat-icon>place</mat-icon>{{ getProjectRegion(c.projectId) }}
+            <!-- Mission / Poste -->
+            <td>
+              <div class="cl-mission">
+                <span class="cl-mission-name">{{ getProjectName(c.projectId) }}</span>
+                <span class="cl-mission-region" *ngIf="getProjectRegion(c.projectId)">
+                  <mat-icon>place</mat-icon>{{ getProjectRegion(c.projectId) }}
+                </span>
+                <span class="cl-mission-poste">{{ c.poste_vise }}</span>
+              </div>
+            </td>
+
+            <!-- Compétences -->
+            <td>
+              <div class="cl-chips" *ngIf="getCompetencesArray(c.competences).length > 0">
+                <span class="cl-chip">{{ getCompetencesArray(c.competences)[0] }}</span>
+                <span
+                  class="cl-chip cl-chip-more"
+                  *ngIf="getCompetencesArray(c.competences).length > 1"
+                  [matTooltip]="getCompetencesArray(c.competences).slice(1).join(', ')"
+                  matTooltipPosition="above">
+                  +{{ getCompetencesArray(c.competences).length - 1 }}
+                </span>
+              </div>
+              <span class="cl-contact-none" *ngIf="getCompetencesArray(c.competences).length === 0">—</span>
+            </td>
+
+            <!-- Statut -->
+            <td>
+              <span [class]="'cl-badge cl-badge-' + c.statut">
+                {{ getStatutText(c.statut) }}
               </span>
-              <span class="cl-mission-poste">{{ c.poste_vise }}</span>
-            </div>
-          </td>
+            </td>
 
-          <!-- Compétences — 1 affichée + badge +N -->
-          <td>
-            <div class="cl-chips" *ngIf="getCompetencesArray(c.competences).length > 0">
-              <span class="cl-chip">{{ getCompetencesArray(c.competences)[0] }}</span>
-              <span
-                class="cl-chip cl-chip-more"
-                *ngIf="getCompetencesArray(c.competences).length > 1"
-                [matTooltip]="getCompetencesArray(c.competences).slice(1).join(', ')"
-                matTooltipPosition="above">
-                +{{ getCompetencesArray(c.competences).length - 1 }}
-              </span>
-            </div>
-            <span class="cl-contact-none"
-                  *ngIf="getCompetencesArray(c.competences).length === 0">—</span>
-          </td>
+            <!-- Date -->
+            <td>
+              <div class="cl-dates">
+                <span class="cl-date-main">{{ c.cree_le | date:'dd MMM yyyy' }}</span>
+                <span class="cl-date-sub" *ngIf="c.mis_a_jour_le">
+                  MAJ {{ c.mis_a_jour_le | date:'dd/MM/yy' }}
+                </span>
+              </div>
+            </td>
 
-          <!-- Statut -->
-          <td>
-            <span [class]="'cl-badge cl-badge-' + c.statut">
-              {{ getStatutText(c.statut) }}
-            </span>
-          </td>
+            <!-- Actions -->
+            <td class="td-actions">
+              <div class="cl-actions">
 
-          <!-- Date -->
-          <td>
-            <div class="cl-dates">
-              <span class="cl-date-main">{{ c.cree_le | date:'dd MMM yyyy' }}</span>
-              <span class="cl-date-sub" *ngIf="c.mis_a_jour_le">
-                MAJ {{ c.mis_a_jour_le | date:'dd/MM/yy' }}
-              </span>
-            </div>
-          </td>
+                <!-- Voir détails -->
+                <button
+                  class="cl-action-btn cl-action-view"
+                  (click)="voirDetails(c)"
+                  matTooltip="Voir les détails"
+                  matTooltipPosition="above">
+                  <mat-icon>visibility</mat-icon>
+                </button>
 
-          <!-- Actions -->
-          <td class="td-actions">
-            <div class="cl-actions">
+                <!-- Changer statut -->
+                <button
+                  class="cl-action-btn cl-action-swap"
+                  [matMenuTriggerFor]="menuStatut"
+                  matTooltip="Changer le statut"
+                  matTooltipPosition="above"
+                  [disabled]="getTransitionsDisponibles(c.statut).length === 0">
+                  <mat-icon>swap_horiz</mat-icon>
+                </button>
 
-              <!-- Voir détails -->
-              <button
-                class="cl-action-btn cl-action-view"
-                (click)="voirDetails(c)"
-                matTooltip="Voir les détails"
-                matTooltipPosition="above">
-                <mat-icon>visibility</mat-icon>
-              </button>
+                <mat-menu #menuStatut="matMenu" class="cl-menu" yPosition="below" xPosition="before">
+                  <div class="cl-menu-header">
+                    Statut actuel : <strong>{{ getStatutText(c.statut) }}</strong>
+                  </div>
 
-              <!-- Changer statut -->
-              <button
-                class="cl-action-btn cl-action-swap"
-                [matMenuTriggerFor]="menuStatut"
-                matTooltip="Changer le statut"
-                matTooltipPosition="above"
-                [disabled]="getTransitionsDisponibles(c.statut).length === 0">
-                <mat-icon>swap_horiz</mat-icon>
-              </button>
+                  <div class="cl-menu-warn"
+                       *ngIf="acceptationBloquee(c) && (c.statut === 'en_attente' || c.statut === 'entretien')">
+                    <mat-icon>warning</mat-icon>
+                    Ce volontaire est déjà actif dans une mission
+                  </div>
 
-              <mat-menu #menuStatut="matMenu" class="cl-menu">
-                <div class="cl-menu-header">
-                  Statut actuel : <strong>{{ getStatutText(c.statut) }}</strong>
-                </div>
+                  <ng-container *ngFor="let t of getTransitionsDisponibles(c.statut)">
+                    <button
+                      mat-menu-item
+                      *ngIf="t.statut === 'acceptee'"
+                      [disabled]="acceptationBloquee(c)"
+                      (click)="changerStatut(c, t.statut)"
+                      [class.cl-menu-item-blocked]="acceptationBloquee(c)">
+                      <mat-icon>{{ t.icon }}</mat-icon>
+                      {{ t.label }}
+                      <span class="cl-menu-item-badge" *ngIf="acceptationBloquee(c)">Bloqué</span>
+                    </button>
 
-                <div class="cl-menu-warn"
-                     *ngIf="acceptationBloquee(c) &&
-                            (c.statut === 'en_attente' || c.statut === 'entretien')">
-                  <mat-icon>warning</mat-icon>
-                  Ce volontaire est déjà actif dans une mission
-                </div>
+                    <button
+                      mat-menu-item
+                      *ngIf="t.statut !== 'acceptee'"
+                      (click)="changerStatut(c, t.statut)">
+                      <mat-icon>{{ t.icon }}</mat-icon>
+                      {{ t.label }}
+                    </button>
+                  </ng-container>
+                </mat-menu>
 
-                <ng-container *ngFor="let t of getTransitionsDisponibles(c.statut)">
+                <!-- Supprimer -->
+                <button
+                  class="cl-action-btn cl-action-delete"
+                  (click)="supprimerCandidature(c.id!)"
+                  matTooltip="Supprimer"
+                  matTooltipPosition="above">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
 
-                  <button
-                    mat-menu-item
-                    *ngIf="t.statut === 'acceptee'"
-                    [disabled]="acceptationBloquee(c)"
-                    (click)="changerStatut(c, t.statut)"
-                    [class]="acceptationBloquee(c)
-                      ? 'cl-menu-item cl-menu-item-blocked'
-                      : 'cl-menu-item'"
-                    [matTooltip]="acceptationBloquee(c)
-                      ? 'Volontaire déjà actif dans une mission' : ''"
-                    matTooltipPosition="left">
-                    <mat-icon>{{ t.icon }}</mat-icon>
-                    {{ t.label }}
-                    <span class="cl-menu-item-badge" *ngIf="acceptationBloquee(c)">
-                      Bloqué
-                    </span>
-                  </button>
+              </div>
+            </td>
 
-                  <button
-                    mat-menu-item
-                    *ngIf="t.statut !== 'acceptee'"
-                    (click)="changerStatut(c, t.statut)"
-                    class="cl-menu-item">
-                    <mat-icon>{{ t.icon }}</mat-icon>
-                    {{ t.label }}
-                  </button>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-                </ng-container>
-              </mat-menu>
-
-              <!-- Supprimer -->
-              <button
-                class="cl-action-btn cl-action-delete"
-                (click)="supprimerCandidature(c.id!)"
-                matTooltip="Supprimer"
-                matTooltipPosition="above">
-                <mat-icon>delete_outline</mat-icon>
-              </button>
-
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- ✅ PAGINATION -->
+    <!-- PAGINATION -->
     <div class="cl-paginator-wrap">
       <mat-paginator
         [length]="totalCandidatures"

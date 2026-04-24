@@ -1,7 +1,6 @@
 // src/app/features/admin/admin-dashboard/admin-dashboard.component.ts
 
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { forkJoin, catchError, of } from 'rxjs';
 import { CommonModule, DatePipe } from '@angular/common'; 
 import { MatCardModule } from '@angular/material/card';
@@ -14,6 +13,7 @@ import { Chart, registerables } from 'chart.js';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CandidatureService } from '../../services/service_candi/candidature.service';
 import { ProjectService } from '../../services/service_projects/projects.service';
+import { VolontaireService } from '../../services/service_volont/volontaire.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Project, ProjectStatus } from '../../models/projects.model';
 
@@ -32,14 +32,13 @@ interface DashboardData {
   projetsEnAttente: number;
   candidaturesEnAttente: number;
   tauxCompletion: number;
-  projetsEcheanceImminente: ProjetEcheanceImminente[];  // Missions avec dateLimiteCandidature dépassée OU ≤ 2 jours
+  projetsEcheanceImminente: ProjetEcheanceImminente[];
   candidaturesUrgentes: CandidatureUrgente[];
   evolutionCandidatures: EvolutionMensuelle[];
   projetsParStatut: RepartitionStatut[];
   statistiques: Statistiques;
 }
 
-// Interface pour les missions à échéance imminente
 interface ProjetEcheanceImminente {
   id: number;
   titre: string;
@@ -47,7 +46,7 @@ interface ProjetEcheanceImminente {
   joursRestants: number;
   statut: string;
   nombrePostesDisponibles: number;
-  estDepassee: boolean;  // ✅ Nouveau: indique si la date est dépassée
+  estDepassee: boolean;
 }
 
 interface CandidatureUrgente {
@@ -117,12 +116,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private chart2: Chart | undefined;
 
   constructor(
-    private http: HttpClient,
     private authService: AuthService,
     private router: Router,
     private datePipe: DatePipe,
     private candidatureService: CandidatureService,
     private projectService: ProjectService,
+    private volontaireService: VolontaireService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -191,7 +190,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     console.log('=== DÉBUT CHARGEMENT TABLEAU DE BORD ===');
 
-    const volontaires$ = this.http.get<any[]>('http://localhost:3000/volontaires').pipe(
+    // ✅ Utilisation des services au lieu des appels HTTP directs
+    const volontaires$ = this.volontaireService.getVolontaires().pipe(
       catchError(error => {
         console.error('Erreur chargement volontaires:', error);
         return of([]);
@@ -230,6 +230,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       error: (error) => {
         console.error('❌ Erreur chargement dashboard:', error);
         this.isLoading = false;
+        this.snackBar.open('Erreur lors du chargement des données', 'Fermer', {
+          duration: 5000
+        });
       }
     });
   }
@@ -238,50 +241,50 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const { volontaires, projets, candidatures } = data;
 
     console.log('📊 Traitement des données:', {
-      volontaires: volontaires.length,
-      projets: projets.length,
-      candidatures: candidatures.length
+      volontaires: volontaires?.length || 0,
+      projets: projets?.length || 0,
+      candidatures: candidatures?.length || 0
     });
 
     // Volontaires actifs
-    this.dashboardData.totalVolontairesActifs = volontaires.filter((v: any) => 
-      this.normaliserStatut(v.statut).includes('actif')
+    this.dashboardData.totalVolontairesActifs = (volontaires || []).filter((v: any) => 
+      this.normaliserStatut(v.statut) === 'actif'
     ).length;
 
     // Projets actifs (ouverts aux candidatures)
-    this.dashboardData.totalProjetsOuverts = projets.filter((p: Project) => 
+    this.dashboardData.totalProjetsOuverts = (projets || []).filter((p: Project) => 
       p.statutProjet === 'actif'
     ).length;
 
     // Projets en attente de validation
-    this.dashboardData.projetsEnAttente = projets.filter((p: Project) => 
+    this.dashboardData.projetsEnAttente = (projets || []).filter((p: Project) => 
       p.statutProjet === 'en_attente'
     ).length;
 
     // Candidatures en attente
-    this.dashboardData.candidaturesEnAttente = candidatures.filter((c: any) => 
+    this.dashboardData.candidaturesEnAttente = (candidatures || []).filter((c: any) => 
       c.statut === 'en_attente'
     ).length;
 
     // Taux de complétion (missions terminées)
-    const projetsTermines = projets.filter((p: Project) => 
+    const projetsTermines = (projets || []).filter((p: Project) => 
       p.statutProjet === 'cloture'
     ).length;
     
-    this.dashboardData.tauxCompletion = projets.length > 0 ? 
+    this.dashboardData.tauxCompletion = (projets && projets.length > 0) ? 
       Math.round((projetsTermines / projets.length) * 100) : 0;
 
-    // ✅ Missions à échéance imminente (date limite candidature dépassée OU ≤ 2 jours)
-    this.dashboardData.projetsEcheanceImminente = this.getProjetsEcheanceImminente(projets);
+    // Missions à échéance imminente
+    this.dashboardData.projetsEcheanceImminente = this.getProjetsEcheanceImminente(projets || []);
     
     // Statistiques
     this.dashboardData.statistiques.missionsTerminees = projetsTermines;
     
     // Candidatures urgentes
-    this.dashboardData.candidaturesUrgentes = this.getCandidaturesUrgentes(candidatures);
+    this.dashboardData.candidaturesUrgentes = this.getCandidaturesUrgentes(candidatures || []);
 
     // Préparer les données pour les graphiques
-    this.prepareChartData(candidatures, projets);
+    this.prepareChartData(candidatures || [], projets || []);
 
     console.log('📊 Tableau de bord traité:', {
       totalVolontairesActifs: this.dashboardData.totalVolontairesActifs,
@@ -295,12 +298,13 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private normaliserStatut(statut: any): string {
     if (!statut) return '';
-    return statut.toString().toLowerCase().trim();
+    const s = statut.toString().toLowerCase().trim();
+    if (s === 'actif' || s === 'active') return 'actif';
+    return s;
   }
 
   // ==================== MÉTHODES DE FILTRAGE ====================
 
-  // ✅ Missions à échéance imminente: date limite candidature dépassée OU dans les 2 jours
   private getProjetsEcheanceImminente(projets: Project[]): ProjetEcheanceImminente[] {
     const aujourdhui = new Date();
     aujourdhui.setHours(0, 0, 0, 0);
@@ -308,9 +312,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const dans2Jours = new Date(aujourdhui);
     dans2Jours.setDate(aujourdhui.getDate() + 2);
     
-    return projets
+    return (projets || [])
       .filter((p: Project) => {
-        // ✅ Uniquement les projets ACTIFS (candidatures encore ouvertes)
         if (p.statutProjet !== 'actif') return false;
         if (!p.dateLimiteCandidature) return false;
         
@@ -318,7 +321,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           const dateLimite = new Date(p.dateLimiteCandidature);
           dateLimite.setHours(0, 0, 0, 0);
           
-          // ✅ Date limite dépassée OU dans les 2 prochains jours
           const estDepassee = dateLimite < aujourdhui;
           const estDans2Jours = dateLimite >= aujourdhui && dateLimite <= dans2Jours;
           
@@ -348,12 +350,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           dateLimiteCandidature: p.dateLimiteCandidature,
           joursRestants: joursRestants,
           statut: p.statutProjet,
-          nombrePostesDisponibles: postesDisponibles,
+          nombrePostesDisponibles: postesDisponibles > 0 ? postesDisponibles : 0,
           estDepassee: estDepassee
         };
       })
       .sort((a, b) => {
-        // Trier: d'abord les dates dépassées, puis par jours restants croissants
         if (a.estDepassee && !b.estDepassee) return -1;
         if (!a.estDepassee && b.estDepassee) return 1;
         return a.joursRestants - b.joursRestants;
@@ -365,7 +366,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const ilYa7Jours = new Date();
     ilYa7Jours.setDate(aujourdhui.getDate() - 7);
     
-    return candidatures
+    return (candidatures || [])
       .filter((c: any) => {
         if (c.statut !== 'en_attente' || !c.cree_le) return false;
         try {
@@ -379,7 +380,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         id: c.id,
         nom: c.nom,
         prenom: c.prenom,
-        mission: c.poste_vise || 'Mission non spécifiée',
+        mission: c.poste_vise || c.projetTitre || 'Mission non spécifiée',
         dateReception: c.cree_le
       }))
       .sort((a, b) => {
@@ -412,14 +413,15 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (estDepassee) return 'urgence-rouge';
     if (jours === 0) return 'urgence-rouge';
     if (jours <= 1) return 'urgence-rouge';
-    return 'urgence-orange';
+    if (jours <= 3) return 'urgence-orange';
+    return '';
   }
 
   // ==================== PRÉPARATION DES GRAPHIQUES ====================
 
   private prepareChartData(candidatures: any[], projets: Project[]): void {
-    this.dashboardData.evolutionCandidatures = this.calculerEvolutionMensuelle(candidatures);
-    this.dashboardData.projetsParStatut = this.calculerRepartitionProjets(projets);
+    this.dashboardData.evolutionCandidatures = this.calculerEvolutionMensuelle(candidatures || []);
+    this.dashboardData.projetsParStatut = this.calculerRepartitionProjets(projets || []);
     
     console.log('📊 Données graphiques préparées:', {
       evolutionCandidatures: this.dashboardData.evolutionCandidatures,
@@ -437,7 +439,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       const moisKey = mois[date.getMonth()];
       const annee = date.getFullYear();
 
-      const count = candidatures.filter((c: any) => {
+      const count = (candidatures || []).filter((c: any) => {
         if (!c.cree_le) return false;
         try {
           const dateCandidature = new Date(c.cree_le);
@@ -463,7 +465,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       'cloture': 'Clôturé'
     };
 
-    projets.forEach((p: Project) => {
+    (projets || []).forEach((p: Project) => {
       const statutLabel = statusLabels[p.statutProjet] || 'Non spécifié';
       statuts[statutLabel] = (statuts[statutLabel] || 0) + 1;
     });
@@ -641,6 +643,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         duration: 3000
       });
       this.loadDashboardData();
+    }).catch(() => {
+      this.snackBar.open('Erreur lors de la vérification', 'Fermer', {
+        duration: 3000
+      });
     });
   }
 

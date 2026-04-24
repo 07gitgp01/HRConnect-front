@@ -220,23 +220,29 @@
       <!-- ═══ SIDEBAR ════════════════════════════════════════════════════════ -->
       <div class="rd-sidebar">
 
-        <!-- ⭐ SECTION DOCUMENT CORRIGÉE ⭐ -->
+        <!-- ⭐ SECTION DOCUMENT - URL MASQUÉE ⭐ -->
         <div class="rd-card" *ngIf="rapport?.urlDocumentAnnexe">
           <div class="rd-card-header">
             <i class="bi bi-paperclip"></i> Document joint
           </div>
           <div class="rd-card-body">
             
-            <!-- Affichage du nom du fichier -->
+            <!-- Informations du fichier sans URL visible -->
             <div class="d-flex align-items-center mb-3 p-3 bg-light rounded">
-              <i class="bi bi-file-earmark-text fs-2 text-primary me-3"></i>
-              <div class="overflow-hidden">
-                <div class="fw-bold text-truncate">
+              <div class="rd-file-icon me-3">
+                <i *ngIf="getDocumentUrl()?.includes('.pdf')" class="bi bi-file-earmark-pdf fs-2 text-danger"></i>
+                <i *ngIf="getDocumentUrl()?.includes('.doc')" class="bi bi-file-earmark-word fs-2 text-primary"></i>
+                <i *ngIf="getDocumentUrl()?.includes('.jpg') || getDocumentUrl()?.includes('.png')" class="bi bi-file-earmark-image fs-2 text-success"></i>
+                <i *ngIf="!getDocumentUrl()?.includes('.pdf') && !getDocumentUrl()?.includes('.doc') && !getDocumentUrl()?.includes('.jpg') && !getDocumentUrl()?.includes('.png')" class="bi bi-file-earmark-text fs-2 text-secondary"></i>
+              </div>
+              <div class="overflow-hidden flex-grow-1">
+                <div class="fw-bold">
+                  <i class="bi bi-paperclip me-1"></i>
                   {{ getDocumentNom() }}
                 </div>
                 <small class="text-muted">
-                  <i class="bi bi-link me-1"></i>
-                  {{ rapport.urlDocumentAnnexe }}
+                  <i class="bi bi-files me-1"></i>
+                  Document annexe
                 </small>
               </div>
             </div>
@@ -244,11 +250,11 @@
             <!-- Boutons d'action -->
             <div class="row g-2">
               <div class="col-6">
-                <button (click)="ouvrirDocument()"
+                <button (click)="previewDocument()"
                         class="btn btn-outline-primary w-100"
                         [disabled]="getDocumentUrl() === '#'">
                   <i class="bi bi-eye me-2"></i>
-                  Voir
+                  Aperçu
                 </button>
               </div>
               <div class="col-6">
@@ -263,16 +269,16 @@
             </div>
 
             <!-- Bouton de vérification -->
-            <div class="mt-2">
+            <!-- <div class="mt-2">
               <button (click)="verifierDocument()" 
                       class="btn btn-sm btn-outline-info w-100">
                 <i class="bi bi-check-circle me-2"></i>
                 Vérifier l'accessibilité
               </button>
-            </div>
+            </div> -->
 
-            <!-- Message si c'est une ancienne URL (upload sans s) -->
-            <div *ngIf="rapport.urlDocumentAnnexe && rapport.urlDocumentAnnexe.includes('/upload/')" 
+            <!-- Message d'information pour anciens formats -->
+            <div *ngIf="rapport.urlDocumentAnnexe && rapport.urlDocumentAnnexe.includes('/upload/') && !rapport.urlDocumentAnnexe.includes('/uploads/')" 
                  class="alert alert-info mt-3 small">
               <i class="bi bi-info-circle me-2"></i>
               Ancien format d'URL automatiquement corrigé

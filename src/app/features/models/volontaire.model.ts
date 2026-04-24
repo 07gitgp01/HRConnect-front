@@ -6,7 +6,7 @@
  */
 export interface Volontaire {
   // === IDENTITÉ OBLIGATOIRE (renseignée lors de l'inscription) ===
-  id?: number | string;
+  id?: string;
   nom: string;
   prenom: string;
   email: string;
@@ -157,7 +157,7 @@ export type Disponibilite = 'Temps plein' | 'Temps partiel';
  * Interface pour la mise à jour partielle d'un volontaire
  */
 export interface VolontaireUpdate extends Partial<Volontaire> {
-  id: number | string;
+  id: string;
 }
 
 /**

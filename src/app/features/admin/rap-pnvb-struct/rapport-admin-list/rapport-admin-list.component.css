@@ -593,3 +593,145 @@
 @media (max-width: 480px) {
   .ra-stats { grid-template-columns: 1fr; }
 }
+
+
+
+.ra-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ra-modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2);
+}
+
+.ra-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ra-modal-header-delete {
+  background: linear-gradient(135deg, #dc3545, #bb2d3b);
+  color: white;
+  border-radius: 16px 16px 0 0;
+}
+
+.ra-modal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ra-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: white;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.ra-modal-close:hover {
+  opacity: 1;
+}
+
+.ra-modal-body {
+  padding: 20px;
+}
+
+.ra-modal-warn {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ra-warn-delete {
+  background: #fff1f2;
+  border-left: 4px solid #dc3545;
+  color: #be123c;
+}
+
+.ra-modal-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.ra-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.ra-modal-btn-cancel {
+  padding: 8px 16px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.ra-modal-btn-confirm {
+  padding: 8px 16px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ra-modal-btn-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ra-action-delete {
+  color: #dc3545 !important;
+  
+  &:hover {
+    background: #dc3545 !important;
+    color: white !important;
+  }
+}
+
+.ra-spinner-sm {
+  width: 16px;
+  height: 16px;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

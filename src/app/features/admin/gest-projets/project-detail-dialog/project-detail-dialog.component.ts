@@ -1,4 +1,5 @@
 // src/app/features/admin/gest-projets/project-detail-dialog/project-detail-dialog.component.ts
+
 import { Component, Inject, OnInit, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -27,15 +28,16 @@ import { PartenaireService } from '../../../services/service_parten/partenaire.s
 import { Partenaire } from '../../../models/partenaire.model';
 import { Volontaire } from '../../../models/volontaire.model';
 import { Candidature } from '../../../models/candidature.model';
+import { environment } from '../../../environment/environment';
+import { VolontaireService } from '../../../services/service_volont/volontaire.service';
 
 interface AffectationView {
-  id: string | number;
-  volontaireId: string | number;
+  id: string;
+  volontaireId: string;
   volontaire: Volontaire;
   dateAffectation?: string;
   dateFin?: string;
   statut?: string;
-  /** ✅ Marqué automatiquement si dateFin projet dépassée */
   missionExpiree?: boolean;
 }
 
@@ -57,7 +59,7 @@ interface CandidatAccepte {
   styleUrls: ['./project-detail-dialog.component.css']
 })
 export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
-  private apiUrl = 'http://localhost:3000';
+  private apiUrl = environment.apiUrl;
 
   candidatures: any[] = [];
   volontairesAffectes: AffectationView[] = [];
@@ -71,18 +73,17 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
   isLoadingCandidatsAcceptes = false;
   isLoadingPartenaires       = false;
 
-  /** ✅ Vrai si la dateFin du projet est dépassée */
   projetExpire = false;
-  /** ✅ Nombre de volontaires en fin de mission détectés automatiquement */
   nbMissionsExpirees = 0;
 
   constructor(
-    public  dialogRef: MatDialogRef<ProjectDetailDialogComponent>,
+    public dialogRef: MatDialogRef<ProjectDetailDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { project: Project },
     private projectService: ProjectService,
     private candidatureService: CandidatureService,
     private affectationService: AffectationService,
     private partenaireService: PartenaireService,
+    private volontaireService: VolontaireService,
     private http: HttpClient,
     private snackBar: MatSnackBar,
     private elementRef: ElementRef
@@ -103,36 +104,22 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // ═══════════════════════════════════════════════════
-  // DÉTECTION AUTOMATIQUE FIN DE MISSION
-  // ═══════════════════════════════════════════════════
-
-  /**
-   * ✅ Vérifie si la dateFin du projet est dépassée.
-   * Si oui, affiche une bannière et propose de terminer toutes les missions.
-   */
   private detecterProjetExpire(): void {
     const dateFin = this.data.project.dateFin;
     if (!dateFin) return;
-
     const maintenant = new Date();
-    const fin        = new Date(dateFin);
+    const fin = new Date(dateFin);
     this.projetExpire = maintenant > fin;
-
     if (this.projetExpire) {
-      console.log(`⚠️ Projet #${this.data.project.id} : dateFin dépassée (${dateFin}) → missions potentiellement expirées`);
+      console.log(`⚠️ Projet #${this.data.project.id} : dateFin dépassée (${dateFin})`);
     }
   }
-
-  // ═══════════════════════════════════════════════════
-  // CHARGEMENT
-  // ═══════════════════════════════════════════════════
 
   loadPartenaires(): void {
     this.isLoadingPartenaires = true;
     this.partenaireService.getAll().subscribe({
-      next:  (p: Partenaire[]) => { this.partenaires = p || []; this.isLoadingPartenaires = false; },
-      error: ()                 => { this.partenaires = [];       this.isLoadingPartenaires = false; }
+      next: (p: Partenaire[]) => { this.partenaires = p || []; this.isLoadingPartenaires = false; },
+      error: () => { this.partenaires = []; this.isLoadingPartenaires = false; }
     });
   }
 
@@ -142,8 +129,8 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
     if (!id) { this.candidatures = []; this.isLoadingCandidatures = false; return; }
 
     this.projectService.getCandidaturesByProject(id).subscribe({
-      next:  (c: any[]) => { this.candidatures = c || []; this.isLoadingCandidatures = false; },
-      error: ()         => { this.candidatures = [];       this.isLoadingCandidatures = false; }
+      next: (c: any[]) => { this.candidatures = c || []; this.isLoadingCandidatures = false; },
+      error: () => { this.candidatures = []; this.isLoadingCandidatures = false; }
     });
   }
 
@@ -153,32 +140,29 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
     if (!projectId) { this.volontairesAffectes = []; this.isLoadingVolontaires = false; return; }
 
     forkJoin({
-      affectations: this.http.get<any[]>(
-        `${this.apiUrl}/affectations?projectId=${projectId}`
-      ).pipe(catchError(() => of([]))),
-      volontaires: this.http.get<Volontaire[]>(
-        `${this.apiUrl}/volontaires`
-      ).pipe(catchError(() => of([])))
+      affectations: this.affectationService.getAffectationsByProject(projectId),
+      volontaires: this.http.get<Volontaire[]>(`${this.apiUrl}/volontaires`).pipe(catchError(() => of([])))
     }).subscribe({
       next: ({ affectations, volontaires }) => {
         this.volontairesAffectes = affectations.map((a: any) => {
           const vol = volontaires.find((v: Volontaire) => String(v.id) === String(a.volontaireId));
           return {
-            id:              a.id,
-            volontaireId:    a.volontaireId,
+            id: String(a.id),
+            volontaireId: String(a.volontaireId),
             dateAffectation: a.dateAffectation,
-            dateFin:         a.dateFin,
-            statut:          a.statut,
-            missionExpiree:  this.projetExpire && a.statut === 'active',
-            volontaire: vol ?? ({
-              id: a.volontaireId, prenom: 'Volontaire',
-              nom: `#${a.volontaireId}`, email: '', competences: []
+            dateFin: a.dateFin,
+            statut: a.statut,
+            missionExpiree: this.projetExpire && a.statut === 'active',
+            volontaire: vol || ({
+              id: a.volontaireId,
+              prenom: 'Volontaire',
+              nom: `#${a.volontaireId}`,
+              email: '',
+              competences: []
             } as unknown as Volontaire)
           };
         });
-
         this.nbMissionsExpirees = this.volontairesAffectes.filter(v => v.missionExpiree).length;
-        this.syncCompteurProjet(affectations.filter(a => a.statut === 'active').length);
         this.isLoadingVolontaires = false;
       },
       error: () => { this.volontairesAffectes = []; this.isLoadingVolontaires = false; }
@@ -190,95 +174,75 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
     if (!projectId) { this.candidatsAcceptes = []; return; }
 
     this.isLoadingCandidatsAcceptes = true;
+    
     forkJoin({
       candidaturesAcceptees: this.candidatureService.getByProject(projectId).pipe(
-        map((list: Candidature[]) => list.filter((c: Candidature) => c.statut === 'acceptee'))
+        map((list: Candidature[]) => list.filter((c: Candidature) => c.statut === 'acceptee')),
+        catchError(() => of([]))
       ),
-      affectationsActives: this.affectationService.getAffectationsActivesByProject(projectId)
+      affectationsActives: this.affectationService.getAffectationsActivesByProject(projectId).pipe(
+        catchError(() => of([]))
+      )
     }).subscribe({
       next: ({ candidaturesAcceptees, affectationsActives }) => {
+        console.log('📋 Candidatures acceptées:', candidaturesAcceptees);
+        console.log('📋 Affectations actives:', affectationsActives);
+        
         this.candidatsAcceptes = candidaturesAcceptees.map((c: Candidature) => ({
           candidature: c,
           dejaAffecte: affectationsActives.some(
             (a: any) => String(a.volontaireId) === String(c.volontaireId)
           )
         }));
+        
+        console.log('📋 Candidats acceptés prêts pour affectation:', this.candidatsAcceptes);
         this.isLoadingCandidatsAcceptes = false;
       },
-      error: () => { this.candidatsAcceptes = []; this.isLoadingCandidatsAcceptes = false; }
+      error: (err) => {
+        console.error('Erreur chargement candidats acceptés:', err);
+        this.candidatsAcceptes = [];
+        this.isLoadingCandidatsAcceptes = false;
+      }
     });
   }
 
-  // ═══════════════════════════════════════════════════
-  // TERMINER UNE MISSION (manuel — un seul volontaire)
-  // ═══════════════════════════════════════════════════
-
   terminerMission(affectationId: string | number, nomVolontaire: string): void {
-    if (!confirm(`Confirmer la fin de mission pour ${nomVolontaire} ?\nSon statut reviendra à "En attente" s'il n'a plus d'autres missions actives.`)) {
-      return;
-    }
-
-    console.log(`🏁 Fin de mission manuelle — affectation #${affectationId}`);
+    if (!confirm(`Confirmer la fin de mission pour ${nomVolontaire} ?`)) return;
 
     this.affectationService.terminerAffectation(affectationId).subscribe({
       next: () => {
-        this.patchCompteurProjet(this.data.project.id!, -1);
-        this.snackBar.open(
-          `Mission de ${nomVolontaire} terminée — statut remis à "En attente" si aucune autre mission active`,
-          'Fermer',
-          { duration: 5000 }
-        );
+        this.snackBar.open(`Mission de ${nomVolontaire} terminée`, 'Fermer', { duration: 5000 });
         setTimeout(() => this.rechargerTout(), 150);
       },
-      error: (err: unknown) => {
-        console.error('❌ Erreur fin de mission:', err);
+      error: () => {
         this.snackBar.open('Erreur lors de la fin de mission', 'Fermer', { duration: 3000 });
       }
     });
   }
 
-  // ═══════════════════════════════════════════════════
-  // TERMINER TOUTES LES MISSIONS (automatique — projet expiré)
-  // ═══════════════════════════════════════════════════
-
   terminerToutesLesMissions(): void {
-    const dateFin   = this.data.project.dateFin;
+    const dateFin = this.data.project.dateFin;
     const projectId = this.data.project.id;
     if (!dateFin || !projectId) return;
 
     const nb = this.volontairesAffectes.length;
-    if (!confirm(
-      `Terminer automatiquement les ${nb} mission(s) active(s) de ce projet ?\n` +
-      `Chaque volontaire concerné reviendra à "En attente" s'il n'a plus d'autres missions.`
-    )) return;
-
-    console.log(`🤖 Fin de missions automatique — projet #${projectId}, dateFin dépassée (${dateFin})`);
+    if (!confirm(`Terminer automatiquement les ${nb} mission(s) active(s) de ce projet ?`)) return;
 
     this.affectationService.terminerAffectationsExpirees(projectId, dateFin).subscribe({
       next: (nbTerminees: number) => {
         if (nbTerminees > 0) {
-          this.patchCompteurProjet(projectId, -nbTerminees);
-          this.snackBar.open(
-            `${nbTerminees} mission(s) terminée(s) automatiquement. Les volontaires sont repassés à "En attente".`,
-            'Fermer',
-            { duration: 6000 }
-          );
+          this.snackBar.open(`${nbTerminees} mission(s) terminée(s) automatiquement.`, 'Fermer', { duration: 6000 });
         } else {
           this.snackBar.open('Aucune affectation active à terminer.', 'Fermer', { duration: 3000 });
         }
         this.nbMissionsExpirees = 0;
         setTimeout(() => this.rechargerTout(), 150);
       },
-      error: (err: unknown) => {
-        console.error('❌ Erreur fin de missions automatique:', err);
+      error: () => {
         this.snackBar.open('Erreur lors de la fin des missions', 'Fermer', { duration: 3000 });
       }
     });
   }
-
-  // ═══════════════════════════════════════════════════
-  // UTILITAIRES TEMPLATE
-  // ═══════════════════════════════════════════════════
 
   get candidatsDisponiblesForAffectation(): CandidatAccepte[] {
     return this.candidatsAcceptes.filter(c => !c.dejaAffecte);
@@ -288,7 +252,7 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
     return Math.max(0, this.getNeededVolunteers() - this.volontairesAffectes.length);
   }
 
-  getNeededVolunteers():  number { return this.data.project.nombreVolontairesRequis  || 0; }
+  getNeededVolunteers(): number { return this.data.project.nombreVolontairesRequis || 0; }
   getCurrentVolunteers(): number { return this.data.project.nombreVolontairesActuels || 0; }
 
   getPartenaireNom(partenaireId?: number | string): string {
@@ -305,9 +269,9 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
   getStatusIcon(status?: ProjectStatus): string {
     switch (status || this.data.project.statutProjet) {
       case 'en_attente': return 'schedule';
-      case 'actif':      return 'play_circle';
-      case 'cloture':    return 'check_circle';
-      default:           return 'help';
+      case 'actif': return 'play_circle';
+      case 'cloture': return 'check_circle';
+      default: return 'help';
     }
   }
 
@@ -315,9 +279,9 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
     return ProjectWorkflow.getStatusLabel(status || this.data.project.statutProjet);
   }
 
-  getProjectTitle():       string { return this.data.project.titre             || 'Titre non disponible'; }
+  getProjectTitle(): string { return this.data.project.titre || 'Titre non disponible'; }
   getProjectDescription(): string { return this.data.project.descriptionLongue || this.data.project.descriptionCourte || 'Aucune description'; }
-  getProjectRegion():      string { return this.data.project.regionAffectation || 'Non spécifiée'; }
+  getProjectRegion(): string { return this.data.project.regionAffectation || 'Non spécifiée'; }
 
   getFormattedDate(d?: string | null): string {
     if (!d) return 'Non définie';
@@ -326,7 +290,7 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
   }
 
   getStartDate(): string { return this.getFormattedDate(this.data.project.dateDebut); }
-  getEndDate():   string { return this.getFormattedDate(this.data.project.dateFin);   }
+  getEndDate(): string { return this.getFormattedDate(this.data.project.dateFin); }
 
   getCompetencesText(competences?: string[] | string): string {
     if (!competences) return 'Aucune';
@@ -345,13 +309,18 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
   hasProjectCompetences(): boolean { return this.getProjectCompetences().length > 0; }
 
   getCandidatureStatutLabel(statut: string): string {
-    return ({ en_attente: 'En attente', entretien: 'Entretien', acceptee: 'Acceptée', refusee: 'Refusée' } as any)[statut] || statut;
+    const map: Record<string, string> = {
+      'en_attente': 'En attente',
+      'entretien': 'Entretien',
+      'acceptee': 'Acceptée',
+      'refusee': 'Refusée'
+    };
+    return map[statut] || statut;
   }
 
-  // ═══════════════════════════════════════════════════
-  // AFFECTATION
-  // ═══════════════════════════════════════════════════
-
+  /**
+   * ✅ Affecter un candidat accepté - VERSION CORRIGÉE
+   */
   affecterCandidatAccepte(): void {
     if (!this.candidatAccepteSelectionne || !this.data.project.id) {
       this.snackBar.open('Sélectionnez un candidat accepté', 'Fermer', { duration: 3000 });
@@ -361,119 +330,123 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
     const candidatInfo = this.candidatsAcceptes.find(
       c => String(c.candidature.volontaireId) === String(this.candidatAccepteSelectionne)
     );
-    if (!candidatInfo) { this.snackBar.open('Candidat introuvable', 'Fermer', { duration: 3000 }); return; }
+    if (!candidatInfo) { 
+      this.snackBar.open('Candidat introuvable', 'Fermer', { duration: 3000 }); 
+      return; 
+    }
 
-    const volontaireId = candidatInfo.candidature.volontaireId;
-    const projectId    = this.data.project.id;
+    if (candidatInfo.dejaAffecte) {
+      this.snackBar.open('Ce volontaire est déjà affecté à ce projet', 'Fermer', { duration: 3000 });
+      return;
+    }
 
-    // ✅ FIX : Utilisation de la nouvelle méthode complète qui vérifie l'unicité globale.
-    this.affectationService.peutEtreAffecte(volontaireId, projectId).subscribe((peutEtreAffecte: boolean) => {
-      if (!peutEtreAffecte) {
-        this.snackBar.open(
-          'Ce volontaire ne peut pas être affecté : soit il est déjà actif sur une autre mission, soit il est déjà affecté à ce projet.',
-          'Fermer',
-          { duration: 5000 }
-        );
+    const volontaireId = String(candidatInfo.candidature.volontaireId);
+    const projectId = String(this.data.project.id);
+    const nomVolontaire = `${candidatInfo.candidature.prenom} ${candidatInfo.candidature.nom}`;
+
+    console.log('🔍 Affectation - volontaireId:', volontaireId, 'projectId:', projectId);
+
+    this.isLoadingCandidatsAcceptes = true;
+
+    // Vérifier si le projet est clôturé
+    this.projectService.getProject(projectId).subscribe(projet => {
+      if (projet.statutProjet !== 'cloture') {
+        this.snackBar.open('Ce projet n\'est pas clôturé. Seules les missions clôturées peuvent accepter des affectations.', 'Fermer', { duration: 5000 });
+        this.isLoadingCandidatsAcceptes = false;
         return;
       }
 
-      this.affectationService.createAffectation({
-        volontaireId,
-        projectId,
-        dateAffectation: new Date().toISOString(),
-        statut: 'active',
-        role:   candidatInfo.candidature.poste_vise || 'Volontaire',
-        notes:  `Affectation depuis candidature acceptée #${candidatInfo.candidature.id}`
-      }).subscribe({
-        next: () => {
-          this.patchCompteurProjet(projectId, +1);
-          this.snackBar.open(
-            `${candidatInfo.candidature.prenom} ${candidatInfo.candidature.nom} affecté(e) et activé(e) ✔`,
-            'Fermer', { duration: 3500 }
-          );
-          this.candidatAccepteSelectionne = null;
-          setTimeout(() => this.rechargerTout(), 150);
-        },
-        error: (err: unknown) => {
-          console.error('❌ Erreur affectation:', err);
-          this.snackBar.open('Erreur lors de l\'affectation', 'Fermer', { duration: 3000 });
+      // Vérifier si le volontaire peut être affecté
+      this.affectationService.peutEtreAffecte(volontaireId, projectId).subscribe((peutEtreAffecte: boolean) => {
+        console.log('🔍 peutEtreAffecte:', peutEtreAffecte);
+        
+        if (!peutEtreAffecte) {
+          this.snackBar.open(`${nomVolontaire} ne peut pas être affecté à cette mission.`, 'Fermer', { duration: 5000 });
+          this.isLoadingCandidatsAcceptes = false;
+          return;
         }
+
+        // Créer l'affectation
+        this.affectationService.createAffectation({
+          volontaireId: volontaireId,
+          projectId: projectId,
+          dateAffectation: new Date().toISOString().split('T')[0],
+          statut: 'active',
+          role: candidatInfo.candidature.poste_vise || 'Volontaire',
+          notes: `Affectation depuis candidature acceptée #${candidatInfo.candidature.id}`
+        }).subscribe({
+          next: (result) => {
+            console.log('✅ Affectation créée:', result);
+            
+            // Mettre à jour le statut du volontaire
+            this.volontaireService.updateVolontaire(volontaireId, { statut: 'Actif' }).subscribe();
+            
+            // Mettre à jour le compteur du projet
+            const nouveauNb = (this.data.project.nombreVolontairesActuels || 0) + 1;
+            this.projectService.updateProject(projectId, { 
+              nombreVolontairesActuels: nouveauNb 
+            }).subscribe();
+            this.data.project.nombreVolontairesActuels = nouveauNb;
+            
+            this.snackBar.open(`${nomVolontaire} affecté(e) avec succès`, 'Fermer', { duration: 3500 });
+            this.candidatAccepteSelectionne = null;
+            this.isLoadingCandidatsAcceptes = false;
+            setTimeout(() => this.rechargerTout(), 500);
+          },
+          error: (err) => {
+            console.error('❌ Erreur affectation:', err);
+            this.snackBar.open('Erreur lors de l\'affectation: ' + (err.message || 'Erreur inconnue'), 'Fermer', { duration: 3000 });
+            this.isLoadingCandidatsAcceptes = false;
+          }
+        });
       });
     });
   }
 
-  // ═══════════════════════════════════════════════════
-  // RETRAIT
-  // ═══════════════════════════════════════════════════
-
+  /**
+   * ✅ Retirer un volontaire
+   */
   retirerVolontaire(affectationId: string | number): void {
-    if (!affectationId || !this.data.project.id) return;
-    if (!confirm('Êtes-vous sûr de vouloir retirer ce volontaire ?')) return;
-
-    const projectId    = this.data.project.id;
-    const affectation  = this.volontairesAffectes.find(a => String(a.id) === String(affectationId));
-    const volontaireId = affectation?.volontaireId ?? affectation?.volontaire?.id;
-
-    this.affectationService.supprimerAffectation(affectationId, volontaireId).pipe(
-      switchMap(() => this.patchCompteurProjetObs(projectId, -1)),
-      switchMap(() => {
-        if (!volontaireId) return of(null);
-        return this.http.get<any[]>(
-          `${this.apiUrl}/candidatures?projectId=${projectId}&volontaireId=${volontaireId}&statut=acceptee`
-        ).pipe(
-          switchMap((cands: any[]) => {
-            if (!cands?.length) return of(null);
-            return this.http.patch(`${this.apiUrl}/candidatures/${cands[0].id}`, {
-              statut: 'refusee', mis_a_jour_le: new Date().toISOString()
-            }).pipe(catchError(() => of(null)));
-          }),
-          catchError(() => of(null))
-        );
-      }),
-      catchError((err: unknown) => {
-        console.error('❌ Erreur retrait:', err);
-        this.snackBar.open('Erreur lors du retrait', 'Fermer', { duration: 3000 });
-        return of(null);
-      })
-    ).subscribe(() => {
-      this.snackBar.open('Volontaire retiré avec succès', 'Fermer', { duration: 3000 });
-      setTimeout(() => this.rechargerTout(), 150);
-    });
-  }
-
-  // ═══════════════════════════════════════════════════
-  // HELPERS PRIVÉS
-  // ═══════════════════════════════════════════════════
-
-  private patchCompteurProjetObs(projectId: string | number, delta: number) {
-    return this.http.get<Project>(`${this.apiUrl}/projets/${projectId}`).pipe(
-      switchMap((projet: Project) => {
-        const actuel  = typeof projet.nombreVolontairesActuels === 'number' ? projet.nombreVolontairesActuels : 0;
-        const nouveau = Math.max(0, actuel + delta);
-        this.data.project = { ...this.data.project, nombreVolontairesActuels: nouveau };
-        return this.http.patch(`${this.apiUrl}/projets/${projectId}`, {
-          nombreVolontairesActuels: nouveau,
-          updated_at: new Date().toISOString()
-        });
-      }),
-      catchError(() => of(null))
-    );
-  }
-
-  private patchCompteurProjet(projectId: string | number, delta: number): void {
-    this.patchCompteurProjetObs(projectId, delta).subscribe();
-  }
-
-  private syncCompteurProjet(nbActives: number): void {
-    const projectId = this.data.project.id;
-    if (!projectId) return;
-    const actuelLocal = this.data.project.nombreVolontairesActuels ?? 0;
-    if (actuelLocal !== nbActives) {
-      this.data.project = { ...this.data.project, nombreVolontairesActuels: nbActives };
-      this.http.patch(`${this.apiUrl}/projets/${projectId}`, {
-        nombreVolontairesActuels: nbActives, updated_at: new Date().toISOString()
-      }).pipe(catchError(() => of(null))).subscribe();
+    if (!affectationId) return;
+    
+    const affectation = this.volontairesAffectes.find(a => String(a.id) === String(affectationId));
+    if (!affectation) {
+      this.snackBar.open('Affectation non trouvée', 'Fermer', { duration: 3000 });
+      return;
     }
+    
+    const nomVolontaire = `${affectation.volontaire.prenom} ${affectation.volontaire.nom}`;
+    
+    if (!confirm(`Retirer ${nomVolontaire} de cette mission ?\nCette action est irréversible.`)) return;
+
+    this.isLoadingVolontaires = true;
+
+    // Supprimer l'affectation
+    this.affectationService.supprimerAffectation(affectationId).subscribe({
+      next: () => {
+        // Mettre à jour le statut du volontaire
+        if (affectation.volontaireId) {
+          this.volontaireService.updateVolontaire(affectation.volontaireId, { statut: 'En attente' }).subscribe();
+        }
+        
+        // Décrémenter le compteur du projet
+        const projectId = String(this.data.project.id);
+        this.projectService.getProject(projectId).subscribe(projet => {
+          const nouveauNb = Math.max(0, (projet.nombreVolontairesActuels || 0) - 1);
+          this.projectService.updateProject(projectId, { nombreVolontairesActuels: nouveauNb }).subscribe();
+          this.data.project.nombreVolontairesActuels = nouveauNb;
+        });
+        
+        this.snackBar.open(`${nomVolontaire} retiré avec succès`, 'Fermer', { duration: 3000 });
+        this.isLoadingVolontaires = false;
+        setTimeout(() => this.rechargerTout(), 500);
+      },
+      error: (err) => {
+        console.error('Erreur:', err);
+        this.snackBar.open('Erreur lors du retrait', 'Fermer', { duration: 3000 });
+        this.isLoadingVolontaires = false;
+      }
+    });
   }
 
   private rechargerTout(): void {
@@ -482,5 +455,7 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
     this.loadCandidatures();
   }
 
-  onClose(): void { this.dialogRef.close('refresh'); }
+  onClose(): void { 
+    this.dialogRef.close('refresh'); 
+  }
 }

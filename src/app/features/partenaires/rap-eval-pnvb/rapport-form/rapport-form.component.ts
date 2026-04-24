@@ -3,8 +3,9 @@ import { Component, OnInit }          from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router }     from '@angular/router';
 import { forkJoin, of }               from 'rxjs';
-import { catchError }                 from 'rxjs/operators';
+import { catchError, finalize }       from 'rxjs/operators';
 import { RapportService }             from '../../../services/rap-eval/rapport.service';
+import { UploadService }              from '../../../services/upload.service';
 import { NouveauRapport, RapportEvaluation } from '../../../models/rapport-evaluation.model';
 
 @Component({
@@ -27,6 +28,7 @@ export class RapportFormComponent implements OnInit {
   selectedFile:   File | null = null;
   uploadProgress  = 0;
   isUploading     = false;
+  uploadedFileUrl: string | null = null;
 
   formSubmitted  = false;
   successMessage = '';
@@ -35,6 +37,7 @@ export class RapportFormComponent implements OnInit {
   constructor(
     private fb:             FormBuilder,
     private rapportService: RapportService,
+    private uploadService:  UploadService,
     private route:          ActivatedRoute,
     private router:         Router
   ) {
@@ -96,7 +99,6 @@ export class RapportFormComponent implements OnInit {
             'Aucune mission clôturée disponible. Un rapport ne peut être soumis que pour une mission terminée.';
         }
 
-        // Auto-sélection si un seul projet
         if (projets.length === 1) {
           this.rapportForm.patchValue({ projetId: projets[0].id });
         }
@@ -125,10 +127,8 @@ export class RapportFormComponent implements OnInit {
         const r = rapport as any;
         this.projets = projets;
 
-        // Inclure le projet lié même s'il n'est plus dans la liste filtrée
-        if (r.projetId && !projets.find((p: any) => String(p.id) === String(r.projetId))) {
-          // On tente de l'ajouter via une autre source si besoin
-          console.warn('Projet du rapport absent de la liste filtrée — pré-rempli sans liste');
+        if (r.urlDocumentAnnexe) {
+          this.uploadedFileUrl = r.urlDocumentAnnexe;
         }
 
         this.rapportForm.patchValue({
@@ -170,49 +170,84 @@ export class RapportFormComponent implements OnInit {
     if (criteres) {
       const valeurs  = Object.values(criteres) as number[];
       const moyenne  = valeurs.reduce((a, b) => a + b, 0) / valeurs.length;
-      // Convertit la moyenne /5 en note /10
       this.rapportForm.patchValue({ evaluationGlobale: Math.round(moyenne * 2) });
     }
   }
 
-  // ─── Upload fichier ───────────────────────────────────────────────────────
+  // ─── Upload fichier VERS LE BACKEND SPRING BOOT ───────────────────────────
 
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     if (!file) return;
 
+    // Validation taille (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       this.errorMessage = 'Le fichier ne doit pas dépasser 5 MB';
+      event.target.value = '';
       return;
     }
 
-    const allowed = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
+    // Validation extension
+    const allowed = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.odt'];
     const ext     = '.' + file.name.split('.').pop()?.toLowerCase();
 
     if (!allowed.includes(ext)) {
-      this.errorMessage = 'Format non supporté. Utilisez PDF, DOC, JPG ou PNG';
+      this.errorMessage = 'Format non supporté. Utilisez PDF, DOC, DOCX, JPG, PNG ou ODT';
+      event.target.value = '';
       return;
     }
 
     this.selectedFile = file;
-    this.uploadFile();
+    this.uploadFileToBackend();
   }
 
-  uploadFile(): void {
+  /**
+   * ✅ Upload du fichier vers le backend Spring Boot
+   */
+  uploadFileToBackend(): void {
     if (!this.selectedFile) return;
-    this.isUploading    = true;
+    
+    this.isUploading = true;
     this.uploadProgress = 0;
-
-    const interval = setInterval(() => {
-      this.uploadProgress += 10;
-      if (this.uploadProgress >= 100) {
-        clearInterval(interval);
+    this.errorMessage = '';
+    
+    this.uploadService.uploadFile(this.selectedFile).subscribe({
+      next: (event) => {
+        if (event.type === 'progress') {
+          this.uploadProgress = event.progress;
+          console.log(`📊 Progression upload: ${event.progress}%`);
+        } else if (event.type === 'complete') {
+          // ✅ Récupérer l'URL retournée par le backend
+          this.uploadedFileUrl = event.data.url;
+          this.rapportForm.patchValue({ urlDocumentAnnexe: this.uploadedFileUrl });
+          
+          this.isUploading = false;
+          this.successMessage = `Fichier "${this.selectedFile?.name}" uploadé avec succès`;
+          this.selectedFile = null;
+          
+          // Reset file input
+          const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+          if (fileInput) fileInput.value = '';
+          
+          console.log('✅ Fichier uploadé:', this.uploadedFileUrl);
+        }
+      },
+      error: (error) => {
+        console.error('❌ Erreur upload:', error);
+        this.errorMessage = 'Erreur lors de l\'upload du fichier. Veuillez réessayer.';
         this.isUploading = false;
-        const fakeUrl = `/uploads/rapports/rapport_${Date.now()}_${this.selectedFile?.name}`;
-        this.rapportForm.patchValue({ urlDocumentAnnexe: fakeUrl });
-        this.successMessage = 'Fichier uploadé avec succès';
+        this.uploadProgress = 0;
       }
-    }, 200);
+    });
+  }
+
+  /**
+   * ✅ Supprimer le fichier attaché
+   */
+  removeFile(): void {
+    this.uploadedFileUrl = null;
+    this.rapportForm.patchValue({ urlDocumentAnnexe: '' });
+    this.successMessage = 'Fichier supprimé';
   }
 
   // ─── Soumission ───────────────────────────────────────────────────────────
@@ -226,7 +261,7 @@ export class RapportFormComponent implements OnInit {
     }
 
     this.isSubmitting = true;
-    const formData    = { ...this.rapportForm.value } as any;
+    const formData = { ...this.rapportForm.value } as any;
 
     // Dénormaliser le nom de la mission
     formData.missionNom = this.getMissionSelectionnee();
@@ -234,12 +269,18 @@ export class RapportFormComponent implements OnInit {
     // Ajouter le partenaireId
     formData.partenaireId = this.rapportService.getPartenaireIdFromStorage();
 
+    // Ajouter l'URL du fichier si uploadé
+    if (this.uploadedFileUrl) {
+      formData.urlDocumentAnnexe = this.uploadedFileUrl;
+    }
+
     if (this.isEditMode && this.rapportId) {
       this.rapportService.updateRapport(this.rapportId, formData).subscribe({
         next:  () => this.handleSuccess('Rapport mis à jour avec succès'),
         error: (err: any) => this.handleError('Erreur lors de la mise à jour', err)
       });
     } else {
+      // ✅ Utiliser createRapport (sans fichier car déjà uploadé)
       this.rapportService.createRapport(formData as NouveauRapport).subscribe({
         next:  () => this.handleSuccess('Rapport créé avec succès'),
         error: (err: any) => this.handleError('Erreur lors de la création', err)
@@ -271,6 +312,7 @@ export class RapportFormComponent implements OnInit {
     this.errorMessage = message;
     this.isSubmitting = false;
     console.error(error);
+    setTimeout(() => { this.errorMessage = ''; }, 5000);
   }
 
   private markFormGroupTouched(fg: FormGroup): void {

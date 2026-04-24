@@ -178,31 +178,71 @@
         </mat-card>
 
         <!-- Lettre de motivation -->
-        <mat-card class="lettre-card">
-          <mat-card-content>
-            <h2 class="section-title">
-              <mat-icon>mail</mat-icon>
-              Lettre de motivation
-            </h2>
-            <div class="lettre-content">
-              {{ candidature.lettre_motivation }}
-            </div>
-          </mat-card-content>
-        </mat-card>
+        <!-- Lettre de motivation - Version corrigée -->
+<mat-card class="lettre-card" *ngIf="candidature.lettreMotivation || candidature.lettreMotivation">
+  <mat-card-content>
+    <h2 class="section-title">
+      <mat-icon>mail</mat-icon>
+      Lettre de motivation
+    </h2>
+    <div class="lettre-content">
+      {{ candidature.lettreMotivation || candidature.lettreMotivation || 'Aucune lettre de motivation fournie' }}
+    </div>
+  </mat-card-content>
+</mat-card>
 
         <!-- CV -->
-        <mat-card class="cv-card" *ngIf="candidature.cv_url">
-          <mat-card-content>
-            <h2 class="section-title">
-              <mat-icon>description</mat-icon>
-              Curriculum Vitae
-            </h2>
-            <button mat-raised-button color="accent" (click)="ouvrirCV()" class="cv-button">
-              <mat-icon>open_in_new</mat-icon>
-              Ouvrir mon CV
-            </button>
-          </mat-card-content>
-        </mat-card>
+       <!-- CV - Version simplifiée -->
+<mat-card class="cv-card" *ngIf="candidature.cv_url">
+  <mat-card-content>
+    <h2 class="section-title">
+      <mat-icon>description</mat-icon>
+      Curriculum Vitae
+    </h2>
+    
+    <div class="cv-container">
+      <div class="cv-preview">
+        <mat-icon class="pdf-icon">picture_as_pdf</mat-icon>
+        <div class="cv-info">
+          <div class="cv-name">Curriculum Vitae</div>
+        </div>
+      </div>
+      
+      <button mat-raised-button color="primary" (click)="ouvrirCV()" class="cv-button">
+        <mat-icon>visibility</mat-icon>
+        Voir mon CV
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Message si aucun CV -->
+<mat-card class="cv-card" *ngIf="!candidature.cv_url">
+  <mat-card-content>
+    <h2 class="section-title">
+      <mat-icon>description</mat-icon>
+      Curriculum Vitae
+    </h2>
+    <div class="cv-empty">
+      <mat-icon>file_present</mat-icon>
+      <p>Aucun CV n'a été joint à cette candidature</p>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Message si aucun CV -->
+<mat-card class="cv-card" *ngIf="!candidature.cv_url && !candidature.cv_url">
+  <mat-card-content>
+    <h2 class="section-title">
+      <mat-icon>description</mat-icon>
+      Curriculum Vitae
+    </h2>
+    <div class="cv-empty">
+      <mat-icon>file_present</mat-icon>
+      <p>Aucun CV n'a été joint à cette candidature</p>
+    </div>
+  </mat-card-content>
+</mat-card>
 
         <!-- Feedback (si refusé ou accepté) -->
        <!--  <mat-card class="feedback-card" *ngIf="candidature.commentaires">

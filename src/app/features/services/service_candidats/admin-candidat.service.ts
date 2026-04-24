@@ -14,6 +14,8 @@ import {
 } from '../../models/volontaire.model';
 import { SyncService } from '../sync.service';
 import { estProfilComplet } from '../service_volont/volontaire.service';
+import { VolontaireService } from '../service_volont/volontaire.service';
+import { environment } from '../../environment/environment';
 
 export interface CreationCandidatCompletData {
   nom: string;
@@ -46,12 +48,16 @@ export interface MiseAJourProfilData extends Partial<ProfilVolontaire> {}
   providedIn: 'root'
 })
 export class AdminCandidatService {
-  private apiUrl = 'http://localhost:3000';
+  // ✅ Utilisation de environment.apiUrl
+  private apiUrl = environment.apiUrl;
 
   constructor(
     private http: HttpClient,
-    private syncService: SyncService
-  ) {}
+    private syncService: SyncService,
+    private volontaireService: VolontaireService  // ✅ Injecter VolontaireService
+  ) {
+    console.log('📡 AdminCandidatService initialisé avec API URL:', this.apiUrl);
+  }
 
   // ==================== UTILITAIRES ID ====================
 
@@ -119,7 +125,7 @@ export class AdminCandidatService {
 
   private creerVolontaireVide(user: User): Volontaire {
     return {
-      id: 0,
+      id: undefined,
       nom: user.nom || '',
       prenom: user.prenom || '',
       email: user.email,
@@ -134,7 +140,18 @@ export class AdminCandidatService {
       dateInscription: new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      userId: user.id
+      userId: user.id,
+      competences: [],
+      regionGeographique: '',
+      motivation: '',
+      disponibilite: 'Temps plein',
+      adresseResidence: '',
+      niveauEtudes: '',
+      domaineEtudes: '',
+      dateValidation: undefined,
+      statutAvantInactif: undefined,
+      urlCV: undefined,
+      urlPieceIdentite: undefined
     };
   }
 
@@ -263,7 +280,7 @@ export class AdminCandidatService {
               email: data.email,
               password: data.motDePasse,
               role: 'candidat',
-              actif: true, // ✅ Par défaut, le compte est actif
+              actif: true,
               prenom: data.prenom,
               nom: data.nom,
               telephone: data.telephone,
@@ -473,7 +490,7 @@ export class AdminCandidatService {
   }
 
   /**
-   * ✅ Désactive un candidat - Met actif=false sur l'utilisateur
+   * ✅ Désactive un candidat - Utilise l'endpoint dédié /desactiver du VolontaireService
    */
   desactiverCandidat(userId: number | string, volontaireId: number | string, statutActuel: VolontaireStatut): Observable<any> {
     console.log(`🔴 [AdminCandidat] Désactivation - User: ${userId}, Volontaire: ${volontaireId}, Statut actuel: ${statutActuel}`);
@@ -481,22 +498,20 @@ export class AdminCandidatService {
     const resolvedUserId = this.resolveId(userId);
     const resolvedVolontaireId = this.resolveId(volontaireId);
 
-    // ✅ Mettre à jour à la fois le volontaire ET l'utilisateur
-    return forkJoin({
-      volontaire: this.http.patch<Volontaire>(`${this.apiUrl}/volontaires/${resolvedVolontaireId}`, {
-        statut: 'Inactif',
-        actif: false,
-        statutAvantInactif: statutActuel,
-        updated_at: new Date().toISOString()
-      }),
-      user: this.http.patch<User>(`${this.apiUrl}/users/${resolvedUserId}`, {
-        actif: false, // ✅ Désactiver le compte utilisateur
-        updated_at: new Date().toISOString()
-      })
-    }).pipe(
-      tap(({ volontaire, user }) => {
-        console.log('✅ [AdminCandidat] Candidat désactivé:', { volontaire, user });
-        this.syncService.notifierVolontaires();
+    // ✅ Utiliser l'endpoint dédié du VolontaireService
+    return this.volontaireService.desactiverVolontaire(resolvedVolontaireId.toString()).pipe(
+      switchMap(volontaire => {
+        // Mettre à jour l'utilisateur également
+        return this.http.patch<User>(`${this.apiUrl}/users/${resolvedUserId}`, {
+          actif: false,
+          updated_at: new Date().toISOString()
+        }).pipe(
+          tap(user => {
+            console.log('✅ [AdminCandidat] Candidat désactivé:', { volontaire, user });
+            this.syncService.notifierVolontaires();
+          }),
+          map(() => volontaire)
+        );
       }),
       catchError(err => {
         console.error('❌ [AdminCandidat] Erreur désactivation candidat:', err);
@@ -506,77 +521,45 @@ export class AdminCandidatService {
   }
 
   /**
-   * ✅ Réactive un candidat - Met actif=true sur l'utilisateur
+   * ✅ Réactive un candidat - Utilise l'endpoint dédié /reactiver du VolontaireService
    */
- reactiverCandidat(volontaireId: number | string): Observable<Volontaire> {
-  console.log(`🟢 [AdminCandidat] Réactivation - Volontaire: ${volontaireId}`);
-  
-  const resolvedVolontaireId = this.resolveId(volontaireId);
+  reactiverCandidat(volontaireId: number | string): Observable<Volontaire> {
+    console.log(`🟢 [AdminCandidat] Réactivation - Volontaire: ${volontaireId}`);
+    
+    const resolvedVolontaireId = this.resolveId(volontaireId);
 
-  return this.http.get<Volontaire>(`${this.apiUrl}/volontaires/${resolvedVolontaireId}`).pipe(
-    switchMap(volontaire => {
-      // ✅ Récupérer le statut avant inactivation (stocké dans statutAvantInactif)
-      const statutAvantInactif = volontaire.statutAvantInactif;
-      
-      console.log(`🟢 [AdminCandidat] Volontaire trouvé:`, {
-        id: volontaire.id,
-        statutActuel: volontaire.statut,
-        statutAvantInactif: statutAvantInactif
-      });
-      
-      // ✅ Déterminer le statut à restaurer :
-      // 1. Si on avait sauvegardé un statut précédent, le restaurer
-      // 2. Sinon, utiliser la règle du profil complet
-      let nouveauStatut: VolontaireStatut;
-      
-      if (statutAvantInactif) {
-        // Restaurer le statut d'origine (Actif, En attente, etc.)
-        nouveauStatut = statutAvantInactif as VolontaireStatut;
-        console.log(`🟢 [AdminCandidat] Restauration du statut précédent: ${statutAvantInactif} → ${nouveauStatut}`);
-      } else {
-        // Fallback: utiliser la règle du profil complet
-        const profilComplet = estProfilComplet(volontaire);
-        nouveauStatut = profilComplet ? 'En attente' : 'Candidat';
-        console.log(`🟢 [AdminCandidat] Pas de statut précédent, utilisation règle profil: ${profilComplet ? 'En attente' : 'Candidat'}`);
-      }
-      
-      // Récupérer l'utilisateur associé
-      return this.getCandidatById(volontaireId).pipe(
-        switchMap(candidat => {
-          const userId = candidat.user.id;
-          
-          if (!userId) {
-            return throwError(() => new Error('ID utilisateur non trouvé'));
-          }
-          
-          // ✅ Mettre à jour à la fois le volontaire ET l'utilisateur
-          return forkJoin({
-            volontaire: this.http.patch<Volontaire>(`${this.apiUrl}/volontaires/${resolvedVolontaireId}`, {
-              statut: nouveauStatut,
-              actif: true,
-              statutAvantInactif: undefined, // ✅ Effacer le statut sauvegardé
-              updated_at: new Date().toISOString()
-            }),
-            user: this.http.patch<User>(`${this.apiUrl}/users/${userId}`, {
+    // ✅ Utiliser l'endpoint dédié du VolontaireService
+    return this.volontaireService.reactiverVolontaire(resolvedVolontaireId.toString()).pipe(
+      switchMap(volontaire => {
+        // Récupérer l'utilisateur associé
+        return this.getCandidatById(volontaireId).pipe(
+          switchMap(candidat => {
+            const userId = candidat.user.id;
+            
+            if (!userId) {
+              return throwError(() => new Error('ID utilisateur non trouvé'));
+            }
+            
+            // Mettre à jour l'utilisateur
+            return this.http.patch<User>(`${this.apiUrl}/users/${userId}`, {
               actif: true,
               updated_at: new Date().toISOString()
-            })
-          }).pipe(
-            map(({ volontaire }) => {
-              console.log(`✅ [AdminCandidat] Candidat réactivé avec statut: ${nouveauStatut}`);
-              this.syncService.notifierVolontaires();
-              return volontaire;
-            })
-          );
-        })
-      );
-    }),
-    catchError(err => {
-      console.error('❌ [AdminCandidat] Erreur réactivation candidat:', err);
-      return throwError(() => err);
-    })
-  );
-}
+            }).pipe(
+              tap(() => {
+                console.log(`✅ [AdminCandidat] Candidat réactivé avec statut: ${volontaire.statut}`);
+                this.syncService.notifierVolontaires();
+              }),
+              map(() => volontaire)
+            );
+          })
+        );
+      }),
+      catchError(err => {
+        console.error('❌ [AdminCandidat] Erreur réactivation candidat:', err);
+        return throwError(() => err);
+      })
+    );
+  }
 
   supprimerCandidat(userId: number | string, volontaireId: number | string): Observable<void> {
     console.log(`🗑️ [AdminCandidat] Suppression - User: ${userId}, Volontaire: ${volontaireId}`);
@@ -651,6 +634,25 @@ export class AdminCandidatService {
     return this.http.get<Volontaire[]>(`${this.apiUrl}/volontaires?numeroPiece=${numeroPiece}`).pipe(
       map(volontaires => volontaires.length > 0),
       catchError(() => of(false))
+    );
+  }
+
+  changerStatutVolontaire(volontaireId: string, statut: string): Observable<Volontaire> {
+    console.log(`🔄 [AdminCandidat] Changement statut volontaire ${volontaireId} → ${statut}`);
+    const resolvedId = this.resolveId(volontaireId);
+    
+    return this.http.patch<Volontaire>(`${this.apiUrl}/volontaires/${resolvedId}`, {
+      statut: statut,
+      updated_at: new Date().toISOString()
+    }).pipe(
+      tap(() => {
+        this.syncService.notifierVolontaires();
+        console.log(`✅ [AdminCandidat] Statut volontaire ${volontaireId} changé à ${statut}`);
+      }),
+      catchError(err => {
+        console.error(`❌ [AdminCandidat] Erreur changement statut volontaire:`, err);
+        return throwError(() => new Error('Erreur lors du changement de statut'));
+      })
     );
   }
 }

@@ -8,8 +8,9 @@ import { RapportService }               from '../../../services/rap-eval/rapport
 import { RapportEvaluation }            from '../../../models/rapport-evaluation.model';
 import { Partenaire }                   from '../../../models/partenaire.model';
 import { HttpClient }                   from '@angular/common/http';
-import { UploadService }                 from '../../../services/upload.service';
+import { UploadService }                from '../../../services/upload.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { environment }                  from '../../../environment/environment'; // ✅ IMPORT AJOUTÉ
 
 @Component({
   selector:    'app-rapport-detail',
@@ -31,7 +32,7 @@ export class RapportDetailComponent implements OnInit, OnDestroy {
   evaluationLabel = '';
 
   private destroy$ = new Subject<void>();
-  private apiUrl   = 'http://localhost:3000';
+  private apiUrl   = environment.apiUrl; // ✅ CORRIGÉ : plus d'URL en dur
 
   constructor(
     private route:          ActivatedRoute,
@@ -42,7 +43,10 @@ export class RapportDetailComponent implements OnInit, OnDestroy {
     private sanitizer:      DomSanitizer
   ) {}
 
-  ngOnInit(): void  { this.loadRapport(); }
+  ngOnInit(): void  { 
+    console.log('📡 API URL utilisée:', this.apiUrl); // Vérification
+    this.loadRapport(); 
+  }
   
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -136,7 +140,6 @@ export class RapportDetailComponent implements OnInit, OnDestroy {
     ].map(item => ({ ...item, stars: this.getStarIcons(item.score) }));
   }
 
-  // ⭐ MÉTHODE POUR OBTENIR LE NOM DU DOCUMENT
   getDocumentNom(): string {
     if (!this.rapport) return 'Document';
     
@@ -150,17 +153,14 @@ export class RapportDetailComponent implements OnInit, OnDestroy {
     return 'Document';
   }
 
-  // ⭐ MÉTHODE POUR OBTENIR L'URL COMPLÈTE DU DOCUMENT
   getDocumentUrl(): string {
     if (!this.rapport?.urlDocumentAnnexe) return '#';
     
-    // ✅ Utiliser UploadService pour construire l'URL complète
     const fullUrl = this.uploadService.getFullUrl(this.rapport.urlDocumentAnnexe);
     console.log('📄 URL document:', fullUrl);
     return fullUrl;
   }
 
-  // ⭐ MÉTHODE POUR OUVRIR LE DOCUMENT
   ouvrirDocument(): void {
     const url = this.getDocumentUrl();
     if (url && url !== '#') {
@@ -170,17 +170,13 @@ export class RapportDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ⭐ MÉTHODE POUR PRÉVISUALISER LE DOCUMENT - CORRIGÉE
   previewDocument(): void {
     const url = this.getDocumentUrl();
     if (url && url !== '#') {
-      // Pour les PDF, on peut utiliser un iframe
       if (url.toLowerCase().endsWith('.pdf')) {
-        // ✅ Correction: utiliser bypassSecurityTrustResourceUrl au lieu de trustAsResourceUrl
         this.documentUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
         this.showDocumentPreview = true;
       } else {
-        // Pour les autres types, on ouvre dans un nouvel onglet
         window.open(url, '_blank');
       }
     } else {
@@ -193,7 +189,6 @@ export class RapportDetailComponent implements OnInit, OnDestroy {
     this.documentUrl = null;
   }
 
-  // ⭐ MÉTHODE DE TÉLÉCHARGEMENT
   downloadDocument(): void {
     if (!this.rapport?.urlDocumentAnnexe) {
       alert('Aucun document à télécharger');
@@ -202,15 +197,14 @@ export class RapportDetailComponent implements OnInit, OnDestroy {
     
     this.isDownloading = true;
     const url = this.rapport.urlDocumentAnnexe;
-    const filename = this.getDocumentNom();
+    const displayName = this.getDocumentNom();
     
-    this.uploadService.downloadFile(url).subscribe({
+    this.uploadService.downloadFile(url, displayName).subscribe({
       next: (blob) => {
-        // Créer un lien de téléchargement
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = downloadUrl;
-        link.download = filename;
+        link.download = displayName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -225,7 +219,6 @@ export class RapportDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ⭐ VÉRIFIER SI LE DOCUMENT EXISTE
   verifierDocument(): void {
     if (!this.rapport?.urlDocumentAnnexe) return;
     

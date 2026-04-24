@@ -169,12 +169,21 @@ export class DetailCandidatureComponent implements OnInit {
   }
 
   ouvrirCV(): void {
-    if (this.candidature?.cv_url) {
-      window.open(this.candidature.cv_url, '_blank');
-    } else {
-      this.snackBar.open('Aucun CV disponible', 'Fermer', { duration: 3000 });
+  const cvUrl = this.candidature?.cv_url;
+  
+  if (cvUrl) {
+    let fullUrl = cvUrl;
+    if (!fullUrl.startsWith('http') && !fullUrl.startsWith('/')) {
+      fullUrl = '/' + fullUrl;
     }
+    if (fullUrl.startsWith('/')) {
+      fullUrl = 'http://localhost:8080' + fullUrl;
+    }
+    window.open(fullUrl, '_blank');
+  } else {
+    this.snackBar.open('Aucun CV disponible', 'Fermer', { duration: 3000 });
   }
+}
 
   voirProjet(): void {
     if (this.candidature?.projectId) {

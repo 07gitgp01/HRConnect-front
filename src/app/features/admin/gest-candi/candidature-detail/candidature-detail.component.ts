@@ -11,6 +11,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 
 import { Candidature } from '../../../models/candidature.model';
 import { Project } from '../../../models/projects.model';
+import { environment } from '../../../environment/environment';
 
 @Component({
   selector: 'app-candidature-detail',
@@ -31,6 +32,7 @@ import { Project } from '../../../models/projects.model';
 })
 export class CandidatureDetailComponent implements OnInit {
   project: Project | null = null;
+  private backendBaseUrl = environment.apiUrl.replace('/api', '');
 
   constructor(
     public dialogRef: MatDialogRef<CandidatureDetailComponent>,
@@ -39,6 +41,52 @@ export class CandidatureDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.project = this.data.project || null;
+  }
+
+  // ✅ Obtenir l'URL complète du CV
+  getCvFullUrl(): string {
+    const cvUrl = this.data.candidature.cv_url;
+    if (!cvUrl) return '#';
+    
+    // Si l'URL est déjà complète
+    if (cvUrl.startsWith('http')) {
+      return cvUrl;
+    }
+    
+    // Sinon, construire l'URL complète
+    let cleanUrl = cvUrl.startsWith('/') ? cvUrl : '/' + cvUrl;
+    return this.backendBaseUrl + cleanUrl;
+  }
+
+  // ✅ Voir le CV
+  voirCV(): void {
+    const url = this.getCvFullUrl();
+    if (url && url !== '#') {
+      window.open(url, '_blank');
+    }
+  }
+
+  // ✅ Télécharger le CV
+  telechargerCV(): void {
+    const url = this.getCvFullUrl();
+    if (url && url !== '#') {
+      // Télécharger le fichier
+      fetch(url)
+        .then(response => response.blob())
+        .then(blob => {
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = `CV_${this.data.candidature.nom}_${this.data.candidature.prenom}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(blobUrl);
+        })
+        .catch(error => {
+          console.error('Erreur téléchargement:', error);
+        });
+    }
   }
 
   getProjectTitle(): string {

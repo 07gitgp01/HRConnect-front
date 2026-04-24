@@ -3,12 +3,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, map, switchMap, catchError, of, throwError, tap } from 'rxjs';
+import { environment } from '../../environment/environment';
 import { SyncService } from '../../../features/services/sync.service';
 
 export interface Affectation {
-  id?: number | string;
-  volontaireId: number | string;
-  projectId: number | string;
+  id?: string;
+  volontaireId: string;
+  projectId: string;
   dateAffectation: string;
   dateFin?: string;
   statut: 'active' | 'terminee' | 'annulee' | 'inactive';
@@ -20,8 +21,8 @@ export interface Affectation {
 
 // ✅ Interface Mission avec le même type de statut que Affectation
 export interface Mission {
-  id: string | number;
-  projetId: string | number;
+  id: string;
+  projetId: string;
   projetTitre: string;
   projetRegion?: string;
   dateAffectation: string;
@@ -33,12 +34,15 @@ export interface Mission {
 
 @Injectable({ providedIn: 'root' })
 export class AffectationService {
-  private apiUrl = 'http://localhost:3000';
+  // ✅ Utilisation de environment.apiUrl
+  private apiUrl = environment.apiUrl;
 
   constructor(
     private http: HttpClient,
     private syncService: SyncService
-  ) {}
+  ) {
+    console.log('📡 AffectationService initialisé avec API URL:', this.apiUrl);
+  }
 
   // ==================== UTILITAIRE DE NORMALISATION ====================
 

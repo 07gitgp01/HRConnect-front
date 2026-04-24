@@ -314,3 +314,15 @@ mat-dialog-actions button:hover {
 .dialog-content::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
 .dialog-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 .dialog-content::-webkit-scrollbar-thumb:hover { background: #008124; }
+
+.cv-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.cv-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

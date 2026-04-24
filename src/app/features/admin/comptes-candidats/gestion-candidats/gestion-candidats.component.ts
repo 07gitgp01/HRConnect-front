@@ -11,6 +11,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { skip, distinctUntilChanged } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { calculerCompletionProfil, estProfilComplet } from '../../../services/service_volont/volontaire.service';
 
 interface CandidatComplet {
   user: User;
@@ -71,7 +72,6 @@ export class GestionCandidatsComponent implements OnInit, OnDestroy {
         console.log('✅ [GestionCandidats] Candidats chargés:', candidats.length);
         this.candidats = candidats;
         this.isLoading = false;
-        // Retour à la première page après chargement
         this.currentPage = 0;
       },
       error: error => {
@@ -214,6 +214,15 @@ export class GestionCandidatsComponent implements OnInit, OnDestroy {
 
   // ==================== HELPERS ====================
 
+  // ✅ CORRECTION : Utiliser le vrai calcul de complétion du profil
+  isProfilComplet(volontaire: Volontaire): boolean {
+    return estProfilComplet(volontaire);
+  }
+
+  getProfilCompletion(volontaire: Volontaire): number {
+    return calculerCompletionProfil(volontaire);
+  }
+
   getStatutBadgeClass(statut: string): string {
     switch (statut) {
       case 'Actif': return 'badge bg-success';
@@ -234,5 +243,33 @@ export class GestionCandidatsComponent implements OnInit, OnDestroy {
       'Refusé': 'refuse'
     };
     return map[statut] || 'candidat';
+  }
+
+  getDateInscription(candidat: CandidatComplet): string {
+    if (candidat.volontaire.dateInscription) {
+      return this.formatDate(candidat.volontaire.dateInscription);
+    }
+    if (candidat.user.date_inscription) {
+      return this.formatDate(candidat.user.date_inscription);
+    }
+    if (candidat.volontaire.created_at) {
+      return this.formatDate(candidat.volontaire.created_at);
+    }
+    return 'Non renseignée';
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+      return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
   }
 }

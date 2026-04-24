@@ -1,4 +1,5 @@
 // src/app/features/admin/gest-projets/projets-form/projets-form.component.ts
+
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ProjectService } from '../../../services/service_projects/projects.service';
@@ -16,6 +17,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   standalone: true,
@@ -32,13 +34,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatSelectModule,
     MatCardModule,
     MatDialogModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatSnackBarModule
   ]
 })
 export class ProjetsFormComponent implements OnInit {
   projectForm!: FormGroup;
   isEdit = false;
-  projectId!: number;
+  projectId!: string;
   isLoading = false;
 
   partenaires: Partenaire[] = [];
@@ -50,7 +53,6 @@ export class ProjetsFormComponent implements OnInit {
     'Tannounyan', 'Tapoa', 'Sourou', 'Yaadga'
   ];
 
-  // ✅ CORRECTION : Utiliser les 3 statuts simplifiés
   statuts: { value: ProjectStatus; label: string }[] = [
     { value: 'en_attente', label: 'En attente' },
     { value: 'actif', label: 'Actif' },
@@ -63,6 +65,7 @@ export class ProjetsFormComponent implements OnInit {
     private partenaireService: PartenaireService,
     private route: ActivatedRoute,
     private router: Router,
+    private snackBar: MatSnackBar,
     private dialogRef: MatDialogRef<ProjetsFormComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any = null
   ) {}
@@ -71,15 +74,12 @@ export class ProjetsFormComponent implements OnInit {
     this.initForm();
     this.loadPartenaires();
 
-    const idFromDialog = this.data && this.data.id ? Number(this.data.id) : null;
+    const idFromDialog = this.data?.id ? String(this.data.id) : null;
     const idFromRoute = this.route.snapshot.paramMap.get('id');
-    const idFromRouteNumber = idFromRoute && !isNaN(Number(idFromRoute)) 
-      ? Number(idFromRoute) 
-      : null;
+    
+    this.projectId = idFromDialog ?? idFromRoute ?? '';
 
-    this.projectId = idFromDialog ?? idFromRouteNumber ?? 0;
-
-    if (this.projectId > 0) {
+    if (this.projectId) {
       this.isEdit = true;
       this.loadProject(this.projectId);
     }
@@ -90,7 +90,6 @@ export class ProjetsFormComponent implements OnInit {
       titre: ['', [Validators.required, Validators.minLength(5)]],
       partenaireId: [null, Validators.required],
       regionAffectation: ['', Validators.required],
-      // ✅ CORRECTION : Par défaut 'en_attente' au lieu de 'soumis'
       statutProjet: ['en_attente', Validators.required],
       nombreVolontairesRequis: [1, [Validators.required, Validators.min(1), Validators.max(100)]],
       descriptionCourte: ['', [Validators.required, Validators.minLength(20)]],
@@ -99,7 +98,6 @@ export class ProjetsFormComponent implements OnInit {
       dateFin: ['', Validators.required],
       dateLimiteCandidature: ['', Validators.required],
       
-      // Champs optionnels
       ville_commune: [''],
       domaineActivite: [''],
       type_mission: [''],
@@ -109,39 +107,6 @@ export class ProjetsFormComponent implements OnInit {
       contact_responsable: [''],
       email_contact: ['', Validators.email]
     });
-
-    // Validation des dates
-    this.projectForm.get('dateFin')?.setValidators([
-      Validators.required,
-      this.dateAfterStartValidator.bind(this)
-    ]);
-
-    this.projectForm.get('dateLimiteCandidature')?.setValidators([
-      Validators.required,
-      this.dateBeforeStartValidator.bind(this)
-    ]);
-  }
-
-  // Validateur personnalisé pour date de fin après date de début
-  private dateAfterStartValidator(): { [key: string]: any } | null {
-    const startDate = this.projectForm?.get('dateDebut')?.value;
-    const endDate = this.projectForm?.get('dateFin')?.value;
-    
-    if (startDate && endDate && new Date(endDate) <= new Date(startDate)) {
-      return { 'dateFinBeforeStart': true };
-    }
-    return null;
-  }
-
-  // Validateur personnalisé pour date limite avant date de début
-  private dateBeforeStartValidator(): { [key: string]: any } | null {
-    const startDate = this.projectForm?.get('dateDebut')?.value;
-    const deadline = this.projectForm?.get('dateLimiteCandidature')?.value;
-    
-    if (startDate && deadline && new Date(deadline) >= new Date(startDate)) {
-      return { 'deadlineAfterStart': true };
-    }
-    return null;
   }
 
   loadPartenaires(): void {
@@ -157,12 +122,12 @@ export class ProjetsFormComponent implements OnInit {
     });
   }
 
-  loadProject(id: number): void {
+  loadProject(id: string): void {
     this.isLoading = true;
     this.projectService.getProject(id).subscribe({
       next: (project: Project) => {
         if (!project) {
-          alert("Projet introuvable !");
+          this.snackBar.open('Projet introuvable !', 'Fermer', { duration: 3000 });
           this.goBack();
           return;
         }
@@ -191,7 +156,7 @@ export class ProjetsFormComponent implements OnInit {
       },
       error: (err: any) => {
         console.error('Erreur chargement projet:', err);
-        alert('Erreur lors du chargement du projet');
+        this.snackBar.open('Erreur lors du chargement du projet', 'Fermer', { duration: 3000 });
         this.isLoading = false;
         this.goBack();
       }
@@ -203,101 +168,87 @@ export class ProjetsFormComponent implements OnInit {
     return dateString.split('T')[0];
   }
 
+  // ✅ Validation des dates
+  verifierDates(): void {
+    const dateDebut = this.projectForm.get('dateDebut')?.value;
+    const dateFin = this.projectForm.get('dateFin')?.value;
+    const dateLimite = this.projectForm.get('dateLimiteCandidature')?.value;
+
+    if (dateDebut && dateFin && new Date(dateFin) <= new Date(dateDebut)) {
+      this.projectForm.get('dateFin')?.setErrors({ dateInvalide: true });
+    } else {
+      this.projectForm.get('dateFin')?.setErrors(null);
+    }
+
+    if (dateLimite && dateDebut && new Date(dateLimite) >= new Date(dateDebut)) {
+      this.projectForm.get('dateLimiteCandidature')?.setErrors({ dateInvalide: true });
+    } else {
+      this.projectForm.get('dateLimiteCandidature')?.setErrors(null);
+    }
+  }
+
   onSubmit(): void {
     if (this.projectForm.invalid) {
       this.markFormGroupTouched();
+      this.snackBar.open('Veuillez corriger les erreurs dans le formulaire', 'Fermer', { duration: 3000 });
       return;
     }
 
     this.isLoading = true;
-
     const formValue = this.projectForm.value;
-    
-    // ✅ CORRECTION : Vérifier si c'est une création, on utilise la méthode soumettrePourValidation
-    if (!this.isEdit) {
-      // Pour une création, on passe d'abord par 'en_attente'
-      this.creerProjetAvecSoumission(formValue);
+
+    const projectData: any = {
+      titre: formValue.titre,
+      partenaireId: formValue.partenaireId,
+      regionAffectation: formValue.regionAffectation,
+      nombreVolontairesRequis: formValue.nombreVolontairesRequis,
+      descriptionCourte: formValue.descriptionCourte,
+      descriptionLongue: formValue.descriptionLongue,
+      dateDebut: formValue.dateDebut,
+      dateFin: formValue.dateFin,
+      dateLimiteCandidature: formValue.dateLimiteCandidature,
+      ville_commune: formValue.ville_commune,
+      domaineActivite: formValue.domaineActivite,
+      type_mission: formValue.type_mission,
+      avantagesVolontaire: formValue.avantagesVolontaire,
+      competences_requises: formValue.competences_requises,
+      conditions_particulieres: formValue.conditions_particulieres,
+      contact_responsable: formValue.contact_responsable,
+      email_contact: formValue.email_contact,
+      updated_at: new Date().toISOString()
+    };
+
+    if (this.isEdit && this.projectId) {
+      // ✅ MODIFICATION
+      projectData.statutProjet = formValue.statutProjet;
+      
+      this.projectService.updateProject(this.projectId, projectData).subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.snackBar.open('Projet modifié avec succès ✅', 'Fermer', { duration: 3000 });
+          this.closeOrBack();
+        },
+        error: (err: any) => {
+          this.isLoading = false;
+          console.error('Erreur modification projet:', err);
+          this.snackBar.open('Erreur lors de la modification du projet', 'Fermer', { duration: 3000 });
+        }
+      });
     } else {
-      // Pour une mise à jour, on garde la logique existante
-      this.mettreAJourProjet(formValue);
+      // ✅ CRÉATION
+      this.projectService.createProject(projectData).subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.snackBar.open('Projet créé avec succès ✅', 'Fermer', { duration: 3000 });
+          this.closeOrBack();
+        },
+        error: (err: any) => {
+          this.isLoading = false;
+          console.error('Erreur création projet:', err);
+          this.snackBar.open('Erreur lors de la création du projet', 'Fermer', { duration: 3000 });
+        }
+      });
     }
-  }
-
-  private creerProjetAvecSoumission(formValue: any): void {
-    const projectData: Omit<Project, 'id'> = {
-      titre: formValue.titre,
-      partenaireId: formValue.partenaireId,
-      regionAffectation: formValue.regionAffectation,
-      // ✅ CORRECTION : Par défaut 'en_attente' pour les nouvelles créations
-      statutProjet: 'en_attente',
-      nombreVolontairesRequis: formValue.nombreVolontairesRequis,
-      descriptionCourte: formValue.descriptionCourte,
-      descriptionLongue: formValue.descriptionLongue,
-      dateDebut: formValue.dateDebut,
-      dateFin: formValue.dateFin,
-      dateLimiteCandidature: formValue.dateLimiteCandidature,
-      ville_commune: formValue.ville_commune,
-      domaineActivite: formValue.domaineActivite,
-      type_mission: formValue.type_mission,
-      avantagesVolontaire: formValue.avantagesVolontaire,
-      competences_requises: formValue.competences_requises,
-      conditions_particulieres: formValue.conditions_particulieres,
-      contact_responsable: formValue.contact_responsable,
-      email_contact: formValue.email_contact,
-      nombreVolontairesActuels: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    this.projectService.createProject(projectData).subscribe({
-      next: (createdProject) => {
-        this.isLoading = false;
-        alert('Projet créé avec succès ✅');
-        this.closeOrBack();
-      },
-      error: (err: any) => {
-        this.isLoading = false;
-        console.error('Erreur création projet:', err);
-        alert('Erreur lors de la création du projet');
-      }
-    });
-  }
-
-  private mettreAJourProjet(formValue: any): void {
-    const projectData: Partial<Project> = {
-      titre: formValue.titre,
-      partenaireId: formValue.partenaireId,
-      regionAffectation: formValue.regionAffectation,
-      statutProjet: formValue.statutProjet,
-      nombreVolontairesRequis: formValue.nombreVolontairesRequis,
-      descriptionCourte: formValue.descriptionCourte,
-      descriptionLongue: formValue.descriptionLongue,
-      dateDebut: formValue.dateDebut,
-      dateFin: formValue.dateFin,
-      dateLimiteCandidature: formValue.dateLimiteCandidature,
-      ville_commune: formValue.ville_commune,
-      domaineActivite: formValue.domaineActivite,
-      type_mission: formValue.type_mission,
-      avantagesVolontaire: formValue.avantagesVolontaire,
-      competences_requises: formValue.competences_requises,
-      conditions_particulieres: formValue.conditions_particulieres,
-      contact_responsable: formValue.contact_responsable,
-      email_contact: formValue.email_contact,
-      updated_at: new Date().toISOString()
-    };
-
-    this.projectService.updateProject(this.projectId, projectData).subscribe({
-      next: () => {
-        this.isLoading = false;
-        alert('Projet modifié avec succès ✅');
-        this.closeOrBack();
-      },
-      error: (err: any) => {
-        this.isLoading = false;
-        console.error('Erreur modification projet:', err);
-        alert('Erreur lors de la modification du projet');
-      }
-    });
   }
 
   private markFormGroupTouched(): void {
@@ -319,7 +270,6 @@ export class ProjetsFormComponent implements OnInit {
     this.router.navigate(['/features/admin/projets']);
   }
 
-  // ✅ AJOUT : Méthode pour obtenir le libellé d'un statut
   getStatusLabel(status: ProjectStatus): string {
     return ProjectWorkflow.getStatusLabel(status);
   }

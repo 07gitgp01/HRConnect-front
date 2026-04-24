@@ -10,11 +10,9 @@ import {
   RapportStats,
 } from '../../models/rapport-evaluation.model';
 import { Partenaire } from '../../models/partenaire.model';
+import { environment } from '../../environment/environment';
 
 // Type local pour compatibilité avec gestion-rapports.component
-// qui utilise le modèle Rapport (rapport.model.ts).
-// Dans rapport.service.ts — remplacez la définition de AnyRapport
-
 type AnyRapport = RapportEvaluation & {
   titre?:          string;
   typeRapportId?:  number;
@@ -23,16 +21,18 @@ type AnyRapport = RapportEvaluation & {
   dateEcheance?:   string;
   description?:    string;
   contenu?:        any;
-  // ✅ On élargit le type de statut pour accepter les deux conventions
   statut?:         RapportEvaluation['statut'] | 'brouillon' | 'soumis' | 'valide' | 'rejete' | 'en_retard';
   [key: string]:   any;
 };
 
 @Injectable({ providedIn: 'root' })
 export class RapportService {
-  private apiUrl = 'http://localhost:3000';
+  // ✅ Utilisation de environment.apiUrl au lieu de 'http://localhost:3000'
+  private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    console.log('📡 RapportService initialisé avec API URL:', this.apiUrl);
+  }
 
   // ============================================================
   // CRUD BASIQUE

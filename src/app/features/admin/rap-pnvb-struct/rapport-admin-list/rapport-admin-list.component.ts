@@ -15,6 +15,7 @@ export class RapportAdminListComponent implements OnInit, OnDestroy {
   filteredRapports: RapportAdmin[] = [];
   stats:            StatsAdmin | null = null;
   isLoading = true;
+  isDeleting = false;
 
   searchTerm    = '';
   statutFilter  = '';
@@ -25,6 +26,11 @@ export class RapportAdminListComponent implements OnInit, OnDestroy {
 
   statuts  = ['Soumis', 'Lu par PNVB', 'Validé', 'Rejeté', 'Brouillon', 'En attente'];
   periodes: string[] = [];
+
+  // Pour la modal de suppression
+  showDeleteModal = false;
+  rapportToDelete: RapportAdmin | null = null;
+  deleteConfirmText = '';
 
   readonly math = Math;
   private destroy$ = new Subject<void>();
@@ -58,6 +64,7 @@ export class RapportAdminListComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error('Erreur chargement:', err);
           this.isLoading = false;
+          this.notify('Erreur lors du chargement des rapports', true);
         }
       });
 
@@ -141,6 +148,65 @@ export class RapportAdminListComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * ✅ Ouvrir la modal de suppression
+   */
+  openDeleteModal(rapport: RapportAdmin, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.rapportToDelete = rapport;
+    this.deleteConfirmText = '';
+    this.showDeleteModal = true;
+  }
+
+  /**
+   * ✅ Fermer la modal de suppression
+   */
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.rapportToDelete = null;
+    this.deleteConfirmText = '';
+  }
+
+  /**
+   * ✅ Confirmer la suppression
+   */
+  confirmDelete(): void {
+    if (this.deleteConfirmText !== 'SUPPRIMER') {
+      this.notify('Veuillez taper "SUPPRIMER" pour confirmer', true);
+      return;
+    }
+
+    if (!this.rapportToDelete?.id) return;
+
+    this.isDeleting = true;
+
+    this.adminService.supprimerRapport(this.rapportToDelete.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.isDeleting = false;
+          this.closeDeleteModal();
+          this.notify('Rapport supprimé avec succès');
+          this.loadData(); // Recharger la liste
+        },
+        error: (err) => {
+          this.isDeleting = false;
+          console.error('Erreur suppression:', err);
+          this.notify('Erreur lors de la suppression du rapport', true);
+        }
+      });
+  }
+
+  /**
+   * ✅ Vérifier si un rapport peut être supprimé
+   */
+  canDelete(statut: string): boolean {
+  // Tous les statuts peuvent être supprimés
+  return true;
+}
+
   exportRapports(): void {
     this.adminService.exportRapports('csv')
       .pipe(takeUntil(this.destroy$))
@@ -152,6 +218,7 @@ export class RapportAdminListComponent implements OnInit, OnDestroy {
           link.download = `rapports_pnvb_${new Date().toISOString().slice(0, 10)}.csv`;
           link.click();
           URL.revokeObjectURL(url);
+          this.notify('Export CSV réussi');
         },
         error: () => this.notify('Erreur export', true)
       });

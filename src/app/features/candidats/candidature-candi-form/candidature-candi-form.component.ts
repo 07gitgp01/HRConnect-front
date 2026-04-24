@@ -1,3 +1,5 @@
+// src/app/features/candidats/candidature-candi-form/candidature-candi-form.component.ts
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -41,20 +43,21 @@ import { VolontaireService } from '../../services/service_volont/volontaire.serv
 })
 export class CandidatureFormCandidatComponent implements OnInit {
 
-  // ✅ projectId: '' (string vide) — compatible avec number | string du modèle
-  // NE PAS mettre 0 ici : 0 est falsy et casse hasValidProjectId()
   candidature: Candidature = {
     prenom: '',
     nom: '',
     email: '',
     telephone: '',
     poste_vise: '',
-    lettre_motivation: '',
+    lettreMotivation: '',
     statut: 'en_attente',
-    projectId: '',   // ✅ string vide — sera remplacé par l'ID réel ("7f1a" ou 42)
+    projectId: '',
     volontaireId: '',
     typePiece: 'CNIB',
-    numeroPiece: ''
+    numeroPiece: '',
+    niveau_experience: undefined,
+    disponibilite: '',
+    competences: []
   };
 
   projet: Project | null = null;
@@ -65,6 +68,7 @@ export class CandidatureFormCandidatComponent implements OnInit {
   user: any;
   volontaire: any;
   profilComplet = false;
+  formSubmitted = false;
 
   constructor(
     private candidatureService: CandidatureService,
@@ -86,15 +90,6 @@ export class CandidatureFormCandidatComponent implements OnInit {
     this.loadProjet();
     this.preRemplirFormulaire();
     this.verifierProfilComplet();
-
-    setTimeout(() => {
-      console.log('📋 État formulaire:', {
-        projectId:    this.candidature.projectId,
-        volontaireId: this.candidature.volontaireId,
-        profilComplet: this.profilComplet,
-        isFormValid:  this.isFormValid()
-      });
-    }, 1500);
   }
 
   loadProjet(): void {
@@ -109,17 +104,9 @@ export class CandidatureFormCandidatComponent implements OnInit {
     this.projectService.getProject(projetId).subscribe({
       next: (projet) => {
         this.projet = projet;
-
-        // ✅ FIX PRINCIPAL : on garde l'ID tel quel — string hex "7f1a" ou number.
-        // Pas de parseInt() : le modèle accepte number | string, pas besoin de convertir.
-        // Fallback sur projetId (depuis l'URL) si projet.id est undefined.
         this.candidature.projectId = projet.id ?? projetId;
-
         this.candidature.poste_vise = projet.titre || '';
         this.loadingProjet = false;
-
-        console.log('✅ Projet chargé — projectId:', this.candidature.projectId,
-                    '(type:', typeof this.candidature.projectId, ')');
       },
       error: (err) => {
         console.error('Erreur chargement projet', err);
@@ -131,22 +118,53 @@ export class CandidatureFormCandidatComponent implements OnInit {
   }
 
   preRemplirFormulaire(): void {
-    if (this.user) {
-      this.candidature.prenom       = this.user.prenom      || '';
-      this.candidature.nom          = this.user.nom         || '';
-      this.candidature.email        = this.user.email       || '';
-      this.candidature.telephone    = this.user.telephone   || '';
-      this.candidature.volontaireId = this.user.id || this.user.userId || '';
-      this.candidature.typePiece    = this.user.typePiece   || 'CNIB';
-      this.candidature.numeroPiece  = this.user.numeroPiece || '';
-
-      console.log('✅ Pré-remplissage depuis User:', {
-        volontaireId: this.candidature.volontaireId,
-        typePiece:    this.candidature.typePiece,
-        numeroPiece:  this.candidature.numeroPiece
-      });
-    }
+  // Récupérer l'ID du volontaire depuis le user connecté
+  const volontaireId = this.user?.volontaireId || this.authService.getVolontaireId();
+  
+  console.log('🔍 ID du volontaire à récupérer:', volontaireId);
+  
+  if (volontaireId) {
+    // ✅ Aller chercher le volontaire complet via l'API
+    this.volontaireService.getVolontaire(volontaireId).subscribe({
+      next: (volontaire) => {
+        console.log('✅ Volontaire récupéré depuis API:', volontaire);
+        console.log('📝 typePiece:', volontaire.typePiece);
+        console.log('📝 numeroPiece:', volontaire.numeroPiece);
+        
+        // Pré-remplir avec les données du volontaire (qui sont complètes)
+        this.candidature.prenom = volontaire.prenom || '';
+        this.candidature.nom = volontaire.nom || '';
+        this.candidature.email = volontaire.email || '';
+        this.candidature.telephone = volontaire.telephone || '';
+        this.candidature.volontaireId = volontaire.id || '';
+        this.candidature.typePiece = volontaire.typePiece || 'CNIB';
+        this.candidature.numeroPiece = volontaire.numeroPiece || '';
+        
+        console.log('✅ Après pré-remplissage - numeroPiece:', this.candidature.numeroPiece);
+      },
+      error: (err) => {
+        console.error('❌ Erreur récupération volontaire:', err);
+        // Fallback sur l'utilisateur localStorage
+        this.preRemplirAvecUser();
+      }
+    });
+  } else {
+    this.preRemplirAvecUser();
   }
+}
+
+private preRemplirAvecUser(): void {
+  if (this.user) {
+    console.log('⚠️ Fallback sur user localStorage:', this.user);
+    this.candidature.prenom = this.user.prenom || '';
+    this.candidature.nom = this.user.nom || '';
+    this.candidature.email = this.user.email || '';
+    this.candidature.telephone = this.user.telephone || '';
+    this.candidature.volontaireId = this.user.id || this.user.userId || '';
+    this.candidature.typePiece = this.user.typePiece || 'CNIB';
+    this.candidature.numeroPiece = this.user.numeroPiece || '';
+  }
+}
 
   private verifierProfilComplet(): void {
     const volontaireId = this.authService.getVolontaireId();
@@ -158,7 +176,7 @@ export class CandidatureFormCandidatComponent implements OnInit {
 
           if (!this.profilComplet) {
             this.snackBar.open(
-              'Votre profil doit être complet à 100% pour pouvoir postuler. Veuillez compléter votre profil d\'abord.',
+              'Votre profil doit être complet à 100% pour pouvoir postuler.',
               'Compléter mon profil',
               { duration: 10000 }
             ).onAction().subscribe(() => {
@@ -202,6 +220,8 @@ export class CandidatureFormCandidatComponent implements OnInit {
     }
     if (file.size > 5 * 1024 * 1024) {
       this.snackBar.open('Le fichier est trop volumineux (max 5MB)', 'Fermer', { duration: 3000 });
+      this.selectedFile = null;
+      this.filePreview = null;
       return;
     }
     this.selectedFile = file;
@@ -209,6 +229,8 @@ export class CandidatureFormCandidatComponent implements OnInit {
   }
 
   onSubmit(): void {
+    this.formSubmitted = true;
+
     if (!this.profilComplet) {
       this.snackBar.open(
         'Votre profil doit être complet à 100% pour pouvoir postuler.',
@@ -224,106 +246,70 @@ export class CandidatureFormCandidatComponent implements OnInit {
     }
 
     if (!this.candidature.prenom || !this.candidature.nom ||
-        !this.candidature.email  || !this.candidature.poste_vise) {
+        !this.candidature.email  || !this.candidature.poste_vise ||
+        !this.candidature.lettreMotivation) {
       this.snackBar.open('Veuillez remplir tous les champs obligatoires', 'Fermer', { duration: 3000 });
       return;
     }
 
-    if (!this.candidature.volontaireId ||
-        this.candidature.volontaireId.toString().trim() === '') {
-      this.snackBar.open('Erreur: Identifiant volontaire manquant', 'Fermer', { duration: 3000 });
+    if (!this.selectedFile) {
+      this.snackBar.open('Veuillez joindre votre CV (PDF) - obligatoire', 'Fermer', { duration: 4000 });
       return;
     }
 
-    if (!this.hasValidProjectId()) {
-      this.snackBar.open('Erreur: Projet non valide', 'Fermer', { duration: 3000 });
+    if (!this.candidature.volontaireId || this.candidature.volontaireId.toString().trim() === '') {
+      this.snackBar.open('Erreur: Identifiant volontaire manquant', 'Fermer', { duration: 3000 });
       return;
     }
 
     this.loading = true;
     this.formatCompetences();
 
-    const candidatureASoumettre: Candidature = {
-      ...this.candidature,
-      statut: 'en_attente' as const
+    // Construction complète de la candidature
+    const candidatureASoumettre: any = {
+      prenom: this.candidature.prenom,
+      nom: this.candidature.nom,
+      email: this.candidature.email,
+      telephone: this.candidature.telephone || '',
+      posteVise: this.candidature.poste_vise,
+      lettreMotivation: this.candidature.lettreMotivation,
+      statut: 'en_attente',
+      projectId: this.candidature.projectId,
+      volontaireId: this.candidature.volontaireId,
+      typePiece: this.candidature.typePiece,
+      numeroPiece: this.candidature.numeroPiece || '',
+      competences: this.candidature.competences || [],
+      niveauExperience: this.candidature.niveau_experience || '',
+      disponibilite: this.candidature.disponibilite || ''
     };
 
-    console.log('📤 Soumission candidature:', {
-      projectId:    candidatureASoumettre.projectId,
-      volontaireId: candidatureASoumettre.volontaireId
-    });
+    console.log('📤 Envoi candidature avec CV:', this.selectedFile.name);
 
-    if (this.selectedFile) {
-      this.uploadCVEtSoumettre(candidatureASoumettre);
-    } else {
-      this.soumettreCandidature(candidatureASoumettre);
-    }
-  }
+    // ✅ Upload du CV avec l'endpoint /api/upload
+    const formData = new FormData();
+    formData.append('fichier', this.selectedFile);
 
-  /**
-   * ✅ FIX : valide projectId qu'il soit string hex ("7f1a") ou number (42).
-   * - Exclut string vide '', '0', 'NaN', null, undefined
-   * - Exclut number 0 et NaN
-   */
-  private hasValidProjectId(): boolean {
-    const id = this.candidature.projectId;
-    if (id === null || id === undefined) return false;
-    if (typeof id === 'number') return !isNaN(id) && id > 0;
-    // string
-    const s = id.toString().trim();
-    return s !== '' && s !== '0' && s !== 'NaN';
-  }
-
-  private uploadCVEtSoumettre(candidature: Candidature): void {
-    this.candidatureService.create(candidature).subscribe({
-      next: (candidatureCreee) => {
-        if (this.selectedFile && candidatureCreee.id) {
-          this.candidatureService.uploadCV(candidatureCreee.id, this.selectedFile).subscribe({
-            next: (response) => {
-              const avecCV = { ...candidatureCreee, cv_url: response.cv_url };
-              this.candidatureService.update(candidatureCreee.id!, avecCV).subscribe({
-                next: () => {
-                  this.snackBar.open('Votre candidature a été envoyée avec succès !', 'Fermer', { duration: 5000 });
-                  this.router.navigate(['/features/candidats/mes-candidatures']);
-                  this.loading = false;
-                },
-                error: () => {
-                  this.snackBar.open('Candidature envoyée mais erreur avec le CV', 'Fermer', { duration: 3000 });
-                  this.router.navigate(['/features/candidats/mes-candidatures']);
-                  this.loading = false;
-                }
-              });
-            },
-            error: () => {
-              this.snackBar.open('Candidature envoyée mais erreur avec le CV', 'Fermer', { duration: 3000 });
-              this.router.navigate(['/features/candidats/mes-candidatures']);
-              this.loading = false;
-            }
-          });
-        } else {
-          this.snackBar.open('Votre candidature a été envoyée avec succès !', 'Fermer', { duration: 5000 });
-          this.router.navigate(['/features/candidats/mes-candidatures']);
-          this.loading = false;
-        }
+    this.candidatureService.uploadFile(formData).subscribe({
+      next: (cvResponse) => {
+        console.log('✅ CV uploadé avec succès:', cvResponse);
+        candidatureASoumettre.cvUrl = cvResponse.url;
+        
+        this.candidatureService.create(candidatureASoumettre).subscribe({
+          next: () => {
+            this.snackBar.open('Votre candidature a été envoyée avec succès !', 'Fermer', { duration: 5000 });
+            this.router.navigate(['/features/candidats/mes-candidatures']);
+            this.loading = false;
+          },
+          error: (err) => {
+            console.error('❌ Erreur création candidature:', err);
+            this.snackBar.open('Erreur lors de l\'envoi de votre candidature', 'Fermer', { duration: 3000 });
+            this.loading = false;
+          }
+        });
       },
       error: (err) => {
-        console.error('Erreur enregistrement candidature', err);
-        this.snackBar.open('Erreur lors de l\'envoi de votre candidature', 'Fermer', { duration: 3000 });
-        this.loading = false;
-      }
-    });
-  }
-
-  private soumettreCandidature(candidature: Candidature): void {
-    this.candidatureService.create(candidature).subscribe({
-      next: () => {
-        this.snackBar.open('Votre candidature a été envoyée avec succès !', 'Fermer', { duration: 5000 });
-        this.router.navigate(['/features/candidats/mes-candidatures']);
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Erreur enregistrement candidature', err);
-        this.snackBar.open('Erreur lors de l\'envoi de votre candidature', 'Fermer', { duration: 3000 });
+        console.error('❌ Erreur upload CV:', err);
+        this.snackBar.open('Erreur lors de l\'upload du CV', 'Fermer', { duration: 3000 });
         this.loading = false;
       }
     });
@@ -335,6 +321,9 @@ export class CandidatureFormCandidatComponent implements OnInit {
         .split(',')
         .map(c => c.trim())
         .filter(c => c.length > 0);
+    }
+    if (!this.candidature.competences) {
+      this.candidature.competences = [];
     }
   }
 
@@ -349,8 +338,9 @@ export class CandidatureFormCandidatComponent implements OnInit {
       this.candidature.nom &&
       this.candidature.email &&
       this.candidature.poste_vise &&
-      this.candidature.lettre_motivation &&
-      this.hasValidProjectId()
+      this.candidature.lettreMotivation &&
+      this.candidature.projectId &&
+      this.selectedFile !== null
     );
   }
 
@@ -361,16 +351,16 @@ export class CandidatureFormCandidatComponent implements OnInit {
     if (fileInput) fileInput.value = '';
   }
 
+  getTypePieceLabel(): string {
+    return this.candidature.typePiece === 'CNIB' ? 'CNIB' : 'Passeport';
+  }
+
   getStatusLabel(status: string): string {
     const map: { [key: string]: string } = {
       'en_attente': 'En attente',
-      'actif':      'Actif',
-      'cloture':    'Clôturé'
+      'actif': 'Actif',
+      'cloture': 'Clôturé'
     };
     return map[status] || status;
-  }
-
-  getTypePieceLabel(): string {
-    return this.candidature.typePiece === 'CNIB' ? 'CNIB' : 'Passeport';
   }
 }

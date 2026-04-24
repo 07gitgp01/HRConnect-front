@@ -7,12 +7,14 @@ import { Volontaire } from '../../models/volontaire.model';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../service_auth/auth.service';
 import { AffectationService, Affectation } from '../service-affecta/affectation.service';
+import { environment } from '../../environment/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProjectService implements OnDestroy {
-  private apiUrl = 'http://localhost:3000';
+  // ✅ Utilisation de environment.apiUrl
+  private apiUrl = environment.apiUrl;
   private notificationSubject = new BehaviorSubject<string[]>([]);
   private isAdminUser = false;
   private monitoringSubscription: Subscription | null = null;
@@ -24,6 +26,7 @@ export class ProjectService implements OnDestroy {
     private authService: AuthService,
     private affectationService: AffectationService
   ) {
+    console.log('📡 ProjectService initialisé avec API URL:', this.apiUrl);
     this.initializeService();
   }
 
@@ -275,64 +278,71 @@ export class ProjectService implements OnDestroy {
    * ✅ Délègue à AffectationService.createAffectation() qui gère maintenant la vérification d'unicité.
    */
   affecterVolontaire(projectId: number | string, volontaireId: number | string): Observable<any> {
-    return this.getProject(projectId).pipe(
-      take(1),
-      switchMap(project => {
-        return this.affectationService.createAffectation({
-          volontaireId:    volontaireId,
-          projectId:       projectId,
-          dateAffectation: new Date().toISOString().split('T')[0],
-          statut:          'active',
-          role:            'Volontaire',
-        }).pipe(
-          switchMap(affectation =>
-            this.patchProject(projectId, {
-              nombreVolontairesActuels: (project.nombreVolontairesActuels ?? 0) + 1
-            }).pipe(
-              map(() => affectation)
-            )
+  return this.getProject(projectId).pipe(
+    take(1),
+    switchMap(project => {
+      // ✅ Convertir les IDs en string avant de les passer à AffectationService
+      const stringProjectId = String(projectId);
+      const stringVolontaireId = String(volontaireId);
+      
+      return this.affectationService.createAffectation({
+        volontaireId: stringVolontaireId,
+        projectId: stringProjectId,
+        dateAffectation: new Date().toISOString().split('T')[0],
+        statut: 'active',
+        role: 'Volontaire',
+      }).pipe(
+        switchMap(affectation =>
+          this.patchProject(projectId, {
+            nombreVolontairesActuels: (project.nombreVolontairesActuels ?? 0) + 1
+          }).pipe(
+            map(() => affectation)
           )
-        );
-      }),
-      catchError(err => {
-        console.error('[ProjectService] Erreur affectation:', err);
-        return throwError(() => err);
-      })
-    );
-  }
+        )
+      );
+    }),
+    catchError(err => {
+      console.error('[ProjectService] Erreur affectation:', err);
+      return throwError(() => err);
+    })
+  );
+}
 
   /**
    * ✅ Délègue à AffectationService.terminerAffectation()
    */
-  retirerVolontaire(projectId: number | string, volontaireId: number | string): Observable<void> {
-    return this.affectationService.getAffectationsByProject(projectId).pipe(
-      take(1),
-      switchMap((affectations: Affectation[]) => {
-        const affActive = affectations.find(
-          (a: Affectation) => Number(a.volontaireId) === Number(volontaireId) && a.statut === 'active'
-        );
-        if (!affActive || !affActive.id) {
-          return throwError(() => new Error('Affectation active introuvable'));
-        }
-        return this.affectationService.terminerAffectation(affActive.id, volontaireId);
-      }),
-      switchMap(() =>
-        this.getProject(projectId).pipe(
-          take(1),
-          switchMap(project =>
-            this.patchProject(projectId, {
-              nombreVolontairesActuels: Math.max(0, (project.nombreVolontairesActuels ?? 1) - 1)
-            })
-          )
+ retirerVolontaire(projectId: number | string, volontaireId: number | string): Observable<void> {
+  const stringProjectId = String(projectId);
+  const stringVolontaireId = String(volontaireId);
+  
+  return this.affectationService.getAffectationsByProject(stringProjectId).pipe(
+    take(1),
+    switchMap((affectations: Affectation[]) => {
+      const affActive = affectations.find(
+        (a: Affectation) => String(a.volontaireId) === stringVolontaireId && a.statut === 'active'
+      );
+      if (!affActive || !affActive.id) {
+        return throwError(() => new Error('Affectation active introuvable'));
+      }
+      return this.affectationService.terminerAffectation(affActive.id, stringVolontaireId);
+    }),
+    switchMap(() =>
+      this.getProject(projectId).pipe(
+        take(1),
+        switchMap(project =>
+          this.patchProject(projectId, {
+            nombreVolontairesActuels: Math.max(0, (project.nombreVolontairesActuels ?? 1) - 1)
+          })
         )
-      ),
-      map(() => void 0),
-      catchError(error => {
-        console.error(`❌ Erreur retirerVolontaire (projet ${projectId}, volontaire ${volontaireId}):`, error);
-        throw error;
-      })
-    );
-  }
+      )
+    ),
+    map(() => void 0),
+    catchError(error => {
+      console.error(`❌ Erreur retirerVolontaire (projet ${projectId}, volontaire ${volontaireId}):`, error);
+      throw error;
+    })
+  );
+}
 
   // ==================== CANDIDATURES ====================
 

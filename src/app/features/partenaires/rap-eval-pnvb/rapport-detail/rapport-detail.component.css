@@ -1,3 +1,5 @@
+/* src/app/features/partenaires/rap-eval-pnvb/rapport-detail/rapport-detail.component.scss */
+
 :host {
   --green-900: #003d10;
   --green-800: #005518;
@@ -67,8 +69,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
 
-  i { color: #FFD700; font-size: 1.3rem; }
+.rd-header-icon i { 
+  color: #FFD700; 
+  font-size: 1.3rem; 
 }
 
 .rd-title {
@@ -98,11 +103,11 @@
   cursor: pointer;
   transition: all .2s ease;
   white-space: nowrap;
+}
 
-  &:hover {
-    background: white;
-    color: var(--green-700);
-  }
+.rd-btn-back:hover {
+  background: white;
+  color: var(--green-700);
 }
 
 .rd-header-actions {
@@ -111,7 +116,9 @@
   flex-wrap: wrap;
 }
 
-rd-action-base {
+/* ✅ CORRECTION: Remplacer %rd-action-base par une classe directe */
+.rd-btn-edit,
+.rd-btn-submit {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -125,20 +132,24 @@ rd-action-base {
 }
 
 .rd-btn-edit {
-  @extend %rd-action-base;
   background: white;
   color: var(--green-700);
+}
 
-  &:hover { background: var(--green-50); transform: translateY(-1px); }
+.rd-btn-edit:hover { 
+  background: var(--green-50); 
+  transform: translateY(-1px); 
 }
 
 .rd-btn-submit {
-  @extend %rd-action-base;
   background: rgba(255,255,255,.15);
   border: 1.5px solid rgba(255,255,255,.4) !important;
   color: white;
+}
 
-  &:hover { background: white; color: var(--green-700); }
+.rd-btn-submit:hover { 
+  background: white; 
+  color: var(--green-700); 
 }
 
 .rd-btn-delete {
@@ -153,10 +164,50 @@ rd-action-base {
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all .2s ease;
-
-  &:hover { background: var(--red); color: white; border-color: var(--red); }
 }
 
+.rd-btn-delete:hover { 
+  background: var(--red); 
+  color: white; 
+  border-color: var(--red); 
+}
+
+/* ✅ AJOUT: Style pour le bouton de vérification */
+.rd-btn-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: var(--slate-100);
+  color: var(--slate-700);
+  border: 1.5px solid var(--slate-300);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.rd-btn-check:hover {
+  background: var(--blue);
+  color: white;
+  border-color: var(--blue);
+}
+
+/* ✅ AJOUT: Style pour l'icône de fichier */
+.rd-file-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--slate-100);
+  border-radius: 12px;
+}
+
+/* Le reste de votre CSS est excellent ! */
 .rd-loading {
   display: flex;
   flex-direction: column;
@@ -164,8 +215,12 @@ rd-action-base {
   justify-content: center;
   padding: 80px 20px;
   text-align: center;
+}
 
-  p { color: var(--slate-500); font-size: 0.9rem; margin-top: 16px; }
+.rd-loading p { 
+  color: var(--slate-500); 
+  font-size: 0.9rem; 
+  margin-top: 16px; 
 }
 
 .rd-spinner {
@@ -177,7 +232,9 @@ rd-action-base {
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin { 
+  to { transform: rotate(360deg); } 
+}
 
 .rd-error {
   display: flex;
@@ -189,10 +246,23 @@ rd-action-base {
   background: #fff1f2;
   border: 1px solid #fecdd3;
   border-radius: var(--radius-lg);
+}
 
-  i    { font-size: 2.5rem; color: #be123c; margin-bottom: 12px; }
-  strong { color: #be123c; font-size: 1rem; }
-  p    { color: var(--slate-500); font-size: 0.875rem; margin: 6px 0 16px; }
+.rd-error i { 
+  font-size: 2.5rem; 
+  color: #be123c; 
+  margin-bottom: 12px; 
+}
+
+.rd-error strong { 
+  color: #be123c; 
+  font-size: 1rem; 
+}
+
+.rd-error p { 
+  color: var(--slate-500); 
+  font-size: 0.875rem; 
+  margin: 6px 0 16px; 
 }
 
 .rd-btn-retry {
@@ -207,8 +277,10 @@ rd-action-base {
   font-weight: 600;
   cursor: pointer;
   transition: all .2s ease;
+}
 
-  &:hover { background: #9f1239; }
+.rd-btn-retry:hover { 
+  background: #9f1239; 
 }
 
 .rd-status-bar {
@@ -229,13 +301,42 @@ rd-action-base {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+}
 
-  &.rd-statut-validé    { background: #f0fdf4; color: #15803d; border: 1.5px solid #bbf7d0; }
-  &.rd-statut-soumis    { background: #eff6ff; color: #1d4ed8; border: 1.5px solid #bfdbfe; }
-  &.rd-statut-brouillon { background: var(--slate-100); color: var(--slate-500); border: 1.5px solid var(--slate-300); }
-  &.rd-statut-rejeté    { background: #fff1f2; color: #be123c; border: 1.5px solid #fecdd3; }
-  &.rd-statut-lu        { background: var(--green-100); color: var(--green-700); border: 1.5px solid rgba(0,129,36,.25); }
-  &.rd-statut-attente   { background: #fffbeb; color: #b45309; border: 1.5px solid #fde68a; }
+.rd-statut-badge.rd-statut-validé { 
+  background: #f0fdf4; 
+  color: #15803d; 
+  border: 1.5px solid #bbf7d0; 
+}
+
+.rd-statut-badge.rd-statut-soumis { 
+  background: #eff6ff; 
+  color: #1d4ed8; 
+  border: 1.5px solid #bfdbfe; 
+}
+
+.rd-statut-badge.rd-statut-brouillon { 
+  background: var(--slate-100); 
+  color: var(--slate-500); 
+  border: 1.5px solid var(--slate-300); 
+}
+
+.rd-statut-badge.rd-statut-rejeté { 
+  background: #fff1f2; 
+  color: #be123c; 
+  border: 1.5px solid #fecdd3; 
+}
+
+.rd-statut-badge.rd-statut-lu { 
+  background: var(--green-100); 
+  color: var(--green-700); 
+  border: 1.5px solid rgba(0,129,36,.25); 
+}
+
+.rd-statut-badge.rd-statut-attente { 
+  background: #fffbeb; 
+  color: #b45309; 
+  border: 1.5px solid #fde68a; 
 }
 
 .rd-has-feedback {
@@ -279,8 +380,11 @@ rd-action-base {
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--slate-700);
+}
 
-  i { color: var(--green-600); font-size: 1rem; }
+.rd-card-header i { 
+  color: var(--green-600); 
+  font-size: 1rem; 
 }
 
 .rd-card-body {
@@ -292,8 +396,11 @@ rd-action-base {
   background: linear-gradient(135deg, var(--green-600), var(--green-800));
   color: white;
   border-bottom: none;
+}
 
-  i { color: #FFD700; }
+.rd-card-feedback .rd-card-header i,
+.rd-card-header-feedback i { 
+  color: #FFD700; 
 }
 
 .rd-info-grid {
@@ -335,16 +442,21 @@ rd-action-base {
   font-size: 0.85rem;
   color: var(--slate-400);
   font-style: italic;
+}
 
-  small { color: var(--slate-300); font-size: 0.75rem; }
+.rd-info-empty small { 
+  color: var(--slate-300); 
+  font-size: 0.75rem; 
 }
 
 .rd-date-value {
   display: flex;
   align-items: center;
   gap: 6px;
+}
 
-  i { color: var(--green-600); }
+.rd-date-value i { 
+  color: var(--green-600); 
 }
 
 .rd-person {
@@ -365,15 +477,15 @@ rd-action-base {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
 
-  &.rd-avatar-partner {
-    background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
-  }
+.rd-avatar.rd-avatar-partner {
+  background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+}
 
-  &.rd-avatar-admin {
-    background: linear-gradient(135deg, var(--amber), #d97706);
-    font-size: 1rem;
-  }
+.rd-avatar.rd-avatar-admin {
+  background: linear-gradient(135deg, var(--amber), #d97706);
+  font-size: 1rem;
 }
 
 .rd-badge-periode {
@@ -397,12 +509,12 @@ rd-action-base {
   font-weight: 900;
   line-height: 1;
   margin-bottom: 8px;
-
-  &.rd-eval-excellent { color: #15803d; }
-  &.rd-eval-bon       { color: var(--green-600); }
-  &.rd-eval-moyen     { color: #b45309; }
-  &.rd-eval-faible    { color: #be123c; }
 }
+
+.rd-eval-score.rd-eval-excellent { color: #15803d; }
+.rd-eval-score.rd-eval-bon       { color: var(--green-600); }
+.rd-eval-score.rd-eval-moyen     { color: #b45309; }
+.rd-eval-score.rd-eval-faible    { color: #be123c; }
 
 .rd-eval-label {
   font-size: 1.2rem;
@@ -418,9 +530,9 @@ rd-action-base {
   margin-bottom: 16px;
   font-size: 1.5rem;
   color: #fbbf24;
-
-  .bi-star { color: var(--slate-300); }
 }
+
+.rd-stars .bi-star { color: var(--slate-300); }
 
 .rd-eval-badge {
   display: inline-block;
@@ -430,10 +542,24 @@ rd-action-base {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
 
-  &.rd-badge-success { background: #f0fdf4; color: #15803d; border: 1.5px solid #bbf7d0; }
-  &.rd-badge-warning { background: #fffbeb; color: #b45309; border: 1.5px solid #fde68a; }
-  &.rd-badge-danger  { background: #fff1f2; color: #be123c; border: 1.5px solid #fecdd3; }
+.rd-eval-badge.rd-badge-success { 
+  background: #f0fdf4; 
+  color: #15803d; 
+  border: 1.5px solid #bbf7d0; 
+}
+
+.rd-eval-badge.rd-badge-warning { 
+  background: #fffbeb; 
+  color: #b45309; 
+  border: 1.5px solid #fde68a; 
+}
+
+.rd-eval-badge.rd-badge-danger { 
+  background: #fff1f2; 
+  color: #be123c; 
+  border: 1.5px solid #fecdd3; 
 }
 
 .rd-criteres-grid {
@@ -447,8 +573,10 @@ rd-action-base {
   border-radius: var(--radius-md);
   padding: 14px 16px;
   transition: border-color .2s ease;
+}
 
-  &:hover { border-color: var(--green-600); }
+.rd-critere-item:hover { 
+  border-color: var(--green-600); 
 }
 
 .rd-critere-header {
@@ -493,9 +621,9 @@ rd-action-base {
   gap: 4px;
   font-size: 0.9rem;
   color: #fbbf24;
-
-  .bi-star { color: var(--slate-300); }
 }
+
+.rd-critere-stars .bi-star { color: var(--slate-300); }
 
 .rd-commentaires {
   white-space: pre-wrap;
@@ -545,13 +673,13 @@ rd-action-base {
   font-weight: 600;
   cursor: pointer;
   transition: all .2s ease;
+}
 
-  &:hover {
-    background: var(--green-600);
-    color: white;
-    border-color: var(--green-600);
-    box-shadow: 0 3px 8px rgba(0,129,36,.3);
-  }
+.rd-btn-download:hover {
+  background: var(--green-600);
+  color: white;
+  border-color: var(--green-600);
+  box-shadow: 0 3px 8px rgba(0,129,36,.3);
 }
 
 .rd-progress-item { margin-bottom: 14px; }
@@ -586,13 +714,13 @@ rd-action-base {
   height: 100%;
   border-radius: 4px;
   transition: width 0.6s ease;
-
-  &.excellent { background: linear-gradient(90deg, #15803d, #22c55e); }
-  &.good      { background: linear-gradient(90deg, var(--green-600), #4ade80); }
-  &.average   { background: linear-gradient(90deg, #b45309, #fbbf24); }
-  &.poor      { background: linear-gradient(90deg, #c2410c, #fb923c); }
-  &.weak      { background: linear-gradient(90deg, #be123c, #f87171); }
 }
+
+.rd-progress-bar.excellent { background: linear-gradient(90deg, #15803d, #22c55e); }
+.rd-progress-bar.good      { background: linear-gradient(90deg, var(--green-600), #4ade80); }
+.rd-progress-bar.average   { background: linear-gradient(90deg, #b45309, #fbbf24); }
+.rd-progress-bar.poor      { background: linear-gradient(90deg, #c2410c, #fb923c); }
+.rd-progress-bar.weak      { background: linear-gradient(90deg, #be123c, #f87171); }
 
 .rd-moyenne-ligne {
   display: flex;
@@ -603,9 +731,9 @@ rd-action-base {
   border-top: 1px solid var(--slate-100);
   font-size: 0.875rem;
   color: var(--slate-700);
-
-  strong { color: var(--green-700); }
 }
+
+.rd-moyenne-ligne strong { color: var(--green-700); }
 
 .rd-meta-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -615,9 +743,9 @@ rd-action-base {
   align-items: center;
   padding: 6px 0;
   border-bottom: 1px solid var(--slate-100);
-
-  &:last-child { border-bottom: none; }
 }
+
+.rd-meta-item:last-child { border-bottom: none; }
 
 .rd-meta-key {
   font-size: 0.78rem;

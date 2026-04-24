@@ -18,7 +18,7 @@ export interface Candidature {
 
   // Candidature spécifique
   poste_vise: string;
-  lettre_motivation?: string;
+  lettreMotivation?: string;
   cv_url?: string;
 
   // Statut

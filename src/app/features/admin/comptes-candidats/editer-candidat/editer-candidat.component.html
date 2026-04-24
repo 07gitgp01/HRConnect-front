@@ -1,4 +1,5 @@
 <!-- src/app/features/admin/components/editer-candidat/editer-candidat.component.html -->
+
 <div class="container-fluid">
   <div class="row">
     <div class="col-12">
@@ -14,162 +15,237 @@
         </div>
         <div class="card-body">
 
+          <!-- Badge de statut actuel -->
+          <div class="alert alert-info mb-3" *ngIf="statutActuel">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>Statut actuel :</strong>
+                <span [class]="getStatutClass()" class="ms-2">
+                  {{ statutActuel }}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <!-- Messages -->
           <div *ngIf="messageSucces" class="alert alert-success">
-            <i class="fas fa-check-circle me-2"></i>
-            {{ messageSucces }}
+            <i class="fas fa-check-circle me-2"></i>{{ messageSucces }}
           </div>
           <div *ngIf="messageErreur" class="alert alert-danger">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            {{ messageErreur }}
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ messageErreur }}
           </div>
 
           <!-- Chargement -->
           <div *ngIf="isChargement" class="text-center py-4">
-            <div class="spinner-border" role="status">
-              <span class="visually-hidden">Chargement...</span>
-            </div>
+            <div class="spinner-border text-primary"></div>
             <p class="mt-2">Chargement du profil...</p>
           </div>
 
           <!-- Formulaire -->
           <form [formGroup]="profilForm" *ngIf="!isChargement">
 
-            <!-- ✅ Pièce d'identité en LECTURE SEULE (données fixes saisies à l'inscription) -->
+            <!-- Pièce d'identité (Lecture seule) -->
             <div class="card bg-light mb-4">
               <div class="card-body">
                 <h6 class="card-title text-muted mb-3">
-                  <i class="fas fa-id-card me-2"></i>
-                  Pièce d'identité <span class="badge bg-secondary ms-2">Lecture seule</span>
+                  <i class="fas fa-id-card me-2"></i>Pièce d'identité
+                  <span class="badge bg-secondary ms-2">Lecture seule</span>
                 </h6>
                 <div class="row">
                   <div class="col-md-6">
-                    <div class="mb-0">
-                      <label class="form-label text-muted small">Type de pièce</label>
-                      <input type="text" class="form-control-plaintext fw-semibold"
-                             [value]="typePieceActuel" readonly>
-                    </div>
+                    <label class="form-label text-muted small">Type de pièce</label>
+                    <input type="text" class="form-control-plaintext fw-semibold"
+                           [value]="typePieceActuel" readonly>
                   </div>
                   <div class="col-md-6">
-                    <div class="mb-0">
-                      <label class="form-label text-muted small">Numéro de pièce</label>
-                      <input type="text" class="form-control-plaintext fw-semibold"
-                             [value]="numeroPieceActuel" readonly>
+                    <label class="form-label text-muted small">Numéro de pièce</label>
+                    <input type="text" class="form-control-plaintext fw-semibold"
+                           [value]="numeroPieceActuel" readonly>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Documents uploadés -->
+            <div class="row mb-4">
+              <!-- CV -->
+              <div class="col-md-6">
+                <div class="card document-card">
+                  <div class="card-body">
+                    <h6 class="card-title">
+                      <i class="fas fa-file-pdf text-danger me-2"></i>Curriculum Vitae (CV)
+                    </h6>
+                    <div *ngIf="urlCVActuel" class="document-actions">
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2"
+                              (click)="ouvrirDocument(urlCVActuel, 'cv')">
+                        <i class="fas fa-eye me-1"></i>Visualiser
+                      </button>
+                      <button type="button" class="btn btn-outline-success btn-sm"
+                              (click)="telechargerDocument(urlCVActuel, 'cv')">
+                        <i class="fas fa-download me-1"></i>Télécharger
+                      </button>
+                    </div>
+                    <div *ngIf="!urlCVActuel" class="text-muted">
+                      <i class="fas fa-times-circle me-1"></i>Aucun CV uploadé
                     </div>
                   </div>
                 </div>
-                <small class="text-muted">
-                  Ces informations ont été saisies à l'inscription et ne sont pas modifiables ici.
-                </small>
+              </div>
+
+              <!-- Pièce d'identité scannée -->
+              <div class="col-md-6">
+                <div class="card document-card">
+                  <div class="card-body">
+                    <h6 class="card-title">
+                      <i class="fas fa-id-card text-primary me-2"></i>Pièce d'identité scannée
+                    </h6>
+                    <div *ngIf="urlPieceIdentiteActuel" class="document-actions">
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2"
+                              (click)="ouvrirDocument(urlPieceIdentiteActuel, 'identity')">
+                        <i class="fas fa-eye me-1"></i>Visualiser
+                      </button>
+                      <button type="button" class="btn btn-outline-success btn-sm"
+                              (click)="telechargerDocument(urlPieceIdentiteActuel, 'identity')">
+                        <i class="fas fa-download me-1"></i>Télécharger
+                      </button>
+                    </div>
+                    <div *ngIf="!urlPieceIdentiteActuel" class="text-muted">
+                      <i class="fas fa-times-circle me-1"></i>Aucun document uploadé
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- Champs éditables du profil -->
+            <!-- Adresse et Région -->
             <div class="row">
               <div class="col-md-6">
                 <div class="mb-3">
-                  <label class="form-label">Adresse de résidence</label>
+                  <label class="form-label fw-semibold">Adresse de résidence</label>
                   <input type="text" class="form-control" formControlName="adresseResidence"
-                         placeholder="Adresse complète">
+                         placeholder="Ex: Ouagadougou, secteur 26">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="mb-3">
-                  <label class="form-label">Région géographique</label>
-                  <input type="text" class="form-control" formControlName="regionGeographique"
-                         placeholder="Région de résidence">
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label">Niveau d'études</label>
-                  <input type="text" class="form-control" formControlName="niveauEtudes"
-                         placeholder="Ex: Bac+2, Licence, Master...">
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label">Domaine d'études</label>
-                  <input type="text" class="form-control" formControlName="domaineEtudes"
-                         placeholder="Ex: Informatique, Commerce, Santé...">
+                  <label class="form-label fw-semibold">Région géographique</label>
+                  <select class="form-select" formControlName="regionGeographique">
+                    <option value="">Sélectionnez une région</option>
+                    <option *ngFor="let region of regions" [value]="region">{{ region }}</option>
+                  </select>
                 </div>
               </div>
             </div>
 
+            <!-- Niveau et Domaine -->
             <div class="row">
               <div class="col-md-6">
                 <div class="mb-3">
-                  <label class="form-label">Disponibilité</label>
-                  <select class="form-control" formControlName="disponibilite">
-                    <option value="Temps plein">Temps plein</option>
-                    <option value="Temps partiel">Temps partiel</option>
+                  <label class="form-label fw-semibold">Niveau d'études</label>
+                  <select class="form-select" formControlName="niveauEtudes">
+                    <option value="">Sélectionnez un niveau</option>
+                    <option *ngFor="let niveau of niveauxEtudes" [value]="niveau">{{ niveau }}</option>
                   </select>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="mb-3">
-                  <label class="form-label">URL CV</label>
-                  <input type="text" class="form-control" formControlName="urlCV"
-                         placeholder="https://...">
+                  <label class="form-label fw-semibold">Domaine d'études</label>
+                  <select class="form-select" formControlName="domaineEtudes">
+                    <option value="">Sélectionnez un domaine</option>
+                    <option *ngFor="let domaine of domainesEtudes" [value]="domaine">{{ domaine }}</option>
+                  </select>
                 </div>
               </div>
             </div>
 
+            <!-- Disponibilité -->
             <div class="row">
-              <div class="col-md-12">
+              <div class="col-md-6">
                 <div class="mb-3">
-                  <label class="form-label">URL document scanné (pièce d'identité)</label>
-                  <input type="text" class="form-control" formControlName="urlPieceIdentite"
-                         placeholder="https://...">
-                  <small class="text-muted">Scan ou photo de la pièce d'identité</small>
+                  <label class="form-label fw-semibold">Disponibilité</label>
+                  <select class="form-select" formControlName="disponibilite">
+                    <option value="Temps plein">Temps plein</option>
+                    <option value="Temps partiel">Temps partiel</option>
+                  </select>
                 </div>
               </div>
             </div>
 
+            <!-- Compétences -->
             <div class="mb-3">
-              <label class="form-label">Compétences</label>
-              <input type="text" class="form-control"
-                     placeholder="Saisir une compétence et appuyer sur Entrée"
-                     (keyup.enter)="ajouterCompetence($event)" #competenceInput>
+              <label class="form-label fw-semibold">Compétences</label>
+              <div class="input-group">
+                <input type="text" class="form-control"
+                       placeholder="Saisir une compétence et appuyer sur Entrée"
+                       (keyup.enter)="ajouterCompetence($event)" #competenceInput>
+                <button class="btn btn-outline-secondary" type="button" 
+                        (click)="ajouterCompetence({target: competenceInput})">
+                  <i class="fas fa-plus"></i> Ajouter
+                </button>
+              </div>
               <small class="text-muted">Appuyez sur Entrée pour ajouter une compétence</small>
-              <div class="mt-2" *ngIf="profilForm.get('competences')?.value?.length > 0">
+              
+              <div class="mt-3 d-flex flex-wrap gap-2" 
+                   *ngIf="profilForm.get('competences')?.value?.length > 0">
                 <span *ngFor="let competence of profilForm.get('competences')?.value"
-                      class="badge bg-primary me-1 mb-1">
+                      class="competence-badge">
+                  <i class="fas fa-tag me-1"></i>
                   {{ competence }}
-                  <button type="button" class="btn-close btn-close-white ms-1"
-                          (click)="supprimerCompetence(competence)"
-                          style="font-size: 0.7rem;"></button>
+                  <button type="button" class="btn-close btn-close-white ms-2"
+                          (click)="supprimerCompetence(competence)"></button>
                 </span>
               </div>
             </div>
 
+            <!-- Motivation -->
             <div class="mb-3">
-              <label class="form-label">Motivation</label>
+              <label class="form-label fw-semibold">Motivation</label>
               <textarea class="form-control" rows="4" formControlName="motivation"
                         placeholder="Décrivez vos motivations pour rejoindre le programme..."></textarea>
             </div>
 
-            <div class="d-flex justify-content-between mt-4">
+            <!-- Boutons d'action (3 actions uniquement) -->
+            <div class="d-flex justify-content-between mt-4 pt-3 border-top">
               <button type="button" class="btn btn-secondary" (click)="annuler()">
                 <i class="fas fa-times me-2"></i>Annuler
               </button>
               <div>
-                <button type="button" class="btn btn-primary me-2"
+                <!-- Mettre à jour -->
+                <button type="button" class="btn btn-warning me-2"
                         (click)="mettreAJourProfil()" [disabled]="isLoading">
-                  <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
-                  <i class="fas fa-save me-2" *ngIf="!isLoading"></i>
-                  Mettre à jour
+                  <i class="fas fa-save me-2"></i>Mettre à jour
                 </button>
-                <button type="button" class="btn btn-success"
-                        (click)="completerProfil()" [disabled]="isLoading">
-                  <i class="fas fa-check-circle me-2"></i>
-                  Compléter le profil
+                
+                <!-- Valider le profil (Candidat → En attente) -->
+                <button *ngIf="statutActuel === 'Candidat'" 
+                        type="button" class="btn btn-success"
+                        (click)="validerProfil()" 
+                        [disabled]="isLoading || !estProfilComplet(getProfilData())">
+                  <i class="fas fa-check-double me-2"></i>
+                  Valider le profil
                 </button>
               </div>
             </div>
+
+            <!-- Message d'information -->
+            <div class="mt-3" *ngIf="statutActuel === 'Candidat'">
+              <div class="alert alert-warning">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Profil en attente de validation :</strong> 
+                Vérifiez les documents et informations du candidat, puis cliquez sur 
+                <strong>"Valider le profil"</strong> pour autoriser le volontaire à postuler aux missions.
+              </div>
+            </div>
+            
+            <div class="mt-3" *ngIf="statutActuel === 'En attente'">
+              <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Profil validé !</strong> 
+                Ce volontaire peut maintenant postuler aux missions.
+              </div>
+            </div>
+
           </form>
 
         </div>

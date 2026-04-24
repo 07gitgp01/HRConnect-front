@@ -5,97 +5,194 @@
 .card {
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   border: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .card-header {
-  background-color: #f8f9fa;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 2px solid #008124;
+  padding: 1rem 1.5rem;
 }
 
-/* MODIFICATION: Jaune pour le bouton "Mettre à jour" */
-.btn-primary {
-  background-color: #FFD700 !important; /* JAUNE PNVB */
-  border-color: #FFD700 !important;
-  color: #1e293b !important; /* Texte foncé pour contraste */
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
 }
 
-.btn-primary:hover {
-  background-color: #FFC107 !important; /* Jaune légèrement plus foncé au survol */
-  border-color: #FFC107 !important;
+/* Cartes documents */
+.document-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  height: 100%;
 }
 
-/* MODIFICATION: Les compétences en VERT (fond vert clair, texte vert foncé) */
-.badge.bg-primary {
-  background-color: rgba(0, 129, 36, 0.15) !important; /* Fond vert très clair (PNVB #008124) */
-  color: #006b1e !important; /* Vert foncé (PNVB #006b1e) */
-  border-color: rgba(0, 129, 36, 0.3) !important; /* Bordure vert clair */
+.document-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
-.form-control:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.document-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
 }
 
-.btn {
-  border-radius: 0.375rem;
+/* Badges de compétences */
+.competence-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 129, 36, 0.15);
+  color: #006b1e;
+  border: 1px solid rgba(0, 129, 36, 0.3);
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
-.badge {
-  font-size: 0.75em;
-  padding: 0.5em 0.75em;
-}:host {
-  display: block;
+.competence-badge:hover {
+  background: rgba(0, 129, 36, 0.25);
+  transform: translateY(-1px);
 }
 
-.card {
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  border: 1px solid rgba(0, 0, 0, 0.125);
+/* Boutons */
+.btn-warning {
+  background: #FFD700;
+  border-color: #FFD700;
+  color: #1e293b;
 }
 
-.card-header {
-  background-color: #f8f9fa;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+.btn-warning:hover {
+  background: #FFC107;
+  border-color: #FFC107;
+  transform: translateY(-1px);
 }
 
-/* MODIFICATION: Jaune pour le bouton "Mettre à jour" */
-.btn-primary {
-  background-color: #FFD700 !important; /* JAUNE PNVB */
-  border-color: #FFD700 !important;
-  color: #1e293b !important; /* Texte foncé pour contraste */
+.btn-success {
+  background: #008124;
+  border-color: #008124;
 }
 
-.btn-primary:hover {
-  background-color: #FFC107 !important; /* Jaune légèrement plus foncé au survol */
-  border-color: #FFC107 !important;
+.btn-success:hover {
+  background: #006b1e;
+  border-color: #006b1e;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 129, 36, 0.3);
 }
 
-/* MODIFICATION: Les compétences en VERT */
-.badge.bg-primary {
-  background-color: rgba(0, 129, 36, 0.15) !important; /* Fond vert très clair */
-  color: #006b1e !important; /* Vert foncé */
-  border-color: rgba(0, 129, 36, 0.3) !important; /* Bordure vert clair */
+.btn-outline-primary:hover {
+  transform: translateY(-1px);
 }
 
-/* MODIFICATION: Croix de suppression des compétences en NOIR */
-.badge.bg-primary .btn-close {
-  filter: invert(1) !important; /* Rend la croix noire */
-  opacity: 0.8;
+.btn-outline-success:hover {
+  transform: translateY(-1px);
 }
 
-.badge.bg-primary .btn-close:hover {
-  opacity: 1;
+/* Champs de formulaire */
+.form-control, .form-select {
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
 }
 
-.form-control:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.form-control:focus, .form-select:focus {
+  border-color: #008124;
+  box-shadow: 0 0 0 3px rgba(0, 129, 36, 0.1);
+  outline: none;
 }
 
-.btn {
-  border-radius: 0.375rem;
+.form-label {
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  color: #334155;
 }
 
-.badge {
-  font-size: 0.75em;
-  padding: 0.5em 0.75em;
+/* Alertes */
+.alert {
+  border-radius: 10px;
+  border-left: 4px solid;
+  padding: 12px 16px;
+}
+
+.alert-success {
+  border-left-color: #10b981;
+  background: #f0fdf4;
+  color: #065f46;
+}
+
+.alert-danger {
+  border-left-color: #ef4444;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+/* Card information */
+.card.bg-light {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.form-control-plaintext {
+  font-size: 1rem;
+  color: #1e293b;
+  padding: 6px 0;
+}
+
+.text-muted {
+  color: #64748b !important;
+}
+
+/* Gap */
+.gap-2 {
+  gap: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .d-flex.justify-content-between > div {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .btn-warning, .btn-success {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .row {
+    flex-direction: column;
+  }
+  
+  .col-md-6, .col-md-12 {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .document-actions {
+    flex-direction: column;
+  }
+  
+  .document-actions button {
+    width: 100%;
+  }
 }

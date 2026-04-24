@@ -17,7 +17,7 @@
     <mat-card-header class="form-header">
       <mat-card-title>
         <mat-icon>how_to_reg</mat-icon>
-        Postuler au mission
+        Postuler à la mission
       </mat-card-title>
       <mat-card-subtitle *ngIf="projet">
         {{ projet.titre }}
@@ -44,13 +44,15 @@
         </div>
       </div>
 
+      <!-- Formulaire -->
       <form (ngSubmit)="onSubmit()" #candidatureForm="ngForm" *ngIf="!loadingProjet; else loadingTpl">
-        <!-- Champs cachés pour les données obligatoires -->
+        <!-- Champs cachés -->
         <input type="hidden" [(ngModel)]="candidature.volontaireId" name="volontaireId">
         <input type="hidden" [(ngModel)]="candidature.projectId" name="projectId">
         <input type="hidden" [(ngModel)]="candidature.typePiece" name="typePiece">
         <input type="hidden" [(ngModel)]="candidature.numeroPiece" name="numeroPiece">
         
+        <!-- Section Informations personnelles -->
         <div class="form-section">
           <h3 class="section-title">
             <mat-icon>person</mat-icon>
@@ -58,7 +60,6 @@
           </h3>
           
           <div class="two-cols">
-            <!-- Prénom -->
             <mat-form-field appearance="outline">
               <mat-label>Prénom *</mat-label>
               <input matInput type="text" [(ngModel)]="candidature.prenom" name="prenom" required readonly />
@@ -66,7 +67,6 @@
               <mat-error>Le prénom est requis</mat-error>
             </mat-form-field>
 
-            <!-- Nom -->
             <mat-form-field appearance="outline">
               <mat-label>Nom *</mat-label>
               <input matInput type="text" [(ngModel)]="candidature.nom" name="nom" required readonly />
@@ -76,7 +76,6 @@
           </div>
 
           <div class="two-cols">
-            <!-- Email -->
             <mat-form-field appearance="outline">
               <mat-label>Email *</mat-label>
               <input matInput type="email" [(ngModel)]="candidature.email" name="email" required readonly />
@@ -84,7 +83,6 @@
               <mat-error>Un email valide est requis</mat-error>
             </mat-form-field>
 
-            <!-- Téléphone -->
             <mat-form-field appearance="outline">
               <mat-label>Téléphone</mat-label>
               <input matInput type="text" [(ngModel)]="candidature.telephone" name="telephone" readonly />
@@ -92,14 +90,13 @@
             </mat-form-field>
           </div>
 
-          <!-- Note d'information -->
           <div class="user-info-note" *ngIf="user">
             <mat-icon>info</mat-icon>
             <span>Ces informations sont pré-remplies depuis votre profil</span>
           </div>
         </div>
 
-        <!-- ✅ Section Pièce d'identité (PRÉ-REMPLIE, LECTURE SEULE) -->
+        <!-- Section Pièce d'identité -->
         <div class="form-section">
           <h3 class="section-title">
             <mat-icon>badge</mat-icon>
@@ -107,42 +104,32 @@
           </h3>
           
           <div class="two-cols">
-            <!-- Type de pièce (LECTURE SEULE) -->
             <mat-form-field appearance="outline">
               <mat-label>Type de pièce d'identité</mat-label>
-              <input matInput 
-                     [value]="getTypePieceLabel()"
-                     readonly
-                     class="readonly-field">
+              <input matInput [value]="getTypePieceLabel()" readonly class="readonly-field">
               <mat-icon matSuffix>badge</mat-icon>
             </mat-form-field>
 
-            <!-- Numéro de pièce (LECTURE SEULE) -->
             <mat-form-field appearance="outline">
               <mat-label>Numéro de pièce</mat-label>
-              <input matInput 
-                     [(ngModel)]="candidature.numeroPiece" 
-                     name="numeroPieceDisplay"
-                     readonly
-                     class="readonly-field numero-piece-readonly">
+              <input matInput [(ngModel)]="candidature.numeroPiece" name="numeroPieceDisplay" readonly class="readonly-field">
               <mat-icon matSuffix>numbers</mat-icon>
             </mat-form-field>
           </div>
           
-          <!-- Note d'information -->
           <div class="user-info-note">
             <mat-icon>info</mat-icon>
             <span>Ces informations proviennent de votre inscription et ne peuvent être modifiées</span>
           </div>
         </div>
 
+        <!-- Section Poste et compétences -->
         <div class="form-section">
           <h3 class="section-title">
             <mat-icon>work</mat-icon>
             Poste et compétences
           </h3>
           
-          <!-- Poste visé -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Poste visé *</mat-label>
             <input matInput type="text" [(ngModel)]="candidature.poste_vise" name="poste_vise" required readonly />
@@ -150,18 +137,15 @@
             <mat-error>Le poste visé est requis</mat-error>
           </mat-form-field>
 
-          <!-- Compétences -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Compétences (séparées par des virgules)</mat-label>
             <input matInput type="text" [(ngModel)]="candidature.competences" name="competences" 
-                   placeholder="Angular, React, Gestion de projet..." 
-                   (blur)="formatCompetences()" />
+                   placeholder="Angular, React, Gestion de projet..." (blur)="formatCompetences()" />
             <mat-icon matSuffix>star</mat-icon>
             <mat-hint>Listez vos compétences principales séparées par des virgules</mat-hint>
           </mat-form-field>
 
           <div class="two-cols">
-            <!-- Niveau d'expérience -->
             <mat-form-field appearance="outline">
               <mat-label>Niveau d'expérience</mat-label>
               <mat-select [(ngModel)]="candidature.niveau_experience" name="niveau_experience">
@@ -173,7 +157,6 @@
               <mat-icon matSuffix>trending_up</mat-icon>
             </mat-form-field>
 
-            <!-- Disponibilité -->
             <mat-form-field appearance="outline">
               <mat-label>Disponibilité</mat-label>
               <mat-select [(ngModel)]="candidature.disponibilite" name="disponibilite">
@@ -190,22 +173,21 @@
           </div>
         </div>
 
+        <!-- Section Lettre de motivation -->
         <div class="form-section">
           <h3 class="section-title">
             <mat-icon>mail</mat-icon>
             Lettre de motivation
           </h3>
           
-          <!-- Lettre de motivation -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Lettre de motivation *</mat-label>
-            <textarea matInput rows="6" [(ngModel)]="candidature.lettre_motivation" 
+            <textarea matInput rows="6" [(ngModel)]="candidature.lettreMotivation" 
                      name="lettre_motivation" required
                      placeholder="Expliquez pourquoi vous êtes intéressé par cette mission et ce que vous pouvez apporter..."></textarea>
             <mat-error>La lettre de motivation est requise</mat-error>
           </mat-form-field>
 
-          <!-- Conseils pour la lettre de motivation -->
           <div class="form-hints">
             <div class="form-hint">
               <mat-icon>lightbulb</mat-icon>
@@ -222,34 +204,45 @@
           </div>
         </div>
 
+        <!-- Section CV -->
         <div class="form-section">
           <h3 class="section-title">
             <mat-icon>description</mat-icon>
             Curriculum Vitae
           </h3>
           
-          <!-- CV (PDF) -->
           <div class="file-upload-section">
-            <label class="mat-body-1">CV (PDF) - Optionnel</label>
+            <label class="mat-body-1 fw-bold">
+              Curriculum Vitae (PDF) <span class="text-danger">*</span>
+            </label>
             <div class="file-input-container">
               <input type="file" accept="application/pdf" 
                      id="cvFile" (change)="onFileSelected($event)" 
-                     class="file-input" />
-              <label for="cvFile" class="file-input-label">
-                <mat-icon>attach_file</mat-icon>
-                Choisir un fichier
+                     class="file-input" 
+                     [class.is-invalid]="!selectedFile && formSubmitted" />
+              <label for="cvFile" class="file-input-label" [class.has-file]="selectedFile">
+                <mat-icon>{{ selectedFile ? 'check_circle' : 'attach_file' }}</mat-icon>
+                {{ selectedFile ? 'Fichier sélectionné' : 'Choisir un fichier PDF' }}
               </label>
             </div>
-            <div *ngIf="filePreview" class="file-preview-container">
+            
+            <div *ngIf="!selectedFile && formSubmitted" class="text-danger small mt-1">
+              <mat-icon class="error-icon">error</mat-icon>
+              Le CV est obligatoire. Veuillez joindre votre curriculum vitae (PDF).
+            </div>
+            
+            <div *ngIf="selectedFile" class="file-preview-container">
               <span class="file-preview">
-                <mat-icon>description</mat-icon>
-                {{ filePreview }}
+                <mat-icon>picture_as_pdf</mat-icon>
+                {{ selectedFile.name }}
+                <span class="file-size">({{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB)</span>
               </span>
               <button type="button" mat-icon-button color="warn" (click)="supprimerFichier()" 
                       class="remove-file-btn" matTooltip="Supprimer le fichier">
                 <mat-icon>close</mat-icon>
               </button>
             </div>
+            
             <small class="file-hint">
               <mat-icon>info</mat-icon>
               Taille maximale : 5MB. Format accepté : PDF uniquement.
@@ -265,12 +258,12 @@
           </button>
 
           <button mat-raised-button color="primary" type="submit" 
-                  [disabled]="loading || !profilComplet || !candidature.lettre_motivation" 
+                  [disabled]="loading || !profilComplet || !candidature.lettreMotivation || !selectedFile" 
                   class="submit-button"
-                  matTooltip="{{ !profilComplet ? 'Complétez votre profil pour postuler' : (!candidature.lettre_motivation ? 'Veuillez remplir la lettre de motivation' : '') }}">
+                  matTooltip="{{ !profilComplet ? 'Complétez votre profil pour postuler' : (!candidature.lettreMotivation ? 'Veuillez remplir la lettre de motivation' : (!selectedFile ? 'Veuillez joindre votre CV' : '')) }}">
             <mat-icon *ngIf="!loading">send</mat-icon>
             <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
-            {{ loading ? 'Envoi en cours...' : (!profilComplet ? 'Profil incomplet' : 'Soumettre ma candidature') }}
+            {{ loading ? 'Envoi en cours...' : 'Soumettre ma candidature' }}
           </button>
         </mat-card-actions>
       </form>

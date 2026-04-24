@@ -16,6 +16,7 @@ import { VolontaireService, calculerCompletionProfil } from '../../services/serv
 import { UploadService } from '../../services/upload.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { environment } from '../../environment/environment';
 
 @Component({
   selector: 'app-profil-candidat',
@@ -52,7 +53,8 @@ export class ProfilCandidatComponent implements OnInit {
 
   selectedCompetences: string[] = [];
 
-  private apiUrl = 'http://localhost:3000';
+  // ✅ Utiliser environment.apiUrl
+  private apiUrl = environment.apiUrl;
 
   constructor(
     private fb: FormBuilder,
@@ -122,23 +124,30 @@ export class ProfilCandidatComponent implements OnInit {
   }
 
   // ============================================================
-  // UPLOAD DE FICHIERS
+  // UPLOAD DE FICHIERS (CORRIGÉ - Utilise UploadService)
   // ============================================================
 
   /**
-   * ✅ Upload réel d'un fichier vers le serveur
+   * ✅ Upload réel d'un fichier vers le backend via UploadService
    */
-  private uploadFile(file: File, type: 'cv' | 'identity'): Promise<string> {
+  private async uploadFile(file: File, type: 'cv' | 'identity'): Promise<string> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('fichier', file); // ✅ 'fichier' comme attendu par le backend
     
-    const url = type === 'cv' 
-      ? `${this.apiUrl}/api/upload/cv` 
-      : `${this.apiUrl}/api/upload/identity`;
-    
-    return lastValueFrom(
-      this.http.post<{url: string}>(url, formData)
-    ).then(response => response.url);
+    return new Promise((resolve, reject) => {
+      this.uploadService.uploadFile(file).subscribe({
+        next: (event) => {
+          if (event.type === 'complete') {
+            console.log(`✅ ${type} uploadé:`, event.data.url);
+            resolve(event.data.url);
+          }
+        },
+        error: (error) => {
+          console.error(`❌ Erreur upload ${type}:`, error);
+          reject(error);
+        }
+      });
+    });
   }
 
   onCVSelected(event: any): void {
@@ -197,12 +206,9 @@ export class ProfilCandidatComponent implements OnInit {
   }
 
   // ============================================================
-  // OUVERTURE DES DOCUMENTS (NOUVELLE MÉTHODE)
+  // OUVERTURE DES DOCUMENTS
   // ============================================================
 
-  /**
-   * ✅ Ouvre un document dans un nouvel onglet
-   */
   ouvrirDocument(url: string | undefined, type: 'cv' | 'identity'): void {
     if (!url) {
       this.showMessage(`Aucun ${type === 'cv' ? 'CV' : 'document'} trouvé`, 'error');
@@ -214,9 +220,6 @@ export class ProfilCandidatComponent implements OnInit {
     window.open(fullUrl, '_blank');
   }
 
-  /**
-   * ✅ Vérifie si un document existe
-   */
   verifierDocument(url: string | undefined, type: 'cv' | 'identity'): void {
     if (!url) {
       this.showMessage(`Aucun ${type === 'cv' ? 'CV' : 'document'} trouvé`, 'error');
@@ -228,7 +231,7 @@ export class ProfilCandidatComponent implements OnInit {
         if (exists) {
           this.showMessage(`✅ ${type === 'cv' ? 'CV' : 'Document'} accessible`, 'success');
         } else {
-          this.showMessage(`❌ ${type === 'cv' ? 'CV' : 'Document'} introuvable sur le serveur`, 'error');
+          this.showMessage(`❌ ${type === 'cv' ? 'CV' : 'Document'} introuvable`, 'error');
         }
       }
     });
@@ -352,85 +355,85 @@ export class ProfilCandidatComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    if (this.profilForm.get('profil')?.invalid) {
-      this.showMessage('Veuillez corriger les erreurs du formulaire', 'error');
-      this.markProfilGroupTouched();
-      return;
-    }
+  if (!this.volontaire?.id) return;
 
-    if (!this.volontaire?.id) return;
-
-    this.isLoading = true;
-    this.message = '';
+  this.isLoading = true;
+  this.message = '';
+  
+  try {
+    // Récupérer les valeurs du formulaire
+    const formValues = this.profilForm.get('profil')?.value;
     
-    try {
-      const formData = this.profilForm.get('profil')?.value;
-      
-      const uploadPromises: Promise<void>[] = [];
-      
-      if (this.selectedCV) {
-        uploadPromises.push(
-          this.uploadFile(this.selectedCV, 'cv').then(url => {
-            formData.urlCV = url;
-            console.log('✅ CV uploadé:', url);
-          })
-        );
-      }
-      
-      if (this.selectedDocumentIdentity) {
-        uploadPromises.push(
-          this.uploadFile(this.selectedDocumentIdentity, 'identity').then(url => {
-            formData.urlPieceIdentite = url;
-            console.log('✅ Pièce d\'identité uploadée:', url);
-          })
-        );
-      }
-
-      if (uploadPromises.length > 0) {
-        await Promise.all(uploadPromises);
-      }
-
-      const donneesMAJ: Partial<Volontaire> = {
-        adresseResidence:   formData.adresseResidence,
-        regionGeographique: formData.regionGeographique,
-        niveauEtudes:       formData.niveauEtudes,
-        domaineEtudes:      formData.domaineEtudes,
-        competences:        this.getSelectedCompetences(),
-        motivation:         formData.motivation,
-        disponibilite:      formData.disponibilite,
-        urlCV:              formData.urlCV,
-        urlPieceIdentite:   formData.urlPieceIdentite
-      };
-
-      const ancienStatut = this.volontaire!.statut;
-      const updated = await lastValueFrom(
-        this.volontaireService.mettreAJourProfil(this.volontaire!.id!, donneesMAJ)
-      );
-
-      this.isLoading = false;
-      this.isEditing = false;
-      this.volontaire = updated;
-      this.profilForm.get('profil')?.disable();
-      this.selectedCV = null; 
-      this.cvPreview = null;
-      this.selectedDocumentIdentity = null; 
-      this.documentIdentityPreview = null;
-
-      if (ancienStatut === 'Candidat' && updated.statut === 'En attente') {
-        this.showMessage(
-          '🎉 Profil complété à 100% ! Votre dossier est maintenant en attente.',
-          'success'
-        );
-      } else {
-        this.showMessage('✅ Profil mis à jour avec succès !', 'success');
-      }
-
-    } catch (error) {
-      this.isLoading = false;
-      console.error('❌ Erreur lors de la mise à jour:', error);
-      this.showMessage('❌ Erreur lors de la mise à jour du profil', 'error');
+    // Préparer les données à envoyer
+    const donneesASauvegarder: any = {};
+    
+    // Ajouter les champs texte
+    if (formValues.adresseResidence) donneesASauvegarder.adresseResidence = formValues.adresseResidence;
+    if (formValues.regionGeographique) donneesASauvegarder.regionGeographique = formValues.regionGeographique;
+    if (formValues.niveauEtudes) donneesASauvegarder.niveauEtudes = formValues.niveauEtudes;
+    if (formValues.domaineEtudes) donneesASauvegarder.domaineEtudes = formValues.domaineEtudes;
+    if (formValues.motivation) donneesASauvegarder.motivation = formValues.motivation;
+    if (formValues.disponibilite) donneesASauvegarder.disponibilite = formValues.disponibilite;
+    
+    // Ajouter les compétences
+    const selectedCompetences = this.getSelectedCompetences();
+    if (selectedCompetences.length > 0) {
+      donneesASauvegarder.competences = selectedCompetences;
     }
+    
+    // Upload du CV si sélectionné
+    if (this.selectedCV) {
+      const url = await this.uploadFile(this.selectedCV, 'cv');
+      donneesASauvegarder.urlCV = url;
+      console.log('✅ CV uploadé:', url);
+    } else if (this.volontaire?.urlCV) {
+      // Garder l'URL existante si pas de nouveau fichier
+      donneesASauvegarder.urlCV = this.volontaire.urlCV;
+    }
+    
+    // Upload de la pièce d'identité si sélectionnée
+    if (this.selectedDocumentIdentity) {
+      const url = await this.uploadFile(this.selectedDocumentIdentity, 'identity');
+      donneesASauvegarder.urlPieceIdentite = url;
+      console.log('✅ Pièce d\'identité uploadée:', url);
+    } else if (this.volontaire?.urlPieceIdentite) {
+      // Garder l'URL existante si pas de nouveau fichier
+      donneesASauvegarder.urlPieceIdentite = this.volontaire.urlPieceIdentite;
+    }
+    
+    console.log('📤 Envoi au backend:', JSON.stringify(donneesASauvegarder, null, 2));
+    
+    // Envoyer au backend
+    const updated = await lastValueFrom(
+      this.volontaireService.mettreAJourProfil(this.volontaire.id, donneesASauvegarder)
+    );
+    
+    console.log('✅ Réponse backend:', updated);
+    
+    // Mettre à jour l'objet local
+    this.volontaire = updated;
+    
+    // Rafraîchir l'affichage
+    this.patchFormValues(updated);
+    
+    this.isEditing = false;
+    this.profilForm.get('profil')?.disable();
+    
+    // Nettoyer
+    this.selectedCV = null;
+    this.cvPreview = null;
+    this.selectedDocumentIdentity = null;
+    this.documentIdentityPreview = null;
+    
+    this.showMessage('✅ Profil sauvegardé avec succès !', 'success');
+    
+  } catch (error) {
+    console.error('❌ Erreur:', error);
+    this.showMessage('❌ Erreur lors de la sauvegarde: ' + (error as Error).message, 'error');
+  } finally {
+    this.isLoading = false;
   }
+}
 
   private markProfilGroupTouched(): void {
     const grp = this.profilForm.get('profil') as FormGroup;

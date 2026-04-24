@@ -1,4 +1,3 @@
-// src/app/features/admin/components/candidature-form/candidature-form.component.ts
 import { Component, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -12,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressBarModule } from '@angular/material/progress-bar'; // ✅ Import ajouté
 
 import { Candidature } from '../../../models/candidature.model';
 import { Project } from '../../../models/projects.model';
@@ -34,7 +34,8 @@ import { Volontaire } from '../../../models/volontaire.model';
     MatSelectModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatProgressBarModule  // ✅ AJOUTER ICI
   ],
   templateUrl: './candidature-form.component.html',
   styleUrls: ['./candidature-form.component.css']
@@ -44,6 +45,11 @@ export class CandidatureFormComponent implements OnInit {
   isEditing = false;
   projects: Project[] = [];
   volontaires: Volontaire[] = [];
+  
+  // Propriétés pour l'upload
+  selectedFile: File | null = null;
+  filePreview: string | null = null;
+  isUploading = false;
 
   constructor(
     private fb: FormBuilder,
@@ -65,7 +71,6 @@ export class CandidatureFormComponent implements OnInit {
   ngOnInit(): void {
     this.isEditing = !!this.data.candidature;
     
-    // Charger les volontaires si non fournis
     if (this.volontaires.length === 0) {
       this.loadVolontaires();
     }
@@ -88,8 +93,7 @@ export class CandidatureFormComponent implements OnInit {
   }
 
   createForm(): FormGroup {
-    return this.fb.group({
-      // ✅ CORRECTION: Ajout du volontaireId
+    const form = this.fb.group({
       volontaireId: ['', Validators.required],
       prenom: ['', Validators.required],
       nom: ['', Validators.required],
@@ -100,6 +104,7 @@ export class CandidatureFormComponent implements OnInit {
       poste_vise: ['', Validators.required],
       projectId: ['', Validators.required],
       lettre_motivation: [''],
+      cvUrl: [''],
       competences: [''],
       disponibilite: [''],
       niveau_experience: [''],
@@ -107,10 +112,14 @@ export class CandidatureFormComponent implements OnInit {
       date_entretien: ['']
     });
 
-    // ✅ Écouter les changements du volontaire pour pré-remplir les infos
-    this.candidatureForm.get('volontaireId')?.valueChanges.subscribe(volontaireId => {
+    // ✅ CORRECTION: Vérifier que la valeur n'est pas null
+  form.get('volontaireId')?.valueChanges.subscribe(volontaireId => {
+    if (volontaireId && volontaireId !== '') {
       this.onVolontaireChange(volontaireId);
-    });
+    }
+  });
+
+    return form;
   }
 
   onVolontaireChange(volontaireId: string | number): void {
@@ -138,7 +147,7 @@ export class CandidatureFormComponent implements OnInit {
       numeroPiece: candidature.numeroPiece || '',
       poste_vise: candidature.poste_vise,
       projectId: candidature.projectId,
-      lettre_motivation: candidature.lettre_motivation || '',
+      lettre_motivation: candidature.lettreMotivation || '',
       competences: this.formatCompetencesForInput(candidature.competences),
       disponibilite: candidature.disponibilite || '',
       niveau_experience: candidature.niveau_experience || '',
@@ -166,24 +175,26 @@ export class CandidatureFormComponent implements OnInit {
     if (this.candidatureForm.valid) {
       const formValue = this.candidatureForm.value;
       
-      // ✅ CORRECTION: Formater les données selon le modèle
-      const candidatureData: Candidature = {
-        volontaireId: Number(formValue.volontaireId),
-        projectId: Number(formValue.projectId),
+      const candidatureData: any = {
+        volontaireId: String(formValue.volontaireId),
+        projectId: String(formValue.projectId),
         prenom: formValue.prenom.trim(),
         nom: formValue.nom.trim(),
         email: formValue.email.trim().toLowerCase(),
         telephone: formValue.telephone?.trim() || '',
         typePiece: formValue.typePiece,
         numeroPiece: formValue.numeroPiece.trim(),
-        poste_vise: formValue.poste_vise.trim(),
-        lettre_motivation: formValue.lettre_motivation?.trim() || '',
+        posteVise: formValue.poste_vise.trim(),
+        lettreMotivation: formValue.lettre_motivation?.trim() || '',
         competences: this.formatCompetencesForSave(formValue.competences),
         disponibilite: formValue.disponibilite || '',
-        niveau_experience: formValue.niveau_experience || '',
+        niveauExperience: formValue.niveau_experience || '',
         statut: formValue.statut,
-        date_entretien: formValue.date_entretien || ''
+        date_entretien: formValue.date_entretien || '',
+        cvUrl: formValue.cvUrl || ''
       };
+
+      console.log('📤 Envoi des données:', candidatureData);
 
       if (this.isEditing && this.data.candidature?.id) {
         this.candidatureService.update(this.data.candidature.id, candidatureData).subscribe({
@@ -218,10 +229,7 @@ export class CandidatureFormComponent implements OnInit {
     if (!competences || competences.trim() === '') {
       return [];
     }
-    return competences
-      .split(',')
-      .map(c => c.trim())
-      .filter(c => c.length > 0);
+    return competences.split(',').map(c => c.trim()).filter(c => c.length > 0);
   }
 
   private markFormGroupTouched(): void {
@@ -232,5 +240,76 @@ export class CandidatureFormComponent implements OnInit {
 
   onCancel(): void {
     this.dialogRef.close();
+  }
+
+  // ==================== MÉTHODES D'UPLOAD ====================
+
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    this.processFile(file);
+  }
+
+  onFileDrop(event: DragEvent): void {
+    event.preventDefault();
+    const file = event.dataTransfer?.files[0];
+    if (file) {
+      this.processFile(file);
+    }
+  }
+
+  processFile(file: File): void {
+    if (!file) return;
+    
+    if (file.type !== 'application/pdf') {
+      this.snackBar.open('Veuillez sélectionner un fichier PDF uniquement', 'Fermer', { duration: 3000 });
+      this.selectedFile = null;
+      this.filePreview = null;
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      this.snackBar.open('Le fichier est trop volumineux (max 5MB)', 'Fermer', { duration: 3000 });
+      this.selectedFile = null;
+      this.filePreview = null;
+      return;
+    }
+    
+    this.selectedFile = file;
+    this.filePreview = file.name;
+    this.uploadFile();
+  }
+
+  uploadFile(): void {
+    if (!this.selectedFile) return;
+    
+    this.isUploading = true;
+    const formData = new FormData();
+    formData.append('fichier', this.selectedFile);
+    
+    this.candidatureService.uploadFile(formData).subscribe({
+      next: (response) => {
+        this.candidatureForm.patchValue({ cvUrl: response.url });
+        this.isUploading = false;
+        this.snackBar.open('CV uploadé avec succès', 'Fermer', { duration: 3000 });
+      },
+      error: (error) => {
+        console.error('Erreur upload CV:', error);
+        this.snackBar.open('Erreur lors de l\'upload du CV', 'Fermer', { duration: 3000 });
+        this.isUploading = false;
+      }
+    });
+  }
+
+  supprimerFichier(): void {
+    this.selectedFile = null;
+    this.filePreview = null;
+    this.candidatureForm.patchValue({ cvUrl: '' });
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  }
+
+  supprimerCVExistant(): void {
+    this.candidatureForm.patchValue({ cvUrl: '' });
+    this.supprimerFichier();
   }
 }

@@ -296,4 +296,47 @@ export class VoirProfilVolontaireComponent implements OnInit, AfterViewInit {
       this.dataSource.paginator.firstPage();
     }
   }
+
+  getDateInscription(): string {
+  // Essayer date_inscription du user (frontend)
+  if (this.candidat?.user?.date_inscription) {
+    return this.formatDateInscription(this.candidat.user.date_inscription);
+  }
+  
+  // Essayer dateInscription du user (backend)
+  /* if (this.candidat?.user?.dateInscription) {
+    return this.formatDateInscription(this.candidat.user.dateInscription);
+  } */
+  
+  // Fallback sur dateInscription du volontaire
+  if (this.candidat?.volontaire?.dateInscription) {
+    return this.formatDateInscription(this.candidat.volontaire.dateInscription);
+  }
+  
+  // Fallback sur createdAt du volontaire
+  /* if (this.candidat?.volontaire?.createdAt) {
+    return this.formatDateInscription(this.candidat.volontaire.createdAt);
+  } */
+  
+  return 'Non renseignée';
+}
+
+/**
+ * ✅ Formatage de la date d'inscription
+ */
+formatDateInscription(dateString: string): string {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  } catch {
+    return dateString;
+  }
+}
+
 }

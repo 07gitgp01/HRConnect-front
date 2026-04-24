@@ -14,100 +14,141 @@
           </button>
         </div>
 
-        <!-- Cartes de statistiques -->
-        <div class="row mb-4">
-          <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h5 class="card-title text-primary mb-1">{{ statsGlobales.totalPartenaires }}</h5>
-                    <p class="card-text text-muted small mb-0">Partenaires total</p>
-                  </div>
-                  <div class="text-primary">
-                    <i class="fas fa-building fa-2x opacity-50"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h5 class="card-title text-success mb-1">{{ statsGlobales.partenairesActifs }}</h5>
-                    <p class="card-text text-muted small mb-0">Comptes actifs</p>
-                  </div>
-                  <div class="text-success">
-                    <i class="fas fa-check-circle fa-2x opacity-50"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h5 class="card-title text-info mb-1">{{ getTotalProjets() }}</h5>
-                    <p class="card-text text-muted small mb-0">Missions soumises</p>
-                  </div>
-                  <div class="text-info">
-                    <i class="fas fa-project-diagram fa-2x opacity-50"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h5 class="card-title text-warning mb-1">{{ getTotalVolontaires() }}</h5>
-                    <p class="card-text text-muted small mb-0">Volontaires affectés</p>
-                  </div>
-                  <div class="text-warning">
-                    <i class="fas fa-users fa-2x opacity-50"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
+     <!-- Cartes de statistiques - Version corrigée -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="stats-card stats-card-total">
+      <div class="stats-card-inner">
+        <div class="stats-card-icon">
+          <i class="fas fa-building"></i>
+        </div>
+        <div class="stats-card-content">
+          <div class="stats-card-number">{{ statsGlobales.totalPartenaires || 0 }}</div>
+          <div class="stats-card-label">Partenaires total</div>
+          <div class="stats-card-trend" *ngIf="getTrendPercentage()">
+            <i class="fas fa-arrow-up text-success me-1"></i>
+            <span class="text-success">{{ getTrendPercentage() }}%</span>
+            <span class="text-muted ms-1">vs mois dernier</span>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="stats-card stats-card-active">
+      <div class="stats-card-inner">
+        <div class="stats-card-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stats-card-content">
+          <div class="stats-card-number">{{ statsGlobales.partenairesActifs || 0 }}</div>
+          <div class="stats-card-label">Comptes actifs</div>
+          <div class="stats-card-rate">
+            <span class="text-success">{{ getActiveRate() }}%</span>
+            <span class="text-muted ms-1">du total</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="stats-card stats-card-missions">
+      <div class="stats-card-inner">
+        <div class="stats-card-icon">
+          <i class="fas fa-project-diagram"></i>
+        </div>
+        <div class="stats-card-content">
+          <div class="stats-card-number">{{ getTotalProjets() || 0 }}</div>
+          <div class="stats-card-label">Missions soumises</div>
+          <div class="stats-card-sub">
+            <span class="text-info">{{ getActiveProjects() || 0 }} actives</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="stats-card stats-card-volunteers">
+      <div class="stats-card-inner">
+        <div class="stats-card-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stats-card-content">
+          <div class="stats-card-number">{{ getTotalVolontaires() || 0 }}</div>
+          <div class="stats-card-label">Volontaires affectés</div>
+          <div class="stats-card-sub">
+            <span class="text-warning">{{ getActiveVolunteers() || 0 }} en mission</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-        <!-- Statistiques par rôle -->
-        <div class="row mb-4" *ngIf="statsGlobales.statsRoles">
-          <div class="col-12">
-            <div class="card border-0 shadow-sm">
-              <div class="card-body">
-                <h6 class="card-title mb-3">Répartition par rôle</h6>
-                <div class="row text-center">
-                  <div class="col-md-4 mb-2">
-                    <div class="border-end-md">
-                      <h4 class="text-primary mb-1">{{ statsGlobales.statsRoles.totalPTF }}</h4>
-                      <small class="text-muted">Partenaires PTF</small>
-                    </div>
-                  </div>
-                  <div class="col-md-4 mb-2">
-                    <div class="border-end-md">
-                      <h4 class="text-success mb-1">{{ statsGlobales.statsRoles.totalStructuresAccueil }}</h4>
-                      <small class="text-muted">Structures d'Accueil</small>
-                    </div>
-                  </div>
-                  <div class="col-md-4 mb-2">
-                    <div>
-                      <h4 class="text-info mb-1">{{ statsGlobales.statsRoles.totalMixtes }}</h4>
-                      <small class="text-muted">Partenaires Mixtes</small>
-                    </div>
-                  </div>
+        <!-- Statistiques par rôle - Version améliorée -->
+<div class="row mb-4" *ngIf="statsGlobales.statsRoles">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+        <h6 class="card-title mb-0 fw-bold text-dark">
+          <i class="fas fa-chart-pie me-2 text-primary"></i>Répartition par rôle
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row text-center g-3">
+          <div class="col-md-4">
+            <div class="stats-role-card stats-role-ptf p-3 rounded-3">
+              <div class="stats-role-icon mb-2">
+                <i class="fas fa-hand-holding-usd fa-2x"></i>
+              </div>
+              <div class="stats-role-number display-4 fw-bold mb-1">{{ statsGlobales.statsRoles.totalPTF || 0 }}</div>
+              <div class="stats-role-label text-muted">Partenaires PTF</div>
+              <div class="stats-role-progress mt-2">
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar bg-primary" 
+                       [style.width.%]="getRolePercentage('ptf')"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stats-role-card stats-role-structure p-3 rounded-3">
+              <div class="stats-role-icon mb-2">
+                <i class="fas fa-building fa-2x"></i>
+              </div>
+              <div class="stats-role-number display-4 fw-bold mb-1">{{ statsGlobales.statsRoles.totalStructuresAccueil || 0 }}</div>
+              <div class="stats-role-label text-muted">Structures d'Accueil</div>
+              <div class="stats-role-progress mt-2">
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar bg-success" 
+                       [style.width.%]="getRolePercentage('structure')"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stats-role-card stats-role-mixte p-3 rounded-3">
+              <div class="stats-role-icon mb-2">
+                <i class="fas fa-users fa-2x"></i>
+              </div>
+              <div class="stats-role-number display-4 fw-bold mb-1">{{ statsGlobales.statsRoles.totalMixtes || 0 }}</div>
+              <div class="stats-role-label text-muted">Partenaires Mixtes</div>
+              <div class="stats-role-progress mt-2">
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar bg-info" 
+                       [style.width.%]="getRolePercentage('mixte')"></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
 
         <!-- Barre de recherche et filtres -->
         <div class="card border-0 shadow-sm mb-4">
@@ -157,9 +198,9 @@
             <strong>{{ filteredPartenaires.length }}</strong>
             partenaire(s) trouvé(s) sur {{ partenaires.length }}
           </span>
-          <button class="btn btn-outline-primary me-2" [routerLink]="['/features/admin/dashboard']">
+          <!-- button class="btn btn-outline-primary me-2" [routerLink]="['/features/admin/dashboard']">
             <i class="fas fa-arrow-left me-2"></i>Retour
-          </button>
+          </button> -->
         </div>
 
         <!-- Tableau -->

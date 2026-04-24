@@ -10,12 +10,16 @@ import {
   TypeStructurePNVB,
   Alerte
 } from '../../models/partenaire.model';
+import { environment } from '../../environment/environment';
 
 @Injectable({ providedIn: 'root' })
 export class PartenaireService {
-  private apiUrl = 'http://localhost:3000';
+  // ✅ Utilisation de environment.apiUrl
+  private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    console.log('📡 PartenaireService initialisé avec API URL:', this.apiUrl);
+  }
 
   // ============================================================================
   // CRUD PARTENAIRES

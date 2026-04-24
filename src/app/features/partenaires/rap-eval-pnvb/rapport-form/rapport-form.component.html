@@ -22,7 +22,7 @@
     <i class="bi bi-check-circle me-2"></i>{{ successMessage }}
     <button type="button" class="btn-close" (click)="successMessage = ''"></button>
   </div>
-  <div *ngIf="errorMessage" class="alert alert-warning alert-dismissible fade show">
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show">
     <i class="bi bi-exclamation-triangle me-2"></i>{{ errorMessage }}
     <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
   </div>
@@ -252,7 +252,8 @@
                  style="cursor:pointer;" (click)="fileInput.click()">
               <i class="bi bi-cloud-upload display-4 text-muted d-block mb-3"></i>
 
-              <div *ngIf="selectedFile" class="mb-3">
+              <!-- Fichier sélectionné en attente d'upload -->
+              <div *ngIf="selectedFile && !uploadedFileUrl" class="mb-3">
                 <div class="d-flex align-items-center justify-content-center">
                   <i class="bi bi-file-earmark-text fs-3 text-primary me-3"></i>
                   <div class="text-start">
@@ -264,35 +265,59 @@
                 </div>
               </div>
 
-              <p class="small text-muted mb-3" *ngIf="!selectedFile">
+              <!-- Document déjà uploadé -->
+              <div *ngIf="uploadedFileUrl" class="mb-3">
+                <div class="d-flex align-items-center justify-content-center">
+                  <i class="bi bi-file-check fs-3 text-success me-3"></i>
+                  <div class="text-start">
+                    <div class="fw-bold text-truncate" style="max-width:200px;">
+                      Document attaché
+                    </div>
+                    <small class="text-muted">
+                      <a [href]="uploadedFileUrl" target="_blank" class="text-decoration-none">
+                        <i class="bi bi-eye me-1"></i>Voir
+                      </a>
+                      <span class="mx-1">|</span>
+                      <a href="javascript:void(0)" (click)="removeFile()" class="text-danger text-decoration-none">
+                        <i class="bi bi-trash me-1"></i>Supprimer
+                      </a>
+                    </small>
+                  </div>
+                </div>
+              </div>
+
+              <p class="small text-muted mb-3" *ngIf="!selectedFile && !uploadedFileUrl">
                 PDF, DOC, DOCX, JPG, PNG — Max 5 MB
               </p>
 
               <input #fileInput type="file" class="d-none"
                      (change)="onFileSelected($event)"
-                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.odt">
 
               <button type="button" class="btn btn-outline-primary btn-sm"
-                      (click)="$event.stopPropagation(); fileInput.click()">
+                      (click)="$event.stopPropagation(); fileInput.click()"
+                      [disabled]="isUploading">
                 <i class="bi bi-folder2-open me-2"></i>
-                {{ selectedFile ? 'Changer' : 'Choisir' }}
+                {{ selectedFile ? 'Changer' : (uploadedFileUrl ? 'Remplacer' : 'Choisir') }}
               </button>
             </div>
 
+            <!-- Barre de progression upload -->
             <div *ngIf="isUploading" class="mb-3">
               <div class="d-flex justify-content-between mb-1">
                 <small>Upload en cours...</small>
                 <small>{{ uploadProgress }}%</small>
               </div>
               <div class="progress" style="height:8px;">
-                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                      [style.width]="uploadProgress + '%'"></div>
               </div>
             </div>
 
-            <div *ngIf="rapportForm.get('urlDocumentAnnexe')?.value && !isUploading"
-                 class="alert alert-success py-2">
-              <i class="bi bi-check-circle me-2"></i>Document prêt
+            <!-- Message document prêt -->
+            <div *ngIf="rapportForm.get('urlDocumentAnnexe')?.value && !isUploading && !selectedFile"
+                 class="alert alert-success py-2 mb-0">
+              <i class="bi bi-check-circle me-2"></i>Document attaché au rapport
             </div>
           </div>
         </div>
@@ -332,6 +357,10 @@
                   <i class="bi bi-star me-1 text-warning"></i>
                   <strong>Note :</strong>
                   {{ rapportForm.get('evaluationGlobale')?.value }}/10
+                </div>
+                <div class="small" *ngIf="uploadedFileUrl">
+                  <i class="bi bi-file-earmark-pdf me-1 text-danger"></i>
+                  <strong>Document :</strong> attaché
                 </div>
               </div>
             </div>

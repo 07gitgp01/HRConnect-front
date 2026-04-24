@@ -1,4 +1,3 @@
-// src/app/features/admin/gestion-volontaires/profil-form/profil-form.component.ts
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule, FormGroup } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -10,10 +9,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatOption } from "@angular/material/core";
 import { MatSelectModule } from '@angular/material/select';
+import { MatDatepicker, MatDatepickerModule } from "@angular/material/datepicker";
 
 import { VolontaireService } from '../../../services/service_volont/volontaire.service';
 import { Volontaire } from '../../../models/volontaire.model';
-import { MatDatepicker, MatDatepickerModule } from "@angular/material/datepicker";
 
 @Component({
   selector: 'app-profil-form',
@@ -31,13 +30,13 @@ import { MatDatepicker, MatDatepickerModule } from "@angular/material/datepicker
     MatSelectModule,
     MatDatepicker,
     MatDatepickerModule,
-
-],
+  ],
   templateUrl: './profil-form.component.html',
   styleUrls: ['./profil-form.component.css']
 })
 export class ProfilFormComponent implements OnInit, OnChanges {
-  @Input() userId?: number;
+  // ✅ ID est un string (UUID)
+  @Input() volontaireId?: string;
   @Output() saved = new EventEmitter<void>();
   @Output() closed = new EventEmitter<void>();
 
@@ -69,64 +68,80 @@ export class ProfilFormComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.initForm();
-    if (this.userId) {
+    if (this.volontaireId) {
       this.loadVolontaire();
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['userId'] && !changes['userId'].firstChange) {
-      if (this.userId) this.loadVolontaire();
-      else this.resetForm();
+    if (changes['volontaireId'] && !changes['volontaireId'].firstChange) {
+      if (this.volontaireId) {
+        this.loadVolontaire();
+      } else {
+        this.resetForm();
+      }
     }
   }
 
   private initForm() {
-  this.profilForm = this.fb.group({
-    // Identité obligatoire
-    nom: ['', Validators.required],
-    prenom: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
-    telephone: ['', [Validators.required, Validators.pattern(/^[0-9]{8}$/)]],
-    // REMPLACER nip par numeroPiece
-    numeroPiece: ['', [Validators.required, Validators.pattern(/^[0-9]{17}$/)]],
-    dateNaissance: ['', Validators.required],
-    nationalite: ['Burkinabè', Validators.required],
-    sexe: ['', Validators.required],
-    
-    // Profil à compléter
-    adresseResidence: [''],
-    regionGeographique: [''],
-    niveauEtudes: [''],
-    domaineEtudes: [''],
-    competences: [''],
-    motivation: [''],
-    disponibilite: [''],
-    typePiece: [''], // Ajouter typePiece si nécessaire
-    
-    // Statut PNVB
-    statut: ['Candidat', Validators.required]
-  });
-}
+    this.profilForm = this.fb.group({
+      nom: ['', Validators.required],
+      prenom: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      telephone: ['', [Validators.required, Validators.pattern(/^[0-9]{8}$/)]],
+      numeroPiece: ['', [Validators.required, Validators.pattern(/^[0-9]{17}$/)]],
+      dateNaissance: ['', Validators.required],
+      nationalite: ['Burkinabè', Validators.required],
+      sexe: ['', Validators.required],
+      adresseResidence: [''],
+      regionGeographique: [''],
+      niveauEtudes: [''],
+      domaineEtudes: [''],
+      competences: [''],
+      motivation: [''],
+      disponibilite: ['Temps plein'],
+      typePiece: ['CNIB'],
+      statut: ['Candidat', Validators.required]
+    });
+  }
 
   private resetForm() {
     this.profilForm.reset({
       nationalite: 'Burkinabè',
-      statut: 'Candidat'
+      statut: 'Candidat',
+      disponibilite: 'Temps plein',
+      typePiece: 'CNIB'
     });
     this.isEdit = false;
   }
 
   private loadVolontaire() {
-    if (!this.userId) return;
+    if (!this.volontaireId) return;
+    
     this.isLoading = true;
     this.isEdit = true;
-    this.volontaireService.getVolontaire(this.userId).subscribe({
+    
+    this.volontaireService.getVolontaire(this.volontaireId).subscribe({
       next: (vol: Volontaire) => {
         const competencesStr = (vol.competences || []).join(', ');
         this.profilForm.patchValue({ 
-          ...vol, 
-          competences: competencesStr
+          nom: vol.nom || '',
+          prenom: vol.prenom || '',
+          email: vol.email || '',
+          telephone: vol.telephone || '',
+          numeroPiece: vol.numeroPiece || '',
+          dateNaissance: vol.dateNaissance || '',
+          nationalite: vol.nationalite || 'Burkinabè',
+          sexe: vol.sexe || '',
+          adresseResidence: vol.adresseResidence || '',
+          regionGeographique: vol.regionGeographique || '',
+          niveauEtudes: vol.niveauEtudes || '',
+          domaineEtudes: vol.domaineEtudes || '',
+          competences: competencesStr,
+          motivation: vol.motivation || '',
+          disponibilite: vol.disponibilite || 'Temps plein',
+          typePiece: vol.typePiece || 'CNIB',
+          statut: vol.statut || 'Candidat'
         });
         this.isLoading = false;
       },
@@ -143,74 +158,64 @@ export class ProfilFormComponent implements OnInit, OnChanges {
   }
 
   submit(): void {
-  if (this.profilForm.invalid) {
-    this.profilForm.markAllAsTouched();
-    this.snack.open('Veuillez corriger les champs en rouge', 'OK', { duration: 3000 });
-    return;
+    if (this.profilForm.invalid) {
+      this.profilForm.markAllAsTouched();
+      this.snack.open('Veuillez corriger les champs en rouge', 'OK', { duration: 3000 });
+      return;
+    }
+
+    const raw = this.profilForm.value;
+    
+    const volont: Volontaire = {
+      id: this.isEdit ? this.volontaireId : undefined,
+      nom: raw.nom || '',
+      prenom: raw.prenom || '',
+      email: raw.email || '',
+      telephone: raw.telephone || '',
+      numeroPiece: raw.numeroPiece || '',
+      dateNaissance: raw.dateNaissance || '',
+      nationalite: raw.nationalite || 'Burkinabè',
+      sexe: raw.sexe as 'M' | 'F',
+      adresseResidence: raw.adresseResidence || '',
+      regionGeographique: raw.regionGeographique || '',
+      niveauEtudes: raw.niveauEtudes || '',
+      domaineEtudes: raw.domaineEtudes || '',
+      competences: String(raw.competences).split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0),
+      motivation: raw.motivation || '',
+      disponibilite: raw.disponibilite as 'Temps plein' | 'Temps partiel' || 'Temps plein',
+      typePiece: raw.typePiece as 'CNIB' | 'PASSEPORT' || 'CNIB',
+      statut: raw.statut || 'Candidat',
+      dateInscription: this.isEdit ? '' : new Date().toISOString()
+    };
+
+    this.isSaving = true;
+
+    if (this.isEdit && this.volontaireId) {
+      this.volontaireService.updateVolontaire(this.volontaireId, volont).subscribe({
+        next: () => {
+          this.snack.open('Profil mis à jour', 'OK', { duration: 2500 });
+          this.isSaving = false;
+          this.saved.emit();
+        },
+        error: (err: any) => {
+          console.error(err);
+          this.snack.open('Erreur lors de la mise à jour', 'Fermer', { duration: 3500 });
+          this.isSaving = false;
+        }
+      });
+    } else {
+      this.volontaireService.createVolontaire(volont).subscribe({
+        next: () => {
+          this.snack.open('Volontaire créé', 'OK', { duration: 2500 });
+          this.isSaving = false;
+          this.saved.emit();
+        },
+        error: (err: any) => {
+          console.error(err);
+          this.snack.open('Erreur lors de la création', 'Fermer', { duration: 3500 });
+          this.isSaving = false;
+        }
+      });
+    }
   }
-
-  const raw = this.profilForm.value;
-  
-  // Créer un objet Volontaire complet selon votre modèle
-  const volont: Volontaire = {
-    id: this.isEdit ? this.userId : undefined,
-    // Identité obligatoire
-    nom: raw.nom || '',
-    prenom: raw.prenom || '',
-    email: raw.email || '',
-    telephone: raw.telephone || '',
-    // REMPLACER nip par numeroPiece
-    numeroPiece: raw.numeroPiece || '',
-    dateNaissance: raw.dateNaissance || '',
-    nationalite: raw.nationalite || 'Burkinabè',
-    sexe: raw.sexe as 'M' | 'F',
-    
-    // Profil à compléter
-    adresseResidence: raw.adresseResidence || '',
-    regionGeographique: raw.regionGeographique || '',
-    niveauEtudes: raw.niveauEtudes || '',
-    domaineEtudes: raw.domaineEtudes || '',
-    competences: String(raw.competences).split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0),
-    motivation: raw.motivation || '',
-    disponibilite: raw.disponibilite as 'Temps plein' | 'Temps partiel' || 'Temps plein',
-    typePiece: raw.typePiece as 'CNIB' | 'PASSEPORT', // Ajouter typePiece
-    
-    // Statut PNVB
-    statut: raw.statut || 'Candidat',
-    
-    // Dates importantes
-    dateInscription: this.isEdit ? '' : new Date().toISOString()
-  };
-
-  // ... le reste du code reste identique
-  this.isSaving = true;
-
-  if (this.isEdit && this.userId) {
-    this.volontaireService.updateVolontaire(this.userId, volont).subscribe({
-      next: () => {
-        this.snack.open('Profil mis à jour', 'OK', { duration: 2500 });
-        this.isSaving = false;
-        this.saved.emit();
-      },
-      error: (err: any) => {
-        console.error(err);
-        this.snack.open('Erreur lors de la mise à jour', 'Fermer', { duration: 3500 });
-        this.isSaving = false;
-      }
-    });
-  } else {
-    this.volontaireService.createVolontaire(volont).subscribe({
-      next: () => {
-        this.snack.open('Volontaire créé', 'OK', { duration: 2500 });
-        this.isSaving = false;
-        this.saved.emit();
-      },
-      error: (err: any) => {
-        console.error(err);
-        this.snack.open('Erreur lors de la création', 'Fermer', { duration: 3500 });
-        this.isSaving = false;
-      }
-    });
-  }
-}
 }

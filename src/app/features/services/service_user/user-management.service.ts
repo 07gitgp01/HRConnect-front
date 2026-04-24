@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { User } from '../../models/user.model';
+import { environment } from '../../environment/environment';
 
 export interface UserStats {
   total: number;
@@ -15,9 +16,12 @@ export interface UserStats {
   providedIn: 'root'
 })
 export class UserManagementService {
-  private apiUrl = 'http://localhost:3000/users';
+  // ✅ Utilisation de environment.apiUrl
+  private apiUrl = `${environment.apiUrl}/users`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    console.log('📡 UserManagementService initialisé avec API URL:', this.apiUrl);
+  }
 
   getUsers(): Observable<User[]> {
     return this.http.get<User[]>(this.apiUrl);
@@ -65,6 +69,22 @@ export class UserManagementService {
   toggleProfilStatus(userId: number | string, profilComplete: boolean): Observable<User> {
     return this.http.patch<User>(`${this.apiUrl}/${userId}`, { 
       profilComplete 
+    });
+  }
+
+  // ✅ Méthode supplémentaire utile pour l'administration
+  updateUserRole(userId: number | string, role: string): Observable<User> {
+    return this.http.patch<User>(`${this.apiUrl}/${userId}`, { 
+      role,
+      updated_at: new Date().toISOString()
+    });
+  }
+
+  // ✅ Méthode pour activer/désactiver un utilisateur
+  toggleUserActive(userId: number | string, actif: boolean): Observable<User> {
+    return this.http.patch<User>(`${this.apiUrl}/${userId}`, { 
+      actif,
+      updated_at: new Date().toISOString()
     });
   }
 }

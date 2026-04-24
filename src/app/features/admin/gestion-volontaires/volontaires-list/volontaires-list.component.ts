@@ -1,6 +1,4 @@
-// src/app/features/admin/gestion-volontaires/volontaires-list/volontaires-list.component.ts
-
-import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, forkJoin, of } from 'rxjs';
@@ -20,7 +18,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 
@@ -32,12 +30,10 @@ import { Volontaire } from '../../../models/volontaire.model';
 import { Project } from '../../../models/projects.model';
 import { ProfilFormComponent } from '../profil-form/profil-form.component';
 import { ConfirmDialogComponent } from '../../../../shared/confirm-dialog/confirm-dialog/confirm-dialog.component';
-import { Component as NgComponent, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 // ==================== DIALOG D'AFFECTATION ====================
 
-@NgComponent({
+@Component({
   selector: 'app-affecter-volontaire-dialog',
   standalone: true,
   imports: [CommonModule, FormsModule, MatDialogModule, MatButtonModule, MatIconModule,
@@ -45,7 +41,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
   template: `
     <div style="padding:24px; min-width:420px">
       <h2 style="margin:0 0 8px; font-size:1.1rem; font-weight:700; color:#0f172a">
-        <mat-icon style="vertical-align:middle; margin-right:8px; color:#008124">assignment_turned_in</mat-icon>
+        <i class="fas fa-tasks" style="margin-right:8px; color:#008124"></i>
         Affecter {{ data.volontaire.prenom }} {{ data.volontaire.nom }}
       </h2>
       <p style="margin:0 0 20px; font-size:0.875rem; color:#64748b">
@@ -54,7 +50,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
       <div *ngIf="data.projetsClotures.length === 0"
            style="padding:16px; background:#fef9c3; border-radius:8px; font-size:0.875rem; color:#92400e; margin-bottom:16px">
-        <mat-icon style="vertical-align:middle; font-size:1rem; margin-right:6px">warning</mat-icon>
+        <i class="fas fa-exclamation-triangle" style="margin-right:6px"></i>
         Aucune mission clôturée disponible pour le moment.
       </div>
 
@@ -80,7 +76,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
                 [disabled]="!projetSelectionne || data.projetsClotures.length === 0"
                 (click)="confirmer()"
                 style="background:#008124; color:white; border-radius:8px; padding:0 20px; height:38px;">
-          <mat-icon style="font-size:1rem">assignment_turned_in</mat-icon>
+          <i class="fas fa-tasks" style="margin-right:6px"></i>
           Affecter
         </button>
       </div>
@@ -88,7 +84,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
   `
 })
 export class AffecterVolontaireDialogComponent {
-  projetSelectionne: number | string | null = null;
+  projetSelectionne: string | null = null;
   role = 'Volontaire';
 
   constructor(
@@ -135,13 +131,13 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
   filterDomaine    = '';
   filterCompetence = '';
 
-  editingVolontaireId?: number;
+  editingVolontaireId?: string;
   isSyncing = false;
   loading   = false;
   erreur: string | null = null;
 
-  missionsVolontaires = new Map<string | number, {
-    id: string | number;
+  missionsVolontaires = new Map<string, {
+    id: string;
     projetTitre: string;
     projetRegion?: string;
     dateAffectation: string;
@@ -173,7 +169,6 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
   ngOnInit(): void {
     this.isSyncing = true;
     this.loading   = true;
-
     this.chargerDonnees();
 
     this.syncService.volontaires$.pipe(
@@ -187,11 +182,8 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
   }
 
   ngAfterViewInit(): void {
-    // ✅ Configuration de la pagination et du tri
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
-    
-    // ✅ Personnalisation du filtre
     this.dataSource.filterPredicate = this.customFilterPredicate();
   }
 
@@ -203,10 +195,12 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
   // ==================== CHARGEMENT DES DONNÉES ====================
 
   chargerDonnees(): void {
+    this.loading = true;
+    
     forkJoin({
       volontaires: this.volontaireService.getVolontaires(),
       affectations: this.affectationService.getAllAffectations().pipe(catchError(() => of([]))),
-      projets: this.http.get<any[]>(`http://localhost:3000/projets`).pipe(catchError(() => of([])))
+      projets: this.projectService.getProjects().pipe(catchError(() => of([])))
     }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
@@ -221,12 +215,17 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
             const projet = projetsClotures.find(p => String(p.id) === String(affectation.projectId));
             if (!projet) return;
             
-            this.missionsVolontaires.set(affectation.volontaireId, {
-              id: affectation.id!,
-              projetTitre: projet.titre || 'Mission sans titre',
-              projetRegion: projet.regionAffectation,
-              dateAffectation: affectation.dateAffectation
-            });
+            const volontaireId = affectation.volontaireId ? String(affectation.volontaireId) : '';
+            const affectationId = affectation.id ? String(affectation.id) : '';
+            
+            if (volontaireId) {
+              this.missionsVolontaires.set(volontaireId, {
+                id: affectationId,
+                projetTitre: projet.titre || 'Mission sans titre',
+                projetRegion: projet.regionAffectation,
+                dateAffectation: affectation.dateAffectation
+              });
+            }
           });
         
         this._applyData(volontaires);
@@ -238,28 +237,21 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
         this.erreur = 'Erreur lors du chargement';
         this.loading = false;
         this.isSyncing = false;
+        this.snackBar.open('Erreur lors du chargement des données', 'Fermer', { duration: 3000 });
       }
     });
   }
 
-  loadVolontaires(): void {
-    this.chargerDonnees();
-  }
-
-  rafraichir(): void {
-    this.loading = true;
-    this.erreur = null;
-    this.chargerDonnees();
-  }
-
   private _applyData(vols: Volontaire[]): void {
+    console.log('📊 Application des données:', vols.length, 'volontaires');
     this.dataSource.data = vols;
     
-    // ✅ Important: réattacher le paginator après mise à jour des données
     setTimeout(() => {
       if (this.paginator) {
         this.dataSource.paginator = this.paginator;
-        this.paginator.firstPage();
+        if (this.paginator.firstPage) {
+          this.paginator.firstPage();
+        }
       }
     });
   }
@@ -275,7 +267,6 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
       competence: this.filterCompetence.toLowerCase()
     });
     
-    // ✅ Retour à la première page après filtrage
     if (this.paginator) {
       this.paginator.firstPage();
     }
@@ -289,12 +280,12 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
         data.prenom.toLowerCase().includes(f.searchTerm) ||
         data.email.toLowerCase().includes(f.searchTerm) ||
         (data.telephone || '').toLowerCase().includes(f.searchTerm) ||
-        (data.competences || []).some(c => c.toLowerCase().includes(f.searchTerm));
+        this.getCompetencesArray(data.competences).some(c => c.toLowerCase().includes(f.searchTerm));
       const matchesStatus    = !f.status    || (data.statut || '').toLowerCase() === f.status;
       const matchesRegion    = !f.region    || (data.regionGeographique || '').toLowerCase() === f.region;
       const matchesDomaine   = !f.domaine   || (data.domaineEtudes      || '').toLowerCase() === f.domaine;
       const matchesCompetence = !f.competence ||
-        (data.competences || []).some(c => c.toLowerCase().includes(f.competence));
+        this.getCompetencesArray(data.competences).some(c => c.toLowerCase().includes(f.competence));
       return matchesSearch && matchesStatus && matchesRegion && matchesDomaine && matchesCompetence;
     };
   }
@@ -321,7 +312,8 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
     dateAffectation: string;
   } | null {
     if (!volontaire.id) return null;
-    return this.missionsVolontaires.get(volontaire.id) || null;
+    const idAsString = String(volontaire.id);
+    return this.missionsVolontaires.get(idAsString) || null;
   }
 
   formatDate(dateString: string): string {
@@ -347,16 +339,60 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
     return '✅ Affecter à une mission clôturée';
   }
 
+  getCompetencesArray(competences: any): string[] {
+    if (!competences) return [];
+    if (Array.isArray(competences)) return competences;
+    if (typeof competences === 'string') {
+      try {
+        const parsed = JSON.parse(competences);
+        if (Array.isArray(parsed)) return parsed;
+        return [competences];
+      } catch {
+        return competences.split(',').map(c => c.trim()).filter(Boolean);
+      }
+    }
+    return [];
+  }
+
+  getCompetencesDisplay(competences: any): string {
+    const competencesArray = this.getCompetencesArray(competences);
+    if (competencesArray.length === 0) return 'Aucune';
+    const display = competencesArray.slice(0, 2).join(', ');
+    return competencesArray.length > 2 ? `${display}...` : display;
+  }
+
+  getFirstCompetence(competences: any): string {
+    const array = this.getCompetencesArray(competences);
+    return array.length > 0 ? array[0] : '';
+  }
+
+  getRemainingCompetences(competences: any): string {
+    const array = this.getCompetencesArray(competences);
+    if (array.length <= 1) return '';
+    return array.slice(1).join(', ');
+  }
+
+  getInitiales(volontaire: Volontaire): string {
+    const n = volontaire.nom?.[0]?.toUpperCase()    || '';
+    const p = volontaire.prenom?.[0]?.toUpperCase() || '';
+    return `${n}${p}` || '??';
+  }
+
+  getNomComplet(volontaire: Volontaire): string {
+    return [volontaire.prenom, volontaire.nom].filter(Boolean).join(' ');
+  }
+
   // ==================== DRAWER ====================
 
-  openDrawerForAdd(): void  { 
+  openDrawerForAdd(): void { 
     this.editingVolontaireId = undefined; 
     this.drawer.open(); 
   }
   
-  openDrawerForEdit(id: number): void { 
-    this.editingVolontaireId = id; 
-    this.drawer.open(); 
+  openDrawerForEdit(id: string | undefined): void {
+    if (!id) return;
+    this.editingVolontaireId = id;
+    this.drawer.open();
   }
 
   onVolontaireSaved(): void {
@@ -371,16 +407,18 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
 
   // ==================== SUPPRESSION ====================
 
-  deleteVolontaire(id?: number): void {
+  deleteVolontaire(id?: string): void {
     if (!id) return;
+    
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title:       'Supprimer le volontaire',
-        message:     'Êtes-vous sûr de vouloir supprimer définitivement ce volontaire ?',
+        title: 'Supprimer le volontaire',
+        message: 'Êtes-vous sûr de vouloir supprimer définitivement ce volontaire ?',
         confirmText: 'Supprimer',
-        cancelText:  'Annuler'
+        cancelText: 'Annuler'
       }
     });
+    
     dialogRef.afterClosed().subscribe((result: boolean) => {
       if (result) {
         this.volontaireService.deleteVolontaire(id).subscribe({
@@ -397,24 +435,22 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
   // ==================== STATUT ====================
 
   changerStatutVolontaire(v: Volontaire, nouveauStatut: Volontaire['statut']): void {
-    if (!v.id) { 
-      this.snackBar.open('ID non défini', 'Fermer', { duration: 3000 }); 
-      return; 
-    }
-
+    if (!v.id) return;
+    
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title:       'Changer le statut',
-        message:     `Changer le statut de ${v.prenom} ${v.nom} en "${nouveauStatut}" ?`,
+        title: 'Changer le statut',
+        message: `Changer le statut de ${v.prenom} ${v.nom} en "${nouveauStatut}" ?`,
         confirmText: 'Confirmer',
-        cancelText:  'Annuler'
+        cancelText: 'Annuler'
       }
     });
 
     dialogRef.afterClosed().subscribe((result: boolean) => {
       if (result) {
         const updatedVolontaire: Volontaire = { ...v, statut: nouveauStatut };
-        this.volontaireService.updateVolontaire(v.id as number, updatedVolontaire).subscribe({
+        const volontaireId = String(v.id);
+        this.volontaireService.updateVolontaire(volontaireId, updatedVolontaire).subscribe({
           next: () => {
             this.chargerDonnees();
             this.snackBar.open(`Statut mis à jour`, 'Fermer', { duration: 3000 });
@@ -443,7 +479,6 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     if (triggerElement) triggerElement.blur();
-    else if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 
     this.projectService.getProjects().subscribe(projets => {
       const projetsClotures = projets.filter(p => p.statutProjet === 'cloture');
@@ -458,13 +493,13 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
       );
 
       const dialogRef = this.dialog.open(AffecterVolontaireDialogComponent, {
-        width:        '480px',
-        data:         { volontaire: v, projetsClotures: projetsTries },
-        autoFocus:    'first-tabbable',
+        width: '480px',
+        data: { volontaire: v, projetsClotures: projetsTries },
+        autoFocus: 'first-tabbable',
         restoreFocus: false
       });
 
-      dialogRef.afterClosed().subscribe((result: { projetId: number | string; role: string } | false) => {
+      dialogRef.afterClosed().subscribe((result: { projetId: string; role: string } | false) => {
         if (!result) return;
 
         this.affectationService.peutEtreAffecte(v.id!, result.projetId).subscribe(peutEtreAffecte => {
@@ -477,12 +512,12 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
           }
 
           this.affectationService.createAffectation({
-            volontaireId:    v.id!,
-            projectId:       result.projetId,
+            volontaireId: v.id!,
+            projectId: result.projetId,
             dateAffectation: new Date().toISOString(),
-            statut:          'active',
-            role:            result.role || 'Volontaire',
-            notes:           `Affectation à une mission clôturée`
+            statut: 'active',
+            role: result.role || 'Volontaire',
+            notes: `Affectation à une mission clôturée`
           }).subscribe({
             next: () => {
               this.snackBar.open(
@@ -513,33 +548,16 @@ export class VolontairesListComponent implements OnInit, OnDestroy, AfterViewIni
           v.nom, v.prenom, v.email, v.telephone || '',
           v.regionGeographique || '', v.niveauEtudes || '', v.domaineEtudes || '',
           v.statut, mission ? mission.projetTitre : 'Aucune',
-          (v.competences || []).join(', ')
+          this.getCompetencesDisplay(v.competences)
         ];
       })
     ].map(e => e.join(';')).join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `volontaires_pnvb_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     this.snackBar.open('Export CSV généré', 'Fermer', { duration: 3000 });
-  }
-
-  // ==================== HELPERS ====================
-
-  getCompetencesDisplay(competences: string[] | undefined): string {
-    if (!competences || competences.length === 0) return 'Aucune';
-    return competences.slice(0, 2).join(', ') + (competences.length > 2 ? '...' : '');
-  }
-
-  getInitiales(volontaire: Volontaire): string {
-    const n = volontaire.nom?.[0]?.toUpperCase()    || '';
-    const p = volontaire.prenom?.[0]?.toUpperCase() || '';
-    return `${n}${p}` || '??';
-  }
-
-  getNomComplet(volontaire: Volontaire): string {
-    return [volontaire.prenom, volontaire.nom].filter(Boolean).join(' ');
   }
 }

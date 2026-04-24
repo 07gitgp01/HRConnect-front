@@ -308,23 +308,42 @@
   margin: 0;
 }
 
-/* ===== TABLEAU ===== */
+/* ===== TABLEAU AVEC HAUTEUR FIXE ET DÉFILEMENT ===== */
 .cl-table-wrap {
   background: white;
   border: 1px solid var(--slate-300);
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 480px);
+  min-height: 400px;
 }
 
+/* Conteneur du tableau avec défilement */
+.cl-table-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+/* En-tête fixe */
 .cl-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
   color: var(--slate-700);
+  min-width: 900px;
 }
 
-/* En-tête */
+.cl-table thead {
+  position: sticky;
+  top: 0;
+  background: var(--slate-50);
+  z-index: 10;
+}
+
 .cl-table thead tr {
   background: var(--slate-50);
   border-bottom: 2px solid var(--slate-300);
@@ -341,9 +360,12 @@
   white-space: nowrap;
 }
 
+/* Largeur fixe pour la colonne actions */
 .th-actions,
 .td-actions {
   text-align: center;
+  width: 140px !important;
+  min-width: 140px !important;
 }
 
 /* Lignes */
@@ -542,20 +564,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
+  flex-wrap: nowrap;
 }
 
 .cl-action-btn {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1.5px solid transparent;
   cursor: pointer;
   background: transparent;
   transition: all .18s ease;
+  flex-shrink: 0;
 }
 
 .cl-action-btn mat-icon {
@@ -609,6 +633,15 @@
 }
 
 /* ===== MENU STATUT ===== */
+.cl-menu {
+  min-width: 220px !important;
+  max-width: 280px !important;
+}
+
+.cl-menu .mat-mdc-menu-content {
+  padding: 4px 0 !important;
+}
+
 .cl-menu-header {
   padding: 10px 16px 8px;
   font-size: 0.8rem;
@@ -621,7 +654,6 @@
   color: var(--slate-700);
 }
 
-/* ===== MENU WARN (volontaire déjà actif) ===== */
 .cl-menu-warn {
   display: flex;
   align-items: center;
@@ -644,15 +676,9 @@
   flex-shrink: 0;
 }
 
-/* Bouton "Accepter" grisé dans le menu */
 .cl-menu-item-blocked {
   opacity: 0.5;
   cursor: not-allowed !important;
-  position: relative;
-}
-
-.cl-menu-item-blocked mat-icon {
-  color: var(--slate-400) !important;
 }
 
 .cl-menu-item-badge {
@@ -660,22 +686,62 @@
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
   background: #fde68a;
   color: #92400e;
   border-radius: 10px;
   padding: 2px 7px;
-  border: 1px solid #fcd34d;
+}
+
+/* ===== PAGINATION ===== */
+.cl-paginator-wrap {
+  border-top: 1px solid var(--slate-100);
+  padding: 8px 0;
+  background: white;
+  flex-shrink: 0;
+}
+
+.cl-paginator-wrap .mat-mdc-paginator {
+  background: white;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+::ng-deep .mat-mdc-paginator .mat-mdc-paginator-container {
+  justify-content: flex-end;
+  padding: 0 16px;
+}
+
+::ng-deep .mat-mdc-paginator .mat-mdc-paginator-range-label {
+  font-size: 0.875rem;
+  color: var(--slate-600);
+  margin: 0 16px;
+}
+
+::ng-deep .mat-mdc-paginator .mat-mdc-icon-button {
+  color: var(--slate-600);
+}
+
+::ng-deep .mat-mdc-paginator .mat-mdc-icon-button:hover {
+  color: var(--green-600);
+  background: rgba(0, 129, 36, 0.08);
+}
+
+::ng-deep .mat-mdc-paginator .mat-mdc-icon-button[disabled] {
+  color: var(--slate-300);
 }
 
 /* ===== SCROLLBAR ===== */
-.cl-table-wrap::-webkit-scrollbar {
+.cl-table-container::-webkit-scrollbar {
+  width: 6px;
   height: 6px;
 }
 
-.cl-table-wrap::-webkit-scrollbar-thumb {
+.cl-table-container::-webkit-scrollbar-thumb {
   background: var(--slate-300);
   border-radius: 3px;
+}
+
+.cl-table-container::-webkit-scrollbar-track {
+  background: var(--slate-50);
 }
 
 /* ===== RESPONSIVE ===== */
@@ -696,14 +762,6 @@
     justify-content: center !important;
   }
 
-  .cl-table-wrap {
-    overflow-x: auto;
-  }
-
-  .cl-table {
-    min-width: 780px;
-  }
-
   .cl-filters {
     flex-direction: column;
     align-items: stretch;
@@ -713,13 +771,4 @@
   .cl-btn-ghost {
     width: 100%;
   }
-}
-/* ===== PAGINATOR ===== */
-.cl-paginator-wrap {
-  border-top: 1px solid var(--slate-100);
-}
-
-.cl-paginator-wrap .mat-mdc-paginator {
-  background: white;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }

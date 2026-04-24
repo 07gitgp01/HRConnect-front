@@ -125,25 +125,31 @@
             </td>
 
             <!-- Profil complété -->
-            <td>
-              <div class="cl-profil-status">
-                <span class="cl-profil-ok" *ngIf="candidat.user.profilComplete">
-                  <i class="fas fa-check-circle"></i> Complété
-                </span>
-                <span class="cl-profil-ko" *ngIf="!candidat.user.profilComplete">
-                  <i class="fas fa-clock"></i> Incomplet
-                </span>
-              </div>
-            </td>
+            <!-- Profil complété -->
+<td>
+  <div class="cl-profil-status">
+    <!-- ✅ CORRECTION : Utiliser la vraie complétion du profil -->
+    <ng-container *ngIf="isProfilComplet(candidat.volontaire); else profilIncomplet">
+      <span class="cl-profil-ok">
+        <i class="fas fa-check-circle"></i> Complété ({{ getProfilCompletion(candidat.volontaire) }}%)
+      </span>
+    </ng-container>
+    <ng-template #profilIncomplet>
+      <span class="cl-profil-ko">
+        <i class="fas fa-clock"></i> Incomplet ({{ getProfilCompletion(candidat.volontaire) }}%)
+      </span>
+    </ng-template>
+  </div>
+</td>
 
             <!-- Date inscription -->
             <td>
-              <div class="cl-dates">
-                <span class="cl-date-main">
-                  {{ candidat.user.date_inscription | date:'dd MMM yyyy' }}
-                </span>
-              </div>
-            </td>
+  <div class="cl-dates">
+    <span class="cl-date-main">
+      {{ getDateInscription(candidat) }}
+    </span>
+  </div>
+</td>
 
             <!-- Actions -->
             <td class="td-actions">

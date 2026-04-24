@@ -359,14 +359,15 @@
           </div>
 
           <!-- Bouton de soumission -->
-          <div *ngIf="isEditing" class="form-actions">
-            <button type="submit" 
-                    [disabled]="isLoading || profil.invalid"
-                    class="btn btn-success btn-lg">
-              <span *ngIf="isLoading" class="spinner-border spinner-border-sm"></span>
-              {{ isLoading ? 'Mise à jour...' : '💾 Sauvegarder le profil' }}
-            </button>
-          </div>
+         <div *ngIf="isEditing" class="form-actions">
+  <button type="submit" 
+          [disabled]="isLoading"
+          class="btn btn-success btn-lg">
+    <span *ngIf="isLoading" class="spinner-border spinner-border-sm"></span>
+    {{ isLoading ? 'Sauvegarde...' : '💾 Sauvegarder le profil' }}
+  </button>
+</div>
+
         </div>
       </form>
     </div>

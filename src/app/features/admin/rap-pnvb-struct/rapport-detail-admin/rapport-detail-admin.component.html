@@ -272,37 +272,39 @@
           </div>
         </div>
 
-        <!-- ⭐ SECTION DOCUMENT CORRIGÉE ⭐ -->
+        <!-- ⭐ SECTION DOCUMENT - URL MASQUÉE ⭐ -->
         <div class="rda-card" *ngIf="r.urlDocumentAnnexe">
           <div class="rda-card-header">
             <i class="bi bi-paperclip"></i> Document annexe
           </div>
           <div class="rda-card-body">
             
-            <!-- Nom du fichier - CORRIGÉ: utilisation des méthodes -->
+            <!-- Nom du fichier - Sans URL visible -->
             <div class="d-flex align-items-center mb-3 p-3 bg-light rounded">
               <i class="bi bi-file-earmark-text fs-2 text-primary me-3"></i>
               <div class="overflow-hidden">
-                <div class="fw-bold text-truncate">
+                <div class="fw-bold">
+                  <i class="bi bi-paperclip me-1"></i>
                   {{ getDocumentNom() }}
                 </div>
-                <small class="text-muted text-truncate d-block">
-                  {{ getDocumentUrl() }}
+                <small class="text-muted">
+                  <i class="bi bi-files me-1"></i>
+                  Document annexe
                 </small>
               </div>
             </div>
 
             <!-- Boutons d'action -->
             <div class="d-grid gap-2">
-              <!-- Option 1: Voir dans un nouvel onglet -->
-              <a [href]="getDocumentUrl()" 
-                 target="_blank"
-                 class="btn btn-outline-primary">
+              <!-- Prévisualiser -->
+              <button (click)="previewDocument()"
+                      class="btn btn-outline-primary"
+                      [disabled]="getDocumentUrl() === '#'">
                 <i class="bi bi-eye me-2"></i>
-                Voir le document
-              </a>
+                Prévisualiser
+              </button>
               
-              <!-- Option 2: Télécharger -->
+              <!-- Télécharger -->
               <button (click)="downloadDocument()"
                       class="btn btn-primary"
                       [disabled]="isDownloading">
@@ -312,13 +314,24 @@
               </button>
             </div>
 
-            <!-- Indicateur de correction -->
-            <div *ngIf="r.urlDocumentAnnexe && r.urlDocumentAnnexe.includes('/upload/')" 
-                 class="alert alert-warning mt-3 small">
-              <i class="bi bi-exclamation-triangle me-2"></i>
-              <strong>Note:</strong> Ancienne URL (upload sans 's') automatiquement redirigée
+            <!-- Indicateur de correction pour anciens formats -->
+            <div *ngIf="r.urlDocumentAnnexe && r.urlDocumentAnnexe.includes('/upload/') && !r.urlDocumentAnnexe.includes('/uploads/')" 
+                 class="alert alert-info mt-3 small">
+              <i class="bi bi-info-circle me-2"></i>
+              Ancien format d'URL automatiquement corrigé
             </div>
 
+          </div>
+        </div>
+
+        <!-- Message si aucun document -->
+        <div class="rda-card" *ngIf="!r.urlDocumentAnnexe">
+          <div class="rda-card-header">
+            <i class="bi bi-paperclip"></i> Document joint
+          </div>
+          <div class="rda-card-body text-center py-4">
+            <i class="bi bi-file-earmark-x fs-1 text-muted d-block mb-3"></i>
+            <p class="text-muted mb-0">Aucun document joint à ce rapport</p>
           </div>
         </div>
 
@@ -328,6 +341,31 @@
   </ng-container>
 
 </div><!-- /rda-container -->
+
+<!-- Modal de prévisualisation PDF -->
+<div *ngIf="showDocumentPreview" class="modal fade show d-block" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-file-pdf me-2 text-danger"></i>
+          {{ getDocumentNom() }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closePreview()"></button>
+      </div>
+      <div class="modal-body p-0" style="height: 80vh;">
+        <iframe *ngIf="documentUrl" [src]="documentUrl" width="100%" height="100%" frameborder="0"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="downloadDocument()">
+          <i class="bi bi-download me-2"></i>Télécharger
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="closePreview()">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div *ngIf="showDocumentPreview" class="modal-backdrop fade show"></div>
 
 <!-- ─── Modal Feedback ─────────────────────────────────────────────────────── -->
 <div class="rda-modal-overlay" *ngIf="showFeedbackModal" (click)="fermerModal()">

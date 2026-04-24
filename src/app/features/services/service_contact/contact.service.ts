@@ -26,7 +26,7 @@ export interface MessagesFilter {
   providedIn: 'root'
 })
 export class ContactService {
-  private apiUrl = `${environment.apiUrl}/contactMessages`;
+private apiUrl = `${environment.apiUrl}/contact-messages`;
 
   constructor(
     private http: HttpClient,

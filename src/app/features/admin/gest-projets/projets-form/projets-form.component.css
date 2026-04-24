@@ -702,3 +702,53 @@ button:focus-visible {
 ✅ Mode sombre inclus
 ✅ Animations fluides
 */
+/* src/app/features/admin/gest-projets/projets-form/projets-form.component.css */
+
+.form-card {
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 24px;
+  border-radius: 16px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.mt-2 {
+  margin-top: 16px;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.submit-button {
+  min-width: 140px;
+}
+
+@media (max-width: 768px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .submit-button {
+    width: 100%;
+  }
+}

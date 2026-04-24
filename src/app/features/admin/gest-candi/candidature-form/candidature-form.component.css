@@ -490,3 +490,94 @@ mat-form-field, button, .form-section {
   color: #c53030;
   border: 1px solid #feb2b2;
 }
+
+/* Styles pour la section CV */
+.file-upload-section {
+  margin-top: 16px;
+}
+
+.file-upload-zone {
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #f9fafb;
+}
+
+.file-upload-zone:hover {
+  border-color: #1a5f23;
+  background-color: #f0fdf4;
+}
+
+.upload-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #9ca3af;
+  margin-bottom: 1rem;
+}
+
+.file-preview-container {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #f0fdf4;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pdf-icon {
+  color: #dc2626;
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+.file-details {
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.file-size {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.remove-file-btn {
+  color: #dc2626;
+}
+
+.upload-progress {
+  margin-top: 1rem;
+}
+
+.existing-file {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background-color: #f0fdf4;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.existing-file mat-icon {
+  color: #10b981;
+}
+
+.file-hint {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-top: 0.5rem;
+}

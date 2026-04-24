@@ -85,26 +85,26 @@
 
         <!-- Compétences -->
         <div class="info-section" *ngIf="getCompetencesArray(data.candidature.competences).length > 0">
-  <h3 class="section-title">
-    <mat-icon>code</mat-icon>
-    Compétences
-  </h3>
-  <div class="competences-container">
-    <mat-chip *ngFor="let competence of getCompetencesArray(data.candidature.competences)" 
-             class="competence-chip">
-      {{ competence }}
-    </mat-chip>
-  </div>
-</div>
+          <h3 class="section-title">
+            <mat-icon>code</mat-icon>
+            Compétences
+          </h3>
+          <div class="competences-container">
+            <mat-chip *ngFor="let competence of getCompetencesArray(data.candidature.competences)" 
+                     class="competence-chip">
+              {{ competence }}
+            </mat-chip>
+          </div>
+        </div>
 
         <!-- Lettre de motivation -->
-        <div class="info-section" *ngIf="data.candidature.lettre_motivation">
+        <div class="info-section" *ngIf="data.candidature.lettreMotivation">
           <h3 class="section-title">
             <mat-icon>description</mat-icon>
             Lettre de motivation
           </h3>
           <div class="motivation-content">
-            {{ data.candidature.lettre_motivation }}
+            {{ data.candidature.lettreMotivation }}
           </div>
         </div>
 
@@ -141,14 +141,18 @@
             <mat-icon>attachment</mat-icon>
             Curriculum Vitae
           </h3>
-          <div class="cv-section">
-            <mat-icon>picture_as_pdf</mat-icon>
-            <a [href]="data.candidature.cv_url" target="_blank" class="cv-link">
+          <div class="cv-actions">
+            <button mat-raised-button color="primary" (click)="voirCV()" class="cv-button">
+              <mat-icon>visibility</mat-icon>
+              Voir le CV
+            </button>
+            <button mat-raised-button color="accent" (click)="telechargerCV()" class="cv-button">
+              <mat-icon>download</mat-icon>
               Télécharger le CV
-            </a>
+            </button>
           </div>
         </div>
-      </mat-card-content>
+      </mat-card-content> <!-- ✅ Cette balise était manquante -->
     </mat-card>
 
     <!-- Informations du projet -->

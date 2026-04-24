@@ -187,6 +187,63 @@
     </form>
   </div>
 
+  <!-- Section CV -->
+<div class="form-section">
+  <h3>Curriculum Vitae</h3>
+  
+  <!-- Champ caché pour stocker l'URL du CV -->
+  <input type="hidden" formControlName="cvUrl">
+  
+  <div class="file-upload-section">
+    <label class="mat-body-1 fw-bold">CV (PDF)</label>
+    
+    <div class="file-upload-zone" 
+         (click)="fileInput.click()"
+         (dragover)="$event.preventDefault()"
+         (drop)="onFileDrop($event)">
+      
+      <input type="file" 
+             #fileInput
+             accept="application/pdf" 
+             (change)="onFileSelected($event)" 
+             style="display: none" />
+      
+      <mat-icon class="upload-icon">cloud_upload</mat-icon>
+      <p>Glissez-déposez votre CV ici ou <strong>cliquez pour parcourir</strong></p>
+      <small class="file-hint">PDF uniquement - Max 5MB</small>
+    </div>
+    
+    <!-- Aperçu du fichier sélectionné -->
+    <div *ngIf="filePreview" class="file-preview-container">
+      <div class="file-info">
+        <mat-icon class="pdf-icon">picture_as_pdf</mat-icon>
+        <div class="file-details">
+          <div class="file-name">{{ filePreview }}</div>
+          <div class="file-size" *ngIf="selectedFile">
+            {{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB
+          </div>
+        </div>
+        <button type="button" mat-icon-button color="warn" (click)="supprimerFichier()" 
+                class="remove-file-btn" matTooltip="Supprimer le fichier">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Barre de progression upload -->
+    <mat-progress-bar *ngIf="isUploading" mode="indeterminate" class="upload-progress"></mat-progress-bar>
+    
+    <!-- URL du CV déjà uploadé (mode édition) -->
+    <div *ngIf="candidatureForm.get('cvUrl')?.value && !selectedFile && !isUploading" class="existing-file">
+      <mat-icon>check_circle</mat-icon>
+      <span>CV déjà téléchargé</span>
+      <button type="button" mat-button color="warn" (click)="supprimerCVExistant()">
+        <mat-icon>delete</mat-icon> Remplacer
+      </button>
+    </div>
+  </div>
+</div>
+
   <div mat-dialog-actions align="end">
     <button mat-button (click)="onCancel()">Annuler</button>
     <button mat-raised-button color="primary" 

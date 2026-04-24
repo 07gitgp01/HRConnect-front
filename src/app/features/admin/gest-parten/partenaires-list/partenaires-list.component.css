@@ -647,4 +647,530 @@
       background: rgba(0, 129, 36, 0.1);
     }
   }
+
+  /* =======================================================
+   STATISTIQUES PAR RÔLE - VERSION AMÉLIORÉE
+   ======================================================= */
+
+/* Cartes de statistiques par rôle */
+.stats-role-card {
+  transition: all 0.3s ease;
+  background: white;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  height: 100%;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* Icônes des rôles */
+.stats-role-icon {
+  color: #008124;
+  opacity: 0.8;
+}
+
+/* Numéros des statistiques */
+.stats-role-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+/* Labels des statistiques */
+.stats-role-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+}
+
+/* Couleurs spécifiques par type de rôle */
+.stats-role-ptf {
+  border-top: 4px solid #2196F3;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  
+  .stats-role-icon {
+    color: #2196F3;
+  }
+  
+  .stats-role-number {
+    color: #1976D2;
+  }
+}
+
+.stats-role-structure {
+  border-top: 4px solid #008124;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  
+  .stats-role-icon {
+    color: #008124;
+  }
+  
+  .stats-role-number {
+    color: #006b1e;
+  }
+}
+
+.stats-role-mixte {
+  border-top: 4px solid #FF9800;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  
+  .stats-role-icon {
+    color: #FF9800;
+  }
+  
+  .stats-role-number {
+    color: #F57C00;
+  }
+}
+
+/* Barres de progression */
+.progress {
+  background-color: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  border-radius: 10px;
+  transition: width 0.5s ease;
+  
+  &.bg-primary {
+    background: linear-gradient(90deg, #2196F3, #1976D2);
+  }
+  
+  &.bg-success {
+    background: linear-gradient(90deg, #008124, #006b1e);
+  }
+  
+  &.bg-info {
+    background: linear-gradient(90deg, #FF9800, #F57C00);
+  }
+}
+
+/* Card header amélioré */
+.card-header {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1rem 1.25rem;
+  
+  .card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+/* Version mobile responsive */
+@media (max-width: 768px) {
+  .stats-role-number {
+    font-size: 1.8rem;
+  }
+  
+  .stats-role-label {
+    font-size: 0.7rem;
+  }
+  
+  .stats-role-icon {
+    font-size: 1.5rem;
+  }
+  
+  .stats-role-card {
+    padding: 0.75rem !important;
+  }
+}
+
+/* Mode sombre */
+@media (prefers-color-scheme: dark) {
+  .stats-role-card {
+    background: #1e293b;
+    border-color: #334155;
+    
+    &:hover {
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+  }
+  
+  .stats-role-number {
+    color: #f1f5f9;
+  }
+  
+  .stats-role-ptf .stats-role-number {
+    color: #64B5F6;
+  }
+  
+  .stats-role-structure .stats-role-number {
+    color: #4CAF50;
+  }
+  
+  .stats-role-mixte .stats-role-number {
+    color: #FFB74D;
+  }
+  
+  .card-header {
+    background: #1e293b;
+    border-bottom-color: #334155;
+    
+    .card-title {
+      color: #f1f5f9;
+    }
+  }
+  
+  .progress {
+    background-color: #334155;
+  }
+}
+/* =======================================================
+   CARTES STATISTIQUES - VERSION GRANDE ET TRÈS VISIBLE
+   ======================================================= */
+
+/* Conteneur des cartes */
+.row.mb-4 {
+  margin-bottom: 2rem !important;
+}
+
+/* Style de base des cartes - PLUS GRANDES */
+.stats-card {
+  border: none;
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+  min-height: 140px;
+  
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+  }
+}
+
+/* Structure interne de la carte - PLUS ESPACÉE */
+.stats-card-inner {
+  display: flex;
+  align-items: center;
+  padding: 1.8rem 1.8rem;
+  gap: 1.5rem;
+}
+
+/* Icônes des cartes - PLUS GRANDES */
+.stats-card-icon {
+  width: 85px;
+  height: 85px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  
+  i {
+    font-size: 42px !important;
+    transition: transform 0.3s ease;
+  }
+}
+
+.stats-card:hover .stats-card-icon i {
+  transform: scale(1.15);
+}
+
+/* Contenu texte */
+.stats-card-content {
+  flex: 1;
+}
+
+/* ✅ CHIFFRES TRÈS GRANDS */
+.stats-card-number {
+  font-size: 3.8rem !important;
+  font-weight: 800 !important;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+  font-family: 'Segoe UI', 'Inter', Roboto, sans-serif;
+  letter-spacing: -2px;
+}
+
+/* Labels PLUS GRANDS */
+.stats-card-label {
+  font-size: 1rem !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
+/* Sous-information */
+.stats-card-trend,
+.stats-card-rate,
+.stats-card-sub {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0.35rem;
+  
+  i, span {
+    font-size: 0.8rem;
+  }
+}
+
+/* === Carte TOTALE === */
+.stats-card-total {
+  background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+  border-left: 6px solid #3b82f6;
+  
+  &::before {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  }
+  
+  .stats-card-icon {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+  }
+  
+  .stats-card-number {
+    color: #1e40af;
+    font-size: 4rem !important;
+  }
+}
+
+/* === Carte ACTIFS === */
+.stats-card-active {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  border-left: 6px solid #10b981;
+  
+  &::before {
+    background: linear-gradient(90deg, #10b981, #34d399);
+  }
+  
+  .stats-card-icon {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+  }
+  
+  .stats-card-number {
+    color: #065f46;
+    font-size: 4rem !important;
+  }
+}
+
+/* === Carte MISSIONS === */
+.stats-card-missions {
+  background: linear-gradient(135deg, #ffffff 0%, #fef3c7 100%);
+  border-left: 6px solid #f59e0b;
+  
+  &::before {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  }
+  
+  .stats-card-icon {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+  }
+  
+  .stats-card-number {
+    color: #b45309;
+    font-size: 4rem !important;
+  }
+}
+
+/* === Carte VOLONTAIRES === */
+.stats-card-volunteers {
+  background: linear-gradient(135deg, #ffffff 0%, #faf5ff 100%);
+  border-left: 6px solid #8b5cf6;
+  
+  &::before {
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+  }
+  
+  .stats-card-icon {
+    background: rgba(139, 92, 246, 0.15);
+    color: #8b5cf6;
+  }
+  
+  .stats-card-number {
+    color: #5b21b6;
+    font-size: 4rem !important;
+  }
+}
+
+/* Effet de brillance au survol */
+.stats-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.6s ease;
+}
+
+.stats-card:hover::after {
+  left: 100%;
+}
+
+/* Animation du nombre au survol */
+.stats-card:hover .stats-card-number {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+/* ✅ RESPONSIVE - Tailles adaptées */
+@media (max-width: 1200px) {
+  .stats-card-number {
+    font-size: 3rem !important;
+  }
+  
+  .stats-card-icon {
+    width: 70px;
+    height: 70px;
+    
+    i {
+      font-size: 34px !important;
+    }
+  }
+  
+  .stats-card-inner {
+    padding: 1.5rem;
+    gap: 1.2rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .stats-card-number {
+    font-size: 2.8rem !important;
+  }
+  
+  .stats-card-label {
+    font-size: 0.85rem !important;
+  }
+  
+  .stats-card-icon {
+    width: 60px;
+    height: 60px;
+    
+    i {
+      font-size: 30px !important;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-card-inner {
+    padding: 1.2rem;
+    gap: 1rem;
+  }
+  
+  .stats-card-number {
+    font-size: 2.2rem !important;
+  }
+  
+  .stats-card-icon {
+    width: 55px;
+    height: 55px;
+    
+    i {
+      font-size: 26px !important;
+    }
+  }
+  
+  .stats-card-label {
+    font-size: 0.75rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .stats-card-inner {
+    flex-direction: row;
+    text-align: left;
+    padding: 1rem;
+    gap: 0.8rem;
+  }
+  
+  .stats-card-content {
+    text-align: right;
+  }
+  
+  .stats-card-number {
+    font-size: 1.8rem !important;
+  }
+  
+  .stats-card-icon {
+    width: 48px;
+    height: 48px;
+    
+    i {
+      font-size: 22px !important;
+    }
+  }
+  
+  .stats-card-label {
+    font-size: 0.7rem !important;
+  }
+}
+
+/* Mode sombre */
+@media (prefers-color-scheme: dark) {
+  .stats-card-total {
+    background: linear-gradient(135deg, #1e293b 0%, #1e3a5f 100%);
+    
+    .stats-card-number {
+      color: #93c5fd;
+    }
+  }
+  
+  .stats-card-active {
+    background: linear-gradient(135deg, #1e293b 0%, #064e3b 100%);
+    
+    .stats-card-number {
+      color: #6ee7b7;
+    }
+  }
+  
+  .stats-card-missions {
+    background: linear-gradient(135deg, #1e293b 0%, #451a03 100%);
+    
+    .stats-card-number {
+      color: #fcd34d;
+    }
+  }
+  
+  .stats-card-volunteers {
+    background: linear-gradient(135deg, #1e293b 0%, #2e1065 100%);
+    
+    .stats-card-number {
+      color: #c4b5fd;
+    }
+  }
+  
+  .stats-card-label {
+    color: #94a3b8;
+  }
+  
+  .stats-card-icon {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
 }
