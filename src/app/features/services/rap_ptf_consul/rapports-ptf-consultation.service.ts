@@ -2,8 +2,8 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, of, throwError, forkJoin } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable, of, forkJoin } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import {
   RapportPTF,
   RapportPTFResponse,
@@ -15,9 +15,12 @@ import { environment } from '../../environment/environment';
 
 @Injectable({ providedIn: 'root' })
 export class RapportsPtfConsultationService {
-  // ✅ CORRECTION : Utiliser la bonne URL
   private readonly apiUrl = `${environment.apiUrl}/rapports-ptf`;
-  private readonly uploadsUrl = environment.apiUrl.replace('/api', ''); // http://localhost:8080
+  private readonly consultationsUrl = `${environment.apiUrl}/consultations-ptf`;
+  private readonly uploadsUrl = environment.apiUrl.replace('/api', '');
+
+  // Cache local pour les stats
+  private statsCache: Map<string, StatsConsultation> = new Map();
 
   constructor(private http: HttpClient) {}
 
@@ -90,8 +93,7 @@ export class RapportsPtfConsultationService {
   // ─── Stats consultation ───────────────────────────────────────────────────
 
   getStatsConsultation(partenairePTFId: string): Observable<StatsConsultation> {
-    // ✅ CORRECTION : Utiliser apiUrl au lieu de serverBase
-    const statsUrl = `${this.apiUrl}/stats/${partenairePTFId}`;
+    const statsUrl = `${this.consultationsUrl}/stats/${partenairePTFId}`;
 
     return this.http.get<any>(statsUrl).pipe(
       map((data: any) => {
@@ -101,50 +103,12 @@ export class RapportsPtfConsultationService {
           derniereConsultation: data.derniereConsultation ?? null,
           tauxConsultation: data.tauxConsultation ?? 0
         };
-        console.log(`📊 Stats PTF "${partenairePTFId}" (serveur):`, stats);
+        
+        // Mettre en cache
+        this.statsCache.set(partenairePTFId, stats);
+        
+        console.log(`📊 Stats PTF "${partenairePTFId}":`, stats);
         return stats;
-      }),
-      catchError(() => this.getStatsConsultationFallback(partenairePTFId))
-    );
-  }
-
-  private getStatsConsultationFallback(partenairePTFId: string): Observable<StatsConsultation> {
-    const consultationsUrl = `${environment.apiUrl}/consultations-ptf`;
-
-    return forkJoin({
-      rapports: this.getRapportsForPTF(partenairePTFId, { page: 1, limit: 10000 }),
-      consultations: this.http.get<any[]>(consultationsUrl).pipe(catchError(() => of([])))
-    }).pipe(
-      map(({ rapports, consultations }) => {
-        const totalRapports = rapports.total;
-        const consultationsPTF = Array.isArray(consultations)
-          ? consultations.filter((c: any) => String(c.partenairePTFId) === String(partenairePTFId))
-          : [];
-
-        const idsConsultes = new Set(consultationsPTF.map((c: any) => String(c.rapportId)));
-        const rapportsConsultes = idsConsultes.size;
-
-        const dates = consultationsPTF
-          .map((c: any) => c.dateConsultation)
-          .filter(Boolean)
-          .sort((a: string, b: string) => b.localeCompare(a));
-
-        const tauxConsultation = totalRapports > 0
-          ? Math.min(100, Math.round((rapportsConsultes / totalRapports) * 100))
-          : 0;
-
-        console.log(`📊 Stats PTF "${partenairePTFId}" (fallback client):`, {
-          totalRapports,
-          rapportsConsultes,
-          tauxConsultation
-        });
-
-        return {
-          totalRapports,
-          rapportsConsultes,
-          derniereConsultation: dates[0] ?? null,
-          tauxConsultation
-        };
       }),
       catchError(() => of({
         totalRapports: 0,
@@ -157,27 +121,69 @@ export class RapportsPtfConsultationService {
 
   // ─── Consultation ─────────────────────────────────────────────────────────
 
+  /**
+   * ✅ CORRECTION : Utiliser le bon endpoint /consultations-ptf
+   */
   marquerCommeConsulte(rapportId: string | number, partenairePTFId: string): Observable<any> {
-    // ✅ CORRECTION : Utiliser apiUrl
-    return this.http
-      .post(`${this.apiUrl}/${rapportId}/consulter`, {
-        partenairePTFId,
-        dateConsultation: new Date().toISOString(),
-        typeConsultation: 'vue'
+    const dateConsultation = new Date().toISOString();
+    
+    const consultationData = {
+      rapportId: String(rapportId),
+      partenairePTFId: partenairePTFId,
+      dateConsultation: dateConsultation,
+      typeConsultation: 'vue'
+    };
+    
+    console.log('📝 Enregistrement consultation:', consultationData);
+    
+    // ✅ Utiliser le bon endpoint /consultations-ptf
+    return this.http.post(this.consultationsUrl, consultationData).pipe(
+      tap(() => {
+        console.log('✅ Consultation enregistrée avec succès');
+        // ✅ Mettre à jour le cache local
+        this.mettreAJourCacheApresConsultation(partenairePTFId, dateConsultation);
+      }),
+      catchError((err) => {
+        console.warn('⚠️ Erreur enregistrement consultation:', err);
+        // Même en cas d'erreur, on met à jour localement
+        this.mettreAJourCacheApresConsultation(partenairePTFId, dateConsultation);
+        return of({ success: false, error: err.message });
       })
-      .pipe(
-        catchError((err) => {
-          console.warn('⚠️ Erreur enregistrement consultation:', err);
-          return of({ success: false });
-        })
-      );
+    );
+  }
+
+  /**
+   * ✅ Mettre à jour le cache local après une consultation
+   */
+  private mettreAJourCacheApresConsultation(partenairePTFId: string, dateConsultation: string): void {
+    const currentStats = this.statsCache.get(partenairePTFId);
+    
+    if (currentStats) {
+      const updatedStats: StatsConsultation = {
+        totalRapports: currentStats.totalRapports,
+        rapportsConsultes: currentStats.rapportsConsultes + 1,
+        derniereConsultation: dateConsultation,
+        tauxConsultation: currentStats.totalRapports > 0
+          ? Math.min(100, Math.round(((currentStats.rapportsConsultes + 1) / currentStats.totalRapports) * 100))
+          : 0
+      };
+      
+      this.statsCache.set(partenairePTFId, updatedStats);
+      console.log('📊 Cache mis à jour:', updatedStats);
+    }
+  }
+
+  /**
+   * ✅ Récupérer les stats depuis le cache (pour l'affichage immédiat)
+   */
+  getStatsFromCache(partenairePTFId: string): StatsConsultation | null {
+    return this.statsCache.get(partenairePTFId) || null;
   }
 
   // ─── Blob (preview + téléchargement) ─────────────────────────────────────
 
   getPdfBlob(rapportId: string | number, rapportUrl?: string): Observable<Blob> {
     if (rapportUrl) {
-      // ✅ CORRECTION : Utiliser uploadsUrl pour les fichiers statiques
       const fullUrl = this.buildFileUrl(rapportUrl);
       return this.http.get(fullUrl, { responseType: 'blob' }).pipe(
         catchError(() => this.getBlobViaBase64(rapportId))
@@ -192,7 +198,9 @@ export class RapportsPtfConsultationService {
         if (!r?.fichierBase64) throw new Error('Fichier introuvable dans la base de données');
         return this.base64ToBlob(r.fichierBase64, r.typeFichier || 'application/pdf');
       }),
-      catchError((err) => throwError(() => new Error(err.message || 'Erreur récupération fichier')))
+      catchError((err) => {
+        throw new Error(err.message || 'Erreur récupération fichier');
+      })
     );
   }
 

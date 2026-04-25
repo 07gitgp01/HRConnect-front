@@ -256,23 +256,44 @@ export class ProjectService implements OnDestroy {
   }
 
   getVolontairesByProject(projectId: number | string): Observable<any[]> {
-    return forkJoin({
-      affectations: this.http.get<any[]>(`${this.apiUrl}/affectations?projectId=${projectId}`).pipe(catchError(() => of([]))),
-      volontaires:  this.http.get<any[]>(`${this.apiUrl}/volontaires`).pipe(catchError(() => of([])))
-    }).pipe(
-      map(({ affectations, volontaires }) =>
-        affectations.map(a => {
-          const vol = volontaires.find(v => String(v.id) === String(a.volontaireId));
-          return {
-            id: a.id,
-            volontaire: vol ?? { id: a.volontaireId, prenom: 'Volontaire', nom: `#${a.volontaireId}`, email: '', competences: [] },
-            dateAffectation: a.dateAffectation,
-            statut: a.statut
-          };
+  console.log('🔍 getVolontairesByProject - projectId:', projectId);
+  
+  // ✅ Utiliser l'endpoint existant qui filtre par projet
+  return this.http.get<any[]>(`${this.apiUrl}/affectations/projet/${projectId}`).pipe(
+    switchMap(affectations => {
+      console.log('📋 Affectations pour le projet:', affectations);
+      
+      if (!affectations || affectations.length === 0) {
+        return of([]);
+      }
+      
+      // Récupérer les volontaires correspondants
+      return this.http.get<Volontaire[]>(`${this.apiUrl}/volontaires`).pipe(
+        map(volontaires => {
+          return affectations.map(affectation => {
+            const volontaire = volontaires.find(v => String(v.id) === String(affectation.volontaireId));
+            return {
+              id: affectation.id,
+              volontaire: volontaire || {
+                id: affectation.volontaireId,
+                prenom: 'Volontaire',
+                nom: `#${affectation.volontaireId}`,
+                email: '',
+                competences: []
+              },
+              dateAffectation: affectation.dateAffectation,
+              statut: affectation.statut
+            };
+          });
         })
-      )
-    );
-  }
+      );
+    }),
+    catchError(error => {
+      console.error('❌ Erreur getVolontairesByProject:', error);
+      return of([]);
+    })
+  );
+}
 
   /**
    * ✅ Délègue à AffectationService.createAffectation() qui gère maintenant la vérification d'unicité.

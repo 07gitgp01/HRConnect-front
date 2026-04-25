@@ -581,4 +581,23 @@ export class AffectationService {
       ))
     );
   }
+
+  /**
+ * ✅ Récupère l'affectation active d'un volontaire (un seul volontaire ne peut avoir qu'une mission active)
+ */
+getAffectationActiveByVolontaire(volontaireId: number | string): Observable<Affectation | null> {
+  console.log('🔍 getAffectationActiveByVolontaire - volontaireId:', volontaireId);
+  
+  return this.getAffectationsByVolontaire(volontaireId).pipe(
+    map(affectations => {
+      const active = affectations.find(a => a.statut === 'active');
+      if (active) {
+        console.log('   - Affectation active trouvée pour projet:', active.projectId);
+      } else {
+        console.log('   - Aucune affectation active');
+      }
+      return active || null;
+    })
+  );
+}
 }

@@ -1,3 +1,5 @@
+// src/app/features/admin/gestion-volontaires/profil-form/profil-form.component.ts
+
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule, FormGroup } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -35,7 +37,6 @@ import { Volontaire } from '../../../models/volontaire.model';
   styleUrls: ['./profil-form.component.css']
 })
 export class ProfilFormComponent implements OnInit, OnChanges {
-  // ✅ ID est un string (UUID)
   @Input() volontaireId?: string;
   @Output() saved = new EventEmitter<void>();
   @Output() closed = new EventEmitter<void>();
@@ -123,6 +124,7 @@ export class ProfilFormComponent implements OnInit, OnChanges {
     
     this.volontaireService.getVolontaire(this.volontaireId).subscribe({
       next: (vol: Volontaire) => {
+        console.log('📥 Volontaire chargé:', vol);
         const competencesStr = (vol.competences || []).join(', ');
         this.profilForm.patchValue({ 
           nom: vol.nom || '',
@@ -143,6 +145,7 @@ export class ProfilFormComponent implements OnInit, OnChanges {
           typePiece: vol.typePiece || 'CNIB',
           statut: vol.statut || 'Candidat'
         });
+        console.log('📝 Statut chargé:', vol.statut);
         this.isLoading = false;
       },
       error: (err: any) => {
@@ -166,8 +169,8 @@ export class ProfilFormComponent implements OnInit, OnChanges {
 
     const raw = this.profilForm.value;
     
-    const volont: Volontaire = {
-      id: this.isEdit ? this.volontaireId : undefined,
+    // ✅ Préparer les données à envoyer
+    const dataToSend: any = {
       nom: raw.nom || '',
       prenom: raw.prenom || '',
       email: raw.email || '',
@@ -184,34 +187,43 @@ export class ProfilFormComponent implements OnInit, OnChanges {
       motivation: raw.motivation || '',
       disponibilite: raw.disponibilite as 'Temps plein' | 'Temps partiel' || 'Temps plein',
       typePiece: raw.typePiece as 'CNIB' | 'PASSEPORT' || 'CNIB',
-      statut: raw.statut || 'Candidat',
-      dateInscription: this.isEdit ? '' : new Date().toISOString()
+      statut: raw.statut || 'Candidat'  // ✅ INCLURE LE STATUT
     };
+
+    console.log('📤 Envoi des données de mise à jour:', dataToSend);
 
     this.isSaving = true;
 
     if (this.isEdit && this.volontaireId) {
-      this.volontaireService.updateVolontaire(this.volontaireId, volont).subscribe({
-        next: () => {
+      // ✅ Utiliser updateVolontaire qui fait un PATCH
+      this.volontaireService.updateVolontaire(this.volontaireId, dataToSend).subscribe({
+        next: (result) => {
+          console.log('✅ Mise à jour réussie, nouveau statut:', result.statut);
           this.snack.open('Profil mis à jour', 'OK', { duration: 2500 });
           this.isSaving = false;
           this.saved.emit();
         },
         error: (err: any) => {
-          console.error(err);
-          this.snack.open('Erreur lors de la mise à jour', 'Fermer', { duration: 3500 });
+          console.error('❌ Erreur mise à jour:', err);
+          this.snack.open('Erreur lors de la mise à jour: ' + (err.message || err), 'Fermer', { duration: 3500 });
           this.isSaving = false;
         }
       });
     } else {
-      this.volontaireService.createVolontaire(volont).subscribe({
-        next: () => {
+      // Création d'un nouveau volontaire
+      const newVolontaire = {
+        ...dataToSend,
+        dateInscription: new Date().toISOString()
+      };
+      this.volontaireService.createVolontaire(newVolontaire as Omit<Volontaire, 'id'>).subscribe({
+        next: (result) => {
+          console.log('✅ Volontaire créé:', result);
           this.snack.open('Volontaire créé', 'OK', { duration: 2500 });
           this.isSaving = false;
           this.saved.emit();
         },
         error: (err: any) => {
-          console.error(err);
+          console.error('❌ Erreur création:', err);
           this.snack.open('Erreur lors de la création', 'Fermer', { duration: 3500 });
           this.isSaving = false;
         }

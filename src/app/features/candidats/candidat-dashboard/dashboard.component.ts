@@ -522,4 +522,16 @@ export class CandidatDashboardComponent implements OnInit {
 
   getVolontairesNecessaires(projet: any): number { return projet.nombreVolontairesRequis ?? 0; }
   getVolontairesAffectes(projet: any): number    { return projet.nombreVolontairesActuels ?? 0; }
+
+  estDateLimiteDepassee(dateLimite: string | undefined): boolean {
+  if (!dateLimite) return false;
+  
+  const aujourdhui = new Date();
+  aujourdhui.setHours(0, 0, 0, 0);
+  
+  const limite = new Date(dateLimite);
+  limite.setHours(23, 59, 59, 999);
+  
+  return aujourdhui > limite;
+}
 }

@@ -287,11 +287,23 @@ export class CandidatureService {
   // ==================== MÉTHODES DE CONSULTATION ====================
 
   getByProject(projectId: number | string): Observable<Candidature[]> {
-    return this.http.get<Candidature[]>(`${this.apiUrl}/candidatures?projectId=${projectId}`).pipe(
-      map(list => this.normalizeCandidatures(list)),
-      catchError(() => of([]))
-    );
-  }
+  console.log('🔍 getByProject - projectId:', projectId);
+  
+  // ✅ Utiliser le bon endpoint : /candidatures/projet/{projectId}
+  return this.http.get<Candidature[]>(`${this.apiUrl}/candidatures/projet/${projectId}`).pipe(
+    tap(candidatures => {
+      console.log('   - Candidatures trouvées:', candidatures.length);
+      candidatures.forEach(c => {
+        console.log('     * id:', c.id, 'statut:', c.statut, 'volontaireId:', c.volontaireId);
+      });
+    }),
+    map(list => this.normalizeCandidatures(list)),
+    catchError(error => {
+      console.error('❌ Erreur getByProject:', error);
+      return of([]);
+    })
+  );
+}
 
   getByVolontaire(volontaireId: number | string): Observable<Candidature[]> {
     return this.http.get<Candidature[]>(`${this.apiUrl}/candidatures?volontaireId=${volontaireId}`).pipe(

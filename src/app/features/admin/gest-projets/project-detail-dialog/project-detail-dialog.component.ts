@@ -135,39 +135,41 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
   }
 
   loadVolontairesAffectes(): void {
-    this.isLoadingVolontaires = true;
-    const projectId = this.data.project.id;
-    if (!projectId) { this.volontairesAffectes = []; this.isLoadingVolontaires = false; return; }
-
-    forkJoin({
-      affectations: this.affectationService.getAffectationsByProject(projectId),
-      volontaires: this.http.get<Volontaire[]>(`${this.apiUrl}/volontaires`).pipe(catchError(() => of([])))
-    }).subscribe({
-      next: ({ affectations, volontaires }) => {
-        this.volontairesAffectes = affectations.map((a: any) => {
-          const vol = volontaires.find((v: Volontaire) => String(v.id) === String(a.volontaireId));
-          return {
-            id: String(a.id),
-            volontaireId: String(a.volontaireId),
-            dateAffectation: a.dateAffectation,
-            dateFin: a.dateFin,
-            statut: a.statut,
-            missionExpiree: this.projetExpire && a.statut === 'active',
-            volontaire: vol || ({
-              id: a.volontaireId,
-              prenom: 'Volontaire',
-              nom: `#${a.volontaireId}`,
-              email: '',
-              competences: []
-            } as unknown as Volontaire)
-          };
-        });
-        this.nbMissionsExpirees = this.volontairesAffectes.filter(v => v.missionExpiree).length;
-        this.isLoadingVolontaires = false;
-      },
-      error: () => { this.volontairesAffectes = []; this.isLoadingVolontaires = false; }
-    });
+  this.isLoadingVolontaires = true;
+  const projectId = this.data.project.id;
+  if (!projectId) { 
+    this.volontairesAffectes = []; 
+    this.isLoadingVolontaires = false; 
+    return; 
   }
+
+  console.log('🔍 loadVolontairesAffectes - projectId:', projectId);
+
+  // ✅ Utiliser la méthode corrigée du projectService
+  this.projectService.getVolontairesByProject(projectId).subscribe({
+    next: (resultats) => {
+      console.log('📋 Volontaires affectés reçus:', resultats);
+      
+      this.volontairesAffectes = resultats.map(item => ({
+        id: String(item.id),
+        volontaireId: String(item.volontaire.id),
+        dateAffectation: item.dateAffectation,
+        dateFin: item.dateFin,
+        statut: item.statut,
+        missionExpiree: this.projetExpire && item.statut === 'active',
+        volontaire: item.volontaire
+      }));
+      
+      this.nbMissionsExpirees = this.volontairesAffectes.filter(v => v.missionExpiree).length;
+      this.isLoadingVolontaires = false;
+    },
+    error: (err) => {
+      console.error('❌ Erreur chargement volontaires affectés:', err);
+      this.volontairesAffectes = [];
+      this.isLoadingVolontaires = false;
+    }
+  });
+}
 
   loadCandidatsAcceptes(): void {
     const projectId = this.data.project.id;
@@ -207,42 +209,66 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
   }
 
   terminerMission(affectationId: string | number, nomVolontaire: string): void {
-    if (!confirm(`Confirmer la fin de mission pour ${nomVolontaire} ?`)) return;
+  if (!confirm(`Confirmer la fin de mission pour ${nomVolontaire} ?`)) return;
 
-    this.affectationService.terminerAffectation(affectationId).subscribe({
-      next: () => {
-        this.snackBar.open(`Mission de ${nomVolontaire} terminée`, 'Fermer', { duration: 5000 });
-        setTimeout(() => this.rechargerTout(), 150);
-      },
-      error: () => {
-        this.snackBar.open('Erreur lors de la fin de mission', 'Fermer', { duration: 3000 });
-      }
-    });
+  // Récupérer l'affectation pour connaître le volontaireId
+  const affectation = this.volontairesAffectes.find(a => String(a.id) === String(affectationId));
+  if (!affectation) {
+    this.snackBar.open('Affectation non trouvée', 'Fermer', { duration: 3000 });
+    return;
   }
+
+  this.affectationService.terminerAffectation(affectationId).subscribe({
+    next: () => {
+      // ✅ CORRECTION : Mettre à jour le statut du volontaire à "En attente"
+      if (affectation.volontaireId) {
+        this.volontaireService.changerStatut(affectation.volontaireId, 'En attente').subscribe({
+          next: () => console.log(`✅ Volontaire ${nomVolontaire} passé à "En attente"`),
+          error: (err) => console.error('Erreur mise à jour statut:', err)
+        });
+      }
+      
+      this.snackBar.open(`Mission de ${nomVolontaire} terminée`, 'Fermer', { duration: 5000 });
+      setTimeout(() => this.rechargerTout(), 150);
+    },
+    error: () => {
+      this.snackBar.open('Erreur lors de la fin de mission', 'Fermer', { duration: 3000 });
+    }
+  });
+}
 
   terminerToutesLesMissions(): void {
-    const dateFin = this.data.project.dateFin;
-    const projectId = this.data.project.id;
-    if (!dateFin || !projectId) return;
+  const dateFin = this.data.project.dateFin;
+  const projectId = this.data.project.id;
+  if (!dateFin || !projectId) return;
 
-    const nb = this.volontairesAffectes.length;
-    if (!confirm(`Terminer automatiquement les ${nb} mission(s) active(s) de ce projet ?`)) return;
+  const nb = this.volontairesAffectes.length;
+  if (!confirm(`Terminer automatiquement les ${nb} mission(s) active(s) de ce projet ?`)) return;
 
-    this.affectationService.terminerAffectationsExpirees(projectId, dateFin).subscribe({
-      next: (nbTerminees: number) => {
-        if (nbTerminees > 0) {
-          this.snackBar.open(`${nbTerminees} mission(s) terminée(s) automatiquement.`, 'Fermer', { duration: 6000 });
-        } else {
-          this.snackBar.open('Aucune affectation active à terminer.', 'Fermer', { duration: 3000 });
-        }
-        this.nbMissionsExpirees = 0;
-        setTimeout(() => this.rechargerTout(), 150);
-      },
-      error: () => {
-        this.snackBar.open('Erreur lors de la fin des missions', 'Fermer', { duration: 3000 });
+  this.affectationService.terminerAffectationsExpirees(projectId, dateFin).subscribe({
+    next: (nbTerminees: number) => {
+      if (nbTerminees > 0) {
+        // ✅ CORRECTION : Mettre à jour tous les volontaires affectés à "En attente"
+        this.volontairesAffectes.forEach(affectation => {
+          if (affectation.volontaireId && affectation.missionExpiree) {
+            this.volontaireService.changerStatut(affectation.volontaireId, 'En attente').subscribe({
+              error: (err) => console.error('Erreur mise à jour statut:', err)
+            });
+          }
+        });
+        
+        this.snackBar.open(`${nbTerminees} mission(s) terminée(s) automatiquement.`, 'Fermer', { duration: 6000 });
+      } else {
+        this.snackBar.open('Aucune affectation active à terminer.', 'Fermer', { duration: 3000 });
       }
-    });
-  }
+      this.nbMissionsExpirees = 0;
+      setTimeout(() => this.rechargerTout(), 150);
+    },
+    error: () => {
+      this.snackBar.open('Erreur lors de la fin des missions', 'Fermer', { duration: 3000 });
+    }
+  });
+}
 
   get candidatsDisponiblesForAffectation(): CandidatAccepte[] {
     return this.candidatsAcceptes.filter(c => !c.dejaAffecte);
@@ -322,132 +348,127 @@ export class ProjectDetailDialogComponent implements OnInit, AfterViewInit {
    * ✅ Affecter un candidat accepté - VERSION CORRIGÉE
    */
   affecterCandidatAccepte(): void {
-    if (!this.candidatAccepteSelectionne || !this.data.project.id) {
-      this.snackBar.open('Sélectionnez un candidat accepté', 'Fermer', { duration: 3000 });
-      return;
-    }
-
-    const candidatInfo = this.candidatsAcceptes.find(
-      c => String(c.candidature.volontaireId) === String(this.candidatAccepteSelectionne)
-    );
-    if (!candidatInfo) { 
-      this.snackBar.open('Candidat introuvable', 'Fermer', { duration: 3000 }); 
-      return; 
-    }
-
-    if (candidatInfo.dejaAffecte) {
-      this.snackBar.open('Ce volontaire est déjà affecté à ce projet', 'Fermer', { duration: 3000 });
-      return;
-    }
-
-    const volontaireId = String(candidatInfo.candidature.volontaireId);
-    const projectId = String(this.data.project.id);
-    const nomVolontaire = `${candidatInfo.candidature.prenom} ${candidatInfo.candidature.nom}`;
-
-    console.log('🔍 Affectation - volontaireId:', volontaireId, 'projectId:', projectId);
-
-    this.isLoadingCandidatsAcceptes = true;
-
-    // Vérifier si le projet est clôturé
-    this.projectService.getProject(projectId).subscribe(projet => {
-      if (projet.statutProjet !== 'cloture') {
-        this.snackBar.open('Ce projet n\'est pas clôturé. Seules les missions clôturées peuvent accepter des affectations.', 'Fermer', { duration: 5000 });
-        this.isLoadingCandidatsAcceptes = false;
-        return;
-      }
-
-      // Vérifier si le volontaire peut être affecté
-      this.affectationService.peutEtreAffecte(volontaireId, projectId).subscribe((peutEtreAffecte: boolean) => {
-        console.log('🔍 peutEtreAffecte:', peutEtreAffecte);
-        
-        if (!peutEtreAffecte) {
-          this.snackBar.open(`${nomVolontaire} ne peut pas être affecté à cette mission.`, 'Fermer', { duration: 5000 });
-          this.isLoadingCandidatsAcceptes = false;
-          return;
-        }
-
-        // Créer l'affectation
-        this.affectationService.createAffectation({
-          volontaireId: volontaireId,
-          projectId: projectId,
-          dateAffectation: new Date().toISOString().split('T')[0],
-          statut: 'active',
-          role: candidatInfo.candidature.poste_vise || 'Volontaire',
-          notes: `Affectation depuis candidature acceptée #${candidatInfo.candidature.id}`
-        }).subscribe({
-          next: (result) => {
-            console.log('✅ Affectation créée:', result);
-            
-            // Mettre à jour le statut du volontaire
-            this.volontaireService.updateVolontaire(volontaireId, { statut: 'Actif' }).subscribe();
-            
-            // Mettre à jour le compteur du projet
-            const nouveauNb = (this.data.project.nombreVolontairesActuels || 0) + 1;
-            this.projectService.updateProject(projectId, { 
-              nombreVolontairesActuels: nouveauNb 
-            }).subscribe();
-            this.data.project.nombreVolontairesActuels = nouveauNb;
-            
-            this.snackBar.open(`${nomVolontaire} affecté(e) avec succès`, 'Fermer', { duration: 3500 });
-            this.candidatAccepteSelectionne = null;
-            this.isLoadingCandidatsAcceptes = false;
-            setTimeout(() => this.rechargerTout(), 500);
-          },
-          error: (err) => {
-            console.error('❌ Erreur affectation:', err);
-            this.snackBar.open('Erreur lors de l\'affectation: ' + (err.message || 'Erreur inconnue'), 'Fermer', { duration: 3000 });
-            this.isLoadingCandidatsAcceptes = false;
-          }
-        });
-      });
-    });
+  if (!this.candidatAccepteSelectionne || !this.data.project.id) {
+    this.snackBar.open('Sélectionnez un candidat accepté', 'Fermer', { duration: 3000 });
+    return;
   }
+
+  const candidatInfo = this.candidatsAcceptes.find(
+    c => String(c.candidature.volontaireId) === String(this.candidatAccepteSelectionne)
+  );
+  if (!candidatInfo) { 
+    this.snackBar.open('Candidat introuvable', 'Fermer', { duration: 3000 }); 
+    return; 
+  }
+
+  if (candidatInfo.dejaAffecte) {
+    this.snackBar.open('Ce volontaire est déjà affecté à ce projet', 'Fermer', { duration: 3000 });
+    return;
+  }
+
+  const volontaireId = String(candidatInfo.candidature.volontaireId);
+  const projectId = String(this.data.project.id);
+  const nomVolontaire = `${candidatInfo.candidature.prenom} ${candidatInfo.candidature.nom}`;
+
+  console.log('🔍 Affectation - volontaireId:', volontaireId, 'projectId:', projectId);
+
+  this.isLoadingCandidatsAcceptes = true;
+
+  // Vérifier si le projet est clôturé
+  this.projectService.getProject(projectId).subscribe(projet => {
+    if (projet.statutProjet !== 'cloture') {
+      this.snackBar.open('Ce projet n\'est pas clôturé. Seules les missions clôturées peuvent accepter des affectations.', 'Fermer', { duration: 5000 });
+      this.isLoadingCandidatsAcceptes = false;
+      return;
+    }
+
+    // Créer l'affectation
+    this.affectationService.createAffectation({
+      volontaireId: volontaireId,
+      projectId: projectId,
+      dateAffectation: new Date().toISOString().split('T')[0],
+      statut: 'active',
+      role: candidatInfo.candidature.poste_vise || 'Volontaire',
+      notes: `Affectation depuis candidature acceptée #${candidatInfo.candidature.id}`
+    }).subscribe({
+      next: (result) => {
+        console.log('✅ Affectation créée:', result);
+        
+        // ✅ Mettre à jour le statut du volontaire à "Actif"
+        this.volontaireService.updateVolontaire(volontaireId, { statut: 'Actif' }).subscribe({
+          next: () => console.log(`✅ Statut volontaire ${nomVolontaire} passé à Actif`),
+          error: (err) => console.error('Erreur mise à jour statut:', err)
+        });
+        
+        // Mettre à jour le compteur du projet
+        const nouveauNb = (this.data.project.nombreVolontairesActuels || 0) + 1;
+        this.projectService.updateProject(projectId, { 
+          nombreVolontairesActuels: nouveauNb 
+        }).subscribe();
+        this.data.project.nombreVolontairesActuels = nouveauNb;
+        
+        this.snackBar.open(`${nomVolontaire} affecté(e) avec succès`, 'Fermer', { duration: 3500 });
+        this.candidatAccepteSelectionne = null;
+        this.isLoadingCandidatsAcceptes = false;
+        setTimeout(() => this.rechargerTout(), 500);
+      },
+      error: (err) => {
+        console.error('❌ Erreur affectation:', err);
+        this.snackBar.open('Erreur lors de l\'affectation: ' + (err.message || 'Erreur inconnue'), 'Fermer', { duration: 3000 });
+        this.isLoadingCandidatsAcceptes = false;
+      }
+    });
+  });
+}
 
   /**
    * ✅ Retirer un volontaire
    */
   retirerVolontaire(affectationId: string | number): void {
-    if (!affectationId) return;
-    
-    const affectation = this.volontairesAffectes.find(a => String(a.id) === String(affectationId));
-    if (!affectation) {
-      this.snackBar.open('Affectation non trouvée', 'Fermer', { duration: 3000 });
-      return;
-    }
-    
-    const nomVolontaire = `${affectation.volontaire.prenom} ${affectation.volontaire.nom}`;
-    
-    if (!confirm(`Retirer ${nomVolontaire} de cette mission ?\nCette action est irréversible.`)) return;
-
-    this.isLoadingVolontaires = true;
-
-    // Supprimer l'affectation
-    this.affectationService.supprimerAffectation(affectationId).subscribe({
-      next: () => {
-        // Mettre à jour le statut du volontaire
-        if (affectation.volontaireId) {
-          this.volontaireService.updateVolontaire(affectation.volontaireId, { statut: 'En attente' }).subscribe();
-        }
-        
-        // Décrémenter le compteur du projet
-        const projectId = String(this.data.project.id);
-        this.projectService.getProject(projectId).subscribe(projet => {
-          const nouveauNb = Math.max(0, (projet.nombreVolontairesActuels || 0) - 1);
-          this.projectService.updateProject(projectId, { nombreVolontairesActuels: nouveauNb }).subscribe();
-          this.data.project.nombreVolontairesActuels = nouveauNb;
-        });
-        
-        this.snackBar.open(`${nomVolontaire} retiré avec succès`, 'Fermer', { duration: 3000 });
-        this.isLoadingVolontaires = false;
-        setTimeout(() => this.rechargerTout(), 500);
-      },
-      error: (err) => {
-        console.error('Erreur:', err);
-        this.snackBar.open('Erreur lors du retrait', 'Fermer', { duration: 3000 });
-        this.isLoadingVolontaires = false;
-      }
-    });
+  if (!affectationId) return;
+  
+  const affectation = this.volontairesAffectes.find(a => String(a.id) === String(affectationId));
+  if (!affectation) {
+    this.snackBar.open('Affectation non trouvée', 'Fermer', { duration: 3000 });
+    return;
   }
+  
+  const nomVolontaire = `${affectation.volontaire.prenom} ${affectation.volontaire.nom}`;
+  
+  if (!confirm(`Retirer ${nomVolontaire} de cette mission ?\nCette action est irréversible.`)) return;
+
+  this.isLoadingVolontaires = true;
+
+  // Supprimer l'affectation
+  this.affectationService.supprimerAffectation(affectationId).subscribe({
+    next: () => {
+      // ✅ CORRECTION : Mettre à jour le statut du volontaire à "En attente"
+      if (affectation.volontaireId) {
+        this.volontaireService.changerStatut(affectation.volontaireId, 'En attente').subscribe({
+          next: () => console.log(`✅ Volontaire ${nomVolontaire} passé à "En attente"`),
+          error: (err) => console.error('Erreur mise à jour statut:', err)
+        });
+      }
+      
+      // Décrémenter le compteur du projet
+      const projectId = String(this.data.project.id);
+      this.projectService.getProject(projectId).subscribe(projet => {
+        const nouveauNb = Math.max(0, (projet.nombreVolontairesActuels || 0) - 1);
+        this.projectService.updateProject(projectId, { nombreVolontairesActuels: nouveauNb }).subscribe();
+        this.data.project.nombreVolontairesActuels = nouveauNb;
+      });
+      
+      this.snackBar.open(`${nomVolontaire} retiré avec succès`, 'Fermer', { duration: 3000 });
+      this.isLoadingVolontaires = false;
+      setTimeout(() => this.rechargerTout(), 500);
+    },
+    error: (err) => {
+      console.error('Erreur:', err);
+      this.snackBar.open('Erreur lors du retrait', 'Fermer', { duration: 3000 });
+      this.isLoadingVolontaires = false;
+    }
+  });
+}
 
   private rechargerTout(): void {
     this.loadVolontairesAffectes();
