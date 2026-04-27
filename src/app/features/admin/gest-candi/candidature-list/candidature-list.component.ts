@@ -190,20 +190,35 @@ export class CandidatureListComponent implements OnInit, OnDestroy {
   // ─── Filtrage ─────────────────────────────────────────────────────────────
 
   getCandidaturesFiltrees(): Candidature[] {
-    let filtered = this.candidatures;
-    if (this.filtreStatut) filtered = filtered.filter(c => c.statut === this.filtreStatut);
-    if (this.filtreProjet) filtered = filtered.filter(c => String(c.projectId) === String(this.filtreProjet));
-    if (this.searchTerm) {
-      const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(c =>
-        c.poste_vise.toLowerCase().includes(term)             ||
-        (c.nom + ' ' + c.prenom).toLowerCase().includes(term) ||
-        c.email.toLowerCase().includes(term)                  ||
-        this.getProjectName(c.projectId).toLowerCase().includes(term)
-      );
-    }
-    return filtered;
+  let filtered = this.candidatures;
+  
+  if (this.filtreStatut) {
+    filtered = filtered.filter(c => c.statut === this.filtreStatut);
   }
+  
+  if (this.filtreProjet) {
+    filtered = filtered.filter(c => String(c.projectId) === String(this.filtreProjet));
+  }
+  
+  if (this.searchTerm) {
+    const term = this.searchTerm.toLowerCase();
+    filtered = filtered.filter(c => {
+      // ✅ Vérifier que les champs existent avant d'appeler toLowerCase()
+      const posteViseMatch = c.poste_vise ? c.poste_vise.toLowerCase().includes(term) : false;
+      const nomMatch = c.nom ? c.nom.toLowerCase().includes(term) : false;
+      const prenomMatch = c.prenom ? c.prenom.toLowerCase().includes(term) : false;
+      const nomCompletMatch = (c.nom && c.prenom) 
+        ? (c.nom + ' ' + c.prenom).toLowerCase().includes(term) 
+        : false;
+      const emailMatch = c.email ? c.email.toLowerCase().includes(term) : false;
+      const projectNameMatch = this.getProjectName(c.projectId).toLowerCase().includes(term);
+      
+      return posteViseMatch || nomMatch || prenomMatch || nomCompletMatch || emailMatch || projectNameMatch;
+    });
+  }
+  
+  return filtered;
+}
 
   get totalCandidatures(): number { return this.getCandidaturesFiltrees().length; }
 
@@ -359,8 +374,13 @@ export class CandidatureListComponent implements OnInit, OnDestroy {
   }
 
   getCompetencesArray(competences: any): string[] {
-    if (!competences) return [];
-    if (Array.isArray(competences)) return competences;
-    return String(competences).split(',').map(c => c.trim());
+  if (!competences) return [];
+  if (Array.isArray(competences)) {
+    return competences.filter(c => c && typeof c === 'string');
   }
+  if (typeof competences === 'string') {
+    return competences.split(',').map(c => c.trim()).filter(c => c.length > 0);
+  }
+  return [];
+}
 }

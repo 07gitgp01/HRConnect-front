@@ -92,26 +92,26 @@
 
             <!-- Volontaire -->
             <td>
-              <div class="cl-person">
-                <div class="cl-avatar">{{ c.prenom.charAt(0) }}{{ c.nom.charAt(0) }}</div>
-                <div class="cl-person-info">
-                  <span class="cl-person-name">{{ c.prenom }} {{ c.nom }}</span>
-                  <span class="cl-person-email">{{ c.email }}</span>
-                  <span class="cl-person-phone" *ngIf="c.telephone">{{ c.telephone }}</span>
-                </div>
-              </div>
-            </td>
+  <div class="cl-person">
+    <div class="cl-avatar">{{ (c.prenom.charAt(0) || '?') }}{{ (c.nom.charAt(0) || '?') }}</div>
+    <div class="cl-person-info">
+      <span class="cl-person-name">{{ c.prenom }} {{ c.nom }}</span>
+      <span class="cl-person-email">{{ c.email }}</span>
+      <span class="cl-person-phone" *ngIf="c.telephone">{{ c.telephone }}</span>
+    </div>
+  </div>
+</td>
 
-            <!-- Mission / Poste -->
-            <td>
-              <div class="cl-mission">
-                <span class="cl-mission-name">{{ getProjectName(c.projectId) }}</span>
-                <span class="cl-mission-region" *ngIf="getProjectRegion(c.projectId)">
-                  <mat-icon>place</mat-icon>{{ getProjectRegion(c.projectId) }}
-                </span>
-                <span class="cl-mission-poste">{{ c.poste_vise }}</span>
-              </div>
-            </td>
+<!-- Mission / Poste -->
+<td>
+  <div class="cl-mission">
+    <span class="cl-mission-name">{{ getProjectName(c.projectId) }}</span>
+    <span class="cl-mission-region" *ngIf="getProjectRegion(c.projectId)">
+      <mat-icon>place</mat-icon>{{ getProjectRegion(c.projectId) }}
+    </span>
+    <span class="cl-mission-poste">{{ c.poste_vise || 'Non spécifié' }}</span>
+  </div>
+</td>
 
             <!-- Compétences -->
             <td>
