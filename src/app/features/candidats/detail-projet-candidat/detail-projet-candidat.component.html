@@ -1,4 +1,11 @@
 <div class="projet-detail-container" *ngIf="projet">
+    <!-- Barre de navigation avec bouton retour -->
+  <div class="nav-bar">
+    <button class="retour-btn" (click)="goBack()">
+      <span class="material-icons">arrow_back</span>
+      Retour
+    </button>
+  </div>
   <!-- En-tête -->
   <div class="header-section">
     <div class="header-content">
@@ -9,10 +16,7 @@
             <span class="material-icons">location_on</span>
             {{ projet.regionAffectation }}
           </span>
-          <!-- ✅ CORRECTION : Utilisation de getStatusClass() -->
-          <span class="status-badge" [ngClass]="getStatusClass(projet.statutProjet)">
-            {{ getStatusLabel(projet.statutProjet) }}
-          </span>
+          
         </div>
       </div>
       
@@ -58,15 +62,7 @@
         </div>
       </div>
       
-      <div class="stat-item">
-        <div class="stat-icon">
-          <span class="material-icons">flag</span>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ getStatusLabel(projet.statutProjet) }}</div>
-          <div class="stat-label">Statut</div>
-        </div>
-      </div>
+      
       
       <div class="stat-item" *ngIf="projet.dateDebut">
         <div class="stat-icon">

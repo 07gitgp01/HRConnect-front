@@ -631,3 +631,30 @@ a:focus-visible {
   outline: 2px solid #008124;
   outline-offset: 2px;
 }
+
+.nav-bar {
+  margin-bottom: 1rem;
+}
+
+.retour-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--vert, #008124);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--vert-pale, #e8f5e9);
+  }
+
+  .material-icons {
+    font-size: 1.2rem;
+  }
+}

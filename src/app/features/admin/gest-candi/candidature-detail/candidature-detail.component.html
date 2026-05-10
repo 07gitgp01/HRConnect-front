@@ -46,7 +46,6 @@
                 <div class="info-value">{{ data.candidature.prenom }} {{ data.candidature.nom }}</div>
               </div>
             </div>
-            
             <div class="info-item">
               <mat-icon class="info-icon">email</mat-icon>
               <div class="info-content">
@@ -58,7 +57,6 @@
                 </div>
               </div>
             </div>
-            
             <div class="info-item" *ngIf="data.candidature.telephone">
               <mat-icon class="info-icon">phone</mat-icon>
               <div class="info-content">
@@ -70,7 +68,6 @@
                 </div>
               </div>
             </div>
-
             <div class="info-item">
               <mat-icon class="info-icon">badge</mat-icon>
               <div class="info-content">
@@ -124,7 +121,6 @@
                 </div>
               </div>
             </div>
-            
             <div class="info-item" *ngIf="data.candidature.disponibilite">
               <mat-icon class="info-icon">access_time</mat-icon>
               <div class="info-content">
@@ -143,16 +139,93 @@
           </h3>
           <div class="cv-actions">
             <button mat-raised-button color="primary" (click)="voirCV()" class="cv-button">
-              <mat-icon>visibility</mat-icon>
-              Voir le CV
+              <mat-icon>visibility</mat-icon> Voir le CV
             </button>
             <button mat-raised-button color="accent" (click)="telechargerCV()" class="cv-button">
-              <mat-icon>download</mat-icon>
-              Télécharger le CV
+              <mat-icon>download</mat-icon> Télécharger le CV
             </button>
           </div>
         </div>
-      </mat-card-content> <!-- ✅ Cette balise était manquante -->
+
+        <!-- ========== ÉVALUATION ENTRETIEN ========== -->
+        <div class="info-section" *ngIf="data.candidature.statut === 'entretien' || data.candidature.statut === 'acceptee'">
+          <h3 class="section-title">
+            <mat-icon>rate_review</mat-icon>
+            Évaluation de l’entretien
+          </h3>
+
+          <!-- Affichage si déjà évalué -->
+          <div *ngIf="data.candidature.scoreEntretien !== undefined && data.candidature.scoreEntretien !== null">
+            <div class="score-display">
+              <span>Score : </span>
+              <ng-container *ngFor="let star of [1,2,3,4,5]">
+                <mat-icon class="star" [class.filled]="star <= data.candidature.scoreEntretien!">star</mat-icon>
+              </ng-container>
+            </div>
+            <div class="comment-display" *ngIf="data.candidature.commentaireEntretien">
+              <strong>Commentaire :</strong> {{ data.candidature.commentaireEntretien }}
+            </div>
+          </div>
+
+          <!-- Formulaire d’évaluation (uniquement si statut "entretien" et non encore évalué) -->
+          <div *ngIf="(data.candidature.scoreEntretien === undefined || data.candidature.scoreEntretien === null) && data.candidature.statut === 'entretien'">
+            <div class="score-input">
+              <label>Note (1 à 5) : </label>
+              <div class="star-rating">
+                <mat-icon *ngFor="let star of [1,2,3,4,5]" 
+                          (click)="setScore(star)"
+                          [class.selected]="star <= tentativeScore"
+                          class="star-selectable">star_border</mat-icon>
+              </div>
+            </div>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Commentaire (optionnel)</mat-label>
+              <textarea matInput rows="3" [(ngModel)]="tentativeCommentaire"></textarea>
+            </mat-form-field>
+            <button mat-raised-button color="primary" (click)="sauvegarderEvaluation()">
+              Enregistrer l’évaluation
+            </button>
+          </div>
+        </div>
+
+        <!-- ========== CONTRAT ========== -->
+        <div class="info-section" *ngIf="data.candidature.statut === 'entretien' || contratUrl">
+          <h3 class="section-title">
+            <mat-icon>description</mat-icon>
+            Contrat de volontariat
+          </h3>
+
+          <!-- Contrat existant -->
+          <div *ngIf="contratUrl" class="contrat-actions">
+            <button mat-raised-button color="primary" (click)="ouvrirContrat()">
+              <mat-icon>visibility</mat-icon> Voir le contrat
+            </button>
+            <button mat-raised-button color="accent" (click)="telechargerContrat()">
+              <mat-icon>download</mat-icon> Télécharger le contrat
+            </button>
+          </div>
+
+          <!-- Upload si entretien et pas encore de contrat -->
+          <div *ngIf="data.candidature.statut === 'entretien' && !contratUrl" class="upload-section">
+            <div class="upload-row">
+              <input type="file" accept=".pdf" (change)="onFichierContratSelected($event)" #contratInput>
+              <button mat-raised-button color="primary" 
+                      (click)="uploaderContrat()" 
+                      [disabled]="!fichierContrat || uploadEnCours">
+                <mat-icon>cloud_upload</mat-icon>
+                {{ uploadEnCours ? 'Upload en cours...' : 'Uploader le contrat' }}
+              </button>
+            </div>
+            <small class="text-muted">Format PDF uniquement. Contrat requis avant validation.</small>
+            <mat-progress-bar *ngIf="uploadEnCours" mode="indeterminate" class="upload-progress"></mat-progress-bar>
+          </div>
+
+          <div *ngIf="!contratUrl && data.candidature.statut !== 'entretien' && data.candidature.statut !== 'acceptee'" class="info-text">
+            <mat-icon>info</mat-icon> Le contrat sera à joindre lors de l’entretien.
+          </div>
+        </div>
+
+      </mat-card-content>
     </mat-card>
 
     <!-- Informations du projet -->
@@ -161,77 +234,61 @@
         <mat-card-title>Projet concerné</mat-card-title>
         <mat-card-subtitle>{{ getProjectTitle() }}</mat-card-subtitle>
       </mat-card-header>
-
       <mat-divider></mat-divider>
-
       <mat-card-content>
         <div class="project-details">
-          <div class="project-info">
-            <div class="info-item" *ngIf="getProjectRegion()">
-              <mat-icon class="info-icon">location_on</mat-icon>
-              <div class="info-content">
-                <div class="info-label">Région</div>
-                <div class="info-value">{{ getProjectRegion() }}</div>
-              </div>
+          <div class="info-item" *ngIf="getProjectRegion()">
+            <mat-icon class="info-icon">location_on</mat-icon>
+            <div class="info-content">
+              <div class="info-label">Région</div>
+              <div class="info-value">{{ getProjectRegion() }}</div>
             </div>
-            
-            <div class="info-item" *ngIf="getProjectStatus()">
-              <mat-icon class="info-icon">flag</mat-icon>
-              <div class="info-content">
-                <div class="info-label">Statut</div>
-                <div class="info-value">{{ getProjectStatus() }}</div>
-              </div>
+          </div>
+          <div class="info-item" *ngIf="getProjectStatus()">
+            <mat-icon class="info-icon">flag</mat-icon>
+            <div class="info-content">
+              <div class="info-label">Statut</div>
+              <div class="info-value">{{ getProjectStatus() }}</div>
             </div>
-            
-            <div class="info-item" *ngIf="getProjectDescription()">
-              <mat-icon class="info-icon">description</mat-icon>
-              <div class="info-content">
-                <div class="info-label">Description</div>
-                <div class="info-value">{{ getProjectDescription() }}</div>
-              </div>
+          </div>
+          <div class="info-item" *ngIf="getProjectDescription()">
+            <mat-icon class="info-icon">description</mat-icon>
+            <div class="info-content">
+              <div class="info-label">Description</div>
+              <div class="info-value">{{ getProjectDescription() }}</div>
             </div>
           </div>
         </div>
       </mat-card-content>
     </mat-card>
 
-    <!-- Dates -->
+    <!-- Dates importantes -->
     <mat-card class="dates-card">
       <mat-card-header>
         <mat-card-title>Dates importantes</mat-card-title>
       </mat-card-header>
-      
       <mat-divider></mat-divider>
-
       <mat-card-content>
         <div class="dates-grid">
           <div class="info-item" *ngIf="data.candidature.cree_le">
             <mat-icon class="info-icon">schedule</mat-icon>
             <div class="info-content">
               <div class="info-label">Date de candidature</div>
-              <div class="info-value">
-                {{ formatDate(data.candidature.cree_le) }}
-              </div>
+              <div class="info-value">{{ formatDate(data.candidature.cree_le) }}</div>
             </div>
           </div>
-          
           <div class="info-item" *ngIf="data.candidature.mis_a_jour_le">
             <mat-icon class="info-icon">update</mat-icon>
             <div class="info-content">
               <div class="info-label">Dernière mise à jour</div>
-              <div class="info-value">
-                {{ formatDate(data.candidature.mis_a_jour_le) }}
-              </div>
+              <div class="info-value">{{ formatDate(data.candidature.mis_a_jour_le) }}</div>
             </div>
           </div>
-          
           <div class="info-item" *ngIf="data.candidature.date_entretien">
             <mat-icon class="info-icon">event</mat-icon>
             <div class="info-content">
               <div class="info-label">Date d'entretien</div>
-              <div class="info-value">
-                {{ formatDate(data.candidature.date_entretien) }}
-              </div>
+              <div class="info-value">{{ formatDate(data.candidature.date_entretien) }}</div>
             </div>
           </div>
         </div>

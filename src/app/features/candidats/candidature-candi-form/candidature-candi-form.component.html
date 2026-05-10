@@ -37,10 +37,10 @@
             <mat-icon>location_on</mat-icon>
             {{ projet.regionAffectation }}
           </span>
-          <span class="projet-detail" *ngIf="projet.statutProjet">
+          <!-- <span class="projet-detail" *ngIf="projet.statutProjet">
             <mat-icon>flag</mat-icon>
             {{ getStatusLabel(projet.statutProjet) }}
-          </span>
+          </span> -->
         </div>
       </div>
 
@@ -90,11 +90,7 @@
             </mat-form-field>
           </div>
 
-          <div class="user-info-note" *ngIf="user">
-            <mat-icon>info</mat-icon>
-            <span>Ces informations sont pré-remplies depuis votre profil</span>
           </div>
-        </div>
 
         <!-- Section Pièce d'identité -->
         <div class="form-section">
@@ -127,17 +123,10 @@
         <div class="form-section">
           <h3 class="section-title">
             <mat-icon>work</mat-icon>
-            Poste et compétences
+            Compétences
           </h3>
           
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Poste visé *</mat-label>
-            <input matInput type="text" [(ngModel)]="candidature.poste_vise" name="poste_vise" required readonly />
-            <mat-icon matSuffix>work_outline</mat-icon>
-            <mat-error>Le poste visé est requis</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="full-width">
+           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Compétences (séparées par des virgules)</mat-label>
             <input matInput type="text" [(ngModel)]="candidature.competences" name="competences" 
                    placeholder="Angular, React, Gestion de projet..." (blur)="formatCompetences()" />

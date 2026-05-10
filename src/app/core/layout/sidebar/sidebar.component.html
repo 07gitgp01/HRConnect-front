@@ -47,7 +47,7 @@
         <div class="menu-group" [class.open]="groupVolontairesOpen">
           <div class="menu-group-label" (click)="groupVolontairesOpen = !groupVolontairesOpen">
             <mat-icon class="menu-group-icon">group</mat-icon>
-            <span>Volontaires & Candidatures</span>
+            <span>Volontaires</span>
             <mat-icon class="menu-group-chevron">
               {{ groupVolontairesOpen ? 'expand_less' : 'expand_more' }}
             </mat-icon>
@@ -55,7 +55,7 @@
           <div class="menu-group-items" [@expandCollapse]="groupVolontairesOpen ? 'open' : 'closed'">
             <a mat-list-item routerLink="/features/admin/volontaires" routerLinkActive="active">
               <mat-icon matListItemIcon>people</mat-icon>
-              <span matListItemTitle>Les Volontaires</span>
+              <span matListItemTitle>Nos Volontaires</span>
             </a>
             <a mat-list-item routerLink="/features/admin/candidatures" routerLinkActive="active">
               <mat-icon matListItemIcon>how_to_reg</mat-icon>

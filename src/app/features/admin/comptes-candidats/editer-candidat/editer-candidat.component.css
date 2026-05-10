@@ -42,7 +42,7 @@
   margin-top: 8px;
 }
 
-/* Badges de compétences */
+/* Badges de compétences (affichage) */
 .competence-badge {
   display: inline-flex;
   align-items: center;
@@ -53,65 +53,28 @@
   padding: 6px 12px;
   font-size: 0.8rem;
   font-weight: 500;
-  transition: all 0.2s ease;
 }
 
-.competence-badge:hover {
-  background: rgba(0, 129, 36, 0.25);
-  transform: translateY(-1px);
-}
-
-/* Boutons */
-.btn-warning {
-  background: #FFD700;
-  border-color: #FFD700;
-  color: #1e293b;
-}
-
-.btn-warning:hover {
-  background: #FFC107;
-  border-color: #FFC107;
-  transform: translateY(-1px);
-}
-
+/* Bouton validation */
 .btn-success {
   background: #008124;
   border-color: #008124;
 }
 
-.btn-success:hover {
+.btn-success:hover:not(:disabled) {
   background: #006b1e;
   border-color: #006b1e;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 129, 36, 0.3);
 }
 
-.btn-outline-primary:hover {
+.btn-success:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-outline-primary:hover, .btn-outline-success:hover {
   transform: translateY(-1px);
-}
-
-.btn-outline-success:hover {
-  transform: translateY(-1px);
-}
-
-/* Champs de formulaire */
-.form-control, .form-select {
-  border-radius: 8px;
-  border: 1.5px solid #e2e8f0;
-  padding: 8px 12px;
-  transition: all 0.2s ease;
-}
-
-.form-control:focus, .form-select:focus {
-  border-color: #008124;
-  box-shadow: 0 0 0 3px rgba(0, 129, 36, 0.1);
-  outline: none;
-}
-
-.form-label {
-  font-size: 0.85rem;
-  margin-bottom: 6px;
-  color: #334155;
 }
 
 /* Alertes */
@@ -133,24 +96,20 @@
   color: #991b1b;
 }
 
-/* Card information */
-.card.bg-light {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+.alert-warning {
+  border-left-color: #f59e0b;
 }
 
+/* Texte en lecture seule */
 .form-control-plaintext {
   font-size: 1rem;
   color: #1e293b;
   padding: 6px 0;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px dashed #e2e8f0;
 }
 
-.text-muted {
-  color: #64748b !important;
-}
-
-/* Gap */
+/* Gap utilitaire */
 .gap-2 {
   gap: 0.5rem;
 }
@@ -162,37 +121,26 @@
     gap: 12px;
     align-items: flex-start;
   }
-  
+
   .d-flex.justify-content-between {
     flex-direction: column;
     gap: 12px;
   }
-  
-  .d-flex.justify-content-between > div {
-    display: flex;
-    flex-direction: column;
+
+  .d-flex.justify-content-between > button,
+  .d-flex.justify-content-between > .btn-success {
     width: 100%;
   }
-  
-  .btn-warning, .btn-success {
-    width: 100%;
-    margin-bottom: 8px;
-  }
-  
-  .row {
-    flex-direction: column;
-  }
-  
-  .col-md-6, .col-md-12 {
-    width: 100%;
-    margin-bottom: 1rem;
-  }
-  
+
   .document-actions {
     flex-direction: column;
   }
-  
+
   .document-actions button {
     width: 100%;
+  }
+
+  .row {
+    flex-direction: column;
   }
 }

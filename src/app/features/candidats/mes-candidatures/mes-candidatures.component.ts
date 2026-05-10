@@ -24,6 +24,7 @@ import { CandidatureService } from '../../services/service_candi/candidature.ser
 import { ProjectService } from '../../services/service_projects/projects.service';
 import { Candidature } from '../../models/candidature.model';
 import { Project } from '../../models/projects.model';
+import { environment } from '../../environment/environment';
 
 @Component({
   selector: 'app-mes-candidatures',
@@ -298,4 +299,16 @@ export class MesCandidaturesComponent implements OnInit {
   aEntretienProgramme(candidature: Candidature): boolean {
     return candidature.statut === 'entretien' && !!candidature.date_entretien;
   }
+
+ ouvrirContrat(contratUrl: string): void {
+  if (!contratUrl) {
+    this.snackBar.open('Aucun contrat disponible', 'Fermer', { duration: 3000 });
+    return;
+  }
+  // Construire l'URL complète : http://localhost:8080/uploads/contrats/...
+  const backendBaseUrl = environment.apiUrl.replace('/api', '');
+  const fullUrl = backendBaseUrl + contratUrl;
+  window.open(fullUrl, '_blank');
+}
+
 }

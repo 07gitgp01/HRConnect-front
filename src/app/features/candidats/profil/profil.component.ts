@@ -1,6 +1,5 @@
 // src/app/features/candidats/profil/profil.component.ts
-
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -26,6 +25,9 @@ import { environment } from '../../environment/environment';
   imports: [CommonModule, ReactiveFormsModule, RouterModule, MatIconModule, MatTooltipModule]
 })
 export class ProfilCandidatComponent implements OnInit {
+  @ViewChild('cvFileInputHidden') cvFileInputHidden!: ElementRef<HTMLInputElement>;
+  @ViewChild('identityFileInputHidden') identityFileInputHidden!: ElementRef<HTMLInputElement>;
+
   profilForm: FormGroup;
   user: User | null = null;
   volontaire: Volontaire | null = null;
@@ -53,7 +55,6 @@ export class ProfilCandidatComponent implements OnInit {
 
   selectedCompetences: string[] = [];
 
-  // ✅ Utiliser environment.apiUrl
   private apiUrl = environment.apiUrl;
 
   constructor(
@@ -107,7 +108,7 @@ export class ProfilCandidatComponent implements OnInit {
         disponibilite:      ['', Validators.required],
         urlCV:              ['', Validators.required],
         urlPieceIdentite:   ['', Validators.required]
-      })
+      }, { disabled: true })
     });
   }
 
@@ -124,16 +125,10 @@ export class ProfilCandidatComponent implements OnInit {
   }
 
   // ============================================================
-  // UPLOAD DE FICHIERS (CORRIGÉ - Utilise UploadService)
+  // UPLOAD DE FICHIERS
   // ============================================================
 
-  /**
-   * ✅ Upload réel d'un fichier vers le backend via UploadService
-   */
   private async uploadFile(file: File, type: 'cv' | 'identity'): Promise<string> {
-    const formData = new FormData();
-    formData.append('fichier', file); // ✅ 'fichier' comme attendu par le backend
-    
     return new Promise((resolve, reject) => {
       this.uploadService.uploadFile(file).subscribe({
         next: (event) => {
@@ -153,18 +148,15 @@ export class ProfilCandidatComponent implements OnInit {
   onCVSelected(event: any): void {
     const file = event.target.files?.[0];
     if (!file) return;
-    
     if (file.size > 5 * 1024 * 1024) { 
       this.showMessage('CV trop volumineux (max 5MB)', 'error'); 
       return; 
     }
-    
     const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     if (!allowed.includes(file.type)) { 
       this.showMessage('Format non supporté. PDF, DOC ou DOCX', 'error'); 
       return; 
     }
-    
     this.selectedCV = file;
     this.cvPreview  = { name: file.name, size: file.size };
   }
@@ -177,18 +169,15 @@ export class ProfilCandidatComponent implements OnInit {
   onDocumentIdentitySelected(event: any): void {
     const file = event.target.files?.[0];
     if (!file) return;
-    
     if (file.size > 5 * 1024 * 1024) { 
       this.showMessage('Fichier trop volumineux (max 5MB)', 'error'); 
       return; 
     }
-    
     const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     if (!allowed.includes(file.type)) { 
       this.showMessage('Format non supporté. PDF, JPG, PNG, DOC ou DOCX', 'error'); 
       return; 
     }
-    
     this.selectedDocumentIdentity = file;
     this.documentIdentityPreview  = { name: file.name, size: file.size };
   }
@@ -214,9 +203,7 @@ export class ProfilCandidatComponent implements OnInit {
       this.showMessage(`Aucun ${type === 'cv' ? 'CV' : 'document'} trouvé`, 'error');
       return;
     }
-    
     const fullUrl = this.uploadService.getFullUrl(url);
-    console.log(`📄 Ouverture ${type}:`, fullUrl);
     window.open(fullUrl, '_blank');
   }
 
@@ -225,7 +212,6 @@ export class ProfilCandidatComponent implements OnInit {
       this.showMessage(`Aucun ${type === 'cv' ? 'CV' : 'document'} trouvé`, 'error');
       return;
     }
-    
     this.uploadService.checkFileExists(url).subscribe({
       next: (exists) => {
         if (exists) {
@@ -235,6 +221,14 @@ export class ProfilCandidatComponent implements OnInit {
         }
       }
     });
+  }
+
+  remplacerCV(): void {
+    this.cvFileInputHidden?.nativeElement.click();
+  }
+
+  remplacerDocumentIdentite(): void {
+    this.identityFileInputHidden?.nativeElement.click();
   }
 
   // ============================================================
@@ -256,7 +250,6 @@ export class ProfilCandidatComponent implements OnInit {
       this.showMessage('Aucun profil volontaire trouvé', 'error'); 
       return; 
     }
-
     this.volontaireService.getVolontaire(volontaireId).subscribe({
       next:  v    => { 
         this.volontaire = v; 
@@ -278,7 +271,6 @@ export class ProfilCandidatComponent implements OnInit {
       typePiece:     volontaire.typePiece   || '',
       numeroPiece:   volontaire.numeroPiece || ''
     });
-
     this.profilForm.get('profil')?.patchValue({
       adresseResidence:   volontaire.adresseResidence   || '',
       regionGeographique: volontaire.regionGeographique || '',
@@ -289,7 +281,6 @@ export class ProfilCandidatComponent implements OnInit {
       urlCV:              volontaire.urlCV              || '',
       urlPieceIdentite:   volontaire.urlPieceIdentite   || ''
     });
-
     if (volontaire.competences) this.updateCompetencesFormArray(volontaire.competences);
   }
 
@@ -318,7 +309,6 @@ export class ProfilCandidatComponent implements OnInit {
   private loadCandidaturesStats(): void {
     const volontaireId = this.authService.getVolontaireId();
     if (!volontaireId) return;
-
     this.candidatureService.getAll().subscribe({
       next: candidatures => {
         const mine = candidatures.filter(c => c.volontaireId?.toString() === volontaireId.toString());
@@ -355,85 +345,64 @@ export class ProfilCandidatComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-  if (!this.volontaire?.id) return;
-
-  this.isLoading = true;
-  this.message = '';
-  
-  try {
-    // Récupérer les valeurs du formulaire
-    const formValues = this.profilForm.get('profil')?.value;
-    
-    // Préparer les données à envoyer
-    const donneesASauvegarder: any = {};
-    
-    // Ajouter les champs texte
-    if (formValues.adresseResidence) donneesASauvegarder.adresseResidence = formValues.adresseResidence;
-    if (formValues.regionGeographique) donneesASauvegarder.regionGeographique = formValues.regionGeographique;
-    if (formValues.niveauEtudes) donneesASauvegarder.niveauEtudes = formValues.niveauEtudes;
-    if (formValues.domaineEtudes) donneesASauvegarder.domaineEtudes = formValues.domaineEtudes;
-    if (formValues.motivation) donneesASauvegarder.motivation = formValues.motivation;
-    if (formValues.disponibilite) donneesASauvegarder.disponibilite = formValues.disponibilite;
-    
-    // Ajouter les compétences
-    const selectedCompetences = this.getSelectedCompetences();
-    if (selectedCompetences.length > 0) {
-      donneesASauvegarder.competences = selectedCompetences;
+    if (!this.volontaire?.id) return;
+    this.isLoading = true;
+    this.message = '';
+    try {
+      const formValues = this.profilForm.get('profil')?.value;
+      const donneesASauvegarder: any = {};
+      if (formValues.adresseResidence) donneesASauvegarder.adresseResidence = formValues.adresseResidence;
+      if (formValues.regionGeographique) donneesASauvegarder.regionGeographique = formValues.regionGeographique;
+      if (formValues.niveauEtudes) donneesASauvegarder.niveauEtudes = formValues.niveauEtudes;
+      if (formValues.domaineEtudes) donneesASauvegarder.domaineEtudes = formValues.domaineEtudes;
+      if (formValues.motivation) donneesASauvegarder.motivation = formValues.motivation;
+      if (formValues.disponibilite) donneesASauvegarder.disponibilite = formValues.disponibilite;
+      const selectedCompetences = this.getSelectedCompetences();
+      if (selectedCompetences.length > 0) {
+        donneesASauvegarder.competences = selectedCompetences;
+      }
+      if (this.selectedCV) {
+        const url = await this.uploadFile(this.selectedCV, 'cv');
+        donneesASauvegarder.urlCV = url;
+      } else if (this.volontaire?.urlCV) {
+        donneesASauvegarder.urlCV = this.volontaire.urlCV;
+      }
+      if (this.selectedDocumentIdentity) {
+        const url = await this.uploadFile(this.selectedDocumentIdentity, 'identity');
+        donneesASauvegarder.urlPieceIdentite = url;
+      } else if (this.volontaire?.urlPieceIdentite) {
+        donneesASauvegarder.urlPieceIdentite = this.volontaire.urlPieceIdentite;
+      }
+      const updated = await lastValueFrom(
+        this.volontaireService.mettreAJourProfil(this.volontaire.id, donneesASauvegarder)
+      );
+      this.volontaire = updated;
+      this.patchFormValues(updated);
+      
+      // ✅ Mise à jour de l'utilisateur si le profil est maintenant complet
+      if (this.user && this.user.id && !this.user.profilComplete && this.isProfilComplet()) {
+        await lastValueFrom(this.authService.marquerProfilComplet(this.user.id));
+        await lastValueFrom(this.authService.promouvoirEnVolontaire(this.user.id));
+        // Recharger l'utilisateur courant
+        this.authService.refreshUserData();
+        this.user = this.authService.getCurrentUser();
+        console.log('✅ Utilisateur mis à jour : profilComplete = true, role = volontaire');
+      }
+      
+      this.isEditing = false;
+      this.profilForm.get('profil')?.disable();
+      this.selectedCV = null;
+      this.cvPreview = null;
+      this.selectedDocumentIdentity = null;
+      this.documentIdentityPreview = null;
+      this.showMessage('✅ Profil sauvegardé avec succès !', 'success');
+    } catch (error) {
+      console.error('❌ Erreur:', error);
+      this.showMessage('❌ Erreur lors de la sauvegarde: ' + (error as Error).message, 'error');
+    } finally {
+      this.isLoading = false;
     }
-    
-    // Upload du CV si sélectionné
-    if (this.selectedCV) {
-      const url = await this.uploadFile(this.selectedCV, 'cv');
-      donneesASauvegarder.urlCV = url;
-      console.log('✅ CV uploadé:', url);
-    } else if (this.volontaire?.urlCV) {
-      // Garder l'URL existante si pas de nouveau fichier
-      donneesASauvegarder.urlCV = this.volontaire.urlCV;
-    }
-    
-    // Upload de la pièce d'identité si sélectionnée
-    if (this.selectedDocumentIdentity) {
-      const url = await this.uploadFile(this.selectedDocumentIdentity, 'identity');
-      donneesASauvegarder.urlPieceIdentite = url;
-      console.log('✅ Pièce d\'identité uploadée:', url);
-    } else if (this.volontaire?.urlPieceIdentite) {
-      // Garder l'URL existante si pas de nouveau fichier
-      donneesASauvegarder.urlPieceIdentite = this.volontaire.urlPieceIdentite;
-    }
-    
-    console.log('📤 Envoi au backend:', JSON.stringify(donneesASauvegarder, null, 2));
-    
-    // Envoyer au backend
-    const updated = await lastValueFrom(
-      this.volontaireService.mettreAJourProfil(this.volontaire.id, donneesASauvegarder)
-    );
-    
-    console.log('✅ Réponse backend:', updated);
-    
-    // Mettre à jour l'objet local
-    this.volontaire = updated;
-    
-    // Rafraîchir l'affichage
-    this.patchFormValues(updated);
-    
-    this.isEditing = false;
-    this.profilForm.get('profil')?.disable();
-    
-    // Nettoyer
-    this.selectedCV = null;
-    this.cvPreview = null;
-    this.selectedDocumentIdentity = null;
-    this.documentIdentityPreview = null;
-    
-    this.showMessage('✅ Profil sauvegardé avec succès !', 'success');
-    
-  } catch (error) {
-    console.error('❌ Erreur:', error);
-    this.showMessage('❌ Erreur lors de la sauvegarde: ' + (error as Error).message, 'error');
-  } finally {
-    this.isLoading = false;
   }
-}
 
   private markProfilGroupTouched(): void {
     const grp = this.profilForm.get('profil') as FormGroup;
@@ -504,6 +473,16 @@ export class ProfilCandidatComponent implements OnInit {
   isCompetencesFormArrayReady(): boolean {
     const arr = this.profilForm.get('profil.competences') as FormArray;
     return !!arr && arr.length > 0;
+  }
+
+  get isDocumentModifiable(): boolean {
+    return this.volontaire?.statut === 'Candidat';
+  }
+
+  getFileName(url: string | undefined): string {
+    if (!url) return 'Aucun fichier';
+    const parts = url.split('/');
+    return parts[parts.length - 1];
   }
 
   get adresseResidence()   { return this.profil.get('adresseResidence'); }

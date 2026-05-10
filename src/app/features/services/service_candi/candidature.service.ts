@@ -186,27 +186,30 @@ export class CandidatureService {
   // ==================== NORMALISATION ====================
 
   private normalizeCandidature(c: Candidature): Candidature {
-    const now = new Date().toISOString();
-    let creeLe = c.cree_le || (c as any).creeLe;
-    let misAJourLe = c.mis_a_jour_le || (c as any).misAJourLe;
-    
-    if (!creeLe || creeLe === 'null' || creeLe === 'undefined') creeLe = now;
-    if (!misAJourLe || misAJourLe === 'null' || misAJourLe === 'undefined') misAJourLe = now;
-    
-    return {
-      ...c,
-      id: c.id ?? undefined,
-      projectId: c.projectId ?? '',
-      volontaireId: c.volontaireId ?? '',
-      competences: this.normalizeCompetences(c.competences),
-      statut: c.statut || 'en_attente',
-      typePiece: c.typePiece || 'CNIB',
-      numeroPiece: c.numeroPiece || (c as any).numeroPiece || '',
-      cv_url: c.cv_url || (c as any).cvUrl || '',
-      cree_le: creeLe,
-      mis_a_jour_le: misAJourLe
-    };
-  }
+  const now = new Date().toISOString();
+  let creeLe = c.cree_le || (c as any).creeLe;
+  let misAJourLe = c.mis_a_jour_le || (c as any).misAJourLe;
+  
+  if (!creeLe || creeLe === 'null' || creeLe === 'undefined') creeLe = now;
+  if (!misAJourLe || misAJourLe === 'null' || misAJourLe === 'undefined') misAJourLe = now;
+  
+  return {
+    ...c,
+    id: c.id ?? undefined,
+    projectId: c.projectId ?? '',
+    volontaireId: c.volontaireId ?? '',
+    competences: this.normalizeCompetences(c.competences),
+    statut: c.statut || 'en_attente',
+    typePiece: c.typePiece || 'CNIB',
+    numeroPiece: c.numeroPiece || (c as any).numeroPiece || '',
+    cv_url: c.cv_url || (c as any).cvUrl || '',
+    contrat_url: c.contrat_url || (c as any).contratUrl || '',   // ✅ AJOUT
+    scoreEntretien: c.scoreEntretien ?? (c as any).scoreEntretien,
+    commentaireEntretien: c.commentaireEntretien ?? (c as any).commentaireEntretien,
+    cree_le: creeLe,
+    mis_a_jour_le: misAJourLe
+  };
+}
 
   private normalizeCandidatures(list: Candidature[]): Candidature[] {
     return list.map(c => this.normalizeCandidature(c));
@@ -481,4 +484,25 @@ export class CandidatureService {
     catchError(() => of([]))
   );
 }
+
+// dans candidature.service.ts
+uploadContrat(candidatureId: number | string, fichier: File): Observable<{ contrat_url: string }> {
+  const resolvedId = this.resolveId(candidatureId);
+  const formData = new FormData();
+  formData.append('fichier', fichier);
+  return this.http.post<{ contrat_url: string }>(
+    `${this.apiUrl}/candidatures/${resolvedId}/upload-contrat`,
+    formData
+  ).pipe(
+    catchError(error => {
+      console.error('Erreur upload contrat :', error);
+      return throwError(() => new Error('Échec de l’upload du contrat.'));
+    })
+  );
+}
+
+patchCandidaturePublic(id: number | string, body: any): Observable<Candidature> {
+  return this.patchCandidature(id, body);
+}
+
 }

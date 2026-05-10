@@ -61,7 +61,7 @@ export class CandidatureListComponent implements OnInit, OnDestroy {
   private destroy$             = new Subject<void>();
   private pendingCandidatureId: string | number | null = null;
 
-  displayedColumns: string[] = ['candidat', 'projet', 'competences', 'statut', 'date', 'actions'];
+  displayedColumns: string[] = ['candidat', 'projet', 'appreciation', 'statut', 'date', 'actions'];
 
   readonly transitionsStatut: Record<string, {
     statut: Candidature['statut']; label: string; icon: string; color: string
@@ -190,35 +190,34 @@ export class CandidatureListComponent implements OnInit, OnDestroy {
   // ─── Filtrage ─────────────────────────────────────────────────────────────
 
   getCandidaturesFiltrees(): Candidature[] {
-  let filtered = this.candidatures;
-  
-  if (this.filtreStatut) {
-    filtered = filtered.filter(c => c.statut === this.filtreStatut);
+    let filtered = this.candidatures;
+    
+    if (this.filtreStatut) {
+      filtered = filtered.filter(c => c.statut === this.filtreStatut);
+    }
+    
+    if (this.filtreProjet) {
+      filtered = filtered.filter(c => String(c.projectId) === String(this.filtreProjet));
+    }
+    
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(c => {
+        const posteViseMatch = c.poste_vise ? c.poste_vise.toLowerCase().includes(term) : false;
+        const nomMatch = c.nom ? c.nom.toLowerCase().includes(term) : false;
+        const prenomMatch = c.prenom ? c.prenom.toLowerCase().includes(term) : false;
+        const nomCompletMatch = (c.nom && c.prenom) 
+          ? (c.nom + ' ' + c.prenom).toLowerCase().includes(term) 
+          : false;
+        const emailMatch = c.email ? c.email.toLowerCase().includes(term) : false;
+        const projectNameMatch = this.getProjectName(c.projectId).toLowerCase().includes(term);
+        
+        return posteViseMatch || nomMatch || prenomMatch || nomCompletMatch || emailMatch || projectNameMatch;
+      });
+    }
+    
+    return filtered;
   }
-  
-  if (this.filtreProjet) {
-    filtered = filtered.filter(c => String(c.projectId) === String(this.filtreProjet));
-  }
-  
-  if (this.searchTerm) {
-    const term = this.searchTerm.toLowerCase();
-    filtered = filtered.filter(c => {
-      // ✅ Vérifier que les champs existent avant d'appeler toLowerCase()
-      const posteViseMatch = c.poste_vise ? c.poste_vise.toLowerCase().includes(term) : false;
-      const nomMatch = c.nom ? c.nom.toLowerCase().includes(term) : false;
-      const prenomMatch = c.prenom ? c.prenom.toLowerCase().includes(term) : false;
-      const nomCompletMatch = (c.nom && c.prenom) 
-        ? (c.nom + ' ' + c.prenom).toLowerCase().includes(term) 
-        : false;
-      const emailMatch = c.email ? c.email.toLowerCase().includes(term) : false;
-      const projectNameMatch = this.getProjectName(c.projectId).toLowerCase().includes(term);
-      
-      return posteViseMatch || nomMatch || prenomMatch || nomCompletMatch || emailMatch || projectNameMatch;
-    });
-  }
-  
-  return filtered;
-}
 
   get totalCandidatures(): number { return this.getCandidaturesFiltrees().length; }
 
@@ -240,6 +239,11 @@ export class CandidatureListComponent implements OnInit, OnDestroy {
     return vol?.statut === 'Actif';
   }
 
+  // 🔹 Vérifie si l'acceptation est autorisée (évaluation requise)
+  private estEvaluationManquante(candidature: Candidature): boolean {
+    return !candidature.scoreEntretien || candidature.scoreEntretien < 1 || candidature.scoreEntretien > 5;
+  }
+
   changerStatut(candidature: Candidature, nouveauStatut: Candidature['statut']): void {
     if (!candidature.id) {
       console.error('❌ ID de candidature manquant:', candidature);
@@ -247,14 +251,23 @@ export class CandidatureListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Log pour debug
+    // 🔴 Blocage : l’acceptation nécessite une évaluation préalable (score 1-5)
+    if (nouveauStatut === 'acceptee') {
+      if (this.estEvaluationManquante(candidature)) {
+        this.snackBar.open(
+          '⚠️ Veuillez d’abord évaluer le candidat (note 1-5) dans les détails de la candidature avant de l’accepter.',
+          'Fermer',
+          { duration: 6000 }
+        );
+        return;
+      }
+    }
+
     console.log('🔄 Changement de statut:', {
       id: candidature.id,
-      idType: typeof candidature.id,
-      idString: String(candidature.id),
       statutActuel: candidature.statut,
       nouveauStatut,
-      candidature
+      scoreEntretien: candidature.scoreEntretien
     });
 
     if (nouveauStatut === 'acceptee') {
@@ -325,6 +338,9 @@ export class CandidatureListComponent implements OnInit, OnDestroy {
       width:     '800px',
       maxHeight: '90vh',
       data:      { candidature, project }
+    }).afterClosed().subscribe(() => {
+      // Recharger la liste pour mettre à jour l'affichage après éventuelle évaluation
+      this.loadCandidatures();
     });
   }
 
@@ -374,13 +390,13 @@ export class CandidatureListComponent implements OnInit, OnDestroy {
   }
 
   getCompetencesArray(competences: any): string[] {
-  if (!competences) return [];
-  if (Array.isArray(competences)) {
-    return competences.filter(c => c && typeof c === 'string');
+    if (!competences) return [];
+    if (Array.isArray(competences)) {
+      return competences.filter(c => c && typeof c === 'string');
+    }
+    if (typeof competences === 'string') {
+      return competences.split(',').map(c => c.trim()).filter(c => c.length > 0);
+    }
+    return [];
   }
-  if (typeof competences === 'string') {
-    return competences.split(',').map(c => c.trim()).filter(c => c.length > 0);
-  }
-  return [];
-}
 }

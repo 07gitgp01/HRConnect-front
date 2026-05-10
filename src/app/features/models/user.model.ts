@@ -1,5 +1,3 @@
-// src/app/models/user.model.ts
-
 import { Partenaire } from "./partenaire.model";
 
 /**
@@ -7,32 +5,29 @@ import { Partenaire } from "./partenaire.model";
  */
 export interface User {
   id?: number | string;
-  username: string;
+  username?: string;                         // ✅ rendu optionnel
   email: string;
   password: string;
-  
-  // ✅ CORRECTION: 'candidat' OU 'volontaire' selon l'évolution du profil
+
   role: 'candidat' | 'volontaire';
-  
-  // ✅ NOUVEAU: Champ actif pour gérer l'état du compte
-  actif?: boolean;  // true par défaut à la création
-  
-  // Champs de liaison avec le profil volontaire
+
+  actif?: boolean;
+
   volontaireId?: number | string;
   profilComplete?: boolean;
-  
-  // Informations personnelles (FIXES - saisies à l'inscription)
+
+  // Informations personnelles
   prenom?: string;
   nom?: string;
   telephone?: string;
   dateNaissance?: string;
   nationalite?: string;
   sexe?: 'M' | 'F';
-  
-  // ✅ Pièce d'identité (FIXES - saisies à l'inscription)
+
+  // Pièce d'identité
   typePiece?: 'CNIB' | 'PASSEPORT';
   numeroPiece?: string;
-  
+
   // Métadonnées
   avatar?: string;
   date_inscription?: string;
@@ -43,15 +38,13 @@ export interface User {
  */
 export interface AdminUser {
   id?: number | string;
-  username: string;
+  username?: string;                         // ✅ rendu optionnel
   email: string;
   password: string;
   role: 'admin';
-  
-  // ✅ NOUVEAU: Champ actif pour les admins aussi
+
   actif?: boolean;
-  
-  // Champs spécifiques admin
+
   nom?: string;
   prenom?: string;
   telephone?: string;
@@ -101,7 +94,7 @@ export interface LoginResponse {
  * Interface pour l'inscription d'un candidat
  */
 export interface RegisterUserData {
-  username: string;
+  username?: string;                         // ✅ rendu optionnel
   email: string;
   password: string;
   confirmerMotDePasse: string;
@@ -111,9 +104,9 @@ export interface RegisterUserData {
   dateNaissance?: string;
   sexe?: 'M' | 'F';
   nationalite?: string;
-  
+
   typePiece: 'CNIB' | 'PASSEPORT';
   numeroPiece: string;
-  
+
   consentementPolitique: boolean;
 }

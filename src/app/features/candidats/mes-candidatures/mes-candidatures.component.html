@@ -47,7 +47,7 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="filter-field">
+          <!-- <mat-form-field appearance="outline" class="filter-field">
             <mat-label>Mission</mat-label>
             <mat-select [(ngModel)]="filtreProjet" (selectionChange)="appliquerFiltres()">
               <mat-option value="">Toutes</mat-option>
@@ -55,7 +55,7 @@
                 {{ getProjetDisplayName(projet) }}
               </mat-option>
             </mat-select>
-          </mat-form-field>
+          </mat-form-field> -->
 
           <button mat-stroked-button color="warn" (click)="clearFilters()" class="clear-filters">
             <mat-icon>clear</mat-icon>
@@ -167,19 +167,13 @@
                       <mat-icon>delete</mat-icon>
                     </button>
                     
-                    <button *ngIf="candidature.statut === 'refusee'" 
-                            mat-icon-button color="accent"
-                            (click)="reappliquer(candidature)"
-                            matTooltip="Repostuler">
-                      <mat-icon>replay</mat-icon>
-                    </button>
+                    <button *ngIf="candidature.contrat_url" 
+        mat-icon-button color="accent"
+        (click)="ouvrirContrat(candidature.contrat_url)"
+        matTooltip="Voir le contrat">
+  <mat-icon>description</mat-icon>
+</button>
                     
-                    <button *ngIf="candidature.cv_url" 
-                            mat-icon-button
-                            (click)="ouvrirCV(candidature.cv_url)"
-                            matTooltip="Voir le CV">
-                      <mat-icon>description</mat-icon>
-                    </button>
                   </div>
                 </td>
               </tr>

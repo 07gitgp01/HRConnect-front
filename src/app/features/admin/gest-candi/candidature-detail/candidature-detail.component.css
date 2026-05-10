@@ -145,7 +145,7 @@ mat-card-header {
 
 .info-content {
   flex: 1;
-  min-width: 0; /* ✅ empêche le débordement dans flexbox */
+  min-width: 0;
 }
 
 .info-label {
@@ -161,8 +161,6 @@ mat-card-header {
   font-weight: 500;
   color: #1a202c;
   line-height: 1.4;
-
-  /* ✅ protection débordement texte long */
   word-break: break-word;
   overflow-wrap: break-word;
 }
@@ -199,32 +197,22 @@ mat-card-header {
   border-radius: 20px !important;
 }
 
-/* =====================================================
-   ✅ LETTRE DE MOTIVATION — CORRECTION DÉBORDEMENT
-   ===================================================== */
+/* Lettre de motivation */
 .motivation-content {
   background: #f8fafc;
   padding: 16px;
   border-radius: 8px;
   border: 1px solid #e9ecef;
-  border-left: 4px solid #008124;   /* accent PNVB vert */
-
-  /* ✅ LES 3 PROPRIÉTÉS QUI STOPPENT LE DÉBORDEMENT */
-  word-break: break-word;           /* coupe les chaînes sans espaces (saaaa...) */
-  overflow-wrap: break-word;        /* renfort cross-browser */
-  white-space: pre-wrap;            /* respecte les \n mais revient à la ligne */
-
-  /* Affichage */
+  border-left: 4px solid #008124;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
   line-height: 1.65;
   font-size: 0.9rem;
   color: #475569;
   font-weight: 400;
-
-  /* ✅ Hauteur limitée avec scroll si très long */
   max-height: 200px;
   overflow-y: auto;
-
-  /* Scrollbar discrète */
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
 }
@@ -232,34 +220,78 @@ mat-card-header {
 .motivation-content::-webkit-scrollbar {
   width: 4px;
 }
-
 .motivation-content::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 2px;
 }
-
 .motivation-content::-webkit-scrollbar-thumb:hover {
   background: #008124;
 }
 
-/* Section CV */
-.cv-section {
+/* CV */
+.cv-actions {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: #e6f4e6;
-  border-radius: 8px;
-  border: 1px solid rgba(0,129,36,0.2);
+  gap: 1rem;
+  margin-top: 0.5rem;
 }
 
-.cv-section mat-icon {
-  color: #008124;
+.cv-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ========== CONTRAT ========== */
+.contrat-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.contrat-actions button {
+  min-width: 140px;
+}
+
+.upload-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.upload-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.upload-progress {
+  margin-top: 12px;
+}
+
+.info-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-top: 12px;
+}
+
+.text-muted {
+  font-size: 0.7rem;
+  color: #64748b;
+  display: block;
+  margin-top: 4px;
 }
 
 /* Projet */
 .project-details {
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 /* Dates */
@@ -296,33 +328,77 @@ mat-dialog-actions button:hover {
   .dialog-title   { padding: 12px 16px 4px; }
   .dialog-content { padding: 0 16px 16px; max-height: 60vh; }
   .info-section   { padding: 12px; }
-
   .info-item {
     flex-direction: column;
     gap: 8px;
   }
-
-  .info-icon      { margin-top: 0; }
-  .section-title  { font-size: 0.95rem; }
+  .info-icon { margin-top: 0; }
+  .section-title { font-size: 0.95rem; }
   .candidate-name { font-size: 1.3rem; }
-
   .motivation-content { max-height: 150px; }
+  .upload-row { flex-direction: column; align-items: stretch; }
+  .upload-row button { width: 100%; }
 }
 
-/* Scrollbar dialogue */
-.dialog-content::-webkit-scrollbar       { width: 6px; }
+/* Scrollbar du dialogue */
+.dialog-content::-webkit-scrollbar { width: 6px; }
 .dialog-content::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
 .dialog-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 .dialog-content::-webkit-scrollbar-thumb:hover { background: #008124; }
 
-.cv-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 0.5rem;
+
+.star-selectable {
+  cursor: pointer;
+  color: lightgray;
+  font-size: 24px;
+  transition: color 0.2s;
+}
+.star-selectable.selected {
+  color: gold;
+}
+.star-selectable:hover {
+  color: gold;
+}
+.star {
+  font-size: 24px;
+  color: lightgray;
+}
+.star.filled {
+  color: gold;
 }
 
-.cv-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+
+/* Styles pour l'évaluation */
+.star-selectable {
+  cursor: pointer;
+  color: lightgray;
+  font-size: 24px;
+  transition: color 0.2s;
+}
+.star-selectable.selected {
+  color: gold;
+}
+.star-selectable:hover {
+  color: gold;
+}
+.star {
+  font-size: 24px;
+  color: lightgray;
+}
+.star.filled {
+  color: gold;
+}
+.score-display,
+.score-input {
+  margin-bottom: 12px;
+}
+.comment-display {
+  background: #f1f5f9;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+.full-width {
+  width: 100%;
+  margin-bottom: 16px;
 }

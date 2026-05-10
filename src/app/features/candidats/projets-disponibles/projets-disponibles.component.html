@@ -22,10 +22,10 @@
             <div class="stat-number">{{ regions.length }}</div>
             <div class="stat-label">Régions</div>
           </div>
-          <div class="stat-item">
+         <!--  <div class="stat-item">
             <div class="stat-number">{{ typeMissions.length }}</div>
             <div class="stat-label">Types de mission</div>
-          </div>
+          </div> -->
         </div>
       </mat-card>
     </div>
@@ -68,7 +68,7 @@
         </mat-form-field>
 
         <!-- Filtre Type de mission -->
-        <mat-form-field appearance="outline">
+       <!--  <mat-form-field appearance="outline">
           <mat-label>Type de mission</mat-label>
           <mat-select [(ngModel)]="typeMissionSelectionne" (selectionChange)="appliquerFiltres()">
             <mat-option value="">Tous les types</mat-option>
@@ -77,7 +77,7 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-
+ -->
         <!-- Bouton réinitialiser -->
         <button mat-stroked-button 
                 (click)="reinitialiserFiltres()"
@@ -128,9 +128,6 @@
           <div class="urgence-badge" *ngIf="getUrgenceCandidature(projet)">
             {{ getUrgenceText(projet) }}
           </div>
-          <span class="status-badge" [class]="projet.statutProjet">
-            {{ getStatusLabel(projet.statutProjet) }}
-          </span>
         </div>
 
         <mat-card-content>
@@ -149,10 +146,10 @@
               <span>{{ projet.domaineActivite }}</span>
             </div>
             
-            <div class="info-item">
+            <!-- <div class="info-item">
               <mat-icon>business</mat-icon>
               <span>{{ projet.type_mission || 'Non spécifié' }}</span>
-            </div>
+            </div> -->
             
             <div class="info-item">
               <mat-icon>schedule</mat-icon>

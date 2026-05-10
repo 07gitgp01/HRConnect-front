@@ -237,12 +237,11 @@
                 <div class="cl-select-wrap">
                   <mat-icon class="cl-select-icon">person_search</mat-icon>
                   <select class="cl-select" [(ngModel)]="candidatAccepteSelectionne">
-                    <option [value]="null">— Sélectionner un candidat accepté —</option>
+                    <option [value]="null">Sélectionner un candidat accepté</option>
                     <ng-container *ngFor="let c of candidatsAcceptes">
                       <option [value]="c.candidature.volontaireId" [disabled]="c.dejaAffecte">
                         {{ c.candidature.prenom }} {{ c.candidature.nom }}
                         {{ c.dejaAffecte ? '(déjà affecté)' : '' }}
-                        — {{ c.candidature.poste_vise }}
                       </option>
                     </ng-container>
                   </select>

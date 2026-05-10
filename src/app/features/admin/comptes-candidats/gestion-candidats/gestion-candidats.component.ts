@@ -1,5 +1,3 @@
-// src/app/features/admin/comptes/gestion-candidats/gestion-candidats.component.ts
-
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AdminCandidatService } from '../../../services/service_candidats/admin-candidat.service';
@@ -36,6 +34,9 @@ export class GestionCandidatsComponent implements OnInit, OnDestroy {
   pageSizeOptions = [5, 10, 25, 50];
   currentPage = 0;
 
+  // 🔔 Notification : volontaires à valider
+  candidatsEnAttenteValidation: number = 0;
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -71,8 +72,10 @@ export class GestionCandidatsComponent implements OnInit, OnDestroy {
       next: candidats => {
         console.log('✅ [GestionCandidats] Candidats chargés:', candidats.length);
         this.candidats = candidats;
+        this.calculerCandidatsEnAttente();   // 🔔 mise à jour du compteur
         this.isLoading = false;
         this.currentPage = 0;
+        this.afficherNotificationSiBesoin(); // 🔔 afficher toast si nécessaire
       },
       error: error => {
         console.error('❌ [GestionCandidats] Erreur chargement candidats:', error);
@@ -80,6 +83,38 @@ export class GestionCandidatsComponent implements OnInit, OnDestroy {
         this.snackBar.open('Erreur lors du chargement des candidats', 'Fermer', { duration: 3000 });
       }
     });
+  }
+
+  // 🔔 Calcule le nombre de volontaires avec statut "Candidat" et profil complet
+  calculerCandidatsEnAttente(): void {
+    this.candidatsEnAttenteValidation = this.candidats.filter(c =>
+      c.volontaire.statut === 'Candidat' && this.isProfilComplet(c.volontaire)
+    ).length;
+  }
+
+  // 🔔 Affiche une notification toast si des profils sont en attente
+  afficherNotificationSiBesoin(): void {
+    if (this.candidatsEnAttenteValidation > 0) {
+      this.snackBar.open(
+        `${this.candidatsEnAttenteValidation} volontaire(s) ont un profil complet et sont en attente de validation.`,
+        'Voir',
+        { duration: 6000 }
+      ).onAction().subscribe(() => {
+        this.filtrerCandidatsEnAttente();
+      });
+    }
+  }
+
+  // 🔔 Filtrer pour afficher uniquement les candidats à valider (statut Candidat)
+  filtrerCandidatsEnAttente(): void {
+    this.filtres.statut = 'Candidat';
+    this.filtres.recherche = '';
+    this.currentPage = 0;
+    this.appliquerFiltres();
+    // Défilement doux vers le tableau
+    setTimeout(() => {
+      document.querySelector('.cl-table-wrap')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   }
 
   // ==================== PAGINATION ====================
@@ -214,7 +249,6 @@ export class GestionCandidatsComponent implements OnInit, OnDestroy {
 
   // ==================== HELPERS ====================
 
-  // ✅ CORRECTION : Utiliser le vrai calcul de complétion du profil
   isProfilComplet(volontaire: Volontaire): boolean {
     return estProfilComplet(volontaire);
   }

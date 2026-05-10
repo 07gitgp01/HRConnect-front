@@ -130,11 +130,7 @@
 
 /* ================================================================
    SECTION PIÈCE D'IDENTITÉ — traitement distinctif
-   ================================================================
-   Cette section contient des données permanentes (non modifiables
-   après l'inscription). Elle reçoit un fond légèrement ambré +
-   bordure dorée pour signaler son importance, différent des
-   autres sections en blanc ordinaire.
+   (données permanentes non modifiables après inscription)
    ================================================================ */
 .form-section:nth-of-type(2) {
   background: var(--jaune-bg);
@@ -183,7 +179,6 @@
   transition: all 0.25s ease;
 }
 
-/* CNIB : fond vert très pâle */
 .numero-piece-input.type-cnib {
   background: var(--vert-pale);
   border-color: rgba(0, 129, 36, 0.4);
@@ -195,7 +190,6 @@
   box-shadow: 0 0 0 3px rgba(0, 129, 36, 0.15);
 }
 
-/* PASSEPORT : fond bleu très pâle */
 .numero-piece-input.type-passeport {
   background: #e3f2fd;
   border-color: rgba(2, 136, 209, 0.4);
@@ -208,7 +202,6 @@
   box-shadow: 0 0 0 3px rgba(2, 136, 209, 0.15);
 }
 
-/* Hint sous le champ numéro de pièce */
 .form-hint {
   display: block;
   margin-top: 5px;
@@ -273,14 +266,6 @@
 input[formControlName="telephone"].form-control {
   font-family: 'Courier New', Courier, monospace;
   letter-spacing: 0.8px;
-}
-
-/* Nationalité en lecture seule */
-input[readonly].form-control {
-  background: var(--gris-bg);
-  color: var(--gris-muted);
-  cursor: default;
-  border-color: #e0e0e0;
 }
 
 /* ================================================================
@@ -377,7 +362,6 @@ input[readonly].form-control {
   font-size: clamp(15px, 3.5vw, 16px);
 }
 
-/* Spinner intégré au bouton */
 .loading-spinner {
   display: inline-block;
   width: 16px;
@@ -393,7 +377,6 @@ input[readonly].form-control {
   to { transform: rotate(360deg); }
 }
 
-/* Indicateur de chargement sous le bouton */
 .loading-indicator {
   margin-top: 14px;
   padding: 12px 16px;
@@ -476,7 +459,7 @@ input[readonly].form-control {
    RESPONSIVE
    ================================================================ */
 
-/* Tablettes portrait (481px – 768px) */
+/* Tablettes portrait */
 @media (max-width: 768px) {
   .signup-container {
     max-width: 92%;
@@ -494,7 +477,7 @@ input[readonly].form-control {
   }
 }
 
-/* Mobiles (320px – 480px) */
+/* Mobiles */
 @media (max-width: 480px) {
   .signup-container {
     max-width: 96%;
@@ -533,7 +516,7 @@ input[readonly].form-control {
   }
 }
 
-/* Très petits mobiles (< 360px) */
+/* Très petits mobiles */
 @media (max-width: 360px) {
   .signup-container {
     padding: 14px 12px;
@@ -549,7 +532,7 @@ input[readonly].form-control {
   }
 }
 
-/* Mode paysage sur mobile */
+/* Mode paysage */
 @media (max-height: 600px) and (orientation: landscape) {
   .signup-container {
     margin: 12px auto;
@@ -638,13 +621,11 @@ input[readonly].form-control {
     box-shadow: 0 0 0 3px rgba(102, 187, 106, 0.25);
   }
 
-  input[readonly].form-control {
-    background: #262626;
-    color: #888;
-    border-color: #333;
+  /* Nationalité (champ texte libre) en mode sombre */
+  input.form-control:not([readonly]) {
+    background: #2d2d2d;
   }
 
-  /* Section pièce d'identité en mode sombre */
   .form-section:nth-of-type(2) {
     background: #2a2400;
     border-color: rgba(249, 168, 37, 0.3);

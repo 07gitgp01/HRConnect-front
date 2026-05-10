@@ -80,8 +80,8 @@
         <thead>
           <tr>
             <th>Volontaire</th>
-            <th>Mission / Poste</th>
-            <th>Compétences</th>
+            <th>Mission</th>
+            <th>Appréciation</th>   <!-- nouvelle colonne -->
             <th>Statut</th>
             <th>Date</th>
             <th class="th-actions">Actions</th>
@@ -92,40 +92,42 @@
 
             <!-- Volontaire -->
             <td>
-  <div class="cl-person">
-    <div class="cl-avatar">{{ (c.prenom.charAt(0) || '?') }}{{ (c.nom.charAt(0) || '?') }}</div>
-    <div class="cl-person-info">
-      <span class="cl-person-name">{{ c.prenom }} {{ c.nom }}</span>
-      <span class="cl-person-email">{{ c.email }}</span>
-      <span class="cl-person-phone" *ngIf="c.telephone">{{ c.telephone }}</span>
-    </div>
-  </div>
-</td>
+              <div class="cl-person">
+                <div class="cl-avatar">{{ (c.prenom.charAt(0) || '?') }}{{ (c.nom.charAt(0) || '?') }}</div>
+                <div class="cl-person-info">
+                  <span class="cl-person-name">{{ c.prenom }} {{ c.nom }}</span>
+                  <span class="cl-person-email">{{ c.email }}</span>
+                  <span class="cl-person-phone" *ngIf="c.telephone">{{ c.telephone }}</span>
+                </div>
+              </div>
+            </td>
 
-<!-- Mission / Poste -->
-<td>
-  <div class="cl-mission">
-    <span class="cl-mission-name">{{ getProjectName(c.projectId) }}</span>
-    <span class="cl-mission-region" *ngIf="getProjectRegion(c.projectId)">
-      <mat-icon>place</mat-icon>{{ getProjectRegion(c.projectId) }}
-    </span>
-    <span class="cl-mission-poste">{{ c.poste_vise || 'Non spécifié' }}</span>
-  </div>
-</td>
-
-            <!-- Compétences -->
+            <!-- Mission / Poste -->
             <td>
-              <div class="cl-chips" *ngIf="getCompetencesArray(c.competences).length > 0">
-                <span class="cl-chip">{{ getCompetencesArray(c.competences)[0] }}</span>
-                <span
-                  class="cl-chip cl-chip-more"
-                  *ngIf="getCompetencesArray(c.competences).length > 1"
-                  [matTooltip]="getCompetencesArray(c.competences).slice(1).join(', ')"
-                  matTooltipPosition="above">
-                  +{{ getCompetencesArray(c.competences).length - 1 }}
+              <div class="cl-mission">
+                <span class="cl-mission-name">{{ getProjectName(c.projectId) }}</span>
+                <span class="cl-mission-region" *ngIf="getProjectRegion(c.projectId)">
+                  <mat-icon>place</mat-icon>{{ getProjectRegion(c.projectId) }}
                 </span>
               </div>
-              <span class="cl-contact-none" *ngIf="getCompetencesArray(c.competences).length === 0">—</span>
+            </td>
+
+            <!-- Appréciation (étoiles + commentaire) -->
+            <td>
+              <div *ngIf="c.scoreEntretien" class="mini-score">
+                <div class="mini-stars">
+                  <mat-icon *ngFor="let star of [1,2,3,4,5]" 
+                            [class.mini-filled]="star <= c.scoreEntretien"
+                            class="mini-star">star</mat-icon>
+                </div>
+                <span class="tooltip-comment" [matTooltip]="c.commentaireEntretien || ''" matTooltipPosition="above">
+                  ⓘ
+                </span>
+              </div>
+              <span *ngIf="!c.scoreEntretien && c.statut === 'acceptee'" class="cl-badge-warning">
+                Non évalué
+              </span>
+              <span *ngIf="!c.scoreEntretien && c.statut !== 'acceptee'" class="cl-muted">—</span>
             </td>
 
             <!-- Statut -->
@@ -180,17 +182,20 @@
                   </div>
 
                   <ng-container *ngFor="let t of getTransitionsDisponibles(c.statut)">
+                    <!-- Option Accepter (bloquée si évaluation manquante) -->
                     <button
                       mat-menu-item
                       *ngIf="t.statut === 'acceptee'"
-                      [disabled]="acceptationBloquee(c)"
+                      [disabled]="acceptationBloquee(c) || !c.scoreEntretien"
                       (click)="changerStatut(c, t.statut)"
-                      [class.cl-menu-item-blocked]="acceptationBloquee(c)">
+                      [class.cl-menu-item-blocked]="acceptationBloquee(c) || !c.scoreEntretien">
                       <mat-icon>{{ t.icon }}</mat-icon>
                       {{ t.label }}
-                      <span class="cl-menu-item-badge" *ngIf="acceptationBloquee(c)">Bloqué</span>
+                      <span class="cl-menu-item-badge" *ngIf="acceptationBloquee(c)">Bloqué (volontaire actif)</span>
+                      <span class="cl-menu-item-badge" *ngIf="!c.scoreEntretien && !acceptationBloquee(c)">Évaluation requise</span>
                     </button>
 
+                    <!-- Autres statuts (non "Accepter") -->
                     <button
                       mat-menu-item
                       *ngIf="t.statut !== 'acceptee'"

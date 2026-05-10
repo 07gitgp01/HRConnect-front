@@ -34,7 +34,9 @@ export interface Candidature {
   notes_interne?: string;
   date_entretien?: string;
   niveau_experience?: 'debutant' | 'intermediaire' | 'expert';
-
+  contrat_url?: string;   // 🔹 Nouveau champ : URL du contrat PDF
+  scoreEntretien?: number;
+  commentaireEntretien?: string;
   // Champs de liaison
   volontaire?: Volontaire;
 }

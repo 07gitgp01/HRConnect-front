@@ -743,3 +743,48 @@
 .cl-table-container::-webkit-scrollbar-track {
   background: var(--slate-50);
 }
+
+/* ===== ALERTE CANDIDATS EN ATTENTE ===== */
+.cl-alert-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  border-radius: 8px;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  i {
+    font-size: 1.2rem;
+    color: #856404;
+  }
+
+  span {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #856404;
+  }
+
+  .cl-alert-btn {
+    background: #ffc107;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    &:hover {
+      background: #e0a800;
+      color: white;
+    }
+  }
+}

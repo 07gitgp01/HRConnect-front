@@ -1,5 +1,3 @@
-<!-- src/app/features/admin/comptes/gestion-candidats/gestion-candidats.component.html -->
-
 <div class="cl-container">
 
   <!-- ===== EN-TÊTE ===== -->
@@ -16,6 +14,17 @@
     <button class="cl-btn-primary" routerLink="/features/admin/comptes/creer-candidat">
       <i class="fas fa-user-plus"></i>
       Nouveau Volontaire
+    </button>
+  </div>
+
+  <!-- ===== ALERTE CANDIDATS EN ATTENTE DE VALIDATION ===== -->
+  <div *ngIf="candidatsEnAttenteValidation > 0" class="cl-alert-warning">
+    <i class="fas fa-bell"></i>
+    <span>
+      {{ candidatsEnAttenteValidation }} volontaire(s) ont un profil complet et sont en attente de validation.
+    </span>
+    <button class="cl-alert-btn" (click)="filtrerCandidatsEnAttente()">
+      <i class="fas fa-arrow-right"></i> Voir les profils à valider
     </button>
   </div>
 
@@ -125,31 +134,29 @@
             </td>
 
             <!-- Profil complété -->
-            <!-- Profil complété -->
-<td>
-  <div class="cl-profil-status">
-    <!-- ✅ CORRECTION : Utiliser la vraie complétion du profil -->
-    <ng-container *ngIf="isProfilComplet(candidat.volontaire); else profilIncomplet">
-      <span class="cl-profil-ok">
-        <i class="fas fa-check-circle"></i> Complété ({{ getProfilCompletion(candidat.volontaire) }}%)
-      </span>
-    </ng-container>
-    <ng-template #profilIncomplet>
-      <span class="cl-profil-ko">
-        <i class="fas fa-clock"></i> Incomplet ({{ getProfilCompletion(candidat.volontaire) }}%)
-      </span>
-    </ng-template>
-  </div>
-</td>
+            <td>
+              <div class="cl-profil-status">
+                <ng-container *ngIf="isProfilComplet(candidat.volontaire); else profilIncomplet">
+                  <span class="cl-profil-ok">
+                    <i class="fas fa-check-circle"></i> Complété ({{ getProfilCompletion(candidat.volontaire) }}%)
+                  </span>
+                </ng-container>
+                <ng-template #profilIncomplet>
+                  <span class="cl-profil-ko">
+                    <i class="fas fa-clock"></i> Incomplet ({{ getProfilCompletion(candidat.volontaire) }}%)
+                  </span>
+                </ng-template>
+              </div>
+            </td>
 
             <!-- Date inscription -->
             <td>
-  <div class="cl-dates">
-    <span class="cl-date-main">
-      {{ getDateInscription(candidat) }}
-    </span>
-  </div>
-</td>
+              <div class="cl-dates">
+                <span class="cl-date-main">
+                  {{ getDateInscription(candidat) }}
+                </span>
+              </div>
+            </td>
 
             <!-- Actions -->
             <td class="td-actions">

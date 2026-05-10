@@ -1,5 +1,4 @@
 <!-- src/app/features/candidats/profil/profil.component.html -->
-
 <div class="profil-container">
   <!-- En-tête -->
   <div class="profil-header">
@@ -10,80 +9,46 @@
       </div>
     </div>
     <div class="header-actions">
-      <button 
-        *ngIf="!isEditing"
-        (click)="toggleEdit()" 
-        class="btn btn-primary"
-        [disabled]="getProfilCompletion() === 100 && !isEditing">
-        ✏️ {{ getProfilCompletion() === 100 ? 'Modifier' : 'Compléter' }} le profil
-      </button>
-      <button 
-        *ngIf="isEditing"
-        (click)="toggleEdit()" 
-        class="btn btn-secondary">
-        ❌ Annuler
-      </button>
-    </div>
+  <button *ngIf="!isEditing" (click)="toggleEdit()" class="btn btn-primary">
+    ✏️ {{ getProfilCompletion() === 100 ? 'Modifier' : 'Compléter' }} le profil
+  </button>
+  <button *ngIf="isEditing" (click)="toggleEdit()" class="btn btn-secondary">
+    ❌ Annuler
+  </button>
+</div>
   </div>
 
   <!-- Message de statut -->
-  <div *ngIf="message" 
-       class="alert" 
-       [class.alert-success]="messageType === 'success'"
+  <div *ngIf="message" class="alert" [class.alert-success]="messageType === 'success'"
        [class.alert-danger]="messageType === 'error'">
     {{ message }}
   </div>
+
+  <!-- Inputs file cachés (toujours dans le DOM) -->
+  <input type="file" #cvFileInputHidden accept=".pdf,.doc,.docx" style="display: none" (change)="onCVSelected($event)">
+  <input type="file" #identityFileInputHidden accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display: none" (change)="onDocumentIdentitySelected($event)">
 
   <div class="profil-content">
     <!-- Colonne gauche : Formulaire profil -->
     <div class="profil-form-section">
       <form [formGroup]="profilForm" (ngSubmit)="onSubmit()">
-        
-        <!-- ✅ Informations personnelles (lecture seule) AVEC pièce d'identité -->
+
+        <!-- Informations personnelles (lecture seule) -->
         <div class="form-section">
           <h3>📋 Informations Personnelles</h3>
           <p class="section-description">
             Ces informations sont issues de votre inscription et ne peuvent pas être modifiées.
           </p>
           <div class="info-grid" formGroupName="informationsPersonnelles">
-            <div class="info-item">
-              <label>Nom</label>
-              <input type="text" formControlName="nom" class="form-control" readonly>
-            </div>
-            <div class="info-item">
-              <label>Prénom</label>
-              <input type="text" formControlName="prenom" class="form-control" readonly>
-            </div>
-            <div class="info-item">
-              <label>Email</label>
-              <input type="email" formControlName="email" class="form-control" readonly>
-            </div>
-            <div class="info-item">
-              <label>Téléphone</label>
-              <input type="text" formControlName="telephone" class="form-control" readonly>
-            </div>
-            <div class="info-item">
-              <label>Date de naissance</label>
-              <input type="text" formControlName="dateNaissance" class="form-control" readonly>
-            </div>
-            <div class="info-item">
-              <label>Nationalité</label>
-              <input type="text" formControlName="nationalite" class="form-control" readonly>
-            </div>
-            <div class="info-item">
-              <label>Sexe</label>
-              <input type="text" formControlName="sexe" class="form-control" readonly>
-            </div>
-            
-            <!-- ✅ Pièce d'identité en lecture seule -->
-            <div class="info-item">
-              <label>Type de pièce d'identité</label>
-              <input type="text" formControlName="typePiece" class="form-control" readonly>
-            </div>
-            <div class="info-item">
-              <label>Numéro de pièce</label>
-              <input type="text" formControlName="numeroPiece" class="form-control numero-piece-readonly" readonly>
-            </div>
+            <div class="info-item"><label>Nom</label><input type="text" formControlName="nom" class="form-control" readonly></div>
+            <div class="info-item"><label>Prénom</label><input type="text" formControlName="prenom" class="form-control" readonly></div>
+            <div class="info-item"><label>Email</label><input type="email" formControlName="email" class="form-control" readonly></div>
+            <div class="info-item"><label>Téléphone</label><input type="text" formControlName="telephone" class="form-control" readonly></div>
+            <div class="info-item"><label>Date de naissance</label><input type="text" formControlName="dateNaissance" class="form-control" readonly></div>
+            <div class="info-item"><label>Nationalité</label><input type="text" formControlName="nationalite" class="form-control" readonly></div>
+            <div class="info-item"><label>Sexe</label><input type="text" formControlName="sexe" class="form-control" readonly></div>
+            <div class="info-item"><label>Type de pièce d'identité</label><input type="text" formControlName="typePiece" class="form-control" readonly></div>
+            <div class="info-item"><label>Numéro de pièce</label><input type="text" formControlName="numeroPiece" class="form-control numero-piece-readonly" readonly></div>
           </div>
         </div>
 
@@ -93,17 +58,15 @@
           <p class="section-description">
             Complétez ces informations pour finaliser votre profil et pouvoir postuler aux missions.
           </p>
-          
+
           <!-- Adresse et région -->
           <div class="form-row">
             <div class="form-group">
               <label>Adresse de résidence *</label>
-              <input type="text" formControlName="adresseResidence" 
-                    [class.is-invalid]="adresseResidence?.invalid && adresseResidence?.touched"
-                    class="form-control" placeholder="Votre adresse complète">
-              <div *ngIf="adresseResidence?.invalid && adresseResidence?.touched" class="invalid-feedback">
-                L'adresse est requise
-              </div>
+              <input type="text" formControlName="adresseResidence"
+                     [class.is-invalid]="adresseResidence?.invalid && adresseResidence?.touched"
+                     class="form-control" placeholder="Votre adresse complète">
+              <div *ngIf="adresseResidence?.invalid && adresseResidence?.touched" class="invalid-feedback">L'adresse est requise</div>
             </div>
             <div class="form-group">
               <label>Région géographique *</label>
@@ -111,13 +74,9 @@
                       [class.is-invalid]="regionGeographique?.invalid && regionGeographique?.touched"
                       class="form-control">
                 <option value="">Sélectionnez votre région</option>
-                <option *ngFor="let region of regions" [value]="region">
-                  {{ region }}
-                </option>
+                <option *ngFor="let region of regions" [value]="region">{{ region }}</option>
               </select>
-              <div *ngIf="regionGeographique?.invalid && regionGeographique?.touched" class="invalid-feedback">
-                La région est requise
-              </div>
+              <div *ngIf="regionGeographique?.invalid && regionGeographique?.touched" class="invalid-feedback">La région est requise</div>
             </div>
           </div>
 
@@ -125,133 +84,106 @@
           <div class="form-row">
             <div class="form-group">
               <label>Niveau d'études *</label>
-              <select formControlName="niveauEtudes"
-                      [class.is-invalid]="niveauEtudes?.invalid && niveauEtudes?.touched"
-                      class="form-control">
+              <select formControlName="niveauEtudes" class="form-control"
+                      [class.is-invalid]="niveauEtudes?.invalid && niveauEtudes?.touched">
                 <option value="">Sélectionnez...</option>
-                <option *ngFor="let niveau of niveauxEtudes" [value]="niveau">
-                  {{ niveau }}
-                </option>
+                <option *ngFor="let niveau of niveauxEtudes" [value]="niveau">{{ niveau }}</option>
               </select>
-              <div *ngIf="niveauEtudes?.invalid && niveauEtudes?.touched" class="invalid-feedback">
-                Le niveau d'études est requis
-              </div>
+              <div *ngIf="niveauEtudes?.invalid && niveauEtudes?.touched" class="invalid-feedback">Le niveau d'études est requis</div>
             </div>
             <div class="form-group">
               <label>Domaine d'études *</label>
-              <select formControlName="domaineEtudes"
-                      [class.is-invalid]="domaineEtudes?.invalid && domaineEtudes?.touched"
-                      class="form-control">
+              <select formControlName="domaineEtudes" class="form-control"
+                      [class.is-invalid]="domaineEtudes?.invalid && domaineEtudes?.touched">
                 <option value="">Sélectionnez...</option>
-                <option *ngFor="let domaine of domainesEtudes" [value]="domaine">
-                  {{ domaine }}
-                </option>
+                <option *ngFor="let domaine of domainesEtudes" [value]="domaine">{{ domaine }}</option>
               </select>
-              <div *ngIf="domaineEtudes?.invalid && domaineEtudes?.touched" class="invalid-feedback">
-                Le domaine d'études est requis
-              </div>
+              <div *ngIf="domaineEtudes?.invalid && domaineEtudes?.touched" class="invalid-feedback">Le domaine d'études est requis</div>
             </div>
           </div>
 
-          <!-- ✅ SECTION DOCUMENTS COMPLÈTE AVEC BOUTONS D'OUVERTURE -->
-          
-          <!-- Document d'identité scanné -->
+          <!-- Document scanné (modifiable seulement si statut 'Candidat') -->
           <div class="form-section document-section">
             <h4>📄 Document scanné de la pièce d'identité</h4>
-            
-            <!-- Upload du document -->
-            <div class="form-group">
+
+            <!-- Cas : modifiable (statut Candidat) -->
+            <div *ngIf="isDocumentModifiable" class="form-group">
               <label>Document d'identité scanné *</label>
               <div class="file-upload-section">
-                <div class="file-input-container">
-                  <input type="file" 
-                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                         class="form-control" 
-                         (change)="onDocumentIdentitySelected($event)"
-                         #documentIdentityInput>
-                  <button type="button" 
-                          class="btn btn-outline-secondary browse-btn"
-                          (click)="documentIdentityInput.click()">
-                    <mat-icon>attach_file</mat-icon>
-                    Parcourir
+                <!-- Affichage de l'input file seulement si pas de document sélectionné et pas de document existant -->
+                <div *ngIf="!selectedDocumentIdentity && !volontaire?.urlPieceIdentite" class="file-input-container">
+                  <button type="button" class="btn btn-outline-secondary browse-btn" (click)="identityFileInputHidden.click()">
+                    <mat-icon>attach_file</mat-icon> Choisir un fichier
                   </button>
                 </div>
-                
+
                 <!-- Aperçu du nouveau document -->
-                <div *ngIf="documentIdentityPreview" class="file-preview">
+                <div *ngIf="selectedDocumentIdentity" class="file-preview">
                   <div class="preview-content">
                     <mat-icon>description</mat-icon>
                     <div class="file-info">
-                      <span class="file-name">{{ documentIdentityPreview.name }}</span>
-                      <span class="file-size">({{ getFileSize(documentIdentityPreview.size) }})</span>
+                      <span class="file-name">{{ selectedDocumentIdentity.name }}</span>
+                      <span class="file-size">({{ getFileSize(selectedDocumentIdentity.size) }})</span>
                     </div>
-                    <button type="button" 
-                            class="btn btn-sm btn-outline-danger"
-                            (click)="removeDocumentIdentity()"
-                            matTooltip="Supprimer">
+                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeDocumentIdentity()" matTooltip="Supprimer">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
                 </div>
 
-                <!-- Document existant avec bouton d'ouverture -->
-                <div *ngIf="!selectedDocumentIdentity && volontaire?.urlPieceIdentite" 
-                     class="existing-document">
+                <!-- Document existant -->
+                <div *ngIf="!selectedDocumentIdentity && volontaire?.urlPieceIdentite" class="existing-document">
                   <div class="existing-file">
                     <mat-icon class="doc-icon">badge</mat-icon>
                     <div class="file-info">
                       <span class="file-name">Pièce d'identité actuelle</span>
-                      <span class="file-path">{{ volontaire?.urlPieceIdentite }}</span>
+                       <span class="file-name">{{ getFileName(volontaire?.urlPieceIdentite) }}</span>
                     </div>
                     <div class="file-actions">
-                      <button 
-                        class="btn btn-sm btn-outline-primary"
-                        (click)="ouvrirDocument(volontaire?.urlPieceIdentite, 'identity')"
-                        matTooltip="Ouvrir la pièce d'identité">
-                        <mat-icon>visibility</mat-icon>
-                        Ouvrir
-                      </button>
-                      <button 
-                        class="btn btn-sm btn-outline-info"
-                        (click)="verifierDocument(volontaire?.urlPieceIdentite, 'identity')"
-                        matTooltip="Vérifier si le document est accessible">
-                        <mat-icon>check_circle</mat-icon>
-                        Vérifier
-                      </button>
+                      <button class="btn btn-sm btn-outline-primary" (click)="ouvrirDocument(volontaire?.urlPieceIdentite, 'identity')" matTooltip="Ouvrir"><mat-icon>visibility</mat-icon> Ouvrir</button>
+                      <button *ngIf="isEditing" class="btn btn-sm btn-outline-warning" (click)="remplacerDocumentIdentite()" matTooltip="Remplacer"><mat-icon>refresh</mat-icon> Remplacer</button>
                     </div>
                   </div>
                 </div>
 
-                <small class="text-muted">
-                  Formats acceptés : PDF, JPG, PNG, DOC (Max 5MB)
-                </small>
+                <small class="text-muted">Formats acceptés : PDF, JPG, PNG, DOC (Max 5MB)</small>
               </div>
+            </div>
+
+            <!-- Cas : non modifiable -->
+            <div *ngIf="!isDocumentModifiable && volontaire?.urlPieceIdentite" class="form-group">
+              <div class="existing-document readonly-document">
+                <div class="existing-file">
+                  <mat-icon class="doc-icon">badge</mat-icon>
+                  <div class="file-info">
+                    <span class="file-name">Pièce d’identité validée</span>
+                     <span class="file-name">{{ getFileName(volontaire?.urlPieceIdentite) }}</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="btn btn-sm btn-outline-primary" (click)="ouvrirDocument(volontaire?.urlPieceIdentite, 'identity')" matTooltip="Ouvrir"><mat-icon>visibility</mat-icon> Ouvrir</button>
+                  </div>
+                </div>
+                <small class="text-muted">Document déjà validé. Pour le modifier, contactez l’administration.</small>
+              </div>
+            </div>
+            <div *ngIf="!isDocumentModifiable && !volontaire?.urlPieceIdentite" class="alert alert-warning">
+              Aucun document d’identité n’a été fourni. Veuillez contacter l’administration.
             </div>
           </div>
 
           <!-- Compétences -->
           <div class="form-group">
             <label>Compétences *</label>
-            
             <div *ngIf="isCompetencesFormArrayReady()" class="competences-grid" formArrayName="competences">
               <div *ngFor="let competence of competencesList; let i = index" class="competence-item">
-                <label>
-                  <input type="checkbox" [formControlName]="i">
-                  {{ competence }}
-                </label>
+                <label><input type="checkbox" [formControlName]="i"> {{ competence }}</label>
               </div>
             </div>
-            
-            <div *ngIf="!isCompetencesFormArrayReady()" class="loading-competences">
-              <p>Chargement des compétences...</p>
-            </div>
-            
+            <div *ngIf="!isCompetencesFormArrayReady()" class="loading-competences"><p>Chargement des compétences...</p></div>
             <div *ngIf="selectedCompetences && selectedCompetences.length > 0" class="selected-competences">
               <p><strong>Compétences sélectionnées :</strong> {{ selectedCompetences.join(', ') }}</p>
             </div>
-            
-            <div *ngIf="selectedCompetences && selectedCompetences.length === 0 && profil.get('competences')?.touched" 
-                 class="invalid-feedback">
+            <div *ngIf="selectedCompetences && selectedCompetences.length === 0 && profil.get('competences')?.touched" class="invalid-feedback">
               Sélectionnez au moins une compétence
             </div>
           </div>
@@ -259,10 +191,9 @@
           <!-- Motivation -->
           <div class="form-group">
             <label>Lettre de motivation *</label>
-            <textarea formControlName="motivation" 
+            <textarea formControlName="motivation" rows="4"
                       [class.is-invalid]="motivation?.invalid && motivation?.touched"
-                      class="form-control" 
-                      rows="4"
+                      class="form-control"
                       placeholder="Expliquez vos motivations pour le volontariat (minimum 50 caractères)..."></textarea>
             <div *ngIf="motivation?.invalid && motivation?.touched" class="invalid-feedback">
               <span *ngIf="motivation?.hasError('required')">La motivation est requise</span>
@@ -274,36 +205,27 @@
           <!-- Disponibilité -->
           <div class="form-group">
             <label>Disponibilité *</label>
-            <select formControlName="disponibilite"
-                    [class.is-invalid]="disponibilite?.invalid && disponibilite?.touched"
-                    class="form-control">
+            <select formControlName="disponibilite" class="form-control"
+                    [class.is-invalid]="disponibilite?.invalid && disponibilite?.touched">
               <option value="">Sélectionnez...</option>
               <option value="Temps plein">Temps plein</option>
               <option value="Temps partiel">Temps partiel</option>
             </select>
-            <div *ngIf="disponibilite?.invalid && disponibilite?.touched" class="invalid-feedback">
-              La disponibilité est requise
-            </div>
+            <div *ngIf="disponibilite?.invalid && disponibilite?.touched" class="invalid-feedback">La disponibilité est requise</div>
           </div>
 
-          <!-- CV avec upload et bouton d'ouverture -->
+          <!-- CV -->
           <div class="form-group">
             <label>Curriculum Vitae (CV) *</label>
             <div class="file-upload-section">
-              <div class="file-input-container">
-                <input type="file" 
-                       accept=".pdf,.doc,.docx"
-                       class="form-control" 
-                       (change)="onCVSelected($event)"
-                       #cvInput>
-                <button type="button" 
-                        class="btn btn-outline-secondary browse-btn"
-                        (click)="cvInput.click()">
-                  <mat-icon>attach_file</mat-icon>
-                  Parcourir
+
+              <!-- Pas encore de CV (et mode édition) -->
+              <div *ngIf="!volontaire?.urlCV && isEditing" class="file-input-container">
+                <button type="button" class="btn btn-outline-secondary browse-btn" (click)="cvFileInputHidden.click()">
+                  <mat-icon>attach_file</mat-icon> Choisir un fichier
                 </button>
               </div>
-              
+
               <!-- Aperçu du nouveau CV -->
               <div *ngIf="cvPreview" class="file-preview">
                 <div class="preview-content">
@@ -312,119 +234,68 @@
                     <span class="file-name">{{ cvPreview.name }}</span>
                     <span class="file-size">({{ getFileSize(cvPreview.size) }})</span>
                   </div>
-                  <button type="button" 
-                          class="btn btn-sm btn-outline-danger"
-                          (click)="removeCV()"
-                          matTooltip="Supprimer">
+                  <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeCV()" matTooltip="Supprimer">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
               </div>
 
-              <!-- CV existant avec bouton d'ouverture -->
-              <div *ngIf="!selectedCV && volontaire?.urlCV" 
-                   class="existing-document">
+              <!-- CV existant -->
+              <div *ngIf="volontaire?.urlCV && !cvPreview" class="existing-document">
                 <div class="existing-file">
                   <mat-icon class="doc-icon">description</mat-icon>
                   <div class="file-info">
                     <span class="file-name">CV actuel</span>
-                    <span class="file-path">{{ volontaire?.urlCV }}</span>
+                     <span class="file-name">{{ getFileName(volontaire?.urlCV) }}</span>
                   </div>
                   <div class="file-actions">
-                    <button 
-                      class="btn btn-sm btn-outline-primary"
-                      (click)="ouvrirDocument(volontaire?.urlCV, 'cv')"
-                      matTooltip="Ouvrir le CV">
-                      <mat-icon>visibility</mat-icon>
-                      Ouvrir
+                    <button class="btn btn-sm btn-outline-primary" (click)="ouvrirDocument(volontaire?.urlCV, 'cv')" matTooltip="Ouvrir">
+                      <mat-icon>visibility</mat-icon> Ouvrir
                     </button>
-                    <button 
-                      class="btn btn-sm btn-outline-info"
-                      (click)="verifierDocument(volontaire?.urlCV, 'cv')"
-                      matTooltip="Vérifier si le document est accessible">
-                      <mat-icon>check_circle</mat-icon>
-                      Vérifier
+                    <button *ngIf="isEditing" class="btn btn-sm btn-outline-warning" (click)="remplacerCV()" matTooltip="Remplacer le CV">
+                      <mat-icon>refresh</mat-icon> Remplacer
                     </button>
                   </div>
                 </div>
               </div>
 
-              <small class="text-muted">
-                Formats acceptés : PDF, DOC, DOCX (Max 5MB)
-              </small>
+              <small class="text-muted">Formats acceptés : PDF, DOC, DOCX (Max 5MB)</small>
             </div>
-            <div *ngIf="urlCV?.invalid && urlCV?.touched" class="invalid-feedback">
-              Le CV est requis
-            </div>
+            <div *ngIf="urlCV?.invalid && urlCV?.touched" class="invalid-feedback">Le CV est requis</div>
           </div>
 
-          <!-- Bouton de soumission -->
-         <div *ngIf="isEditing" class="form-actions">
-  <button type="submit" 
-          [disabled]="isLoading"
-          class="btn btn-success btn-lg">
-    <span *ngIf="isLoading" class="spinner-border spinner-border-sm"></span>
-    {{ isLoading ? 'Sauvegarde...' : '💾 Sauvegarder le profil' }}
-  </button>
-</div>
-
+          <div *ngIf="isEditing" class="form-actions">
+            <button type="submit" [disabled]="isLoading" class="btn btn-success btn-lg">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm"></span>
+              {{ isLoading ? 'Sauvegarde...' : '💾 Sauvegarder le profil' }}
+            </button>
+          </div>
         </div>
       </form>
     </div>
 
     <!-- Colonne droite : Statistiques et actions -->
     <div class="profil-stats-section">
-      <!-- Carte de statut -->
       <div class="stat-card">
         <h4>📊 Mes Candidatures</h4>
         <div class="stats-grid">
-          <div class="stat-item total">
-            <span class="stat-number">{{ stats.total }}</span>
-            <span class="stat-label">Total</span>
-          </div>
-          <div class="stat-item en-attente">
-            <span class="stat-number">{{ stats.en_attente }}</span>
-            <span class="stat-label">En attente</span>
-          </div>
-          <div class="stat-item entretien">
-            <span class="stat-number">{{ stats.entretien }}</span>
-            <span class="stat-label">Entretien</span>
-          </div>
-          <div class="stat-item acceptee">
-            <span class="stat-number">{{ stats.acceptee }}</span>
-            <span class="stat-label">Acceptées</span>
-          </div>
+          <div class="stat-item total"><span class="stat-number">{{ stats.total }}</span><span class="stat-label">Total</span></div>
+          <div class="stat-item en-attente"><span class="stat-number">{{ stats.en_attente }}</span><span class="stat-label">En attente</span></div>
+          <div class="stat-item entretien"><span class="stat-number">{{ stats.entretien }}</span><span class="stat-label">Entretien</span></div>
+          <div class="stat-item acceptee"><span class="stat-number">{{ stats.acceptee }}</span><span class="stat-label">Acceptées</span></div>
         </div>
       </div>
-
-      <!-- Actions rapides -->
       <div class="actions-card">
         <h4>🚀 Actions Rapides</h4>
-        <button (click)="navigateToNouvelleCandidature()" 
-                class="btn btn-primary btn-block"
-                [disabled]="getProfilCompletion() < 100">
-          📨 Nouvelle candidature
-        </button>
-        <button (click)="navigateToCandidatures()" 
-                class="btn btn-outline-primary btn-block">
-          📋 Voir mes candidatures
-        </button>
-        <div *ngIf="getProfilCompletion() < 100" class="alert alert-warning mt-2">
-          <small>Complétez votre profil à 100% pour postuler aux missions</small>
-        </div>
+        <button (click)="navigateToNouvelleCandidature()" class="btn btn-primary btn-block" [disabled]="getProfilCompletion() < 100">📨 Nouvelle candidature</button>
+        <button (click)="navigateToCandidatures()" class="btn btn-outline-primary btn-block">📋 Voir mes candidatures</button>
+        <div *ngIf="getProfilCompletion() < 100" class="alert alert-warning mt-2"><small>Complétez votre profil à 100% pour postuler aux missions</small></div>
       </div>
-
-      <!-- Dernières candidatures -->
       <div class="candidatures-card" *ngIf="dernieresCandidatures.length > 0">
         <h4>📝 Dernières candidatures</h4>
         <div class="candidatures-list">
-          <div *ngFor="let candidature of dernieresCandidatures" 
-               class="candidature-item"
-               [class]="'statut-' + candidature.statut">
-            <div class="candidature-info">
-              <strong>{{ candidature.poste_vise }}</strong>
-              <span class="statut-badge">{{ getCandidatureStatutLabel(candidature.statut) }}</span>
-            </div>
+          <div *ngFor="let candidature of dernieresCandidatures" class="candidature-item" [class]="'statut-' + candidature.statut">
+            <div class="candidature-info"><strong>{{ candidature.poste_vise }}</strong><span class="statut-badge">{{ getCandidatureStatutLabel(candidature.statut) }}</span></div>
             <small class="text-muted">{{ candidature.cree_le | date:'dd/MM/yyyy' }}</small>
           </div>
         </div>

@@ -772,3 +772,46 @@
     width: 100%;
   }
 }
+
+/* Afficher les étoiles dans la colonne Appréciation */
+.mini-score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mini-stars {
+  display: inline-flex;
+  gap: 2px;
+}
+.mini-star {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: lightgray;
+}
+.mini-star.mini-filled {
+  color: gold;
+}
+.tooltip-comment {
+  cursor: help;
+  color: #008124;
+  font-size: 14px;
+}
+.cl-badge-warning {
+  background: #ffc107;
+  color: #333;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+.cl-muted {
+  color: #aaa;
+}
+.cl-menu-item-badge {
+  margin-left: 8px;
+  font-size: 0.7rem;
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 12px;
+}

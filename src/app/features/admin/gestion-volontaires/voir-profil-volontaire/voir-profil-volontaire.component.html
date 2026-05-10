@@ -16,12 +16,7 @@
         <mat-icon>arrow_back</mat-icon>
         <span>Retour à la liste</span>
       </button>
-      <div class="topbar-actions">
-        <button class="btn-action btn-edit" (click)="editer()" matTooltip="Modifier le profil">
-          <mat-icon>edit</mat-icon>
-          Modifier
-        </button>
-      </div>
+      
     </div>
 
     <!-- ===== HERO — IDENTITÉ ===== -->
@@ -241,10 +236,7 @@
               <span class="doc-nom">Curriculum Vitae (CV)</span>
               <span class="doc-statut">
                 {{ candidat.volontaire.urlCV ? 'Disponible' : 'Non renseigné' }}
-              </span>
-              <span *ngIf="candidat.volontaire.urlCV" class="doc-chemin">
-                {{ candidat.volontaire.urlCV }}
-              </span>
+              </span>             
             </div>
             <div class="doc-actions" *ngIf="candidat.volontaire.urlCV">
               <button class="btn-doc btn-view" 
@@ -272,9 +264,7 @@
               <span class="doc-statut">
                 {{ candidat.volontaire.urlPieceIdentite ? 'Disponible' : 'Non fournie' }}
               </span>
-              <span *ngIf="candidat.volontaire.urlPieceIdentite" class="doc-chemin">
-                {{ candidat.volontaire.urlPieceIdentite }}
-              </span>
+              
             </div>
             <div class="doc-actions" *ngIf="candidat.volontaire.urlPieceIdentite">
               <button class="btn-doc btn-view" 
