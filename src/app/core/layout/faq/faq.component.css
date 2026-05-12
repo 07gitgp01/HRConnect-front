@@ -1,0 +1,43 @@
+.faq-page {
+  max-width: 900px;
+  margin: 80px auto 40px;
+  padding: 24px;
+
+  mat-card {
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    padding: 24px;
+  }
+
+  mat-accordion {
+    margin-top: 24px;
+  }
+
+  mat-expansion-panel {
+    margin: 8px 0;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .question-text {
+    margin-left: 12px;
+    font-weight: 500;
+    color: #1e293b;
+  }
+
+  .faq-contact {
+    margin-top: 32px;
+    padding-top: 24px;
+    text-align: center;
+    border-top: 1px solid #e2e8f0;
+
+    p {
+      margin-bottom: 16px;
+      color: #64748b;
+    }
+
+    button {
+      padding: 8px 24px;
+    }
+  }
+}

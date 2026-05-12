@@ -1,37 +1,27 @@
 <!-- src/app/core/layout/home/home.component.html -->
-
 <div class="home-container">
 
   <!-- ===== HERO CAROUSEL ===== -->
   <section class="hero-carousel">
     <div class="carousel-container">
-      
-      <!-- Slides -->
       <div class="carousel-inner">
-        <div 
-          *ngFor="let slide of carouselSlides; let i = index" 
-          class="carousel-item" 
+        <div
+          *ngFor="let slide of carouselSlides; let i = index"
+          class="carousel-item"
           [class.active]="currentHeroSlide === i">
-          <img 
-            [src]="slide.image" 
+          <img
+            [src]="slide.image"
             [alt]="slide.title"
             class="carousel-image"
             (error)="handleImageError($event)">
-          
           <div class="carousel-caption">
             <h1>{{ slide.title }}</h1>
             <p>{{ slide.description }}</p>
             <div class="hero-actions">
-              <button 
-                mat-raised-button 
-                color="primary" 
-                [routerLink]="slide.primaryButton.link">
+              <button mat-raised-button color="primary" [routerLink]="slide.primaryButton.link">
                 {{ slide.primaryButton.text }}
               </button>
-              <button 
-                mat-stroked-button 
-                color="accent" 
-                [routerLink]="slide.secondaryButton.link">
+              <button mat-stroked-button color="accent" [routerLink]="slide.secondaryButton.link">
                 {{ slide.secondaryButton.text }}
               </button>
             </div>
@@ -39,11 +29,10 @@
         </div>
       </div>
 
-      <!-- Indicateurs et contrôles -->
       <div class="carousel-indicators">
-        <button 
-          *ngFor="let slide of carouselSlides; let i = index" 
-          type="button" 
+        <button
+          *ngFor="let slide of carouselSlides; let i = index"
+          type="button"
           [class.active]="currentHeroSlide === i"
           (click)="goToHeroSlide(i)"
           [attr.aria-label]="'Aller au slide ' + (i + 1)">
@@ -74,6 +63,74 @@
     </div>
   </section>
 
+  <!-- ===== SECTION ACTUALITÉS ===== -->
+  <section class="news-section">
+    <div class="section-container">
+      <div class="section-header">
+        <mat-icon class="section-icon">newspaper</mat-icon>
+        <h2>Actualités</h2>
+        <p>Suivez les dernières nouvelles, événements et opportunités</p>
+      </div>
+
+      @if (isLoadingPosts()) {
+        <div class="loading-section">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Chargement des actualités...</p>
+        </div>
+      }
+
+      @if (postsError() && !isLoadingPosts()) {
+        <div class="error-section">
+          <mat-icon>error_outline</mat-icon>
+          <h3>Erreur de chargement</h3>
+          <button mat-raised-button color="primary" (click)="loadPosts()">Réessayer</button>
+        </div>
+      }
+
+      @if (!isLoadingPosts() && !postsError() && posts().length > 0) {
+        <div class="news-grid">
+          @for (post of posts(); track post.id) {
+            <div class="news-card">
+              <div class="news-media">
+                @if (post.imageUrl) {
+                  <img [src]="post.imageUrl" [alt]="post.title" (error)="handleImageError($event)">
+                } @else if (post.videoUrl) {
+                  <video controls [src]="post.videoUrl"></video>
+                } @else {
+                  <div class="no-media"></div>
+                }
+              </div>
+              <div class="news-content">
+                <h3>{{ post.title }}</h3>
+                <div class="news-meta">
+                  <mat-icon>event</mat-icon>
+                  <span>{{ post.createdAt | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <p class="news-excerpt">{{ (post.content | stripHtml) | slice:0:120 }}...</p>
+                <button class="btn-read-more" (click)="navigateTo('/actualites/' + post.id)">
+                  Lire la suite <mat-icon>arrow_forward</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+        <div class="view-all-container">
+          <button class="btn-view-all" routerLink="/actualites">
+            Voir toutes les actualités
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      }
+
+      @if (!isLoadingPosts() && !postsError() && posts().length === 0) {
+        <div class="no-news">
+          <mat-icon>info_outline</mat-icon>
+          <p>Aucune actualité pour le moment. Revenez bientôt !</p>
+        </div>
+      }
+    </div>
+  </section>
+
   <!-- ===== SECTION DOMAINES D'INTERVENTION ===== -->
   <section class="domains-section">
     <div class="section-container">
@@ -86,19 +143,13 @@
         @for (domain of domains; track domain.id) {
           <div class="domain-card" [style.border-color]="domain.color">
             <div class="domain-image">
-              <img 
-                [src]="domain.imageUrl" 
-                [alt]="domain.name"
-                (error)="handleImageError($event)"
-                class="domain-img">
+              <img [src]="domain.imageUrl" [alt]="domain.name" (error)="handleImageError($event)" class="domain-img">
               <div class="domain-overlay"></div>
             </div>
-            
             <div class="domain-content">
               <div class="domain-icon" [style.background-color]="domain.color + '20'">
                 <span class="icon" [style.color]="domain.color">{{ domain.icon }}</span>
               </div>
-              
               <h3 class="domain-name">{{ domain.name }}</h3>
               <p class="domain-description">{{ domain.description }}</p>
             </div>
@@ -131,42 +182,30 @@
           <h3>Erreur de chargement</h3>
           <p>Impossible de charger les missions. Veuillez réessayer.</p>
           <button mat-raised-button color="primary" (click)="loadFeaturedProjects()">
-            <mat-icon>refresh</mat-icon>
-            Réessayer
+            <mat-icon>refresh</mat-icon> Réessayer
           </button>
         </div>
       }
 
       @if (!isLoadingProjects() && !loadError() && featuredProjects().length > 0) {
-        <!-- GRILLE DE MISSIONS -->
         <div class="missions-grid">
           @for (mission of featuredProjects(); track mission.id) {
             <div class="mission-card" [class]="getUrgencyClass(getDaysRemaining(mission.dateLimiteCandidature || mission.applicationDeadline))">
-              
-              <!-- En-tête avec badge de statut -->
               <div class="mission-card-header">
                 <h3 class="mission-title">{{ mission.titre || mission.title }}</h3>
                 <span class="mission-badge">{{ mission.type_mission || 'Mission' }}</span>
               </div>
-              
-              <!-- Organisation -->
               <div class="mission-organisation">
                 <mat-icon>business</mat-icon>
                 <span>{{ mission.partenaire?.nom || 'Organisation' }}</span>
               </div>
-              
-              <!-- Localisation -->
               <div class="mission-location">
                 <mat-icon>location_on</mat-icon>
                 <span>{{ mission.regionAffectation || mission.region || 'Région non spécifiée' }}</span>
               </div>
-              
-              <!-- Description courte -->
               <p class="mission-description">
                 {{ (mission.descriptionCourte || mission.description || 'Description de la mission de volontariat') | slice:0:120 }}...
               </p>
-              
-              <!-- Informations clés -->
               <div class="mission-key-info">
                 <div class="key-item">
                   <mat-icon>people</mat-icon>
@@ -177,8 +216,6 @@
                   <span [class.urgent]="jours <= 7">{{ jours }} jours restants</span>
                 </div>
               </div>
-              
-              <!-- Compétences (si disponibles) -->
               <div class="mission-skills" *ngIf="mission.competences_requises || mission.requiredSkills">
                 <span class="skills-label">Compétences :</span>
                 <div class="skills-chips">
@@ -190,24 +227,18 @@
                   }
                 </div>
               </div>
-              
-              <!-- Boutons d'action -->
               <div class="mission-footer">
                 <button class="btn-view" (click)="viewProjectDetails(mission.id)">
-                  <mat-icon>info</mat-icon>
-                  Détails
+                  <mat-icon>info</mat-icon> Détails
                 </button>
-                
                 <button class="btn-apply" (click)="applyToProject(mission)">
-                  <mat-icon>send</mat-icon>
-                  Postuler
+                  <mat-icon>send</mat-icon> Postuler
                 </button>
               </div>
             </div>
           }
         </div>
 
-        <!-- Bouton voir toutes les missions -->
         <div class="view-all-container">
           <button class="btn-view-all" (click)="voirToutesLesMissions()">
             Voir toutes les missions
@@ -227,5 +258,4 @@
       }
     </div>
   </section>
-
 </div>

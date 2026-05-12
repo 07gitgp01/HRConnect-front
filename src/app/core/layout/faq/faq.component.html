@@ -1,0 +1,28 @@
+<div class="static-page-container faq-page">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Foire aux questions (FAQ)</mat-card-title>
+      <mat-card-subtitle>Réponses aux interrogations les plus fréquentes sur le volontariat national</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-accordion>
+        <mat-expansion-panel *ngFor="let faq of faqs; let i = index">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>help_outline</mat-icon>
+              <span class="question-text">{{ faq.question }}</span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <p>{{ faq.answer }}</p>
+        </mat-expansion-panel>
+      </mat-accordion>
+
+      <div class="faq-contact">
+        <p>Vous n’avez pas trouvé votre réponse ?</p>
+        <button mat-raised-button color="primary" (click)="goToSupport()">
+          <mat-icon>support_agent</mat-icon> Contacter le support
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -3,6 +3,13 @@ import { Routes } from '@angular/router';
 import { LayoutComponent } from './layout.component';
 import { RecrutementsComponent } from './recrutements/recrutements.component';
 import { DetailProjetComponent } from './detail-projet/detail-projet.component';
+import { PostsListPublicComponent } from './posts-pub/posts-list/posts-list.component';
+import { PostDetailComponent } from './posts-pub/post-detail/post-detail.component';
+import { AboutComponent } from './about/about.component';
+import { FaqComponent } from './faq/faq.component';
+import { SupportComponent } from './support/support.component';
+import { LegalComponent } from './legal/legal.component';
+import { PrivacyComponent } from './privacy/privacy.component';
 
 export const layoutRoutes: Routes = [
   {
@@ -40,6 +47,16 @@ export const layoutRoutes: Routes = [
                 component:DetailProjetComponent
                 
               },
+
+              { path: 'actualites', component: PostsListPublicComponent },
+  { path: 'actualites/:id', component: PostDetailComponent },
+
+  { path: 'a-propos', component: AboutComponent },
+  { path: 'faq', component: FaqComponent },
+  { path: 'aide-support', component: SupportComponent },
+
+  { path: 'mentions-legales', component: LegalComponent },
+  { path: 'politique-confidentialite', component: PrivacyComponent },
 
       { path: '**', redirectTo: 'home' }
     ]

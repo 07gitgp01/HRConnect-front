@@ -1,10 +1,8 @@
 // src/app/features/candidats/candidat-dashboard/dashboard.component.ts
-
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,10 +11,9 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
-
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
-
 import { AuthService } from '../../services/service_auth/auth.service';
 import { CandidatureService } from '../../services/service_candi/candidature.service';
 import { VolontaireService, calculerCompletionProfil } from '../../services/service_volont/volontaire.service';
@@ -24,21 +21,22 @@ import { ProjectService } from '../../services/service_projects/projects.service
 import { Candidature } from '../../models/candidature.model';
 import { Volontaire } from '../../models/volontaire.model';
 
+export interface Notification {
+  id: string;
+  message: string;
+  date: Date;
+  type: 'info' | 'success' | 'warning' | 'error';
+  candidatureId?: string | number;
+  read: boolean;
+}
+
 @Component({
   selector: 'app-candidat-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
-    RouterModule,
-    FormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
-    MatBadgeModule,
-    MatDividerModule,
-    MatTooltipModule
+    CommonModule, RouterModule, FormsModule, MatCardModule, MatButtonModule,
+    MatIconModule, MatProgressSpinnerModule, MatChipsModule, MatBadgeModule,
+    MatDividerModule, MatTooltipModule, MatSnackBarModule
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
@@ -47,14 +45,13 @@ export class CandidatDashboardComponent implements OnInit {
   user: any;
   volontaire: Volontaire | null = null;
   statutPrincipal: string = 'Candidat';
-  notifications: any[] = [];
+  
+  notifications = signal<Notification[]>([]);
+  unreadCount = computed(() => this.notifications().filter(n => !n.read).length);
+
   mesCandidatures: Candidature[] = [];
   projetsDisponibles: any[] = [];
   loading = true;
-
-  // ✅ Supprimer les propriétés de bascule
-  // afficherToutesCandidatures = false;
-  // afficherTousProjets = false;
 
   stats = {
     totalCandidatures: 0,
@@ -65,473 +62,338 @@ export class CandidatDashboardComponent implements OnInit {
   };
 
   profilCompletion = 0;
-
-  // ✅ FIX : Set<number | string> pour supporter les IDs hex json-server
   projetsDejaPostules: Set<number | string> = new Set();
+
+  private readonly STATUS_STORAGE_KEY = 'candidat_statuts_historique';
+  private readonly NOTIFS_STORAGE_KEY = 'candidat_notifications';
 
   constructor(
     private authService: AuthService,
     private candidatureService: CandidatureService,
     private volontaireService: VolontaireService,
     private projectService: ProjectService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private snackBar: MatSnackBar
+  ) {
+    effect(() => {
+      localStorage.setItem(this.NOTIFS_STORAGE_KEY, JSON.stringify(this.notifications()));
+    });
+  }
 
   ngOnInit(): void {
     this.user = this.authService.getCurrentUser();
-
-    console.log('🔍 USER COMPLET:', JSON.stringify(this.user, null, 2));
-    console.log('🔍 getVolontaireId():', this.authService.getVolontaireId?.());
-
     if (!this.user) {
       this.router.navigate(['/login']);
       return;
     }
-
+    this.loadSavedNotifications();
     this.chargerVolontairePuisSuite();
     this.loadProjetsDisponibles();
   }
 
-  // ✅ Supprimer les méthodes de bascule
-  // toggleAfficherToutesCandidatures(): void { ... }
-  // toggleAfficherTousProjets(): void { ... }
-
-  // ✅ Getter pour les candidatures limitées à 3
-  get candidaturesAffichees(): Candidature[] {
-    return this.mesCandidatures.slice(0, 3);
+  // ==================== NOTIFICATIONS ====================
+  private loadSavedNotifications(): void {
+    try {
+      const saved = localStorage.getItem(this.NOTIFS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const notifs = parsed.map((n: any) => ({ ...n, date: new Date(n.date) }));
+        this.notifications.set(notifs);
+      }
+    } catch (e) {}
   }
 
-  // ✅ Getter pour les projets limités à 3
-  get projetsAffiches(): any[] {
-    return this.projetsDisponibles.slice(0, 3);
-  }
-
-  // ✅ FIX : utilise String() pour normaliser les IDs avant de les stocker dans le Set
-  chargerProjetsDejaPostules(): void {
-    if (!this.user?.email) {
-      console.log('⚠️ Utilisateur non connecté');
-      return;
-    }
-
-    this.projectService.getProjects().subscribe({
-      next: (projets) => {
-        if (!projets || projets.length === 0) {
-          this.projetsDejaPostules = new Set();
-          return;
-        }
-
-        const verifications$ = projets.map(projet =>
-          this.candidatureService.emailDejaPostule(this.user.email, projet.id!).pipe(
-            map((dejaPostule: boolean) => dejaPostule ? projet.id : null)
-          )
-        );
-
-        forkJoin(verifications$).subscribe({
-          next: (resultats) => {
-            const ids = resultats.filter(
-              (id): id is number | string => id !== null && id !== undefined
-            );
-            this.projetsDejaPostules = new Set(ids);
-            console.log(`✅ ${this.projetsDejaPostules.size} projet(s) déjà postulé(s) dans le dashboard`);
-          },
-          error: (err) => {
-            console.error('❌ Erreur lors des vérifications:', err);
-            this.projetsDejaPostules = new Set();
+  private addNotification(notification: Omit<Notification, 'id' | 'date'>): void {
+    const newNotif: Notification = {
+      ...notification,
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 8),
+      date: new Date(),
+      read: notification.read // déjà présent
+    };
+    this.notifications.update(list => [newNotif, ...list]);
+    if (notification.type === 'warning' || notification.type === 'success') {
+      this.snackBar.open(notification.message, 'Voir', { duration: 5000 })
+        .onAction().subscribe(() => {
+          if (notification.candidatureId) {
+            this.voirDetailsCandidature(notification.candidatureId);
           }
         });
-      },
-      error: (err) => {
-        console.error('❌ Erreur chargement projets:', err);
-        this.projetsDejaPostules = new Set();
-      }
-    });
-  }
-
-  // ✅ FIX : comparaison String() pour être robuste number vs string
-  estDejaPostule(projetId: number | string | undefined): boolean {
-    if (projetId === undefined || projetId === null) return false;
-    if (this.projetsDejaPostules.has(projetId)) return true;
-    const projetIdStr = String(projetId);
-    for (const id of this.projetsDejaPostules) {
-      if (String(id) === projetIdStr) return true;
     }
-    return false;
   }
 
-  // ================================================================
-  // ÉTAPE 1 — Charger le volontaire
-  // ================================================================
+  markAsRead(notifId: string): void {
+    this.notifications.update(list => list.map(n => n.id === notifId ? { ...n, read: true } : n));
+  }
+
+  markAllAsRead(): void {
+    this.notifications.update(list => list.map(n => ({ ...n, read: true })));
+  }
+
+  clearNotifications(): void {
+    this.notifications.set([]);
+  }
+
+  // ==================== DÉTECTION CHANGEMENTS STATUT ====================
+  private detectStatusChanges(newCandidatures: Candidature[]): void {
+    const previousStatuses = this.loadPreviousStatuses();
+    const newStatuses: Record<string, string> = {};
+    for (const c of newCandidatures) {
+      if (!c.id) continue;
+      const key = String(c.id);
+      newStatuses[key] = c.statut;
+      const oldStatus = previousStatuses[key];
+      if (oldStatus && oldStatus !== c.statut) {
+        this.onStatusChange(c, oldStatus, c.statut);
+      } else if (!oldStatus) {
+        this.onStatusChange(c, null, c.statut);
+      }
+    }
+    this.saveCurrentStatuses(newStatuses);
+  }
+
+  private onStatusChange(candidature: Candidature, oldStatus: string | null, newStatus: string): void {
+    const projectName = this.getProjectNameFromId(candidature.projectId);
+    let message = '';
+    let type: Notification['type'] = 'info';
+    if (!oldStatus) {
+      message = `✅ Vous avez postulé à la mission "${projectName}". Votre candidature est enregistrée.`;
+      type = 'info';
+    } else {
+      switch (newStatus) {
+        case 'entretien':
+          message = `🎉 Bonne nouvelle ! Votre candidature pour "${projectName}" a été retenue pour un entretien.`;
+          type = 'success';
+          break;
+        case 'acceptee':
+          message = `🏆 Félicitations ! Votre candidature pour "${projectName}" a été acceptée. Un contrat vous sera envoyé.`;
+          type = 'success';
+          break;
+        case 'refusee':
+          message = `😔 Nous sommes désolés, votre candidature pour "${projectName}" n'a pas été retenue.`;
+          type = 'error';
+          break;
+        default:
+          message = `Mise à jour du statut de votre candidature pour "${projectName}" : ${this.getStatutText(newStatus)}.`;
+          type = 'info';
+      }
+    }
+    this.addNotification({ message, type, candidatureId: candidature.id, read: false });
+  }
+
+  private loadPreviousStatuses(): Record<string, string> {
+    try {
+      return JSON.parse(localStorage.getItem(this.STATUS_STORAGE_KEY) || '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  private saveCurrentStatuses(statuses: Record<string, string>): void {
+    localStorage.setItem(this.STATUS_STORAGE_KEY, JSON.stringify(statuses));
+  }
+
+  private getProjectNameFromId(projectId: string | number | undefined): string {
+    if (!projectId) return 'une mission';
+    const project = this.projetsDisponibles.find(p => String(p.id) === String(projectId));
+    return project?.titre || 'mission';
+  }
+
+  // ==================== CHARGEMENT DONNÉES ====================
   private chargerVolontairePuisSuite(): void {
-    const volontaireId =
-      this.authService.getVolontaireId?.() ??
-      this.user?.volontaireId ??
-      this.user?.id ??
-      this.user?.userId ??
-      null;
-
-    console.log('🔍 volontaireId utilisé pour getVolontaire():', volontaireId);
-
+    const volontaireId = this.authService.getVolontaireId?.() ?? this.user?.volontaireId ?? null;
     if (!volontaireId) {
-      console.warn('⚠️ Impossible de trouver un volontaireId');
       this.finirChargementSansVolontaire();
       return;
     }
-
     this.volontaireService.getVolontaire(volontaireId).subscribe({
       next: (v) => {
-        this.volontaire       = v;
-        this.statutPrincipal  = this.getStatutPrincipal(v.statut);
+        this.volontaire = v;
+        this.statutPrincipal = this.getStatutPrincipal(v.statut);
         this.profilCompletion = calculerCompletionProfil(v);
-        console.log('✅ Volontaire chargé:', v);
-        console.log('✅ Complétion profil:', this.profilCompletion, '%');
         this.loadMesCandidatures(volontaireId);
       },
-      error: (err) => {
-        console.error('❌ Erreur getVolontaire:', err);
-        this.finirChargementSansVolontaire();
-      }
+      error: () => this.finirChargementSansVolontaire()
     });
   }
 
   private finirChargementSansVolontaire(): void {
-    const id =
-      this.authService.getVolontaireId?.() ??
-      this.user?.volontaireId ??
-      this.user?.id ??
-      null;
+    const id = this.authService.getVolontaireId?.() ?? this.user?.volontaireId ?? null;
     this.loadMesCandidatures(id);
   }
 
-  // ================================================================
-  // ÉTAPE 2 — Charger les candidatures
-  // ================================================================
   private loadMesCandidatures(volontaireId: any): void {
-    console.log('🔍 Chargement candidatures pour volontaireId:', volontaireId);
-
-    const candidaturesObs =
-      (this.candidatureService as any).getCandidaturesByVolontaire &&
-      volontaireId
-        ? (this.candidatureService as any).getCandidaturesByVolontaire(volontaireId)
-        : null;
-
-    if (candidaturesObs) {
-      candidaturesObs.subscribe({
-        next: (candidatures: Candidature[]) => {
-          console.log('✅ Candidatures (endpoint dédié):', candidatures.length, candidatures);
-          this.appliquerCandidatures(candidatures);
-        },
-        error: (err: any) => {
-          console.warn('⚠️ getCandidaturesByVolontaire a échoué, fallback getAll:', err);
-          this.loadMesCandidaturesViaGetAll(volontaireId);
-        }
-      });
-    } else {
-      this.loadMesCandidaturesViaGetAll(volontaireId);
-    }
-  }
-
-  private loadMesCandidaturesViaGetAll(volontaireId: any): void {
     this.candidatureService.getAll().subscribe({
-      next: (toutes: Candidature[]) => {
-        console.log('🔍 Toutes les candidatures (getAll):', toutes.length, toutes);
-
+      next: (toutes) => {
         let miennes: Candidature[] = [];
-
-        if (volontaireId !== null && volontaireId !== undefined) {
+        if (volontaireId) {
           const idStr = String(volontaireId).trim();
-
-          miennes = toutes.filter(c => {
-            const cId = c.volontaireId !== undefined && c.volontaireId !== null
-              ? String(c.volontaireId).trim()
-              : '';
-            return cId === idStr;
-          });
-
-          console.log(`🔍 Filtre par volontaireId="${idStr}" → ${miennes.length} candidature(s)`);
-
-          if (miennes.length === 0 && this.user?.email) {
-            console.warn('⚠️ Aucune correspondance sur volontaireId, tentative par email:', this.user.email);
-            miennes = toutes.filter(c =>
-              c.email?.toLowerCase().trim() === this.user.email?.toLowerCase().trim()
-            );
-            console.log(`🔍 Filtre par email → ${miennes.length} candidature(s)`);
-          }
-        } else if (this.user?.email) {
-          console.warn('⚠️ Pas de volontaireId, filtrage par email uniquement');
-          miennes = toutes.filter(c =>
-            c.email?.toLowerCase().trim() === this.user.email?.toLowerCase().trim()
-          );
+          miennes = toutes.filter(c => String(c.volontaireId || '').trim() === idStr);
         }
-
+        if (miennes.length === 0 && this.user?.email) {
+          miennes = toutes.filter(c => c.email?.toLowerCase() === this.user.email?.toLowerCase());
+        }
         this.appliquerCandidatures(miennes);
       },
-      error: (err) => {
-        console.error('❌ Erreur getAll candidatures:', err);
-        this.appliquerCandidatures([]);
-      }
+      error: () => this.appliquerCandidatures([])
     });
   }
 
   private appliquerCandidatures(candidatures: Candidature[]): void {
-    this.mesCandidatures = candidatures
-      .sort((a, b) =>
-        new Date(b.cree_le || 0).getTime() - new Date(a.cree_le || 0).getTime()
-      );
-
+    this.detectStatusChanges(candidatures);
+    this.mesCandidatures = candidatures.sort((a, b) =>
+      new Date(b.cree_le || 0).getTime() - new Date(a.cree_le || 0).getTime()
+    );
     this.calculerStats(candidatures);
-    this.buildNotifications();
+    this.buildInitialNotifications();
     this.loading = false;
-
-    console.log('✅ Candidatures appliquées:', this.mesCandidatures.length);
-    console.log('✅ Stats:', this.stats);
   }
 
-  // ================================================================
-  // STATS
-  // ================================================================
-  calculerStats(toutes?: Candidature[]): void {
-    const source = toutes ?? this.mesCandidatures;
-    this.stats = {
-      totalCandidatures: source.length,
-      enAttente: source.filter(c => c.statut === 'en_attente').length,
-      entretien: source.filter(c => c.statut === 'entretien').length,
-      acceptee:  source.filter(c => c.statut === 'acceptee').length,
-      refusee:   source.filter(c => c.statut === 'refusee').length
-    };
-  }
-
-  // ================================================================
-  // NOTIFICATIONS
-  // ================================================================
-  private buildNotifications(): void {
-    this.notifications = [];
-
-    this.notifications.push({
-      id: 1,
-      message: 'Bienvenue dans votre espace candidat PNVB !',
-      date: new Date().toISOString(),
-      type: 'info',
-      lu: false
-    });
-
-    if (this.stats.enAttente > 0) {
-      this.notifications.push({
-        id: 2,
-        message: `Vous avez ${this.stats.enAttente} candidature(s) en attente de traitement`,
-        date: new Date().toISOString(),
-        type: 'warning',
-        lu: false
-      });
+  private buildInitialNotifications(): void {
+    const existingMessages = this.notifications().map(n => n.message);
+    if (!existingMessages.some(m => m.includes('Bienvenue'))) {
+      this.addNotification({ message: 'Bienvenue dans votre espace candidat PNVB !', type: 'info', read: false });
     }
-
-    if (this.stats.entretien > 0) {
-      this.notifications.push({
-        id: 3,
-        message: `Félicitations ! ${this.stats.entretien} de vos candidatures ont été présélectionnées`,
-        date: new Date().toISOString(),
-        type: 'success',
-        lu: false
-      });
+    if (this.stats.enAttente > 0 && !existingMessages.some(m => m.includes(`${this.stats.enAttente} candidature(s)`))) {
+      this.addNotification({ message: `Vous avez ${this.stats.enAttente} candidature(s) en attente de traitement.`, type: 'warning', read: false });
     }
-
-    if (!this.isProfilComplet()) {
-      this.notifications.push({
-        id: 4,
-        message: `Votre profil est complété à ${this.profilCompletion}%. Complétez-le à 100% pour pouvoir postuler.`,
-        date: new Date().toISOString(),
-        type: 'error',
-        lu: false
-      });
+    if (this.stats.entretien > 0 && !existingMessages.some(m => m.includes(`${this.stats.entretien} de vos candidatures`))) {
+      this.addNotification({ message: `Félicitations ! ${this.stats.entretien} de vos candidatures ont été présélectionnées.`, type: 'success', read: false });
+    }
+    if (!this.isProfilComplet() && !existingMessages.some(m => m.includes('Complétez votre profil'))) {
+      this.addNotification({ message: `Votre profil est complété à ${this.profilCompletion}%. Complétez-le à 100% pour pouvoir postuler.`, type: 'error', read: false });
     }
   }
 
-  // ================================================================
-  // PROJETS DISPONIBLES
-  // ================================================================
+  // ==================== STATISTIQUES ET PROJETS ====================
+  calculerStats(toutes: Candidature[]): void {
+  this.stats = {
+    totalCandidatures: toutes.length,
+    enAttente: toutes.filter((c: Candidature) => c.statut === 'en_attente').length,
+    entretien: toutes.filter((c: Candidature) => c.statut === 'entretien').length,
+    acceptee: toutes.filter((c: Candidature) => c.statut === 'acceptee').length,
+    refusee: toutes.filter((c: Candidature) => c.statut === 'refusee').length
+  };
+}
+
   private loadProjetsDisponibles(): void {
-    const obs$ = (this.projectService as any).getAllProjectsWithStats
-      ? (this.projectService as any).getAllProjectsWithStats()
-      : this.projectService.getProjects();
-
+    const obs$ = (this.projectService as any).getAllProjectsWithStats?.() ?? this.projectService.getProjects();
     obs$.subscribe({
       next: (projets: any[]) => {
-        this.projetsDisponibles = projets
-          .filter(p => this.estProjetOuvert(p));
-        console.log('✅ Projets disponibles:', this.projetsDisponibles.length);
+        this.projetsDisponibles = projets.filter(p => this.estProjetOuvert(p));
         this.chargerProjetsDejaPostules();
       },
-      error: (err: any) => {
-        console.error('❌ Erreur chargement projets:', err);
-        this.projetsDisponibles = [];
+      error: () => this.projetsDisponibles = []
+    });
+  }
+
+  private chargerProjetsDejaPostules(): void {
+    if (!this.user?.email) return;
+    this.projectService.getProjects().subscribe({
+      next: (projets) => {
+        const verifications$ = projets.map(projet =>
+          this.candidatureService.emailDejaPostule(this.user.email, projet.id!).pipe(map(deja => deja ? projet.id : null))
+        );
+        forkJoin(verifications$).subscribe({
+          next: (resultats) => {
+            const ids = resultats.filter((id): id is string | number => id !== null && id !== undefined);
+            this.projetsDejaPostules = new Set(ids);
+          }
+        });
       }
     });
   }
 
   private estProjetOuvert(projet: any): boolean {
     const statut = (projet.statutProjet || '').toLowerCase().replace(/\s/g, '_');
-    const ok = [
-      'en_cours', 'actif', 'active', 'ouvert', 'disponible',
-      'soumis', 'ouvert_aux_candidatures', 'planifié', 'planifie'
-    ];
+    const ok = ['en_cours', 'actif', 'active', 'ouvert', 'disponible', 'soumis', 'ouvert_aux_candidatures', 'planifié'];
     return ok.some(s => statut.includes(s));
   }
 
-  // ================================================================
-  // ACTIONS
-  // ================================================================
+  // ==================== ACTIONS ====================
+  get candidaturesAffichees(): Candidature[] { return this.mesCandidatures.slice(0, 3); }
+  get projetsAffiches(): any[] { return this.projetsDisponibles.slice(0, 3); }
 
-  postulerAuProjet(projet: any): void {
-    if (!projet?.id) {
-      alert('Projet invalide');
-      return;
-    }
+  estDejaPostule(projetId: number | string | undefined): boolean {
+    if (!projetId) return false;
+    return this.projetsDejaPostules.has(projetId);
+  }
 
-    if (!this.isProfilComplet()) {
-      const msg = `Votre profil est complété à ${this.profilCompletion}%.\n\n` +
-                  `Pour postuler, votre profil doit être complet à 100%.\n\n` +
-                  `Voulez-vous le compléter maintenant ?`;
-      if (confirm(msg)) {
-        this.router.navigate(['/features/candidats/profil']);
-      }
-      return;
-    }
-
-    const dejaPostuleLocal = this.mesCandidatures.some(c =>
-      String(c.projectId ?? '').trim() === String(projet.id ?? '').trim()
-    );
-
-    if (dejaPostuleLocal) {
-      alert('Vous avez déjà postulé à cette mission.\nConsultez "Mes candidatures" pour voir le statut.');
-      this.router.navigate(['/features/candidats/mes-candidatures']);
-      return;
-    }
-
-    if (!this.user?.email) {
-      alert('Erreur : email introuvable. Reconnectez-vous.');
-      this.router.navigate(['/login']);
-      return;
-    }
-
-    this.loading = true;
-
-    this.candidatureService.emailDejaPostule(this.user.email, projet.id).subscribe({
-      next: (dejaPostule) => {
-        this.loading = false;
-
-        if (dejaPostule) {
-          alert('Vous avez déjà postulé à cette mission.');
-          this.router.navigate(['/features/candidats/mes-candidatures']);
-          return;
-        }
-
-        this.router.navigate(['/features/candidats/postuler', String(projet.id)]);
-      },
-      error: (err) => {
-        this.loading = false;
-        console.warn('⚠️ emailDejaPostule échoué, redirection quand même:', err);
-        this.router.navigate(['/features/candidats/postuler', String(projet.id)]);
-      }
-    });
+  estDateLimiteDepassee(dateLimite: string | undefined): boolean {
+    if (!dateLimite) return false;
+    const aujourdhui = new Date();
+    aujourdhui.setHours(0, 0, 0, 0);
+    const limite = new Date(dateLimite);
+    limite.setHours(23, 59, 59, 999);
+    return aujourdhui > limite;
   }
 
   voirDetailsCandidature(candidatureId?: number | string): void {
-    if (!candidatureId) {
-      alert('Erreur : candidature introuvable');
-      return;
-    }
+    if (!candidatureId) return;
     this.router.navigate(['/features/candidats/candidature', candidatureId]);
   }
 
   retirerCandidature(candidatureId: number | string): void {
-    if (!confirm('Êtes-vous sûr ? Cette action est irréversible.')) return;
-    this.candidatureService.delete(candidatureId).subscribe({
-      next: () => {
-        this.mesCandidatures = this.mesCandidatures.filter(c =>
-          String(c.id) !== String(candidatureId)
-        );
-        this.calculerStats();
-        this.buildNotifications();
-        alert('Candidature retirée avec succès');
-      },
-      error: () => alert('Erreur lors du retrait de la candidature')
-    });
+    if (confirm('Retirer cette candidature ?')) {
+      this.candidatureService.delete(candidatureId).subscribe({
+        next: () => {
+          this.mesCandidatures = this.mesCandidatures.filter(c => String(c.id) !== String(candidatureId));
+          this.calculerStats(this.mesCandidatures);
+          this.detectStatusChanges(this.mesCandidatures);
+          this.snackBar.open('Candidature retirée', 'Fermer', { duration: 3000 });
+        },
+        error: () => this.snackBar.open('Erreur lors du retrait', 'Fermer', { duration: 3000 })
+      });
+    }
   }
 
-  voirToutesCandidatures(): void { this.router.navigate(['/features/candidats/mes-candidatures/']); }
-  voirTousProjets(): void        { this.router.navigate(['/features/candidats/projets/']); }
-  completerProfil(): void        { this.router.navigate(['/features/candidats/profil']); }
+  postulerAuProjet(projet: any): void {
+    if (!this.isProfilComplet()) {
+      if (confirm(`Votre profil est complété à ${this.profilCompletion}%. Voulez-vous le compléter maintenant ?`)) {
+        this.router.navigate(['/features/candidats/profil']);
+      }
+      return;
+    }
+    if (this.estDejaPostule(projet.id)) {
+      alert('Vous avez déjà postulé à cette mission.');
+      return;
+    }
+    this.router.navigate(['/features/candidats/postuler', String(projet.id)]);
+  }
 
-  // ================================================================
-  // HELPERS PROFIL
-  // ================================================================
-  isProfilComplet(): boolean    { return this.profilCompletion >= 100; }
+  voirToutesCandidatures(): void { this.router.navigate(['/features/candidats/mes-candidatures']); }
+  voirTousProjets(): void { this.router.navigate(['/features/candidats/projets']); }
+  completerProfil(): void { this.router.navigate(['/features/candidats/profil']); }
+
+  // ==================== HELPERS AFFICHAGE ====================
+  isProfilComplet(): boolean { return this.profilCompletion >= 100; }
   getProfilCompletion(): number { return this.profilCompletion; }
 
-  // ================================================================
-  // HELPERS AFFICHAGE
-  // ================================================================
   getStatutPrincipal(statutVolontaire: string): string {
     const map: Record<string, string> = {
-      'Actif':          'Volontaire Actif',
-      'Inactif':        'En attente de mission',
-      'Fin de mission': 'Mission terminée',
-      'Candidat':       'Candidat',
-      'En attente':     'En attente de validation'
+      'Actif': 'Volontaire Actif', 'Inactif': 'En attente de mission',
+      'Fin de mission': 'Mission terminée', 'Candidat': 'Candidat', 'En attente': 'En attente de validation'
     };
     return map[statutVolontaire] || 'Candidat';
   }
 
   getStatutBadgeClass(statut: string): string {
     const map: Record<string, string> = {
-      'en_attente': 'statut-en-attente',
-      'entretien':  'statut-entretien',
-      'acceptee':   'statut-acceptee',
-      'refusee':    'statut-refusee'
+      'en_attente': 'statut-en-attente', 'entretien': 'statut-entretien',
+      'acceptee': 'statut-acceptee', 'refusee': 'statut-refusee'
     };
     return map[statut] || 'statut-default';
   }
 
   getStatutText(statut: string): string {
     const map: Record<string, string> = {
-      'en_attente': 'En attente',
-      'entretien':  'En entretien',
-      'acceptee':   'Acceptée',
-      'refusee':    'Refusée'
-    };
-    return map[statut] || statut;
-  }
-
-  getProjectStatusLabel(statut: string): string {
-    const map: Record<string, string> = {
-      'soumis':                  'Soumis',
-      'en_attente_validation':   'En attente',
-      'ouvert_aux_candidatures': 'Ouvert',
-      'en_cours':                'En cours',
-      'actif':                   'Actif',
-      'a_cloturer':              'À clôturer',
-      'cloture':                 'Clôturé'
+      'en_attente': 'En attente', 'entretien': 'En entretien',
+      'acceptee': 'Acceptée', 'refusee': 'Refusée'
     };
     return map[statut] || statut;
   }
 
   getCompetencesArray(competences: any): string[] {
     if (!competences) return [];
-    if (Array.isArray(competences)) return competences.filter(Boolean);
-    return String(competences).split(',').map(c => c.trim()).filter(Boolean);
+    return Array.isArray(competences) ? competences : String(competences).split(',').map(c => c.trim());
   }
-
-  getVolontairesNecessaires(projet: any): number { return projet.nombreVolontairesRequis ?? 0; }
-  getVolontairesAffectes(projet: any): number    { return projet.nombreVolontairesActuels ?? 0; }
-
-  estDateLimiteDepassee(dateLimite: string | undefined): boolean {
-  if (!dateLimite) return false;
-  
-  const aujourdhui = new Date();
-  aujourdhui.setHours(0, 0, 0, 0);
-  
-  const limite = new Date(dateLimite);
-  limite.setHours(23, 59, 59, 999);
-  
-  return aujourdhui > limite;
-}
 }

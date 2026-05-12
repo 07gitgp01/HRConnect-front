@@ -784,3 +784,18 @@
   .cl-container { padding: 12px; }
   .cl-title { font-size: 1.1rem; }
 }
+
+
+/* Badge pour le nombre de missions en attente */
+.pending-badge {
+  display: inline-block;
+  background: #ff9800;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 12px;
+  vertical-align: middle;
+  letter-spacing: 0.5px;
+}

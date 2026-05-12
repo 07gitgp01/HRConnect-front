@@ -69,9 +69,10 @@ export class ProjetsListComponent implements OnInit, AfterViewInit, OnDestroy {
   partenaires: Partenaire[] = [];
   isLoading = true;
 
-  private originalProjects: Project[] = [];
+  // 🔔 Compteur des missions en attente
+  pendingProjectsCount = 0;
 
-  // ✅ Stocker l'ID à ouvrir après chargement — même pattern que candidatures
+  private originalProjects: Project[] = [];
   private pendingProjetId: string | number | null = null;
   private destroy$ = new Subject<void>();
 
@@ -87,11 +88,10 @@ export class ProjetsListComponent implements OnInit, AfterViewInit, OnDestroy {
   private dialog            = inject(MatDialog);
   private snackBar          = inject(MatSnackBar);
   private datePipe          = inject(DatePipe);
-  private route             = inject(ActivatedRoute); // ✅ ajout
-  private router            = inject(Router);         // ✅ ajout
+  private route             = inject(ActivatedRoute);
+  private router            = inject(Router);
 
   ngOnInit(): void {
-    // ✅ Lire le query param AVANT de charger — même pattern que candidatures
     this.route.queryParams
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
@@ -99,7 +99,6 @@ export class ProjetsListComponent implements OnInit, AfterViewInit, OnDestroy {
           this.pendingProjetId = params['projetId'];
         }
       });
-
     this.loadData();
   }
 
@@ -114,7 +113,6 @@ export class ProjetsListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ==================== CHARGEMENT ====================
-
   loadData(): void {
     this.isLoading = true;
 
@@ -122,6 +120,9 @@ export class ProjetsListComponent implements OnInit, AfterViewInit, OnDestroy {
       next: (projects: Project[]) => {
         this.originalProjects = projects || [];
         this.dataSource.data  = [...this.originalProjects];
+
+        // 🔔 Calcul du nombre de missions en attente
+        this.pendingProjectsCount = this.originalProjects.filter(p => p.statutProjet === 'en_attente').length;
 
         this.partenaireService.getAll().subscribe({
           next: (partners: Partenaire[]) => {
@@ -134,7 +135,18 @@ export class ProjetsListComponent implements OnInit, AfterViewInit, OnDestroy {
             this.applyFilters();
             this.isLoading = false;
 
-            // ✅ Ouvrir le projet en attente après chargement complet
+            // 🔔 Notification toast si des missions en attente
+            if (this.pendingProjectsCount > 0) {
+              this.snackBar.open(
+                `${this.pendingProjectsCount} mission(s) en attente de validation.`,
+                'Voir',
+                { duration: 6000 }
+              ).onAction().subscribe(() => {
+                this.statusFilter = 'en_attente';
+                this.applyFilters();
+              });
+            }
+
             if (this.pendingProjetId !== null) {
               this.ouvrirProjetParId(this.pendingProjetId);
               this.pendingProjetId = null;
@@ -155,14 +167,9 @@ export class ProjetsListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  // ==================== OUVERTURE AUTOMATIQUE DEPUIS QUERY PARAM ====================
-
-  // ✅ Même logique que ouvrirCandidatureParId() dans candidature-list
   private ouvrirProjetParId(id: string | number): void {
     const projet = this.originalProjects.find(p => this.idsEqual(p.id, id));
-
     if (projet) {
-      // ✅ Ajuster la page du paginator Material pour afficher le projet
       const filtres   = this.dataSource.filteredData;
       const index     = filtres.findIndex(p => this.idsEqual(p.id, id));
       if (index >= 0 && this.paginator) {
@@ -171,16 +178,12 @@ export class ProjetsListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.paginator.pageIndex = pageCible;
         this.dataSource.paginator = this.paginator;
       }
-
-      // ✅ Ouvrir le dialog après un court délai (rendu)
       setTimeout(() => {
         this.viewProjectDetails(projet);
       }, 150);
     } else {
       this.snackBar.open('Mission introuvable', 'Fermer', { duration: 3000 });
     }
-
-    // ✅ Nettoyer le query param
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { projetId: null },
@@ -189,38 +192,26 @@ export class ProjetsListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ==================== FILTRES ====================
-
   private configureFilterPredicate(): void {
     this.dataSource.filterPredicate = (data: Project, filter: string) => {
       const [search, statusFilter] = filter.split('|');
       const term = (search || '').toLowerCase();
-
       const matchText =
         (data.titre || '').toLowerCase().includes(term) ||
         (data.descriptionCourte || '').toLowerCase().includes(term) ||
         this.getPartenaireNom(data.partenaireId).toLowerCase().includes(term) ||
         (data.regionAffectation || '').toLowerCase().includes(term);
-
       const matchStatus = !statusFilter || statusFilter === 'Tous' || data.statutProjet === statusFilter;
-
       return matchText && matchStatus;
     };
   }
 
   clearSearch(): void { this.searchTerm = ''; this.applyFilters(); }
-
-  applyFilters(): void {
-    this.dataSource.filter = `${this.searchTerm}|${this.statusFilter}`;
-  }
-
+  applyFilters(): void { this.dataSource.filter = `${this.searchTerm}|${this.statusFilter}`; }
   filterStatus(status: string): void { this.statusFilter = status; this.applyFilters(); }
 
   // ==================== HELPERS ====================
-
-  private idsEqual(a: any, b: any): boolean {
-    if (a == null || b == null) return false;
-    return String(a) === String(b);
-  }
+  private idsEqual(a: any, b: any): boolean { return String(a) === String(b); }
 
   getPartenaireNom(id: number | string | undefined): string {
     if (id == null) return '—';
@@ -267,7 +258,6 @@ export class ProjetsListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ==================== ACTIONS ====================
-
   viewProjectDetails(project: Project): void {
     this.dialog.open(ProjectDetailDialogComponent, {
       width: '1000px',
@@ -319,12 +309,10 @@ export class ProjetsListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   changerStatut(project: Project, nouveauStatut: ProjectStatus): void {
     if (!project.id) { this.snackBar.open('Projet non valide', 'Fermer', { duration: 3000 }); return; }
-
     if (!ProjectWorkflow.canChangeStatus(project.statutProjet, nouveauStatut)) {
       this.snackBar.open('Transition de statut non autorisée', 'Fermer', { duration: 3000 });
       return;
     }
-
     this.projectService.changerStatutProjet(project.id, nouveauStatut).subscribe({
       next: (updatedProject: Project) => {
         this.updateProjectInDataSource(updatedProject);
@@ -342,16 +330,16 @@ export class ProjetsListComponent implements OnInit, AfterViewInit, OnDestroy {
   private updateProjectInDataSource(updatedProject: Project): void {
     const currentData  = [...this.dataSource.data];
     const originalData = [...this.originalProjects];
-
     const dataIndex     = currentData.findIndex(p  => this.idsEqual(p.id, updatedProject.id));
     const originalIndex = originalData.findIndex(p => this.idsEqual(p.id, updatedProject.id));
-
     if (dataIndex !== -1) {
       const merged = { ...currentData[dataIndex], ...updatedProject };
       currentData[dataIndex] = merged;
       if (originalIndex !== -1) originalData[originalIndex] = merged;
       this.originalProjects = originalData;
       this.dataSource.data  = currentData;
+      // Recalculer le compteur après mise à jour
+      this.pendingProjectsCount = originalData.filter(p => p.statutProjet === 'en_attente').length;
     } else {
       this.loadData();
     }

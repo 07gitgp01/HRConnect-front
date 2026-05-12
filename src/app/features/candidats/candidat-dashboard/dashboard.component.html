@@ -55,34 +55,59 @@
   </div>
 
   <!-- Alertes/Notifications -->
-  <div class="notifications-section" *ngIf="notifications.length > 0">
-    <mat-card class="notifications-card">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon class="header-icon">notifications</mat-icon>
-          Vos alertes importantes
-        </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="notifications-list">
-          <div *ngFor="let notif of notifications" 
-               class="notification-item"
-               [class]="'notification-' + notif.type">
-            <mat-icon class="notification-icon">
-              {{ notif.type === 'info' ? 'info' : 
-                 notif.type === 'success' ? 'check_circle' : 
-                 notif.type === 'error' ? 'error' :
-                 'warning' }}
-            </mat-icon>
-            <div class="notification-content">
-              <div class="notification-message">{{ notif.message }}</div>
-              <div class="notification-date">{{ notif.date | date:'dd/MM/yyyy' }}</div>
-            </div>
+  <!-- ===== NOTIFICATIONS PROFESSIONNELLES ===== -->
+<div class="notifications-section">
+  <mat-card class="notifications-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">notifications_active</mat-icon>
+        Vos alertes
+        <span class="badge-count" *ngIf="unreadCount() > 0">{{ unreadCount() }}</span>
+      </mat-card-title>
+      <div class="notifications-actions" *ngIf="notifications().length > 0">
+        <button mat-button color="primary" (click)="markAllAsRead()" matTooltip="Tout marquer comme lu">
+          <mat-icon>done_all</mat-icon>
+        </button>
+        <button mat-button color="warn" (click)="clearNotifications()" matTooltip="Effacer toutes les notifications">
+          <mat-icon>clear_all</mat-icon>
+        </button>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="notifications-list" *ngIf="notifications().length > 0; else noNotifications">
+        <div *ngFor="let notif of notifications()" 
+             class="notification-item"
+             [class.read]="notif.read"
+             [class]="'notification-' + notif.type">
+          <mat-icon class="notification-icon">
+            {{ notif.type === 'success' ? 'check_circle' : 
+               notif.type === 'warning' ? 'warning' :
+               notif.type === 'error' ? 'error' : 'info' }}
+          </mat-icon>
+          <div class="notification-content">
+            <div class="notification-message">{{ notif.message }}</div>
+            <div class="notification-date">{{ notif.date | date:'dd/MM/yyyy à HH:mm' }}</div>
+          </div>
+          <div class="notification-actions">
+            <button *ngIf="notif.candidatureId" mat-icon-button (click)="voirDetailsCandidature(notif.candidatureId)" matTooltip="Voir la candidature">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button *ngIf="!notif.read" mat-icon-button (click)="markAsRead(notif.id)" matTooltip="Marquer comme lue">
+              <mat-icon>mark_email_read</mat-icon>
+            </button>
           </div>
         </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+      </div>
+      <ng-template #noNotifications>
+        <div class="empty-notifications">
+          <mat-icon>notifications_off</mat-icon>
+          <p>Aucune notification pour le moment.</p>
+        </div>
+      </ng-template>
+    </mat-card-content>
+  </mat-card>
+</div>
 
   <div class="content-section">
     <!-- Mes Candidatures Récentes (LIMITÉ À 3) -->

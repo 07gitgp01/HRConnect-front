@@ -1,0 +1,147 @@
+.public-posts-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  min-height: 70vh;
+}
+
+.header-section {
+  text-align: center;
+  margin-bottom: 48px;
+  
+  h1 {
+    font-size: 2.5rem;
+    color: #006b1e;
+    margin-bottom: 16px;
+  }
+  
+  p {
+    font-size: 1.1rem;
+    color: #64748b;
+  }
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 60px;
+}
+
+.posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 32px;
+}
+
+.post-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,129,36,0.12);
+  }
+}
+
+.post-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.post-image {
+  height: 200px;
+  overflow: hidden;
+  
+  img, video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .no-media {
+    height: 200px;
+    background: #f1f5f9;
+  }
+}
+
+.post-content {
+  padding: 20px;
+  
+  h2 {
+    font-size: 1.3rem;
+    margin: 0 0 12px;
+    color: #0f172a;
+    line-height: 1.4;
+  }
+  
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #64748b;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    
+    mat-icon {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+  
+  .post-excerpt {
+    color: #475569;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  
+  .read-more {
+    color: #008124;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: gap 0.2s;
+    
+    &:hover {
+      gap: 10px;
+    }
+  }
+}
+
+.no-posts {
+  text-align: center;
+  padding: 60px;
+  color: #64748b;
+  
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .posts-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .header-section h1 {
+    font-size: 2rem;
+  }
+}
+
+.back-home {
+  margin-bottom: 24px;
+  text-align: left;
+  
+  button {
+    padding: 8px 16px;
+    font-weight: 500;
+  }
+}

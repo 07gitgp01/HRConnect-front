@@ -1,0 +1,46 @@
+<div class="public-posts-container">
+  <!-- Bouton de retour à l'accueil -->
+  <div class="back-home">
+    <button mat-stroked-button color="primary" routerLink="/">
+      <mat-icon>arrow_back</mat-icon> Retour à l'accueil
+    </button>
+  </div>
+
+  <div class="header-section">
+    <h1>Toutes les actualités</h1>
+    <p>Suivez les dernières nouvelles et événements du Programme National de Volontariat</p>
+  </div>
+
+  <div *ngIf="loading" class="loading-spinner">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Chargement des actualités...</p>
+  </div>
+
+  <div class="posts-grid" *ngIf="!loading && posts.length === 0">
+    <div class="no-posts">
+      <mat-icon>info_outline</mat-icon>
+      <p>Aucune actualité pour le moment. Revenez bientôt !</p>
+    </div>
+  </div>
+
+  <div class="posts-grid" *ngIf="!loading && posts.length > 0">
+    <article *ngFor="let post of posts" class="post-card">
+      <a [routerLink]="['/actualites', post.id]" class="post-link">
+        <div class="post-image">
+          <img *ngIf="post.imageUrl" [src]="post.imageUrl" [alt]="post.title" loading="lazy">
+          <video *ngIf="post.videoUrl && !post.imageUrl" [src]="post.videoUrl" controls></video>
+          <div *ngIf="!post.imageUrl && !post.videoUrl" class="no-media"></div>
+        </div>
+        <div class="post-content">
+          <h2>{{ post.title }}</h2>
+          <div class="post-meta">
+            <mat-icon>event</mat-icon>
+            <span>{{ post.createdAt | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <p class="post-excerpt">{{ (post.content | stripHtml) | slice:0:150 }}...</p>
+          <div class="read-more">Lire la suite <mat-icon>arrow_forward</mat-icon></div>
+        </div>
+      </a>
+    </article>
+  </div>
+</div>

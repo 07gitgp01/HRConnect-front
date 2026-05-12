@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { SharedRoutingModule } from './shared-routing.module';
 import { TruncatePipe } from './pipes/pipestruct/truncate.pipe';
+import { StripHtmlPipe } from './pipes/strip-html.pipe';
 
 
 @NgModule({

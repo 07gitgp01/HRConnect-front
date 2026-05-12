@@ -7,7 +7,9 @@
         <mat-icon>folder_open</mat-icon>
       </div>
       <div>
-        <h1 class="cl-title">Gestion des Missions</h1>
+        <h1 class="cl-title">Gestion des Missions <span class="pending-badge" *ngIf="pendingProjectsCount > 0">
+        {{ pendingProjectsCount }} en attente
+      </span></h1>
         <p class="cl-subtitle">Suivi des projets — filtres, statuts, actions</p>
       </div>
     </div>

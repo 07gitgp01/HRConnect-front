@@ -13,6 +13,9 @@ import { GestionAdminsComponent } from './gestion-admins/gestion-admins.componen
 import { AdminRapportsPTFComponent } from './admin-rapports-ptf/admin-rapports-ptf.component';
 import { RapportAdminListComponent } from './rap-pnvb-struct/rapport-admin-list/rapport-admin-list.component';
 import { RapportAdminDetailComponent } from './rap-pnvb-struct/rapport-detail-admin/rapport-detail-admin.component';
+import { AdminGuard } from '../../core/guards/admin.guard';
+import { PostFormComponent } from './posts/post-form/post-form.component';
+import { PostsListComponent } from './posts/posts-list/posts-list.component';
 
 const routes: Routes = [
   {
@@ -90,6 +93,12 @@ const routes: Routes = [
    { path: 'rapports/:id', component: RapportAdminDetailComponent },
 /*   { path: 'rap-struct/:id', component: RapportAdminDetailComponent },
  */
+
+    
+{ path: 'posts', component: PostsListComponent},
+{ path: 'posts/new', component: PostFormComponent },
+{ path: 'posts/edit/:id', component: PostFormComponent},
+
   {
     path: 'contact-messages',
     redirectTo: 'messages',

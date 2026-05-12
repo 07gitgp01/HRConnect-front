@@ -3,10 +3,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { PartenaireActifGuard } from '../core/guards/partenaire-actif.guard';
+import { AdminGuard } from '../core/guards/admin.guard';
 
 const routes: Routes = [
     {
       path:'admin',
+      canActivate: [AdminGuard],
       loadChildren:()=>import('./admin/admin.module').then(m=>m.AdminModule)
     },
      {

@@ -1,0 +1,53 @@
+<div class="post-form-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ isEditMode ? 'Modifier l\'article' : 'Nouvel article' }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="postForm" (ngSubmit)="savePost()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Titre</mat-label>
+          <input matInput formControlName="title" required>
+        </mat-form-field>
+
+        <!-- Image de couverture -->
+        <div class="form-group">
+          <label>Image de couverture (optionnelle)</label>
+          <input type="file" (change)="onImageSelected($event)" accept="image/*">
+          <div *ngIf="uploadingImage" class="uploading">Upload en cours...</div>
+          <div *ngIf="imagePreviewUrl" class="media-preview">
+            <img [src]="imagePreviewUrl" alt="Aperçu">
+            <button type="button" (click)="removeImage()">Supprimer</button>
+          </div>
+        </div>
+
+        <!-- Vidéo de couverture -->
+        <div class="form-group">
+          <label>Vidéo de couverture (optionnelle)</label>
+          <input type="file" (change)="onVideoSelected($event)" accept="video/*">
+          <div *ngIf="uploadingVideo" class="uploading">Upload en cours...</div>
+          <div *ngIf="videoPreviewUrl" class="media-preview">
+            <video controls [src]="videoPreviewUrl"></video>
+            <button type="button" (click)="removeVideo()">Supprimer</button>
+          </div>
+        </div>
+
+        <!-- TinyMCE -->
+        <div class="form-group">
+          <label>Contenu de l'article</label>
+          <editor
+            formControlName="content"
+            [init]="editorConfig"
+            [inline]="false">
+          </editor>
+        </div>
+
+        <div class="actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="postForm.invalid || uploadingImage || uploadingVideo">
+            {{ isEditMode ? 'Mettre à jour' : 'Publier' }}
+          </button>
+<button mat-button type="button" (click)="annuler()">Annuler</button>        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

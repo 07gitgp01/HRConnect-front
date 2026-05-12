@@ -1,0 +1,22 @@
+.admin-posts-container {
+  padding: 24px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+.loading-spinner {
+  text-align: center;
+  padding: 48px;
+}

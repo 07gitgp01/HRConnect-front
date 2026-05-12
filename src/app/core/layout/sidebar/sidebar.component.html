@@ -73,6 +73,11 @@
           <span matListItemTitle>Gestion Partenaires</span>
         </a>
 
+        <a mat-list-item routerLink="/features/admin/posts" routerLinkActive="active">
+  <mat-icon matListItemIcon>newspaper</mat-icon>
+  <span matListItemTitle>Actualités</span>
+</a>
+
         <!-- ===== GROUPE ACCORDÉON : RAPPORTS ===== -->
         <div class="menu-group" [class.open]="groupRapportsOpen">
           <div class="menu-group-label" (click)="groupRapportsOpen = !groupRapportsOpen">

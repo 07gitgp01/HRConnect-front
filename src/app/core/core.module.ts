@@ -8,12 +8,11 @@ import { PartenaireService } from '../features/services/service_parten/partenair
 
 
 
+
+
 @NgModule({
   declarations: [
   
-
-  
-    
   ],
   imports: [
     CommonModule,

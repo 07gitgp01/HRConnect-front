@@ -1,0 +1,31 @@
+<div class="admin-posts-container">
+  <div class="admin-header">
+    <h1>Gestion des actualités</h1>
+    <button mat-raised-button color="primary" routerLink="/features/admin/posts/new">
+      <mat-icon>add</mat-icon> Nouvel article
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading-spinner">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Chargement des articles...</p>
+  </div>
+
+  <div class="posts-grid" *ngIf="!loading">
+    <mat-card *ngFor="let post of posts" class="post-card">
+      <mat-card-header>
+        <mat-card-title>{{ post.title }}</mat-card-title>
+        <mat-card-subtitle>Publié le {{ post.createdAt | date:'dd/MM/yyyy' }}</mat-card-subtitle>
+      </mat-card-header>
+      <img *ngIf="post.imageUrl" mat-card-image [src]="post.imageUrl" alt="illustration">
+      <mat-card-actions align="end">
+        <button mat-icon-button color="primary" [routerLink]="['/features/admin/posts/edit', post.id]">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deletePost(post.id!)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>

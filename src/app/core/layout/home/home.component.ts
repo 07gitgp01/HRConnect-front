@@ -1,5 +1,4 @@
 // src/app/core/layout/home/home.component.ts
-
 import { Component, OnInit, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -9,8 +8,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
+
 import { AuthService } from '../../../features/services/service_auth/auth.service';
 import { ProjectService } from '../../../features/services/service_projects/projects.service';
+import { StripHtmlPipe } from '../../../shared/pipes/strip-html.pipe';
+import { PostService, Post } from '../../../features/services/service_posts/post.service.ts.service';
+import { environment } from '../../../features/environment/environment';
 
 interface Domain {
   id: number;
@@ -43,66 +46,68 @@ interface CarouselSlide {
     MatIconModule,
     MatDividerModule,
     MatProgressSpinnerModule,
-    MatChipsModule
+    MatChipsModule,
+    StripHtmlPipe
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit, OnDestroy {
-  // Signaux pour la gestion d'état
+  // Signaux projets
   featuredProjects = signal<any[]>([]);
   isLoadingProjects = signal<boolean>(true);
   loadError = signal<boolean>(false);
   stats = signal<any>({});
-  
-  // COMPTEUR DES MISSIONS ACTIVES ET OUVERTES
+
+  // Compteurs
   activeProjectsCount = signal<number>(0);
   totalProjectsCount = signal<number>(0);
 
-  // Domaines d'intervention
+  // Domaines
   domains: Domain[] = [];
-  
-  // Hero Carousel properties
+
+  // Carrousel
   currentHeroSlide = 0;
   carouselSlides: CarouselSlide[] = [];
   private heroSlideInterval: any;
   private loadTimeout: any;
 
-  // Computed signals pour l'authentification
+  // Actualités
+  posts = signal<Post[]>([]);
+  isLoadingPosts = signal<boolean>(true);
+  postsError = signal<boolean>(false);
+
+  // Authentification
   isLoggedIn = computed(() => this.authService.isLoggedIn());
   userRole = computed(() => this.authService.getUserRole() || 'visiteur');
+
+  // URL backend (sans /api)
+  private backendBaseUrl = environment.apiUrl.replace('/api', '');
 
   constructor(
     private authService: AuthService,
     private projectService: ProjectService,
+    private postService: PostService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     console.log('🏠 HomeComponent initialisé');
-    
     this.featuredProjects.set([]);
-    
-    setTimeout(() => {
-      this.loadFeaturedProjects();
-    }, 100);
-    
+    setTimeout(() => this.loadFeaturedProjects(), 100);
     this.loadDomainsData();
     this.loadStats();
     this.initializeHeroCarousel();
     this.startHeroAutoSlide();
+    this.loadPosts();
   }
 
   ngOnDestroy(): void {
-    if (this.heroSlideInterval) {
-      clearInterval(this.heroSlideInterval);
-    }
-    if (this.loadTimeout) {
-      clearTimeout(this.loadTimeout);
-    }
+    if (this.heroSlideInterval) clearInterval(this.heroSlideInterval);
+    if (this.loadTimeout) clearTimeout(this.loadTimeout);
   }
 
-  // ==================== HERO CAROUSEL METHODS ====================
+  // === HERO CAROUSEL ===
   private initializeHeroCarousel(): void {
     this.carouselSlides = [
       {
@@ -110,29 +115,27 @@ export class HomeComponent implements OnInit, OnDestroy {
         title: 'Programme National de Volontariat',
         description: 'Rejoignez le mouvement citoyen pour le développement du Burkina Faso',
         primaryButton: { text: 'Devenir Volontaire', link: '/signup' },
-        secondaryButton: { text: 'Découvrir les Missions', link: '/features/admin/projets' }
+        secondaryButton: { text: 'Découvrir les Missions', link: '/recrutements' }
       },
       {
         image: 'assets/2.jpg',
         title: 'Engagez-vous pour Votre Nation',
         description: 'Participez à des projets qui transforment les communautés',
         primaryButton: { text: 'Commencer l\'Aventure', link: '/signup' },
-        secondaryButton: { text: 'En Savoir Plus', link: '/login' }
+        secondaryButton: { text: 'En Savoir Plus', link: '/a-propos' }
       },
       {
         image: 'assets/3.png',
         title: 'Faites la Différence',
         description: 'Des milliers de volontaires nous font déjà confiance',
-        primaryButton: { text: 'Postuler Maintenant', link: '/signup' },
+        primaryButton: { text: 'FAQ', link: '/faq' },
         secondaryButton: { text: 'Nous Contacter', link: '/contact' }
       }
     ];
   }
 
   private startHeroAutoSlide(): void {
-    this.heroSlideInterval = setInterval(() => {
-      this.nextHeroSlide();
-    }, 4000);
+    this.heroSlideInterval = setInterval(() => this.nextHeroSlide(), 4000);
   }
 
   nextHeroSlide(): void {
@@ -151,13 +154,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private restartHeroAutoSlide(): void {
-    if (this.heroSlideInterval) {
-      clearInterval(this.heroSlideInterval);
-    }
+    if (this.heroSlideInterval) clearInterval(this.heroSlideInterval);
     this.startHeroAutoSlide();
   }
 
-  // ==================== DOMAINES D'INTERVENTION ====================
+  // === DOMAINES ===
   private loadDomainsData(): void {
     this.domains = [
       {
@@ -229,14 +230,41 @@ export class HomeComponent implements OnInit, OnDestroy {
     ];
   }
 
-  // ==================== CHARGEMENT DES PROJETS ====================
+  // === ACTUALITÉS (avec conversion des URLs) ===
+  private getFullUrl(relativePath: string | undefined): string | undefined {
+    if (!relativePath) return undefined;
+    if (relativePath.startsWith('http')) return relativePath;
+    const cleanPath = relativePath.startsWith('/') ? relativePath : '/' + relativePath;
+    return this.backendBaseUrl + cleanPath;
+  }
+
+  loadPosts(): void {
+  this.isLoadingPosts.set(true);
+  this.postsError.set(false);
+  this.postService.getAll().subscribe({
+    next: (posts: Post[]) => {
+      const sorted = posts.sort((a, b) =>
+        new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
+      );
+      this.posts.set(sorted.slice(0, 3));
+      this.isLoadingPosts.set(false);
+    },
+    error: (err: any) => {
+      console.error('Erreur chargement actualités', err);
+      this.postsError.set(true);
+      this.isLoadingPosts.set(false);
+    }
+  });
+}
+
+  // === PROJETS ===
   loadFeaturedProjects(): void {
-    console.log('🔄 Début chargement des projets en recrutement...');
+    console.log('🔄 Début chargement des projets...');
     this.isLoadingProjects.set(true);
     this.loadError.set(false);
 
     this.loadTimeout = setTimeout(() => {
-      console.log('⏱️ Timeout: Arrêt forcé du chargement après 8 secondes');
+      console.log('⏱️ Timeout chargement projets');
       this.featuredProjects.set([]);
       this.isLoadingProjects.set(false);
       this.loadError.set(false);
@@ -244,63 +272,33 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     this.projectService.getAllProjectsWithStats().subscribe({
       next: (projectsWithStats: any[]) => {
-        if (this.loadTimeout) {
-          clearTimeout(this.loadTimeout);
-        }
-
-        console.log('📊 PROJETS REÇUS:', projectsWithStats?.length || 0);
-        
+        if (this.loadTimeout) clearTimeout(this.loadTimeout);
         let openProjects: any[] = [];
-        
         if (projectsWithStats && projectsWithStats.length > 0) {
           const aujourdhui = new Date();
           aujourdhui.setHours(0, 0, 0, 0);
-          
-          // ✅ Filtrer les projets actifs ET avec date limite de candidature non dépassée
           openProjects = projectsWithStats.filter(project => {
-            const status = project.status || project.statutProjet || '';
-            const statusNormalized = status.toString().toLowerCase().trim();
-            
-            // Vérifier que le projet est actif
-            if (statusNormalized !== 'actif') return false;
-            
-            // Vérifier la date limite de candidature
+            const status = (project.status || project.statutProjet || '').toString().toLowerCase().trim();
+            if (status !== 'actif') return false;
             const dateLimite = project.dateLimiteCandidature || project.applicationDeadline;
-            if (!dateLimite) return true; // Si pas de date limite, on considère comme ouvert
-            
+            if (!dateLimite) return true;
             try {
               const dateLimiteObj = new Date(dateLimite);
               dateLimiteObj.setHours(0, 0, 0, 0);
-              // ✅ La date limite doit être aujourd'hui ou dans le futur
               return dateLimiteObj >= aujourdhui;
             } catch {
               return true;
             }
           });
-          
           this.activeProjectsCount.set(openProjects.length);
           this.totalProjectsCount.set(projectsWithStats.length);
-          
-          console.log(`✅ ${openProjects.length} projets actifs et ouverts aux candidatures trouvés`);
-          console.log(`❌ ${projectsWithStats.filter((p: any) => {
-            const status = p.status || p.statutProjet || '';
-            return status.toString().toLowerCase().trim() === 'actif';
-          }).length - openProjects.length} projets actifs mais avec date limite dépassée`);
-          
-          // ✅ Filtrer pour la grille : max 6 missions
           this.featuredProjects.set(openProjects.slice(0, 6));
         }
-        
-        console.log('🎯 PROJETS AFFICHÉS DANS LA GRILLE:', this.featuredProjects().length);
-        
         this.isLoadingProjects.set(false);
       },
       error: (error: any) => {
-        if (this.loadTimeout) {
-          clearTimeout(this.loadTimeout);
-        }
-        
-        console.error('❌ ERREUR chargement projets:', error);
+        if (this.loadTimeout) clearTimeout(this.loadTimeout);
+        console.error('Erreur chargement projets:', error);
         this.featuredProjects.set([]);
         this.loadError.set(true);
         this.isLoadingProjects.set(false);
@@ -317,7 +315,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ==================== MÉTHODES UTILITAIRES ====================
+  // === UTILITAIRES ===
   getDefaultImage(): string {
     return 'https://images.unsplash.com/photo-1572177812156-58036aae439c?w=600&h=400&fit=crop';
   }
@@ -327,21 +325,21 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   getStatusIcon(status: string): string {
-    const statusIcons: { [key: string]: string } = {
+    const icons: Record<string, string> = {
       'en_attente': 'schedule',
       'actif': 'check_circle',
       'cloture': 'cancel'
     };
-    return statusIcons[status] || 'help';
+    return icons[status] || 'help';
   }
 
   getStatusLabel(status: string): string {
-    const statusLabels: { [key: string]: string } = {
+    const labels: Record<string, string> = {
       'en_attente': 'En attente',
       'actif': 'Actif',
       'cloture': 'Clôturé'
     };
-    return statusLabels[status] || status;
+    return labels[status] || status;
   }
 
   getRequiredVolunteersDisplay(project: any): number {
@@ -351,11 +349,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   canApplyToProject(project: any): boolean {
     const status = (project.status || project.statutProjet || '').toString().toLowerCase().trim();
     if (status !== 'actif') return false;
-    
-    // ✅ Vérifier aussi que la date limite n'est pas dépassée
     const dateLimite = project.dateLimiteCandidature || project.applicationDeadline;
     if (!dateLimite) return true;
-    
     try {
       const aujourdhui = new Date();
       aujourdhui.setHours(0, 0, 0, 0);
@@ -368,7 +363,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   getDomainIcon(domain: string): string {
-    const icons: { [key: string]: string } = {
+    const icons: Record<string, string> = {
       'Education': 'school',
       'Santé': 'local_hospital',
       'Environnement': 'nature',
@@ -399,11 +394,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       deadline.setHours(0, 0, 0, 0);
-      
-      const diffTime = deadline.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      // ✅ Ne retourner que les jours restants positifs
+      const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       return diffDays > 0 ? diffDays : 0;
     } catch {
       return null;
@@ -417,29 +408,22 @@ export class HomeComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  // ==================== NAVIGATION ====================
+  // === NAVIGATION ===
   viewProjectDetails(projectId: number): void {
-    if (!projectId) {
-      console.error('❌ ID du projet manquant');
-      return;
-    }
+    if (!projectId) return;
     this.router.navigate(['/detail', projectId]);
   }
 
   applyToProject(project: any): void {
     if (!this.isLoggedIn()) {
-      this.router.navigate(['/login'], { 
-        queryParams: { returnUrl: `/detail/${project.id}` }
-      });
+      this.router.navigate(['/login'], { queryParams: { returnUrl: `/detail/${project.id}` } });
       return;
     }
     this.viewProjectDetails(project.id);
   }
 
   exploreDomain(domain: Domain): void {
-    this.router.navigate(['/features/admin/projets'], { 
-      queryParams: { category: domain.category }
-    });
+    this.router.navigate(['/features/admin/projets'], { queryParams: { category: domain.category } });
   }
 
   navigateTo(path: string): void {

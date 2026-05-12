@@ -24,13 +24,16 @@ import { SharedModule } from '../../shared/shared.module';
 import { GestionAdminsComponent } from './gestion-admins/gestion-admins.component';
 import { MatProgressSpinner } from "@angular/material/progress-spinner";
 import { RapportAdminListComponent } from './rap-pnvb-struct/rapport-admin-list/rapport-admin-list.component';
+import { PostsListComponent } from './posts/posts-list/posts-list.component';
+import { PostFormComponent } from './posts/post-form/post-form.component';
 
 
 @NgModule({
   declarations: [
    
     GestionAdminsComponent,
-         RapportAdminListComponent,
+         RapportAdminListComponent
+        
   ],
   imports: [
     CommonModule,

@@ -1,0 +1,43 @@
+.support-page {
+  max-width: 1100px;
+  margin: 80px auto 40px;
+  padding: 24px;
+}
+
+.support-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.support-card {
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  padding: 16px;
+
+  .contact-info p {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0;
+    color: #334155;
+  }
+
+  mat-icon {
+    color: #008124;
+  }
+}
+
+.form-card {
+  .full-width {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+}
